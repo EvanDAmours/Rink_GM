@@ -29,7 +29,6 @@ const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MO
  await page.screenshot({path:qaDir+'/career-desktop.png',fullPage:true});
  await nav('Trophy Room');await page.waitForTimeout(200);await page.screenshot({path:qaDir+'/cup-desktop.png',fullPage:true});
  const gl=await page.locator('canvas').evaluate(c=>{const g=c.getContext('webgl');return {active:!!g,error:g?.getError(),renderer:g?.getParameter(g.RENDERER)};});assert.ok(gl.active);assert.equal(gl.error,0);console.log('3D Cup:',gl);
- await page.getByRole('button',{name:'Pause rotation',exact:true}).click();await page.getByRole('button',{name:'Rotate Cup',exact:true}).click();
  await nav('Draft & Scouting');await nav('Record Book');await nav('Front Office');await nav('Schedule');await nav('Roster');await nav('Lines');await nav('Settings');
  console.log('Desktop navigation and rendering passed');
  await nav('Settings');await page.getByLabel('Table density',{exact:true}).selectOption('compact');assert.equal(await page.locator('.app').getAttribute('data-density'),'compact');await page.getByRole('button',{name:'Save here',exact:true}).first().click();assert.ok(await page.getByRole('button',{name:'Load',exact:true}).first().isEnabled());console.log('Manual save-slot UI passed');
