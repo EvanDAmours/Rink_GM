@@ -551,3 +551,4 @@ table.combine td.top { color: var(--good); font-weight: 700; }
 @media(prefers-reduced-motion:reduce){.pick-reveal{animation:none}}
 .overlay .box>.cup3d{margin:0 auto 10px}
 @media(max-width:600px){.topbar .teaminfo{width:100%;flex:1 1 100%}.topbar .teaminfo>div{min-width:0}.topbar .meta{white-space:normal;line-height:1.5}.topbar .teaminfo .name{white-space:normal;font-size:18px}.topbar .actions{width:100%}.topbar .spacer{display:none}}
+.stack .item.small{gap:10px;flex-wrap:wrap}.stack .bar{margin:6px 0 4px}

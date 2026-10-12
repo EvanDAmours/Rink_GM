@@ -15,6 +15,7 @@
     "test:render": "node scripts/render-smoke.mjs",
     "test:dynasty": "node scripts/dynasty-smoke.mjs",
     "test:browser": "node scripts/browser-smoke.cjs",
+    "refresh:records": "node scripts/refresh-historical-records.mjs",
     "refresh:logos": "node scripts/refresh-logos.mjs",
     "build:pages": "vite build && node scripts/build-artifact.mjs",
     "refresh:players": "python3 scripts/refresh-player-data.py",
