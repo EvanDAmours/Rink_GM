@@ -1,0 +1,680 @@
+{
+  "project": "Rink GM",
+  "target_repository": "https://github.com/EvanDAmours/Rink_GM",
+  "packaged_at_utc": "2026-10-12",
+  "source_commit": "46b3a6ceb2dcb70f491fc818085737d332ba92df",
+  "audited_game_commit": "2631eb53ecf7a260cd7be7008011a8f922cb769c",
+  "publication_status": "Not uploaded to GitHub; complete Claude import/deployment handoff",
+  "validation": {
+    "regression_tests_passed": 70,
+    "controlled_matchup_games": 12000,
+    "fixed_roster_season_games": 1344,
+    "mobile_widths_px": [
+      360,
+      390,
+      430
+    ],
+    "fresh_build_pages": "passed",
+    "runtime_changes_since_audited_game": false
+  },
+  "hash_algorithm": "SHA-256",
+  "hash_scope": "All package payload files except this manifest",
+  "files": {
+    ".github/workflows/pages.yml": {
+      "bytes": 1020,
+      "sha256": "db31f95e41a328c72ed4c14fa9a14a198ea32239a0e1c1d2c4ac0c411b413c5f"
+    },
+    ".gitignore": {
+      "bytes": 36,
+      "sha256": "dab45bb8ea66038c7da352fcd514a41339cf7d860aba47b02dc93eb38eb95a79"
+    },
+    "CLAUDE.md": {
+      "bytes": 1368,
+      "sha256": "d4aef9bd6bab4d475d262f41193a74ae3bc9cba4a5db3fc1c6c45b2e4f32a508"
+    },
+    "CLAUDE_HANDOFF.md": {
+      "bytes": 10851,
+      "sha256": "89fb17e0f3ccee5efaff30e281ff97f19c34eda93c340a2f847c49e32fefe4d1"
+    },
+    "PLAY-RINK-GM.html": {
+      "bytes": 1596349,
+      "sha256": "afc0023baa38c6e4f90d205af6826ea1ff86794dc1d37ff545b3586bc3e97a4d"
+    },
+    "README.md": {
+      "bytes": 6632,
+      "sha256": "537091f780d81147f68a725ad1e5cb352e406c75700cf545eabe23e3152ce119"
+    },
+    "docs/FEATURE_PARITY.md": {
+      "bytes": 13604,
+      "sha256": "89afcf8a5439f0d25b1e093331c7ca0c4e78a89cb7cb67875d8ba968932f2061"
+    },
+    "docs/PLAYER_DATA.md": {
+      "bytes": 2762,
+      "sha256": "b8b2b8b6d1aaf1bd2d15b9900df20476e3fd8f337262faebcbe5d01a3f86af9f"
+    },
+    "docs/SIMULATION_AUDIT.md": {
+      "bytes": 3963,
+      "sha256": "c6f6aa9ae6df5271413a5093887c89270a81fa51d908554711521f68d2cf0121"
+    },
+    "docs/UI_REDESIGN.md": {
+      "bytes": 5926,
+      "sha256": "a3b95ad6b3b8633b35c2438e2c084d8a1a5d42ec66b14de823ef2e6d7da0df69"
+    },
+    "docs/season-audit-results.json": {
+      "bytes": 22378,
+      "sha256": "0f91b75a78a0036b17f55f0c5eb900787f61ac8a088f5b384c11790d94435b41"
+    },
+    "docs/simulation-audit-results.json": {
+      "bytes": 2553,
+      "sha256": "b75c77801528761b9436bf0ee678ba874c9df9ef990159f6f88dc0e0623493ba"
+    },
+    "index.html": {
+      "bytes": 902,
+      "sha256": "7db5e6443ac525b75d56cac7f1e898b867fb9c2d580d499223f978d8c72dce3d"
+    },
+    "package-lock.json": {
+      "bytes": 56619,
+      "sha256": "c02bc23a859f24ea653ee0d00c1b61b0b68f25ab63dd873159a959d6f2f0d780"
+    },
+    "package.json": {
+      "bytes": 1177,
+      "sha256": "2c16e06724e10117b168354d129ac46d6c6550433273d830a0ade87ed97a5456"
+    },
+    "prebuilt/.nojekyll": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prebuilt/index.html": {
+      "bytes": 1596349,
+      "sha256": "afc0023baa38c6e4f90d205af6826ea1ff86794dc1d37ff545b3586bc3e97a4d"
+    },
+    "prebuilt/mobile/index.html": {
+      "bytes": 1596349,
+      "sha256": "afc0023baa38c6e4f90d205af6826ea1ff86794dc1d37ff545b3586bc3e97a4d"
+    },
+    "scripts/browser-smoke.cjs": {
+      "bytes": 9173,
+      "sha256": "9508c29cb8555550f368ad5b9cc19ca7e6a78786e954d2a0df813a4cab2f3b00"
+    },
+    "scripts/build-artifact.mjs": {
+      "bytes": 1724,
+      "sha256": "cd7dc2a79a3c0dadf4364c4827cf4c41d7b445fd2e684c7447cf4a363e1c9776"
+    },
+    "scripts/dynasty-smoke.mjs": {
+      "bytes": 2031,
+      "sha256": "5b43b93220a8a2beed1cdb8a961a6cbc50d23af4b68181ee889c0aa3f87ce751"
+    },
+    "scripts/refresh-logos.mjs": {
+      "bytes": 1516,
+      "sha256": "24f01551d235a446ee05ecf13733c024dedd0f3d38937045f08279b5937db737"
+    },
+    "scripts/refresh-player-data.py": {
+      "bytes": 4121,
+      "sha256": "44859454556c20e30cc9c3f1f200772c98109e34b31242f7fce68799a056bdf9"
+    },
+    "scripts/refresh-schedule.mjs": {
+      "bytes": 1581,
+      "sha256": "0d1021653d62bc0ac7f9bb9dad814caed9764e63c069d56dc2e0a14293e2492c"
+    },
+    "scripts/render-smoke.mjs": {
+      "bytes": 2408,
+      "sha256": "3dbdd8b198d7aa36f8a7371ec02e9a0aa21f790de4890f6f97c061b02fa4f681"
+    },
+    "scripts/season-audit.mjs": {
+      "bytes": 1694,
+      "sha256": "78c6396a681be62a05a33441b37e253963d14101c2d500a6f41d1eb117f52dd7"
+    },
+    "scripts/simulation-audit.mjs": {
+      "bytes": 4847,
+      "sha256": "37c4e8cba0625dacf1fa6a4405daaff82c26f2d7ad8c517e233b3de7333dae9a"
+    },
+    "scripts/validate-rosters.mjs": {
+      "bytes": 3601,
+      "sha256": "87dea371da4385c5918b23bad36ab69d46b0932d89c9562a0b587c5f3ce8393c"
+    },
+    "server/nhlSchedule.js": {
+      "bytes": 1080,
+      "sha256": "3561f6ea009b13d5063458a74b65875d4407526c508aa68145d2c41d8b0fb3c9"
+    },
+    "src/App.jsx": {
+      "bytes": 24802,
+      "sha256": "8f5d23d697ad49d95d491a457af06f2c13c0427efb67d2d70d05459e549ae50c"
+    },
+    "src/assets/fonts/barlow-condensed-600.woff2": {
+      "bytes": 14844,
+      "sha256": "5bc49d41f32810a114765314392332ce2acae2276635eee265a50319a12c1b49"
+    },
+    "src/assets/fonts/barlow-condensed-700.woff2": {
+      "bytes": 14888,
+      "sha256": "e3e520cb7468f2efd60bc2ce96694567c3312f4ef414fffbe605e3ad146b24e6"
+    },
+    "src/assets/fonts/barlow-condensed-800.woff2": {
+      "bytes": 14764,
+      "sha256": "89eec21b1a1d6fd579d3e3c518901c5a6e3579e0e7a4f8b2f17b1473117bc30d"
+    },
+    "src/assets/fonts/barlowcondensed-OFL.txt": {
+      "bytes": 4377,
+      "sha256": "186d750eb496a4c17a76385f82be6aea2ac1cf2de074a811d63786cf374ea73f"
+    },
+    "src/assets/fonts/manifest.json": {
+      "bytes": 1544,
+      "sha256": "5591f807bc2149e6634c5758d7beef0e4909e2fb772dcf44523d6be5db47b3d6"
+    },
+    "src/assets/fonts/manrope-400.woff2": {
+      "bytes": 24576,
+      "sha256": "e310b55a7fd9677f5e3555e6c6c4d064fa1f1d24393f0ddbe217cea12a8c432f"
+    },
+    "src/assets/fonts/manrope-OFL.txt": {
+      "bytes": 4387,
+      "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b"
+    },
+    "src/assets/team-logos/ANA.svg": {
+      "bytes": 16710,
+      "sha256": "fae13ecc4f2b19d8b0df0940dc8514e1dc842ed5117ade651f14a7c6e62d11eb"
+    },
+    "src/assets/team-logos/BOS.svg": {
+      "bytes": 2334,
+      "sha256": "fe5977ab9a980b983ecf881bd92d3dfe89e364a04e8f26073a3ae9c842d60e9f"
+    },
+    "src/assets/team-logos/BUF.svg": {
+      "bytes": 9171,
+      "sha256": "c255131065181b43734b8a4abab307ce41e851755b106d57d4abd48a75eb485c"
+    },
+    "src/assets/team-logos/CAR.svg": {
+      "bytes": 2876,
+      "sha256": "71b345ec3856db76f86d7bf9170334d18fcc9816642cd65ba65a90493b3ed4dc"
+    },
+    "src/assets/team-logos/CBJ.svg": {
+      "bytes": 5922,
+      "sha256": "02d72fd6c4d01da41596e0516fbc8b9c5082c71dfb33870bfa590d7355b3f128"
+    },
+    "src/assets/team-logos/CGY.svg": {
+      "bytes": 6178,
+      "sha256": "ea8bf991d450cce7996b509681ce6751f0f9b9ab3f45075ff1de618caed77682"
+    },
+    "src/assets/team-logos/CHI.svg": {
+      "bytes": 25866,
+      "sha256": "40fb05722ca373515e6dce34042dc1c910dde6e366c2e84cee17b5966cb1055e"
+    },
+    "src/assets/team-logos/COL.svg": {
+      "bytes": 6022,
+      "sha256": "68d3c1287651053010b11aaac7b9ee14a414e0228ab1cf271995ddd520bbbddc"
+    },
+    "src/assets/team-logos/DAL.svg": {
+      "bytes": 5506,
+      "sha256": "a3983745c237e906029be5e3d50645e0d3b14cc830484c739854716608084182"
+    },
+    "src/assets/team-logos/DET.svg": {
+      "bytes": 15646,
+      "sha256": "7132b64d9f4cf53d1e0dae8222196d48390219a081d4e5b4a0e131821fe77a1d"
+    },
+    "src/assets/team-logos/EDM.svg": {
+      "bytes": 4472,
+      "sha256": "f9a3eb54e88d8b5c9b6c71f9e7821e816b6a917bade1ed2abe0e18225d7cbcd1"
+    },
+    "src/assets/team-logos/FLA.svg": {
+      "bytes": 13423,
+      "sha256": "086040d132972bf74ef5198615337c9e65975e103821ef148ac0fd3a85a8ca30"
+    },
+    "src/assets/team-logos/LAK.svg": {
+      "bytes": 35251,
+      "sha256": "4e3270fae2919143ec85ded20f5076ba8f61ed215c3f76548629624384866aa6"
+    },
+    "src/assets/team-logos/MIN.svg": {
+      "bytes": 4151,
+      "sha256": "e559a6e0324df81bcb921a6609a1ffc8a320e415fcd6985a57fde3e7a6e20116"
+    },
+    "src/assets/team-logos/MTL.svg": {
+      "bytes": 2476,
+      "sha256": "30b6de9978ddfe67189e63815ba76c413b70693a0b688d7f11a3089f9edbf049"
+    },
+    "src/assets/team-logos/NJD.svg": {
+      "bytes": 3684,
+      "sha256": "bd006c967931a10a1f8d5fe624128f939e4837eceb38fe4729dd75d908ae50ad"
+    },
+    "src/assets/team-logos/NSH.svg": {
+      "bytes": 7795,
+      "sha256": "4c40d9f73a99dcdbe8145cc6a8dcf1c45a78538168f841eec9f169b38cc8a7e4"
+    },
+    "src/assets/team-logos/NYI.svg": {
+      "bytes": 9959,
+      "sha256": "a9be92ca8df8fd7a94355c535bd7c32639c59a489250dd50aadf715c52e738f2"
+    },
+    "src/assets/team-logos/NYR.svg": {
+      "bytes": 5123,
+      "sha256": "9eca90c4a3482d8acb66c6982321accbccc573cb4616f7f0c39226ed91cf5e52"
+    },
+    "src/assets/team-logos/OTT.svg": {
+      "bytes": 23940,
+      "sha256": "68b41750be5db8e3988c21d89d9366fd3e56cb81b6852992fee91adf6b848f8a"
+    },
+    "src/assets/team-logos/PHI.svg": {
+      "bytes": 1853,
+      "sha256": "eabbf4de4121c6d933557f5761bce78c5edc55fcd6a2ba686808fbca75c1457f"
+    },
+    "src/assets/team-logos/PIT.svg": {
+      "bytes": 9476,
+      "sha256": "e35fe9ce18917da163fe8caf57370c4e90a431ff00fd46f8efc7f4d6b1182d18"
+    },
+    "src/assets/team-logos/SEA.svg": {
+      "bytes": 4460,
+      "sha256": "e12f89fbab164009d1b832f0048c28a23d6389d0b19bd044cc9b96c5964bc4c2"
+    },
+    "src/assets/team-logos/SJS.svg": {
+      "bytes": 9668,
+      "sha256": "a825eea61513ceaf8a001a5bb94df8efbe20ec003a9295cee52e007592d21a23"
+    },
+    "src/assets/team-logos/STL.svg": {
+      "bytes": 2661,
+      "sha256": "d195c4f3aceb42de72fb5f2dfb99eef479c905b870f4159460e832a467f5ac99"
+    },
+    "src/assets/team-logos/TBL.svg": {
+      "bytes": 1360,
+      "sha256": "28f8358caf509ca1f29c8ba0152d89eccd36d036ec5e7fe8dbc2d528d68dc89b"
+    },
+    "src/assets/team-logos/TOR.svg": {
+      "bytes": 20117,
+      "sha256": "9fd69989b1fcc5e97aea8557ad3ae2a624b531e1cfaa908c82bd69ed1ff76406"
+    },
+    "src/assets/team-logos/UTA.svg": {
+      "bytes": 4590,
+      "sha256": "c3435090b06ed74d93c7ac9f8fe53c862eeb5cb8976a3125d06a84e2202bf527"
+    },
+    "src/assets/team-logos/VAN.svg": {
+      "bytes": 6995,
+      "sha256": "a9cb1f92e0bacdb6bceb000bdcb9f6f6987454b852b6166bc3e3331f8715efc9"
+    },
+    "src/assets/team-logos/VGK.svg": {
+      "bytes": 2182,
+      "sha256": "509eedadfe134fbe6302f2b3d17224f1b16cb203654e51b3ae852820584ee673"
+    },
+    "src/assets/team-logos/WPG.svg": {
+      "bytes": 3666,
+      "sha256": "04720da6e56b54c87300771a4a7d8db0a64afd4c1d8971e7d3596b0c6e9a1b23"
+    },
+    "src/assets/team-logos/WSH.svg": {
+      "bytes": 5810,
+      "sha256": "d197891bc04a6f97b96c9e98b50fb127c048f4245cf2fd6a884cdf6045c6af19"
+    },
+    "src/assets/team-logos/bounds.json": {
+      "bytes": 4646,
+      "sha256": "22d8c85b909d9efab82da6ac5c0d1501f6391e3db8032463176d4e9c9929e750"
+    },
+    "src/assets/team-logos/manifest.json": {
+      "bytes": 8447,
+      "sha256": "2048ad9a22c0b7c113e66515052f60c104b8b7135775b7f9667ffa6021b7f6e0"
+    },
+    "src/data/cupHistory.js": {
+      "bytes": 812,
+      "sha256": "41bc82bef5a52828f8e3db04d7aaf31cc8eeaa6ba9d77b17f77a2f9c1669332f"
+    },
+    "src/data/nhl27-rosters.json": {
+      "bytes": 114257,
+      "sha256": "a2c661b8e946dcb0dd6dc7f26d1db2620e931561707218fa8b5152cf6a4ecf26"
+    },
+    "src/data/realCoaches.js": {
+      "bytes": 905,
+      "sha256": "810094694652f151fd3f157b0dbc96d4f54e6316bd4047d0a98e6a7a3930eb0c"
+    },
+    "src/data/realProspects.js": {
+      "bytes": 1265,
+      "sha256": "3463f7b1592d32aad82c9f716d7896dc56bfda9d90db6a94b96f99e0b950c086"
+    },
+    "src/data/schedule2026.json": {
+      "bytes": 211908,
+      "sha256": "39ad615bf1e77122e32d22135ef50add2c34d8751fa2d304539860617d3fba06"
+    },
+    "src/data/verifiedPlayerData.json": {
+      "bytes": 499796,
+      "sha256": "5f87407815be86ffda9ca22b6e22e19797a4b85471997682a9c908a43df92e36"
+    },
+    "src/engine/autoRoster.js": {
+      "bytes": 3255,
+      "sha256": "1fe2454fe8062d6c6cf4c64380d451c2eda2ad314a031055a2f922c9f0c074b3"
+    },
+    "src/engine/awards.js": {
+      "bytes": 5081,
+      "sha256": "40c3b4c4358cb19b45aeec4f64b153c7b7653d879407b519cec1f27dbba0d56a"
+    },
+    "src/engine/constants.js": {
+      "bytes": 3026,
+      "sha256": "5672b5c24505a7a4866385c44dc4059a78ea8e34549a3c60f2a2f70951deb9ad"
+    },
+    "src/engine/cupGeometry.js": {
+      "bytes": 1470,
+      "sha256": "29453f58f08c6a22d06ce19810dbd253d7c88e1d15cc3f4f01c78eb04019894c"
+    },
+    "src/engine/development.js": {
+      "bytes": 6237,
+      "sha256": "e7e223364bd59643ed9116d2bcd9b8652aed9d99d5011c64dc17fdd9681f1cb8"
+    },
+    "src/engine/draft.js": {
+      "bytes": 10087,
+      "sha256": "f57f52d85d1554abfe058d62012a3746e829c54ccce0351e7d2e3b4dfd3082e2"
+    },
+    "src/engine/draftExpansion.js": {
+      "bytes": 6817,
+      "sha256": "152394f193e725fc9f9d39a86554c26cbd00e6afc3b0e4d54ebbef51700b5607"
+    },
+    "src/engine/draftTools.js": {
+      "bytes": 4192,
+      "sha256": "8dcf772d06cb5e9e8c760257c589fa2df32c316df1441845995148a9e3d458d8"
+    },
+    "src/engine/dynasty.js": {
+      "bytes": 5771,
+      "sha256": "19305e5bc819c8aa578f530c6a00fe2bc3822bc83dcb227aac7f5c7b86111b39"
+    },
+    "src/engine/events.js": {
+      "bytes": 4835,
+      "sha256": "63397b7085d24ba68c69723f98137cf77bd4f019a3cf5d94435c9ef728e0eb1e"
+    },
+    "src/engine/extensions.js": {
+      "bytes": 1700,
+      "sha256": "400b6c56a52d25fcc9296de5ccb4357e15cc32150e2a1f1f9b8e09013217a8e5"
+    },
+    "src/engine/franchise.js": {
+      "bytes": 10368,
+      "sha256": "91f41ba17cbb558cf607bfbf3b7127438e8bf079a162c1dcd38b58fe6f3a6f71"
+    },
+    "src/engine/hockeyRules.js": {
+      "bytes": 4703,
+      "sha256": "92863cf9244675f293bd1bfa5ad15506545b0a766be1bc0a85fbaf4cfefc9705"
+    },
+    "src/engine/importer.js": {
+      "bytes": 6556,
+      "sha256": "62debb25138b20fa3ec8ffc8e0e3100891a028038ce75ee76e3fec24dd3f3645"
+    },
+    "src/engine/injuries.js": {
+      "bytes": 506,
+      "sha256": "0ba3ef75f708cb9c908eaa610a612a334a684c67e0acd0f498f9c172f0d8544c"
+    },
+    "src/engine/league.js": {
+      "bytes": 17362,
+      "sha256": "82dc6c36e207af181055e69421cd0cb11b39c48f600c0103716ba42a571f2247"
+    },
+    "src/engine/lines.js": {
+      "bytes": 11991,
+      "sha256": "28b974f58371866290703a4cbfcb359addca8475ca5660d3d0d508d79daf7524"
+    },
+    "src/engine/market.js": {
+      "bytes": 33927,
+      "sha256": "25e24ceab2dba68b708a2496cbddb9f8386a7992ea096de2a32aab1478adeb78"
+    },
+    "src/engine/names.js": {
+      "bytes": 5695,
+      "sha256": "46e040342fbba0552351022a736803622fc13e13fa8dd714948be467456d5c14"
+    },
+    "src/engine/negotiations.js": {
+      "bytes": 10068,
+      "sha256": "8e6ac136837ba56725de1daab8b614f20d98d5293d5941f327c554af9557dff1"
+    },
+    "src/engine/offseason.js": {
+      "bytes": 22882,
+      "sha256": "088ea17bf388305ba7ecfdffc04d209cb237217f5b5a8efd10a6f72ecc23fe62"
+    },
+    "src/engine/operations.js": {
+      "bytes": 8539,
+      "sha256": "057c87ace24d4b0cf26962134010e9c21c803b55390a0c97682e4a815f362684"
+    },
+    "src/engine/players.js": {
+      "bytes": 9761,
+      "sha256": "04cac2bcfc6ce1de26f746df0a74455a91751daececab2edcf96cf72841ce684"
+    },
+    "src/engine/playoffs.js": {
+      "bytes": 4832,
+      "sha256": "034c3ee3ceab9130172f96c9edd62c765c9bcc23c8ee0c27754287d3f77d9516"
+    },
+    "src/engine/ratings.js": {
+      "bytes": 9980,
+      "sha256": "087106ffb5f5983d8f37704f04e1377c223343aa0c2af5199a79dc5f21a072fa"
+    },
+    "src/engine/records.js": {
+      "bytes": 2642,
+      "sha256": "742eb60e0189cc39de61d6188e9b2d4497fc30bcbf7127403284a0f02f34fc28"
+    },
+    "src/engine/regions.js": {
+      "bytes": 3208,
+      "sha256": "8133e09d3be9f88005bb6cd254fc69329b5305c3173fd82844f5adbe9e5a9242"
+    },
+    "src/engine/rng.js": {
+      "bytes": 3276,
+      "sha256": "079b6ddacb44fc146bc2c47f315aed80ce0974434fca94b3cb9f4cec881650f5"
+    },
+    "src/engine/roster.js": {
+      "bytes": 10219,
+      "sha256": "fbfc01a4dae769bcec27c8550e25413c45b15fe9bfc0100b7ee714ab23961379"
+    },
+    "src/engine/saveSlots.js": {
+      "bytes": 561,
+      "sha256": "cda61d8097b5c3ea6a603ace1feed46553c86e0a0056ac49677fe9d139a1dcdc"
+    },
+    "src/engine/schedule.js": {
+      "bytes": 7127,
+      "sha256": "6541c5feee4e90f13d81005b5f2f3e287a3fd58f547c3f066495e025a451a9d2"
+    },
+    "src/engine/scheduleRefresh.js": {
+      "bytes": 2601,
+      "sha256": "6bb78422ea718bcfefbf901c319beb68b474287d71bb4928b472ecc449c3231a"
+    },
+    "src/engine/scouting.js": {
+      "bytes": 39487,
+      "sha256": "0e4a4dd44174b9d53ec48b13aa3e8df7a99612a25a3fe603891f32fed00a16d6"
+    },
+    "src/engine/sim.js": {
+      "bytes": 31806,
+      "sha256": "8ea2da7720642d3dc4254ad4098302325616365a76fb62e36246ab7552ad913a"
+    },
+    "src/engine/standings.js": {
+      "bytes": 2319,
+      "sha256": "222dd2624fef3dc21123732eea7cc0e565b1886233e6cdc95adeeae0571614f7"
+    },
+    "src/engine/teams.js": {
+      "bytes": 4171,
+      "sha256": "96944505d22c5b809cff493bdde947cbf1d59d2b84f315865d8188cb2a85bd0d"
+    },
+    "src/engine/trade.js": {
+      "bytes": 13679,
+      "sha256": "e39b1a94c126c85336af8a8253372926ad1dd02c159fa7ecbdfa824de880c3ae"
+    },
+    "src/engine/uniforms.js": {
+      "bytes": 1552,
+      "sha256": "30bcfe92ecf27e88815e72732f43a151c2ac5f5d0326920fe375a4cceda0539f"
+    },
+    "src/engine/verifiedData.js": {
+      "bytes": 4625,
+      "sha256": "4bec832599954b59bb073ba33fb360f8d7517bb4262bd0001c58a803b6845eb9"
+    },
+    "src/main.jsx": {
+      "bytes": 1805,
+      "sha256": "0f7fa00e292e26f7f846d9f979e1804724476a94b83020d9c0f0b1b195b5b9a5"
+    },
+    "src/platform.js": {
+      "bytes": 4259,
+      "sha256": "4d5fe4f5eddb4805e192246a2cec7741e7d598601612f4cf079505995baef4bc"
+    },
+    "src/styles.css": {
+      "bytes": 43087,
+      "sha256": "e6e5c8202e9392d4e7db530d6279729cae41be296d9d199fcb2f3d30b236afe2"
+    },
+    "src/ui/ActivityPage.jsx": {
+      "bytes": 2796,
+      "sha256": "f938baaca796bcae963c72bfa340fe35f1f1ebc00974305131163c06f27b6564"
+    },
+    "src/ui/BoxScoreModal.jsx": {
+      "bytes": 2654,
+      "sha256": "509db1a475db963986f1f1106a47e6379ee86d258a1a0c3783338e86c5173e4e"
+    },
+    "src/ui/CommandPalette.jsx": {
+      "bytes": 2936,
+      "sha256": "9d9565d6f4dd2ee50b10e0cadc70f4cd3930bb6aa817693b3c6abcb343bc768a"
+    },
+    "src/ui/ConfirmModal.jsx": {
+      "bytes": 1309,
+      "sha256": "5b1fe51cdc9fba13f9fe2b9b762d55b2d58c4693ce53be9ed2c27621255ba180"
+    },
+    "src/ui/Dashboard.jsx": {
+      "bytes": 11689,
+      "sha256": "08fa8984d82cae14b7db678424ac9ef33dcde8c75adc1c912da9fb5041d5aaa6"
+    },
+    "src/ui/DeadlinePage.jsx": {
+      "bytes": 10463,
+      "sha256": "5ad7550a44d2e7d20be8ca1b61185fc760f82b5006716e8818e62f09f063c6fb"
+    },
+    "src/ui/DraftPage.jsx": {
+      "bytes": 31408,
+      "sha256": "f65d2c3248348a833821f4ebb637c2a0960a1584f79fd0c5fc63bf20517f2035"
+    },
+    "src/ui/DraftTools.jsx": {
+      "bytes": 5688,
+      "sha256": "8cef359b8ca51b97ff174cfa6b35b13de151555901ea8971571a7d98930ba590"
+    },
+    "src/ui/ErrorBoundary.jsx": {
+      "bytes": 589,
+      "sha256": "378b1fd0e562a3e6c224677b0e4edd4371a8f31eb6921a6ffcf4ca68860662aa"
+    },
+    "src/ui/FreeAgencyPage.jsx": {
+      "bytes": 8302,
+      "sha256": "cc311e074db9e58fb8a4423ba1fe2aec3e37f72b1d265a0734f5d130e52c5872"
+    },
+    "src/ui/FrontOfficePage.jsx": {
+      "bytes": 7523,
+      "sha256": "beedebf1cb095a9d377228ad389011c260ce65f374b8b7bde948a85ca9c8468c"
+    },
+    "src/ui/HockeyOperationsPage.jsx": {
+      "bytes": 21436,
+      "sha256": "e82ed00b0ad5abe5884e2c31eb80fa30b2614effe4ae9a54f5b891bc856dbd76"
+    },
+    "src/ui/Icon.jsx": {
+      "bytes": 2596,
+      "sha256": "6a5f8c0007a905710b607e334d46d8a57464b0d3e1c721bb2c38dcc94ededf72"
+    },
+    "src/ui/Jersey.jsx": {
+      "bytes": 4303,
+      "sha256": "41e8acd57a1ec81814a1cc0a865226088b6e81cfa6fa43920c9aeb4ddeec88d7"
+    },
+    "src/ui/LeaguePage.jsx": {
+      "bytes": 6229,
+      "sha256": "fec4f1e94c6b2f6b0a838efa7edac231bc1c008fcc9ae089ee7612e35e63c618"
+    },
+    "src/ui/LinesPage.jsx": {
+      "bytes": 13389,
+      "sha256": "fe22b6b0b8e24820b27a76d396eb9063cea7102c79280140f3a163f6320a19b8"
+    },
+    "src/ui/LiveGame.jsx": {
+      "bytes": 20129,
+      "sha256": "a4cd75dd667827b3cf6310dca26ecc9c0b79c13f170f261f5f66e660b8dd2c0c"
+    },
+    "src/ui/PlayerModal.jsx": {
+      "bytes": 10205,
+      "sha256": "321d417c928e155b9d938039fb37df33ce107166c38bbf323700269817526788"
+    },
+    "src/ui/PlayoffsPage.jsx": {
+      "bytes": 4982,
+      "sha256": "b5ee0a0c1dd91a154c1eba0440f87b6c09af42061e98c22d4abf29b3c9ab86ef"
+    },
+    "src/ui/ProspectProfile.jsx": {
+      "bytes": 8210,
+      "sha256": "feb4504eff2f3090053c38b07c4bbc801cecfe4eddea186e11747550fe37663b"
+    },
+    "src/ui/RecordBookPage.jsx": {
+      "bytes": 3401,
+      "sha256": "9030381a6f79bd64ba28ea207e52f947331eaa3cee8d6cb4ab378a83f0d6064c"
+    },
+    "src/ui/RegionalScouting.jsx": {
+      "bytes": 2611,
+      "sha256": "62f782afd9ed05abda59eec1a050cf409e0eb4008f43f6f0b73eaa21b56ab2a6"
+    },
+    "src/ui/RosterPage.jsx": {
+      "bytes": 11670,
+      "sha256": "7e4d30144ec0ebf9b5fdcdd5f5032ca6fcb886fd9887128d014796f45d77202f"
+    },
+    "src/ui/SchedulePage.jsx": {
+      "bytes": 6657,
+      "sha256": "0422f1562f9f968775d4029dc84465f895065ff3ae98c90dfae8671dfa4a624c"
+    },
+    "src/ui/SettingsPage.jsx": {
+      "bytes": 13347,
+      "sha256": "31ffbedafa5c2d8a37e9e04cac4ac8a141b8df6b3178b5cfe325a00a2623f469"
+    },
+    "src/ui/StandingsPage.jsx": {
+      "bytes": 4808,
+      "sha256": "a151c93d31d825361e5777d91627e5f0e2431e7b17f279bf16d747052e8d4bbe"
+    },
+    "src/ui/StanleyCup3D.jsx": {
+      "bytes": 4727,
+      "sha256": "2869659012f2f373cf1314254ddb8119d42caad1fd3122250936d0f3a78073d4"
+    },
+    "src/ui/StatsPage.jsx": {
+      "bytes": 6856,
+      "sha256": "f324fb6a18936caa37eac59e95eab4ead945c5b508db37dd0576f582b2d371ca"
+    },
+    "src/ui/TeamModal.jsx": {
+      "bytes": 2796,
+      "sha256": "c46daaec3587b395194bf48841c54712ba2c7514f90491948b0be70d25a2e3a8"
+    },
+    "src/ui/TitleScreen.jsx": {
+      "bytes": 10892,
+      "sha256": "c31a6790db8a65552bd47662153f93bd02cbb5dd1a9b63dbfdac52b4843317c0"
+    },
+    "src/ui/TradeBlockPage.jsx": {
+      "bytes": 11323,
+      "sha256": "c30dbe9f023652f95093a736cbb4adcd8329013ca083d88ee9b6a102f9f684f6"
+    },
+    "src/ui/TradePage.jsx": {
+      "bytes": 10086,
+      "sha256": "4edc896920b5f5715b5796ecd3a76bc28e9dc5937aaff911622f649235706857"
+    },
+    "src/ui/TrophyRoom.jsx": {
+      "bytes": 8514,
+      "sha256": "48342ec27120a8f5267c1e526176172d3cfb8492bcba39095fbad70a2207ed2d"
+    },
+    "src/ui/accessibility.js": {
+      "bytes": 1306,
+      "sha256": "224117428c1a010ff45f9dde294083929c294386736bfb2da3d8a140455ef6c0"
+    },
+    "src/ui/common.jsx": {
+      "bytes": 6419,
+      "sha256": "59c5daf8857fe1e1106ba97abbce6674e4ee5bbfc6db48f610523a9738e01477"
+    },
+    "src/ui/fonts.css": {
+      "bytes": 1486,
+      "sha256": "bf67b65e36991691214d4e722ae6154ca00b39db36e2e8f9a4b52647d1281de8"
+    },
+    "src/ui/logos.js": {
+      "bytes": 906,
+      "sha256": "9e074514d976030a835b525a7159010d27e5162a4d2d775bfac74f17ad7231cd"
+    },
+    "src/ui/premium.css": {
+      "bytes": 50064,
+      "sha256": "2c34f12a6e52f0a59ac3514ac1fd1a0f8a5a1ec7ccfe0cbdf5423e900ffd8f00"
+    },
+    "src/ui/scoutingBits.jsx": {
+      "bytes": 2621,
+      "sha256": "39d083cfba387dc66224dd976569cf81bc052cf1d83ff7ca8c28cbcfd12be7b5"
+    },
+    "tests/engine.test.js": {
+      "bytes": 22137,
+      "sha256": "4e11b5fa5c98b3f149e643f74e80becb69c6fc519dd54edc03ca2419350c1eca"
+    },
+    "tests/franchise.test.js": {
+      "bytes": 11037,
+      "sha256": "54774727384e58c23c77d43bbe7cb0e7558cdbd0dfcd4cab7156c56d63e9ce07"
+    },
+    "tests/hockey-operations.test.js": {
+      "bytes": 17180,
+      "sha256": "c359bb1fc3731d58c384b667e0a7da8f3563d14650314f958d9553592dc87cd8"
+    },
+    "tests/player-data-injuries.test.js": {
+      "bytes": 5158,
+      "sha256": "4f9d72a79d0c8eeae225fd6cad3011a27addff8b894dc2922fcc3ab26a09e158"
+    },
+    "tests/simulation-quality.test.js": {
+      "bytes": 1795,
+      "sha256": "d09598c36f9ee75ab919757e30a61356179bfe33b2c7680bd383b8c0616439e7"
+    },
+    "vite.config.js": {
+      "bytes": 1201,
+      "sha256": "13a55e1af9d6c7ffcfc0e1f6be535ee4afc1a72eaef7637a1729d89df0f6b2c4"
+    }
+  }
+}

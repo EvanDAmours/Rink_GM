@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-12T16:26:43.181Z",
+  "games": 12000,
+  "perScenario": 1500,
+  "results": [
+    {
+      "name": "Equal 82-rated clubs",
+      "games": 1500,
+      "winRate": 0.4927,
+      "goalsFor": 2.637,
+      "goalsAgainst": 2.657,
+      "shotsFor": 27.38,
+      "shotsAgainst": 27.28,
+      "overtimeRate": 0.2173,
+      "savePct": 0.9026
+    },
+    {
+      "name": "86 vs 80 skaters / equal goalies",
+      "games": 1500,
+      "winRate": 0.7707,
+      "goalsFor": 3.634,
+      "goalsAgainst": 1.955,
+      "shotsFor": 32.48,
+      "shotsAgainst": 22.35,
+      "overtimeRate": 0.17,
+      "savePct": 0.9125
+    },
+    {
+      "name": "92 vs 72 complete clubs",
+      "games": 1500,
+      "winRate": 1,
+      "goalsFor": 8.5,
+      "goalsAgainst": 0.61,
+      "shotsFor": 47.14,
+      "shotsAgainst": 12.52,
+      "overtimeRate": 0.0013,
+      "savePct": 0.9513
+    },
+    {
+      "name": "95 vs 70 goalies / equal skaters",
+      "games": 1500,
+      "winRate": 0.804,
+      "goalsFor": 3.516,
+      "goalsAgainst": 1.862,
+      "shotsFor": 27.05,
+      "shotsAgainst": 26.9,
+      "overtimeRate": 0.1793,
+      "savePct": 0.9308
+    },
+    {
+      "name": "95 vs 60 shooting accuracy",
+      "games": 1500,
+      "winRate": 0.7827,
+      "goalsFor": 3.283,
+      "goalsAgainst": 1.735,
+      "shotsFor": 29,
+      "shotsAgainst": 24.12,
+      "overtimeRate": 0.1933,
+      "savePct": 0.9281
+    },
+    {
+      "name": "95 vs 60 shooting power",
+      "games": 1500,
+      "winRate": 0.662,
+      "goalsFor": 3.007,
+      "goalsAgainst": 2.168,
+      "shotsFor": 27.46,
+      "shotsAgainst": 26.76,
+      "overtimeRate": 0.22,
+      "savePct": 0.919
+    },
+    {
+      "name": "Elite first-line scorer vs 82-rated linemates",
+      "games": 1500,
+      "winRate": 0.5967,
+      "goalsFor": 3.096,
+      "goalsAgainst": 2.591,
+      "shotsFor": 28.47,
+      "shotsAgainst": 27.03,
+      "overtimeRate": 0.2413,
+      "savePct": 0.9042,
+      "starGoalsPer60": 2.29,
+      "teammateGoalsPer60": 0.609,
+      "starShotsPer60": 13.931,
+      "teammateShotsPer60": 5.6
+    },
+    {
+      "name": "Published TBL vs PIT roster",
+      "games": 1500,
+      "winRate": 0.7287,
+      "goalsFor": 3.307,
+      "goalsAgainst": 2.168,
+      "shotsFor": 26.67,
+      "shotsAgainst": 24.5,
+      "overtimeRate": 0.2407,
+      "savePct": 0.9115
+    }
+  ],
+  "checks": {
+    "balanced": true,
+    "moderate": true,
+    "strong": true,
+    "goalies": true,
+    "accuracy": true,
+    "power": true,
+    "star": true,
+    "scoring": true,
+    "shots": true
+  }
+}
