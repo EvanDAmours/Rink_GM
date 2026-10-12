@@ -1,0 +1,13 @@
+# Published player data
+
+Snapshot checked 12 October 2026. `src/data/verifiedPlayerData.json` contains all 300 profiles available in EA's public NHL 27 ratings list, including every nonzero published individual rating and ability name. Six list pages provide the complete embedded profiles; each record retains its source page. ESPN's 32 roster pages provide 810 player numbers. Exact normalized names and six explicitly reviewed full-name aliases match 300 ratings profiles and approximately 690 usable numbers to the game's 797 real players. Team matching prevents applying a previous club's EA number after a real transfer.
+
+McDavid starts at 99 OVR, number 97, slapshot accuracy 95 and slapshot power 92. Published attributes are imported verbatim: generated attributes are never shifted to force our weighted formula to equal EA's overall. A stored baseline offset preserves EA's OVR while allowing franchise development. Attributes absent from a published profile remain estimated and are labelled accordingly in the player modal. Goalie-specific ratings include recovery, angles, glove/stick saves, passing and puck-playing frequency.
+
+Preseason saves without games/career history receive the attribute correction automatically. Established saves preserve developed or custom ratings; Settings provides a concrete, confirmed baseline update for real players with unsourced attributes. User-imported ratings and already sourced players are preserved. Available real numbers correct legacy generated numbers before career history, while new manual assignments are preserved. Number conflicts/retired numbers receive legal franchise assignments and lose the verified label. Profiles distinguish verified numbers from game or user assignments.
+
+Refresh with `npm run refresh:players`. The Python standard-library importer validates full EA pagination, all 32 ESPN clubs and numeric ranges before atomically replacing the snapshot. `--cache DIR` reuses downloaded pages for repeatable inspection. This does not automatically move players between franchises or replace contracts.
+
+Sources: https://www.ea.com/games/nhl/ratings and https://www.espn.com/nhl/team/roster. Neither publisher endorses this fan-made game. Coverage is bounded by the public data; the remaining real players do not have invented official attribute claims.
+
+Automatic roster handling selects the lowest-rated eligible players in positions with surplus, preserving healthy group and position depth. Required waivers appear in a review dialog; approved automatic assignments resolve the claim window immediately with normal claims, without advancing or skipping hockey fixtures. NMC, injury and cap constraints still apply. Contract/reserve-list issues cannot be solved by demotion alone.

@@ -1,0 +1,28 @@
+import React from 'react';
+const shapes={
+ dashboard:<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,
+ roster:<><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v2"/></>,
+ lines:<><path d="M6 6h12M6 18h12M6 6v12m12-12v12"/><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/></>,
+ schedule:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h3m4 0h3"/></>,
+ standings:<><path d="M4 20V10h4v10m4 0V4h4v16m4 0v-7M2 21h20"/></>,
+ stats:<><path d="M3 3v18h18M6 15l5-5 4 3 6-7"/></>,
+ trophies:<><path d="M7 3h10v6a5 5 0 0 1-10 0V3Zm0 2H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 14v5m-5 2h10m-8-2h6"/></>,
+ trade:<><path d="M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4"/></>,
+ block:<><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 3h6v4H9V3Zm0 9h6m-6 4h6"/></>,
+ deadline:<><circle cx="12" cy="13" r="8"/><path d="M12 9v5l3 2M9 2h6m-3 0v3m6 1 2-2"/></>,
+ freeagency:<><path d="m15 3 6 6-12 12H3v-6L15 3Zm-3 3 6 6M3 21h18"/></>,
+ draft:<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="m12 12 9-9"/></>,
+ frontoffice:<><path d="M4 21V3h16v18M8 7h2m4 0h2m-8 4h2m4 0h2m-8 4h2m4 0h2m-6 6v-3h4v3"/></>,
+ operations:<><path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4Z"/><path d="m8 12 3 3 5-6"/></>,
+ records:<><path d="M12 6c-3-3-7-3-10-1v15c3-2 7-2 10 1 3-3 7-3 10-1V5c-3-2-7-2-10 1Zm0 0v15"/></>,
+ league:<><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6h14M5 18h14"/></>,
+ settings:<><path d="m10 3 4 0 1 3 3-1 2 3-2 3 2 3-2 3-3-1-1 3h-4l-1-3-3 1-2-3 2-3-2-3 2-3 3 1 1-3Z"/><circle cx="12" cy="11" r="3"/></>,
+ search:<><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></>,
+ arrow:<path d="M4 12h16m-6-6 6 6-6 6"/>,
+ play:<path d="m8 4 12 8-12 8V4Z"/>,
+ chevron:<path d="m9 5 7 7-7 7"/>,
+ close:<path d="m6 6 12 12M18 6 6 18"/>,
+ check:<path d="m4 12 5 5L20 6"/>,
+ bell:<><path d="M6 10a6 6 0 0 1 12 0v6l2 3H4l2-3v-6Zm4 11h4"/></>,
+};
+export default function Icon({name,size=20,...props}){return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>{shapes[name==="activity"?"bell":name] || shapes.trophies}</svg>;}

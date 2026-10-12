@@ -1,0 +1,230 @@
+{
+  "provider": "NHL official asset CDN",
+  "attribution": "NHL and respective team marks remain their owners’ property. Rink GM is an independent fan-made game.",
+  "logos": [
+    {
+      "abbr": "BOS",
+      "source": "https://assets.nhle.com/logos/nhl/svg/BOS_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.631Z",
+      "bytes": 2334,
+      "sha256": "fe5977ab9a980b983ecf881bd92d3dfe89e364a04e8f26073a3ae9c842d60e9f"
+    },
+    {
+      "abbr": "BUF",
+      "source": "https://assets.nhle.com/logos/nhl/svg/BUF_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.685Z",
+      "bytes": 9171,
+      "sha256": "c255131065181b43734b8a4abab307ce41e851755b106d57d4abd48a75eb485c"
+    },
+    {
+      "abbr": "DET",
+      "source": "https://assets.nhle.com/logos/nhl/svg/DET_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.680Z",
+      "bytes": 15646,
+      "sha256": "7132b64d9f4cf53d1e0dae8222196d48390219a081d4e5b4a0e131821fe77a1d"
+    },
+    {
+      "abbr": "FLA",
+      "source": "https://assets.nhle.com/logos/nhl/svg/FLA_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.685Z",
+      "bytes": 13423,
+      "sha256": "086040d132972bf74ef5198615337c9e65975e103821ef148ac0fd3a85a8ca30"
+    },
+    {
+      "abbr": "MTL",
+      "source": "https://assets.nhle.com/logos/nhl/svg/MTL_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.675Z",
+      "bytes": 2476,
+      "sha256": "30b6de9978ddfe67189e63815ba76c413b70693a0b688d7f11a3089f9edbf049"
+    },
+    {
+      "abbr": "OTT",
+      "source": "https://assets.nhle.com/logos/nhl/svg/OTT_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.685Z",
+      "bytes": 23940,
+      "sha256": "68b41750be5db8e3988c21d89d9366fd3e56cb81b6852992fee91adf6b848f8a"
+    },
+    {
+      "abbr": "TBL",
+      "source": "https://assets.nhle.com/logos/nhl/svg/TBL_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.593Z",
+      "bytes": 1360,
+      "sha256": "28f8358caf509ca1f29c8ba0152d89eccd36d036ec5e7fe8dbc2d528d68dc89b"
+    },
+    {
+      "abbr": "TOR",
+      "source": "https://assets.nhle.com/logos/nhl/svg/TOR_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.691Z",
+      "bytes": 20117,
+      "sha256": "9fd69989b1fcc5e97aea8557ad3ae2a624b531e1cfaa908c82bd69ed1ff76406"
+    },
+    {
+      "abbr": "CAR",
+      "source": "https://assets.nhle.com/logos/nhl/svg/CAR_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.716Z",
+      "bytes": 2876,
+      "sha256": "71b345ec3856db76f86d7bf9170334d18fcc9816642cd65ba65a90493b3ed4dc"
+    },
+    {
+      "abbr": "CBJ",
+      "source": "https://assets.nhle.com/logos/nhl/svg/CBJ_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.769Z",
+      "bytes": 5922,
+      "sha256": "02d72fd6c4d01da41596e0516fbc8b9c5082c71dfb33870bfa590d7355b3f128"
+    },
+    {
+      "abbr": "NJD",
+      "source": "https://assets.nhle.com/logos/nhl/svg/NJD_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.781Z",
+      "bytes": 3684,
+      "sha256": "bd006c967931a10a1f8d5fe624128f939e4837eceb38fe4729dd75d908ae50ad"
+    },
+    {
+      "abbr": "NYI",
+      "source": "https://assets.nhle.com/logos/nhl/svg/NYI_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.788Z",
+      "bytes": 9959,
+      "sha256": "a9be92ca8df8fd7a94355c535bd7c32639c59a489250dd50aadf715c52e738f2"
+    },
+    {
+      "abbr": "NYR",
+      "source": "https://assets.nhle.com/logos/nhl/svg/NYR_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.781Z",
+      "bytes": 5123,
+      "sha256": "9eca90c4a3482d8acb66c6982321accbccc573cb4616f7f0c39226ed91cf5e52"
+    },
+    {
+      "abbr": "PHI",
+      "source": "https://assets.nhle.com/logos/nhl/svg/PHI_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.781Z",
+      "bytes": 1853,
+      "sha256": "eabbf4de4121c6d933557f5761bce78c5edc55fcd6a2ba686808fbca75c1457f"
+    },
+    {
+      "abbr": "PIT",
+      "source": "https://assets.nhle.com/logos/nhl/svg/PIT_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.744Z",
+      "bytes": 9476,
+      "sha256": "e35fe9ce18917da163fe8caf57370c4e90a431ff00fd46f8efc7f4d6b1182d18"
+    },
+    {
+      "abbr": "WSH",
+      "source": "https://assets.nhle.com/logos/nhl/svg/WSH_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.791Z",
+      "bytes": 5810,
+      "sha256": "d197891bc04a6f97b96c9e98b50fb127c048f4245cf2fd6a884cdf6045c6af19"
+    },
+    {
+      "abbr": "CHI",
+      "source": "https://assets.nhle.com/logos/nhl/svg/CHI_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.832Z",
+      "bytes": 25866,
+      "sha256": "40fb05722ca373515e6dce34042dc1c910dde6e366c2e84cee17b5966cb1055e"
+    },
+    {
+      "abbr": "COL",
+      "source": "https://assets.nhle.com/logos/nhl/svg/COL_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.889Z",
+      "bytes": 6022,
+      "sha256": "68d3c1287651053010b11aaac7b9ee14a414e0228ab1cf271995ddd520bbbddc"
+    },
+    {
+      "abbr": "DAL",
+      "source": "https://assets.nhle.com/logos/nhl/svg/DAL_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.900Z",
+      "bytes": 5506,
+      "sha256": "a3983745c237e906029be5e3d50645e0d3b14cc830484c739854716608084182"
+    },
+    {
+      "abbr": "MIN",
+      "source": "https://assets.nhle.com/logos/nhl/svg/MIN_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.891Z",
+      "bytes": 4151,
+      "sha256": "e559a6e0324df81bcb921a6609a1ffc8a320e415fcd6985a57fde3e7a6e20116"
+    },
+    {
+      "abbr": "NSH",
+      "source": "https://assets.nhle.com/logos/nhl/svg/NSH_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.900Z",
+      "bytes": 7795,
+      "sha256": "4c40d9f73a99dcdbe8145cc6a8dcf1c45a78538168f841eec9f169b38cc8a7e4"
+    },
+    {
+      "abbr": "STL",
+      "source": "https://assets.nhle.com/logos/nhl/svg/STL_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.889Z",
+      "bytes": 2661,
+      "sha256": "d195c4f3aceb42de72fb5f2dfb99eef479c905b870f4159460e832a467f5ac99"
+    },
+    {
+      "abbr": "UTA",
+      "source": "https://assets.nhle.com/logos/nhl/svg/UTA_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.861Z",
+      "bytes": 4590,
+      "sha256": "c3435090b06ed74d93c7ac9f8fe53c862eeb5cb8976a3125d06a84e2202bf527"
+    },
+    {
+      "abbr": "WPG",
+      "source": "https://assets.nhle.com/logos/nhl/svg/WPG_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.903Z",
+      "bytes": 3666,
+      "sha256": "04720da6e56b54c87300771a4a7d8db0a64afd4c1d8971e7d3596b0c6e9a1b23"
+    },
+    {
+      "abbr": "ANA",
+      "source": "https://assets.nhle.com/logos/nhl/svg/ANA_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.948Z",
+      "bytes": 16710,
+      "sha256": "fae13ecc4f2b19d8b0df0940dc8514e1dc842ed5117ade651f14a7c6e62d11eb"
+    },
+    {
+      "abbr": "CGY",
+      "source": "https://assets.nhle.com/logos/nhl/svg/CGY_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:23.000Z",
+      "bytes": 6178,
+      "sha256": "ea8bf991d450cce7996b509681ce6751f0f9b9ab3f45075ff1de618caed77682"
+    },
+    {
+      "abbr": "EDM",
+      "source": "https://assets.nhle.com/logos/nhl/svg/EDM_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.984Z",
+      "bytes": 4472,
+      "sha256": "f9a3eb54e88d8b5c9b6c71f9e7821e816b6a917bade1ed2abe0e18225d7cbcd1"
+    },
+    {
+      "abbr": "LAK",
+      "source": "https://assets.nhle.com/logos/nhl/svg/LAK_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.993Z",
+      "bytes": 35251,
+      "sha256": "4e3270fae2919143ec85ded20f5076ba8f61ed215c3f76548629624384866aa6"
+    },
+    {
+      "abbr": "SJS",
+      "source": "https://assets.nhle.com/logos/nhl/svg/SJS_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:23.000Z",
+      "bytes": 9668,
+      "sha256": "a825eea61513ceaf8a001a5bb94df8efbe20ec003a9295cee52e007592d21a23"
+    },
+    {
+      "abbr": "SEA",
+      "source": "https://assets.nhle.com/logos/nhl/svg/SEA_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.993Z",
+      "bytes": 4460,
+      "sha256": "e12f89fbab164009d1b832f0048c28a23d6389d0b19bd044cc9b96c5964bc4c2"
+    },
+    {
+      "abbr": "VAN",
+      "source": "https://assets.nhle.com/logos/nhl/svg/VAN_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:22.962Z",
+      "bytes": 6995,
+      "sha256": "a9cb1f92e0bacdb6bceb000bdcb9f6f6987454b852b6166bc3e3331f8715efc9"
+    },
+    {
+      "abbr": "VGK",
+      "source": "https://assets.nhle.com/logos/nhl/svg/VGK_dark.svg",
+      "downloadedAt": "2026-10-12T14:33:23.003Z",
+      "bytes": 2182,
+      "sha256": "509eedadfe134fbe6302f2b3d17224f1b16cb203654e51b3ae852820584ee673"
+    }
+  ]
+}

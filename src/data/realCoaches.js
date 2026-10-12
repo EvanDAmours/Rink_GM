@@ -1,0 +1,4 @@
+// Names verified against NHL.com's June 23, 2026 list, retrieved Oct 12.
+// All tactical and numeric ratings are generated gameplay estimates.
+export const COACH_SOURCE="https://www.nhl.com/news/topic/offseason/nhl-coaches-2023-24-season-290549742";
+export const REAL_COACHES={ANA:"Joel Quenneville",BOS:"Marco Sturm",BUF:"Lindy Ruff",CGY:"Ryan Huska",CAR:"Rod Brind'Amour",CHI:"Jeff Blashill",COL:"Jared Bednar",CBJ:"Rick Bowness",DAL:"Glen Gulutzan",DET:"Todd McLellan",EDM:"Mike Babcock",FLA:"Paul Maurice",LAK:"Peter Laviolette",MIN:"John Hynes",MTL:"Martin St. Louis",NSH:"Andrew Brunette",NJD:"Sheldon Keefe",NYI:"Peter DeBoer",NYR:"Mike Sullivan",OTT:"Travis Green",PHI:"Rick Tocchet",PIT:"Dan Muse",SJS:"Ryan Warsofsky",STL:"Jim Montgomery",SEA:"Lane Lambert",TBL:"Jon Cooper",TOR:"Jim Hiller",UTA:"Andre Tourigny",VAN:"Manny Malhotra",VGK:"Ryan Craig",WSH:"Spencer Carbery",WPG:"Scott Arniel"};
