@@ -1,10 +1,10 @@
 # Rink GM — complete NHL franchise game
 
-**For Claude: start with [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md).** This package contains the completed game, editable source, bundled player/team data, tests, and deployment setup. Import this program into `https://github.com/EvanDAmours/Rink_GM`; the requested next task is publication, not rebuilding the game from a description.
+The NHL simulation was rebuilt on 16 October 2026. Read [the simulation audit](docs/SIMULATION_AUDIT.md) for scoring rules, player and coach behaviour, position-specific tests, measured league rates and remaining limits. Editable source, bundled player/team data, tests and deployment setup are included. [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md) describes the original import package.
 
 ## Play immediately
 
-Open `PLAY-RINK-GM.html` in a desktop browser. A ready-built website is in `prebuilt/`: `index.html` is the desktop entry, and `mobile/index.html` is the mobile entry. Both pages include their fonts, logos, styles and game engine. Browser saves are local; export/import a franchise to transfer it between devices.
+For the rebuilt engine, run `npm ci` and `npm run build:pages`, then open `dist/rink-gm.html` in a desktop browser or deploy `dist/`. The checked-in `PLAY-RINK-GM.html` and `prebuilt/` files are the original October 12 import snapshot; they do not contain later source changes. Browser saves are local; export/import a franchise to transfer it between devices.
 
 ## Develop and build
 
@@ -31,7 +31,7 @@ Expected addresses after a successful deployment:
 
 These are intended destinations, not a claim that GitHub Pages is already live. Desktop and mobile use the same responsive game and share saved franchises in the same browser on the same origin. They do not automatically sync saves across devices.
 
-For a buildless alternative, publish the contents of `prebuilt/` through a Pages deployment. Those files are already self-contained. Keep the source in the repository for future edits.
+For a single-file deployment of the current engine, build first and publish `dist/rink-gm.html` or `dist/mobile/index.html`. GitHub Pages Actions already builds from source.
 
 ## Included game
 
@@ -51,11 +51,13 @@ The exact feature inventory and simplified rules are documented in [FEATURE_PARI
 
 - [PLAYER_DATA.md](docs/PLAYER_DATA.md): EA/ESPN sources, identity matching, estimated coverage and save migration.
 - [SIMULATION_AUDIT.md](docs/SIMULATION_AUDIT.md): model changes, repeatable experiments and limitations.
-- `docs/simulation-audit-results.json`: 12,000 controlled matchup games.
-- `docs/season-audit-results.json`: a complete 1,344-game fixed-roster season.
+- `docs/simulation-audit-results.json`: 8,000 controlled matchup games, with win-rate confidence intervals.
+- `docs/season-audit-results.json` and `docs/season-audit-holdout-results.json`: two separate 1,344-game fixed-roster seasons.
+- `docs/positional-audit-results.json`: causal forward, playmaking, defense, goalie and faceoff comparisons.
+- `docs/nhl-calibration-2025-26.json`: official NHL API data used for league-rate comparison.
 - [UI_REDESIGN.md](docs/UI_REDESIGN.md): visual system, bundled fonts/logos and accessibility.
 
-The completed release passed 70 regression tests and desktop/360/390/430px browser checks. Run `npm run test:simulation` or `npm run test:season` to repeat statistical checks. Detailed browser smoke tests require a separately supplied Playwright/Chromium environment; the script supports environment-variable paths. Nothing in this package depends on the previous agent's scratch paths at runtime.
+The rebuilt engine passed 100 regression tests, 14,000 controlled/positional audit games and two 1,344-game season validations. Desktop/390px live gameplay, saves and navigation passed with zero JavaScript errors. Run `npm test` for regression checks and `npm run test:simulation`, `npm run test:positions`, or `npm run test:season` for statistical checks. See the audit for measured results and browser validation. Detailed browser smoke tests require a separately supplied Playwright/Chromium environment; the script supports environment-variable paths. Nothing in this package depends on the previous agent's scratch paths at runtime.
 
 ## Live NHL schedule access
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useGame, TeamBadge, PlayerName } from "./common.jsx";
-import { skatersForDisplay, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel } from "../engine/sim.js";
+import { skatersForDisplay, skaterCount, takeTimeout, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel } from "../engine/sim.js";
 import { playScheduledGame, finishDay } from "../engine/league.js";
 import { recordSeriesGame, simPlayoffDay, ROUND_NAMES } from "../engine/playoffs.js";
 
@@ -22,9 +22,7 @@ const O_ZONE = [[72, 42.5], [70, 20], [70, 65], [52, 24], [52, 61], [82, 50]];
 const D_ZONE = [[70, 42.5], [58, 24], [58, 61], [80, 35], [80, 50], [80, 42.5]];
 
 function skatersOn(s, k) {
-  const base = s.phase === "ot" && !s.playoff ? 3 : 5;
-  const boxed = Math.min(2, s.pen[k].filter((p) => !p.offset).length);
-  return Math.max(3, base - boxed) + (s[k].pulled ? 1 : 0);
+  return skaterCount(s, k) + (s[k].pulled ? 1 : 0);
 }
 function rolesOn(n) {
   if (n >= 6) return [0, 1, 2, 3, 4, 5];
@@ -293,9 +291,7 @@ export default function LiveGame({ spec, onDone }) {
   }, [s, s.events.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ppSide = (k) => {
-    const mine = s.pen[k].filter((p) => !p.offset).length;
-    const theirs = s.pen[k === "h" ? "a" : "h"].filter((p) => !p.offset).length;
-    return theirs > mine;
+    return skaterCount(s, k) > skaterCount(s, k === 'h' ? 'a' : 'h');
   };
   const gsaves = (k) => {
     const gid = s[k === "h" ? "a" : "h"].goalie;
@@ -371,10 +367,11 @@ export default function LiveGame({ spec, onDone }) {
                   <button key={k} className={mySide.tactic === k ? "primary small" : "small"} onClick={() => { mySide.tactic = k; force((x) => x + 1); }}>{l}</button>
                 ))}
                 <button className={mySide.ride ? "primary small" : "small"} onClick={() => { mySide.ride = !mySide.ride; force((x) => x + 1); }} title="Give your top lines more ice time">Ride top lines</button>
-                <button className="small" disabled={mySide.timeout} onClick={() => { mySide.timeout = true; mySide.boost = 6; force((x) => x + 1); }} title="One per game: a short burst of energy">Timeout{mySide.timeout ? " (used)" : ""}</button>
+                <button className="small" disabled={mySide.timeout || !s.faceoffNext || s.phase === 'so' || s.stoppage?.icing === s.userSide} onClick={() => { takeTimeout(s, s.userSide); force((x) => x + 1); }} title="Rest your players at a stoppage. One per game; unavailable after your own icing.">Timeout{mySide.timeout ? " (used)" : ""}</button>
                 <button
                   className={mySide.pulled ? "danger small" : "small"}
-                  disabled={s.phase === "so"}
+                  disabled={s.phase === "so" || s.delayedPenalty && s.delayedPenalty.k !== s.userSide}
+                  title={s.phase === 'ot' && !s.playoff ? 'An empty-net overtime loss forfeits the overtime standings point.' : 'Replace your goalie with an extra skater.'}
                   onClick={() => { mySide.autoPull = false; mySide.pulled = !mySide.pulled; force((x) => x + 1); }}
                 >
                   {mySide.pulled ? "Put goalie back" : "Pull goalie"}

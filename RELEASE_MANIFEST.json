@@ -4,7 +4,7 @@
   "packaged_at_utc": "2026-10-12",
   "source_commit": "46b3a6ceb2dcb70f491fc818085737d332ba92df",
   "audited_game_commit": "2631eb53ecf7a260cd7be7008011a8f922cb769c",
-  "publication_status": "Not uploaded to GitHub; complete Claude import/deployment handoff",
+  "publication_status": "Original October 12 package imported to GitHub; consult current source and docs/SIMULATION_AUDIT.md for subsequent engine work",
   "validation": {
     "regression_tests_passed": 70,
     "controlled_matchup_games": 12000,
@@ -15,10 +15,10 @@
       430
     ],
     "fresh_build_pages": "passed",
-    "runtime_changes_since_audited_game": false
+    "runtime_changes_since_audited_game": true
   },
   "hash_algorithm": "SHA-256",
-  "hash_scope": "All package payload files except this manifest",
+  "hash_scope": "Original October 12 import package payload, not the current source checkout",
   "files": {
     ".github/workflows/pages.yml": {
       "bytes": 1020,
@@ -676,5 +676,7 @@
       "bytes": 1201,
       "sha256": "13a55e1af9d6c7ffcfc0e1f6be535ee4afc1a72eaef7637a1729d89df0f6b2c4"
     }
-  }
+  },
+  "manifest_kind": "historical_import_snapshot",
+  "current_engine_audit": "docs/SIMULATION_AUDIT.md"
 }

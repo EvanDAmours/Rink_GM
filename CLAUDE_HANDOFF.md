@@ -1,4 +1,6 @@
-# Claude handoff — publish Evan's completed Rink GM
+# Claude handoff — original 12 October 2026 import package
+
+The repository now contains subsequent work. Build from current source; [docs/SIMULATION_AUDIT.md](docs/SIMULATION_AUDIT.md) is authoritative for the 16 October engine rebuild. The checked-in standalone/prebuilt files and the historical manifest describe the original import snapshot. The instructions below preserve that package's provenance.
 
 ## Copy this prompt into Claude with the ZIP attached
 

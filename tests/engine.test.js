@@ -11,6 +11,7 @@ import { counts, capSpace, canSendDown, releasePlayer, payroll } from "../src/en
 import { marketValue } from "../src/engine/players.js";
 import { faAsk } from "../src/engine/offseason.js";
 import { restShare } from "../src/engine/sim.js";
+import {seed} from '../src/engine/rng.js';
 import { gameLines, syncLines, lineupIds } from "../src/engine/lines.js";
 import { evaluateTrade, executeTrade, tradingClosed, isContending } from "../src/engine/trade.js";
 import { toggleUserBlock, onBlock, deadlinePending, startDeadline, deadlineTick, userOffers, acceptOffer, DEADLINE_START, DEADLINE_END } from "../src/engine/market.js";
@@ -270,9 +271,19 @@ test("trade market review fixes: goalies move, no buried vets, standings-based b
   while (!lg.deadline.done) deadlineTick(lg);
   assert.equal(lg.deadline.total, lg.deadline.feed.filter((f) => f.kind === "trade").length);
   assert.ok(lg.deadline.feed.some((f) => f.talks), "talks are reported before deals");
-  // Goalies can change hands between AI teams (Hellebuyck asked out).
-  const helle = Object.values(lg.players).find((p) => p.name === "Connor Hellebuyck");
-  assert.notEqual(lg.teams[helle.tid].abbr, "WPG", "Hellebuyck traded");
+  // Test goalie negotiability in a controlled market. A named player's trade
+  // cannot be required after a season whose standings and cap moves vary with
+  // the simulation model. Requests still require a legal, affordable buyer.
+  const goalieMarket = L.createLeague({userAbbr:'TOR',seed:5,injuries:false});
+  goalieMarket.phase='regular';goalieMarket.day=goalieMarket.deadlineDay;
+  for(const t of goalieMarket.teams){
+    Object.assign(t.rec,{gp:60,w:30,l:20,otl:10,pts:70});
+    for(const id of t.roster)goalieMarket.players[id].cap*=.5;
+  }
+  const helle=Object.values(goalieMarket.players).find(p=>p.name==='Connor Hellebuyck');
+  helle.wantsTrade=true;seed(6507);startDeadline(goalieMarket);
+  while(!goalieMarket.deadline.done)deadlineTick(goalieMarket);
+  assert.notEqual(goalieMarket.teams[helle.tid].abbr,'WPG','an affordable requested goalie trade can complete');
   // A listed player who leaves without a trade can still be taken off the block.
   if (lg.players[listed.id].tid === user.id) {
     toggleUserBlock(lg, listed.id);

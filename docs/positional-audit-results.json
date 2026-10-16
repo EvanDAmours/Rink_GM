@@ -1,0 +1,191 @@
+{
+  "date": "2026-10-16T17:52:54.467Z",
+  "seedSeries": "622199 + i * 7907",
+  "games": 6000,
+  "perScenario": 1000,
+  "results": [
+    {
+      "name": "82-rated baseline",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 0.677,
+        "assistsPer60": 1.197,
+        "pointsPer60": 1.874,
+        "shotsPer60": 5.841,
+        "linematePointsPer60": 1.798
+      },
+      "left": {
+        "goalsFor": 3.01,
+        "goalsAgainst": 2.845,
+        "shotsAgainst": 26.72,
+        "xgAgainst": 2.995,
+        "blocks": 9.78,
+        "savePct": 0.8935,
+        "faceoffPct": 0.5013
+      },
+      "right": {
+        "goalsFor": 2.996,
+        "goalsAgainst": 2.837,
+        "shotsAgainst": 26.61,
+        "xgAgainst": 3.002,
+        "blocks": 9.71,
+        "savePct": 0.8934,
+        "faceoffPct": 0.4987
+      }
+    },
+    {
+      "name": "Same first-line center upgraded to 97",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 1.681,
+        "assistsPer60": 1.815,
+        "pointsPer60": 3.496,
+        "shotsPer60": 9.552,
+        "linematePointsPer60": 1.898
+      },
+      "left": {
+        "goalsFor": 3.39,
+        "goalsAgainst": 2.722,
+        "shotsAgainst": 25.69,
+        "xgAgainst": 2.843,
+        "blocks": 9.5,
+        "savePct": 0.894,
+        "faceoffPct": 0.5298
+      },
+      "right": {
+        "goalsFor": 2.844,
+        "goalsAgainst": 3.177,
+        "shotsAgainst": 27.78,
+        "xgAgainst": 3.315,
+        "blocks": 10.07,
+        "savePct": 0.8856,
+        "faceoffPct": 0.4702
+      }
+    },
+    {
+      "name": "Same center: only playmaking and puck skills upgraded",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 0.971,
+        "assistsPer60": 1.539,
+        "pointsPer60": 2.511,
+        "shotsPer60": 6.891,
+        "linematePointsPer60": 1.813
+      },
+      "left": {
+        "goalsFor": 3.129,
+        "goalsAgainst": 2.887,
+        "shotsAgainst": 26.55,
+        "xgAgainst": 2.981,
+        "blocks": 9.71,
+        "savePct": 0.8913,
+        "faceoffPct": 0.4991
+      },
+      "right": {
+        "goalsFor": 3.041,
+        "goalsAgainst": 2.94,
+        "shotsAgainst": 26.71,
+        "xgAgainst": 3.07,
+        "blocks": 9.66,
+        "savePct": 0.8899,
+        "faceoffPct": 0.5009
+      }
+    },
+    {
+      "name": "Only left defense corps defensive attributes upgraded to 92",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 0.805,
+        "assistsPer60": 1.254,
+        "pointsPer60": 2.059,
+        "shotsPer60": 5.874,
+        "linematePointsPer60": 1.962
+      },
+      "left": {
+        "goalsFor": 3.095,
+        "goalsAgainst": 2.714,
+        "shotsAgainst": 25.34,
+        "xgAgainst": 2.859,
+        "blocks": 9.88,
+        "savePct": 0.8929,
+        "faceoffPct": 0.4989
+      },
+      "right": {
+        "goalsFor": 2.878,
+        "goalsAgainst": 2.895,
+        "shotsAgainst": 26.88,
+        "xgAgainst": 3.048,
+        "blocks": 9.78,
+        "savePct": 0.8923,
+        "faceoffPct": 0.5011
+      }
+    },
+    {
+      "name": "95 vs 70 goalies, identical 82-rated skaters",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 0.93,
+        "assistsPer60": 1.607,
+        "pointsPer60": 2.536,
+        "shotsPer60": 5.842,
+        "linematePointsPer60": 2.515
+      },
+      "left": {
+        "goalsFor": 4.04,
+        "goalsAgainst": 2.106,
+        "shotsAgainst": 26.68,
+        "xgAgainst": 2.11,
+        "blocks": 10.02,
+        "savePct": 0.9211,
+        "faceoffPct": 0.5016
+      },
+      "right": {
+        "goalsFor": 2.17,
+        "goalsAgainst": 3.772,
+        "shotsAgainst": 26.57,
+        "xgAgainst": 3.993,
+        "blocks": 9.57,
+        "savePct": 0.8581,
+        "faceoffPct": 0.4984
+      }
+    },
+    {
+      "name": "Only center faceoff attributes changed: 99 vs 60",
+      "games": 1000,
+      "forward": {
+        "goalsPer60": 0.796,
+        "assistsPer60": 1.546,
+        "pointsPer60": 2.342,
+        "shotsPer60": 6.106,
+        "linematePointsPer60": 1.848
+      },
+      "left": {
+        "goalsFor": 3.302,
+        "goalsAgainst": 2.668,
+        "shotsAgainst": 24.68,
+        "xgAgainst": 2.791,
+        "blocks": 8.87,
+        "savePct": 0.8919,
+        "faceoffPct": 0.6491
+      },
+      "right": {
+        "goalsFor": 2.822,
+        "goalsAgainst": 3.102,
+        "shotsAgainst": 28.86,
+        "xgAgainst": 3.245,
+        "blocks": 10.49,
+        "savePct": 0.8925,
+        "faceoffPct": 0.3509
+      }
+    }
+  ],
+  "checks": {
+    "forwardScoring": true,
+    "forwardPoints": true,
+    "pointsBeyondIceTime": true,
+    "playmaking": true,
+    "defensiveSuppression": true,
+    "goalieQuality": true,
+    "faceoffSpecialists": true
+  }
+}
