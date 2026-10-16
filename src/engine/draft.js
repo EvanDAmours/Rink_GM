@@ -1,3 +1,5 @@
+import {releasePlayer} from './roster.js';
+import {teamNeeds as positionalNeeds} from './teamPlanning.js';
 // Entry draft: prospect classes, the two-draw lottery, and AI picks. Scouting lives in
 // scouting.js.
 import {seedDraftIdentities,resolveProtections} from "./draftExpansion.js";
@@ -58,10 +60,10 @@ function estimate(p, sdOvr, sdPot) {
 // latest scouting report if there is one, otherwise the consensus read.
 export function shownRatings(p) {
   const s = p.scout;
-  if (!s) return { ovr: p.ovr, pot: p.pot, exact: true };
+  if (!s) return {ovr:"??",pot:"??",exact:false};
   if (s.lvl > 0 && s.eOvr != null) return { ovr: s.eOvr, pot: s.ePot, exact: !!s.exact };
   const b = s.base || s;
-  return { ovr: b.eOvr ?? p.ovr, pot: b.ePot ?? p.pot, exact: false };
+  return { ovr: b.eOvr ?? "??", pot: b.ePot ?? "??", exact: false };
 }
 
 export function createDraftPicks(league, year) {
@@ -148,13 +150,14 @@ const DEV_EYE = { superstar: 1.2, star: 0.6, late: -0.3 };
 export function aiChoose(league, tid) {
   const avail = league.draftClass.filter((id) => league.players[id]?.tid === -2);
   const need = teamNeeds(league, tid);
+  const positional=Object.fromEntries(positionalNeeds(league,league.teams[tid]).map(n=>[n.pos,1+n.score*.0005]));
   let best = null;
   let bestScore = -Infinity;
   for (const id of avail) {
     const p = league.players[id];
     const grp = isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F";
     const own = (p.pot + (p.consensus || 0)) * 0.78 + p.ovr * 0.22 + (DEV_EYE[p.dev] || 0);
-    const score = (own * 0.5 + csScore(p) * 0.5 + gauss(0, 1.2)) * need[grp];
+    const score = (own * 0.5 + csScore(p) * 0.5 + gauss(0, 1.2)) * need[grp] * (positional[p.pos] || 1);
     if (score > bestScore) { bestScore = score; best = id; }
   }
   return best;
@@ -203,10 +206,14 @@ export function simDraftToUser(league, { all = false } = {}) {
 }
 
 export function finishDraft(league) {
-  // Undrafted prospects leave the league; trim oversized prospect pools.
+  // Undrafted players remain available; trimming a reserve pool is a release, not deletion.
   for (const id of league.draftClass) {
     const p = league.players[id];
-    if (p && p.tid === -2) delete league.players[id];
+    if (p && p.tid === -2) {
+      p.tid=-1;p.assignment='freeagent';p.signed=false;p.yrs=0;p.cap=0;
+      (p.moveHistory ||= []).push({year:league.year,day:league.day,from:-2,to:-1,kind:'undrafted free agent'});
+      if(!league.freeAgents.includes(id))league.freeAgents.push(id);
+    }
   }
   league.draftClass = [];
   for (const t of league.teams) {
@@ -222,8 +229,11 @@ export function releaseProspect(league, pid) {
   const p = league.players[pid];
   if (!p) return;
   const t = league.teams[p.tid];
-  if (t) t.prospects = t.prospects.filter((x) => x !== pid);
-  delete league.players[pid];
+  if (!t || !t.prospects.includes(pid)) return false;
+  releasePlayer(league,t,pid);
+  if(p.tid!==-1)return false;
+  p.assignment='freeagent';delete p.rightsUntil;
+  return true;
 }
 
 export function randomRoundSeed() {
@@ -243,4 +253,10 @@ export function expandLegacyDraftClass(league) {
   rankClass(league,ids);
   ids.forEach(id=>{league.players[id].cs.mid+=offset;});
   league.draftClass.push(...ids);
+}
+
+// Player-facing evaluation; opponents' development players fail closed.
+export function visibleRatings(lg,p){
+ const hidden=p.tid===-2 || p.tid!==lg.userTid && lg.teams[p.tid]?.prospects.includes(p.id);
+ return hidden?shownRatings(p):{ovr:p.ovr,pot:p.pot,exact:true};
 }

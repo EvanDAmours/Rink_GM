@@ -1,3 +1,5 @@
+import {buyoutSummary} from '../engine/capAccounting.js';
+import ArchivedPlayerCard from './ArchivedPlayerCard.jsx';
 import React from "react";
 import Jersey from "./Jersey.jsx";
 import { useGame, Modal, TeamBadge, Ovr, Bar, money, pct, signed } from "./common.jsx";
@@ -7,15 +9,16 @@ import { fullPosName, savePct, gaa, marketValue, isRFA, DEV_TRAITS } from "../en
 import ProspectProfile from "./ProspectProfile.jsx";
 import { DevChip } from "./scoutingBits.jsx";
 import { shownRatings } from "../engine/draft.js";
-import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor } from "../engine/roster.js";
+import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } from "../engine/roster.js";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
   const p = league.players[pid];
+  if (!p) return <ArchivedPlayerCard pid={pid} onClose={closeModal}/>;
   const team = league.teams[p.tid];
   const mine = p.tid === league.userTid;
   const inMinors = team && team.prospects.includes(p.id);
-  const hidden = (p.tid === -2 || (inMinors && !mine)) && p.scout;
+  const hidden = p.tid === -2 || (inMinors && !mine);
   const r = hidden ? shownRatings(p) : { ovr: p.ovr, pot: p.pot, exact: true };
   const goalie = isGoalie(p.pos);
   const groups = goalie ? GOALIE_ATTRS : SKATER_ATTRS;
@@ -38,7 +41,7 @@ export default function PlayerModal({ pid }) {
   }
   // Development traits matter while a player is still growing. Other teams' prospects
   // show what your scouts found out (if anything).
-  const devShown = p.age <= 25 && p.dev ? (hidden ? p.scout.dev || null : p.dev) : undefined;
+  const devShown = p.age <= 25 && p.dev ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
 
   return (
     <Modal
@@ -63,7 +66,7 @@ export default function PlayerModal({ pid }) {
             <span className="k">Team</span><span>{team ? <span className="link" onClick={() => openTeam(team.id)}>{team.city} {team.name}</span> : p.tid === -2 ? `${league.draftClassYear} draft class` : "Free agent"}{inMinors ? " (minors)" : ""}</span>
             <span className="k">Contract</span>
             <span>{p.signed === false ? "Unsigned draft pick" : p.yrs > 0 ? `${money(p.cap)} × ${p.yrs} yr${p.yrs > 1 ? "s" : ""} (through ${league.year + p.yrs - 1}-${String(league.year + p.yrs).slice(2)})` : "None"} {p.tid >= 0 && p.yrs <= 1 && p.signed !== false ? <span className="pill">{isRFA(p) ? "RFA" : "UFA"} next summer</span> : null}</span>
-            <span className="k">Market value</span><span>{money(marketValue(p, league.year))} / yr</span>
+            <span className="k">Market value</span><span>{hidden ? 'Unavailable without an NHL evaluation' : `${money(marketValue(p, league.year))} / yr`}</span>
             <span className="k">Rating source</span>
             <span>{p.ratingData ? <><span className="src ea">EA</span> EA SPORTS {p.ratingData.edition} · {p.ratingData.keys.length} published attributes{league.year>(league.startYear || 2026)?" · franchise development applied":""}</> : p.src === "ea27" ? <><span className="src ea">EA</span> Official EA SPORTS NHL 27 overall</> : p.src === "est" ? <><span className="src est">EST</span> Estimated — update it in Settings → Ratings Import</> : "Generated player"}</span>
             {p.injury > 0 && (<><span className="k">Injury</span><span className="bad">{p.injuryNote} — out {p.injury} game{p.injury > 1 ? "s" : ""}</span></>)}
@@ -121,7 +124,7 @@ export default function PlayerModal({ pid }) {
                 <tbody>
                   {career.map((c, i) => (
                     <tr key={i}>
-                      <td>{c.y}-{String(c.y + 1).slice(2)}</td><td>{c.t}</td><td className="num">{c.o ?? ""}</td>
+                      <td>{c.y}-{String(c.y + 1).slice(2)}</td><td>{c.t}</td><td className="num">{hidden ? '—' : c.o ?? ''}</td>
                       {goalie ? <><td className="num">{c.s.gp}</td><td className="num">{c.s.w}</td><td className="num">{c.s.l}</td><td className="num">{c.s.otl}</td><td className="num">{pct(savePct(c.s))}</td><td className="num">{gaa(c.s).toFixed(2)}</td><td className="num">{c.s.so}</td></>
                         : <><td className="num">{c.s.gp}</td><td className="num">{c.s.g}</td><td className="num">{c.s.a}</td><td className="num">{c.s.pts}</td><td className="num">{signed(c.s.pm)}</td><td className="num">{c.s.pim}</td></>}
                     </tr>
@@ -136,7 +139,7 @@ export default function PlayerModal({ pid }) {
           {mine && !inMinors && (
             <>
               <button disabled={!canSendDown(p)} onClick={() => { sendDown(league, team, p.id); commit(); closeModal(); }}>Send to minors</button>
-              <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? `His buyout leaves ${money(p.cap / 3)} of dead cap for ${p.yrs * 2} season(s).` : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
+              <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? buyoutSummary(p,capYear(league)) : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
               <button onClick={() => proposeTradeFor(p.id, p.tid)}>Put in a trade</button>
             </>
           )}

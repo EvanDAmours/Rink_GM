@@ -1,10 +1,16 @@
+import {packLeague,unpackLeague} from './savePacking.js';
+import {isHockeyLeague,sanitizeLegacyNews} from './gameIdentity.js';
 // League orchestration: creation from the NHL 27 roster file (or a random
 // league), daily simulation, phase transitions and save/load.
+import {accrueCap, startCapLedger} from './capAccounting.js';
+import {commitmentWeek} from './playerCommitments.js';
+import {recordReport} from './matchReports.js';
 import {upgradeVerifiedData} from './verifiedData.js';
 import {setInjuriesEnabled} from './injuries.js';
 import rosterFile from "../data/nhl27-rosters.json" with { type: "json" };
 import LZString from "lz-string";
 import { TEAMS } from "./teams.js";
+import {snapshotRng,restoreRng} from './rng.js';
 import { seed as seedRng, randInt, pick, chance, gauss, clamp } from "./rng.js";
 import { createPlayer, generatePlayer, marketValue } from "./players.js";
 import { FIRST_SEASON, SCOUT_POINTS_START, SAVE_KEY, SAVE_VERSION, MAX_ROSTER, DRAFT_ROUNDS, isGoalie, isDefense, minSalaryForYear } from "./constants.js";
@@ -36,6 +42,8 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
   const year = FIRST_SEASON;
   const league = {
     version: SAVE_VERSION,
+    game: "rink-gm",
+    newsVisibilityVersion: 1,
     mode,
     year,
     startYear: year,
@@ -210,15 +218,18 @@ export function seasonOver(league) {
 export function startRegularSeason(league) {
   league.phase = "regular";
   league.day = 0;
+  for (const t of league.teams) startCapLedger(league,t);
   league.deadlineDay = Math.floor(lastDay(league.schedule) * 0.78);
   logTx(league, `${league.year}-${String(league.year + 1).slice(2)} regular season begins`);
 }
 
 export function playScheduledGame(league, g, state) {
+  if (!g) throw new Error('Scheduled fixture is missing.');
+  if (g.played) return {hs:g.hs,as:g.as,ot:g.ot,shots:g.shots,stars:g.stars,goals:g.goals,g:g.gl};
   const result = applyResult(league, state, { playoff: false });
   const mine = g.h === league.userTid || g.a === league.userTid;
   Object.assign(g, { played: true, hs: result.hs, as: result.as, ot: result.ot, shots: result.shots, stars: result.stars, gl: result.g });
-  if (mine) g.goals = result.goals;
+  if (mine) { g.goals = result.goals; recordReport(league,state,g.id); }
   return result;
 }
 
@@ -247,6 +258,8 @@ export function simDay(league, { holdUserGame = false } = {}) {
 }
 
 export function finishDay(league, played) {
+  accrueCap(league);
+  commitmentWeek(league);
   const ids = played || new Set(gamesOnDay(league, league.day).flatMap((g) => [g.h, g.a]));
   healInjuries(league, ids);
   processWaivers(league);
@@ -266,8 +279,10 @@ export function finishDay(league, played) {
   }
   // Players back from injury or called up: keep AI rosters at 23.
   for (const t of league.teams) if (t.id !== league.userTid) fitRoster(league, t);
+  const completedDay = league.day;
   league.day++;
   while (league.day <= lastDay(league.schedule) && !gamesOnDay(league, league.day).length) league.day++;
+  if (league.day > completedDay+1) accrueCap(league,league.day-1);
 }
 
 export function simDays(league, n, { stopAtUserGame = false } = {}) {
@@ -352,12 +367,12 @@ export function beginNextSeason(league) {
 
 // Saves are LZ-compressed (roughly 8x smaller) so long dynasties fit in localStorage.
 export function serializeLeague(league) {
-  return LZString.compressToUTF16(JSON.stringify(league));
+  return LZString.compressToUTF16(JSON.stringify(packLeague({...league,game:"rink-gm",savedRng:snapshotRng()})));
 }
 
 // Portable export: a small JSON wrapper around base64-compressed league data.
 export function exportLeagueText(league) {
-  return JSON.stringify({ rinkgm: SAVE_VERSION, league: LZString.compressToBase64(JSON.stringify(league)) });
+  return JSON.stringify({ rinkgm: SAVE_VERSION, league: LZString.compressToBase64(JSON.stringify(packLeague({...league,game:"rink-gm",savedRng:snapshotRng()}))) });
 }
 
 export function deserializeLeague(raw) {
@@ -370,12 +385,15 @@ export function deserializeLeague(raw) {
   } else {
     json = LZString.decompressFromUTF16(raw);
   }
-  return restoreLeague(json ? JSON.parse(json) : null);
+  return restoreLeague(json ? unpackLeague(JSON.parse(json)) : null);
 }
 
 // Accept a league object from any source (save slot, league file, cloud backup).
 export function restoreLeague(l) {
-  return l && l.version === SAVE_VERSION ? migrateLeague(l) : null;
+  if (!l || l.version !== SAVE_VERSION || !isHockeyLeague(l)) return null;
+  const restored=migrateLeague(l); restored.game="rink-gm";
+  if (restored.savedRng) restoreRng(restored.savedRng);
+  return restored;
 }
 
 // Bring older saves up to date with features added since they were made.
@@ -411,6 +429,7 @@ function migrateLeague(l) {
   ensureFutureClasses(l);
   updateRecords(l);
   expandLegacyDraftClass(l);
+  sanitizeLegacyNews(l);
   return l;
 }
 

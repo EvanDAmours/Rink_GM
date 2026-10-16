@@ -1,3 +1,4 @@
+import {recordReport} from './matchReports.js';
 // Stanley Cup Playoffs: 16 teams, four best-of-seven rounds, fixed bracket.
 import { playoffPicture, compareTeams } from "./standings.js";
 import { createGame, simToEnd, applyResult } from "./sim.js";
@@ -67,6 +68,9 @@ export function nextGame(league, s) {
 }
 
 export function recordSeriesGame(league, s, state, result) {
+  if (state.seriesRecorded) return;
+  state.seriesRecorded = true;
+  if (state.h.tid === league.userTid || state.a.tid === league.userTid) recordReport(league,state,`po:${league.year}:${s.round}:${s.top}:${s.bot}:${s.games.length}`);
   const winnerTid = state.winner === "h" ? state.h.tid : state.a.tid;
   s.games.push({ h: state.h.tid, a: state.a.tid, hs: result.hs, as: result.as, ot: result.ot, stars: result.stars });
   if (winnerTid === s.top) s.wTop++;

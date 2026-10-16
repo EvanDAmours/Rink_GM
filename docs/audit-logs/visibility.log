@@ -1,0 +1,9 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> nhl-gm@1.0.0 test:visibility
+> node scripts/visibility-smoke.mjs
+
+Opponent modal: missing scouting data, raw attributes, market value, potential and development protected
+Opponent team and trade lists: hidden potential does not control ordering
+Inbound offers, trade block and deadline listings preserve scouting visibility
+Draft board, player profile and comparison lab: hidden truth does not alter public reads

@@ -1,3 +1,4 @@
+import {buyoutSummary} from '../engine/capAccounting.js';
 import {automaticallyHandleRoster,automaticRosterPlan} from "../engine/autoRoster.js";
 import React, { useState } from "react";
 import { useGame, Table, PlayerName, PlayerCell, TeamBadge, Ovr, money, pct, signed, POS_ORDER } from "./common.jsx";
@@ -23,7 +24,7 @@ export default function RosterPage() {
     commit();
   };
   const doRelease = async (p) => {
-    const dead = p.yrs > 0 && p.cap > 0 ? ` His buyout leaves ${money(p.cap / 3)} of dead cap for ${p.yrs * 2} season(s).` : "";
+    const dead = p.yrs > 0 && p.cap > 0 ? ` ${buyoutSummary(p,capYear(league))}` : "";
     if (!(await ask({ title: `Release ${p.name}?`, body: `He becomes a free agent.${dead}`, yes: "Release", danger: true }))) return;
     releasePlayer(league, user, p.id);
     commit();
@@ -115,8 +116,8 @@ export default function RosterPage() {
               { key: "name", label: "Player", render: (p) => <PlayerCell p={p} team={user} />, sort: (p) => p.name },
               { key: "pos", label: "Pos", render: (p) => <span className="posbadge">{p.pos}</span>, sort: (p) => POS_ORDER[p.pos] },
               { key: "age", label: "Age", num: true, sort: (p) => p.age },
-              { key: "ovr", label: "OVR", render: (p) => <Ovr v={shownRatings(p).ovr} />, sort: (p) => p.ovr },
-              { key: "pot", label: "POT", num: true, render: (p) => shownRatings(p).pot, sort: (p) => p.pot },
+              { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} />, sort: (p) => p.ovr },
+              { key: "pot", label: "POT", num: true, render: (p) => p.pot, sort: (p) => p.pot },
               { key: "draft", label: "Drafted", render: (p) => (p.draft ? `${p.draft.year} R${p.draft.round} #${p.draft.pick}` : <span className="dim">—</span>) },
               { key: "k", label: "Contract", render: (p) => (p.signed ? `${money(p.cap)} × ${p.yrs}` : <span className="pill">Unsigned</span>) },
               {
@@ -157,7 +158,7 @@ export default function RosterPage() {
             <h3>Dead Cap (buyouts)</h3>
             <div className="list">
               {user.deadCap.map((d, i) => (
-                <div className="item" key={i}>{d.name}<span style={{ marginLeft: "auto" }} className="mono">{money(d.amt)} × {d.yrs}</span></div>
+                <div className="item" key={i}>{d.name}<span style={{ marginLeft: "auto" }} className="mono">{money(d.amt)} × {d.yrs}{d.offset>0?` · starts ${capYear(league)+d.offset}`:" · current"}</span></div>
               ))}
               {!user.deadCap.length && <div className="dim small">None.</div>}
             </div>

@@ -1,10 +1,14 @@
 # Rink GM — complete NHL franchise game
 
-The NHL simulation was rebuilt on 16 October 2026. Read [the simulation audit](docs/SIMULATION_AUDIT.md) for scoring rules, player and coach behaviour, position-specific tests, measured league rates and remaining limits. Editable source, bundled player/team data, tests and deployment setup are included. [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md) describes the original import package.
+A brighter hockey clubhouse now uses warm off-white and ice-blue panels, navy text and orange accents, with team-color illustrations, clearer actions, larger text and phone navigation. Text size, density and reduced motion are configurable in Settings.
+
+The NHL simulation and franchise systems were rebuilt on 16 October 2026. Hockey Operations → Planning & analysis adds match reports, shared roster priorities, opponent plans, prospect readiness, commitments and daily cap ledgers. Live games now support exact checkpoint recovery. Read [the whole-game smoke and data-isolation report](docs/SMOKE_TEST_REPORT.md) and [the installation handoff](ENGINE_REBUILD_HANDOFF.md). Read [the simulation audit](docs/SIMULATION_AUDIT.md) for scoring rules, player and coach behaviour, position-specific tests, measured league rates and remaining limits. Editable source, bundled player/team data, tests and deployment setup are included. [CLAUDE_HANDOFF.md](CLAUDE_HANDOFF.md) describes the original import package.
+
+For a no-terminal upload walkthrough, read [UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md).
 
 ## Play immediately
 
-For the rebuilt engine, run `npm ci` and `npm run build:pages`, then open `dist/rink-gm.html` in a desktop browser or deploy `dist/`. The checked-in `PLAY-RINK-GM.html` and `prebuilt/` files are the original October 12 import snapshot; they do not contain later source changes. Browser saves are local; export/import a franchise to transfer it between devices.
+To play this download, open `PLAY-RINK-GM.html` on your computer. Current desktop/mobile hosting entries are in `prebuilt/`. GitHub Pages automatically tests and builds the editable source after you upload it using the guide. This download includes freshly built `PLAY-RINK-GM.html` and `prebuilt/` desktop/mobile entries with the complete update. The source-only patch requires rebuilding those entries after application. Browser saves are local; export/import a franchise to transfer it between devices.
 
 ## Develop and build
 
@@ -14,6 +18,7 @@ Use Node.js 22 or later. Run commands in the directory containing this README an
 npm ci
 npm test
 npm run test:render
+npm run test:visibility
 npm run build:pages
 npm run dev
 ```
@@ -57,7 +62,7 @@ The exact feature inventory and simplified rules are documented in [FEATURE_PARI
 - `docs/nhl-calibration-2025-26.json`: official NHL API data used for league-rate comparison.
 - [UI_REDESIGN.md](docs/UI_REDESIGN.md): visual system, bundled fonts/logos and accessibility.
 
-The rebuilt engine passed 100 regression tests, 14,000 controlled/positional audit games and two 1,344-game season validations. Desktop/390px live gameplay, saves and navigation passed with zero JavaScript errors. Run `npm test` for regression checks and `npm run test:simulation`, `npm run test:positions`, or `npm run test:season` for statistical checks. See the audit for measured results and browser validation. Detailed browser smoke tests require a separately supplied Playwright/Chromium environment; the script supports environment-variable paths. Nothing in this package depends on the previous agent's scratch paths at runtime.
+The current regression results are recorded in `docs/ENGINE_VALIDATION.json`. The rebuilt engine was checked with 14,000 controlled/positional audit games and two 1,344-game season validations. Desktop/390px live gameplay, saves and navigation passed with zero JavaScript errors. Run `npm test` for regression checks and `npm run test:simulation`, `npm run test:positions`, or `npm run test:season` for statistical checks. See the audit for measured results and browser validation. Detailed browser smoke tests require a separately supplied Playwright/Chromium environment; the script supports environment-variable paths. For the phase fixtures, first run `NHL_QA_DIR=tmp/browser-qa DYNASTY_SEASONS=1 npm run test:dynasty`, then `node scripts/prepare-browser-fixtures.mjs`, then `npm run test:browser` with Playwright/Chromium configured. `DYNASTY_RESUME=1` resumes a career audit from its saved checkpoint. Nothing in this package depends on the previous agent's scratch paths at runtime.
 
 ## Live NHL schedule access
 

@@ -1,3 +1,5 @@
+import FeedbackToast from './ui/FeedbackToast.jsx';
+import {decisionInterrupt} from './engine/decisionInterrupts.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCtx, TeamBadge, recordStr, money } from "./ui/common.jsx";
 import StanleyCup3D from "./ui/StanleyCup3D.jsx";
@@ -42,7 +44,7 @@ import ConfirmModal from "./ui/ConfirmModal.jsx";
 
 const NAV = [
   {group:"Clubhouse"},
-  {id:"dashboard",label:"Dashboard"},{id:"activity",label:"News & Inbox"},{id:"roster",label:"Roster"},{id:"lines",label:"Lines"},{id:"frontoffice",label:"Front Office"},{id:"operations",label:"Hockey Operations"},
+  {id:"dashboard",label:"Dashboard"},{id:"activity",label:"News & Inbox"},{id:"roster",label:"Roster"},{id:"lines",label:"Lines"},{id:"frontoffice",label:"Front Office"},{id:"operations",label:"Hockey Operations"},{id:"analysis",label:"Game plans & reports"},
   {group:"Competition"},
   {id:"schedule",label:"Schedule"},{id:"standings",label:"Standings"},{id:"stats",label:"Stats"},{id:"playoffs",label:"Playoffs"},
   {group:"Build your contender"},
@@ -67,7 +69,7 @@ export default function App({ resume = false }) {
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
   const [toast, setToast] = useState(null);
-  const [live, setLive] = useState(null);
+  const [live, setLive] = useState(leagueRef.current?.activeGame?.spec || null);
   const [tradeSeed, setTradeSeed] = useState(null);
   const saveTimer = useRef(null);
   const cancelRef = useRef(false);
@@ -133,6 +135,7 @@ export default function App({ resume = false }) {
 
   const startLeague = (lg) => {
     leagueRef.current = lg;
+    setLive(lg.activeGame?.spec || null);
     cloudRef.current.phase = lg.phase;
     setScreen("game");
     setTab("dashboard");
@@ -150,7 +153,7 @@ export default function App({ resume = false }) {
     const tick = () => {
       const t0 = performance.now();
       let more = true;
-      while (more && performance.now() - t0 < 45) more = step();
+      while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){toast(notice,7000);more=false;} }
       setBusy({ label: label(), cancel: true });
       if (more && !cancelRef.current) setTimeout(tick, 0);
       else {
@@ -467,7 +470,7 @@ export default function App({ resume = false }) {
 
   return (
     <GameCtx.Provider value={ctx}>
-      <div className="app" data-density={league.settings.uiDensity || "comfortable"}>
+      <div className="app" data-density={league.settings.uiDensity || "comfortable"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
         <div className="topbar">
           <button className="brand" onClick={()=>setTab("dashboard")} aria-label="Rink GM dashboard"><span className="brand-mark">R</span><span>RINK<span className="brand-gm">GM</span><small>FRANCHISE MODE</small></span></button>
           <div className="teaminfo">
@@ -485,7 +488,7 @@ export default function App({ resume = false }) {
           {!live && <div className="actions">{actions}</div>}
         </div>
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => setTab("deadline")} />}
-        <div className="mobile-menu"><label>Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>n.id && (!n.when || n.when(league))).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label><div className="row">{["dashboard","roster","draft","operations"].map(id=><button key={id} className={tab===id?"on small":"small"} disabled={!!live} onClick={()=>setTab(id)}>{NAV.find(n=>n.id===id).label}</button>)}</div></div>
+        <div className="mobile-menu"><label>Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>n.id && (!n.when || n.when(league))).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label><div className="row">{["dashboard","roster","draft","operations"].map(id=><button key={id} className={tab===id?"on small":"small"} disabled={!!live} onClick={()=>setTab(id)}><Icon name={id} size={20}/><span>{({dashboard:"Home",roster:"Roster",draft:"Draft",operations:"Club office"})[id]}</span></button>)}</div></div>
         <div className="body">
           <nav className="nav" aria-label="Main navigation"><div className="rail-club"><TeamBadge team={user} size={62}/><span><b>{user.abbr}</b><small>{league.year}–{String(league.year+1).slice(2)} SEASON</small></span></div>
             {NAV.filter((n) => !n.when || n.when(league)).map((n, i) =>
@@ -519,6 +522,7 @@ export default function App({ resume = false }) {
                 {tab === "freeagency" && <FreeAgencyPage />}
                 {tab === "draft" && <DraftPage act={act} />}
                 {tab === "operations" && <HockeyOperationsPage />}
+                {tab === "analysis" && <HockeyOperationsPage initialView="analysis" />}
                 {tab === "frontoffice" && <FrontOfficePage />}
                 {tab === "trophies" && <TrophyRoom />}
                 {tab === "records" && <RecordBookPage />}
@@ -545,7 +549,7 @@ export default function App({ resume = false }) {
             </div>
           </div>
         )}
-        {toast && <div className="toast">{toast}</div>}
+        {toast && <FeedbackToast message={toast}/>}
         {confirmEl}
       </div>
     </GameCtx.Provider>

@@ -1,0 +1,28 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> nhl-gm@1.0.0 test:browser
+> node scripts/browser-smoke.cjs
+
+All 32 embedded logos and conference filters passed
+Light palette, direct planning navigation and readability/motion controls passed
+Keyboard search, modal focus/Escape, roster filtering/sorting and club inbox passed
+Desktop operations: Planning & analysis
+Desktop operations: Roster & rights
+Desktop operations: Agents & offers
+Desktop operations: Development
+Desktop operations: Career & arena
+Desktop operations: Events & legacy
+Desktop operations: Draft lab
+3D Cup: { active: true, error: 0, renderer: 'WebKit WebGL' }
+Desktop navigation and rendering passed
+Manual save-slot UI passed
+Live reload restored exact clock and paused coaching state
+Live game, jersey labels and result completion passed
+Postgame shot map, unit report and real game-plan controls passed
+Overflow diagnosis { width: 390, body: 390, elements: [] }
+Mobile 390px navigation and offline logos/fonts passed; zero JavaScript errors
+Saved draft clock survives navigation: 1:59
+Phase browser smoke: deadline
+Phase browser smoke: resign
+Phase browser smoke: fa
+Unavailable-GPU Cup fallback passed

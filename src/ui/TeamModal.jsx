@@ -41,7 +41,7 @@ export default function TeamModal({ tid }) {
           <>
             <div className="muted small">Minors & prospects</div>
             <div className="row">
-              {minors.sort((a, b) => b.pot - a.pot).map((p) => {
+              {minors.sort((a,b)=>(Number((mine?b:shownRatings(b)).pot)||0)-(Number((mine?a:shownRatings(a)).pot)||0)||a.name.localeCompare(b.name)).map((p) => {
                 const r = mine ? p : shownRatings(p);
                 return <span key={p.id} className="pill"><PlayerName p={p} /> {p.pos} {r.ovr}/{r.pot}</span>;
               })}

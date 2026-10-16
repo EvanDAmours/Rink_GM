@@ -215,9 +215,10 @@ export function generalIdea(league, p) {
   const cov = coverage(league, p);
   const area = regionRead(league, p);
   if (cov.role === "office") return area ? { pot: area.pot, grade: potGrade(area.pot), tier: projection(p.pos, area.pot), by: "area", who: "Regional scouts" } : null;
+  if (p.scout?.base?.ePot == null && !area) return null;
   const sd = readSd(cov.role, 0, scoutEval(cov.scout, p));
   const r = stream(`${p.id}|${cov.scout.id}|gen`);
-  const pot = area && area.sd < sd ? area.pot : (p.scout?.base?.ePot ?? p.pot) + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd);
+  const pot = area && area.sd < sd ? area.pot : (p.scout?.base?.ePot ?? area.pot) + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd);
   return { pot:clamp(pot,40,99), grade: potGrade(pot), tier: projection(p.pos, pot), by: cov.role, who: cov.scout.name };
 }
 

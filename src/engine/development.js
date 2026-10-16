@@ -47,11 +47,18 @@ export function developmentWeek(lg) {
       if(!t.prospects.includes(id) || p.injury>0)continue;
       const st=p.farmStats ||= {gp:0,g:0,a:0,w:0,sa:0,ga:0,year:lg.year};
       const role=p.farmRole || "middle",usage=role==="top"?1.15:role==="depth"?.7:1;
-      const games=elapsed*(p.assignment==="college"?1:2);const r=stream(`${id}|farm|${lg.year}|${week}`);
+      const games=Math.max(1,Math.round(elapsed*(isGoalie(p.pos)?(role==="top"?.8:role==="depth"?.3:.5):1)*(p.assignment==="college"?1:2)));const r=stream(`${id}|farm|${lg.year}|${week}`);
       st.gp+=games;
+      const minutes=isGoalie(p.pos)?60:role==='top'?(isDefense(p.pos)?24:21):role==='depth'?9:16;
+      st.toi=(st.toi || 0)+games*minutes*60;
+      const competition=p.assignment==='ahl'?1.1:p.assignment==='college'?1:p.assignment==='europe'?1.05:.9;
+      const challenge=p.ovr>=78 && p.assignment==='junior'?.65:1;
+      p.developmentHistory ||= [];
+      p.developmentHistory.push({year:lg.year,week,assignment:p.assignment,role,games,minutes,ovr:p.ovr});
+      if(p.developmentHistory.length>80)p.developmentHistory.shift();
       if(isGoalie(p.pos)){st.w+=Math.round(games*.55);st.sa+=games*28;st.ga+=Math.round(games*(3.5-(p.ovr-65)*.06));}
       else {const pts=Math.round(games*Math.max(.15,(p.ovr-45)/30)*usage*(isDefense(p.pos)?.6:1)*(0.85+r.next()*.3));const goals=Math.round(pts*.4);st.g+=goals;st.a+=pts-goals;}
-      p.farmWork=(p.farmWork || 0)+elapsed*usage*(.6+(t.coach.development+t.staff[isGoalie(p.pos)?"goalie":"assistant"].development)/300+(t.arena?.training || 0)*.05);
+      p.farmWork=(p.farmWork || 0)+elapsed*usage*competition*challenge*(.6+(t.coach.development+t.staff[isGoalie(p.pos)?"goalie":"assistant"].development)/300+(t.arena?.training || 0)*.05);
     }
   }
 }

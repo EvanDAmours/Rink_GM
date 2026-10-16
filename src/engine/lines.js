@@ -1,3 +1,4 @@
+import {recruitmentOrder} from './teamPlanning.js';
 // Line combinations: 4 forward lines (LW-C-RW), 3 defense pairs (LD-RD),
 // a goalie tandem, and two power-play and penalty-kill units.
 import { composites } from "./ratings.js";
@@ -218,7 +219,7 @@ export function slotIn(league, team, p, { margin = 0 } = {}) {
 export function coachLines(league, team) {
   const L = syncLines(league, team);
   const inLineup = new Set(lineupIds(L));
-  const spares = healthy(league, team).filter((p) => !inLineup.has(p.id)).sort(byOvr);
+  const spares = healthy(league, team).filter((p) => !inLineup.has(p.id)).sort(recruitmentOrder(league,team));
   let moved = 0;
   for (const p of spares) {
     if (moved >= 3) break;

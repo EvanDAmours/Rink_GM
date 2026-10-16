@@ -1,0 +1,186 @@
+{
+  "seed": 151,
+  "seasons": [
+    {
+      "year": 2027,
+      "seasons": 1,
+      "players": 1574,
+      "retired": 64,
+      "saveBytes": 722996,
+      "regularGames": 1344,
+      "playoffGames": 84
+    },
+    {
+      "year": 2028,
+      "seasons": 2,
+      "players": 1766,
+      "retired": 134,
+      "saveBytes": 934770,
+      "regularGames": 1344,
+      "playoffGames": 92
+    },
+    {
+      "year": 2029,
+      "seasons": 3,
+      "players": 1976,
+      "retired": 202,
+      "saveBytes": 1152442,
+      "regularGames": 1344,
+      "playoffGames": 84
+    },
+    {
+      "year": 2030,
+      "seasons": 4,
+      "players": 2166,
+      "retired": 278,
+      "saveBytes": 1371910,
+      "regularGames": 1344,
+      "playoffGames": 87
+    },
+    {
+      "year": 2031,
+      "seasons": 5,
+      "players": 2350,
+      "retired": 368,
+      "saveBytes": 1582956,
+      "regularGames": 1344,
+      "playoffGames": 91
+    },
+    {
+      "year": 2032,
+      "seasons": 6,
+      "players": 2523,
+      "retired": 453,
+      "saveBytes": 1804004,
+      "regularGames": 1344,
+      "playoffGames": 87
+    },
+    {
+      "year": 2033,
+      "seasons": 7,
+      "players": 2702,
+      "retired": 537,
+      "saveBytes": 2011266,
+      "regularGames": 1344,
+      "playoffGames": 81
+    },
+    {
+      "year": 2034,
+      "seasons": 8,
+      "players": 2894,
+      "retired": 610,
+      "saveBytes": 2218414,
+      "regularGames": 1344,
+      "playoffGames": 93
+    },
+    {
+      "year": 2035,
+      "seasons": 9,
+      "players": 3092,
+      "retired": 674,
+      "saveBytes": 2422608,
+      "regularGames": 1344,
+      "playoffGames": 90
+    },
+    {
+      "year": 2036,
+      "seasons": 10,
+      "players": 3258,
+      "retired": 740,
+      "saveBytes": 2617412,
+      "regularGames": 1344,
+      "playoffGames": 86
+    },
+    {
+      "year": 2037,
+      "seasons": 11,
+      "players": 3423,
+      "retired": 799,
+      "saveBytes": 2821914,
+      "regularGames": 1344,
+      "playoffGames": 78
+    },
+    {
+      "year": 2038,
+      "seasons": 12,
+      "players": 3546,
+      "retired": 874,
+      "saveBytes": 3012418,
+      "regularGames": 1344,
+      "playoffGames": 95
+    },
+    {
+      "year": 2039,
+      "seasons": 13,
+      "players": 3623,
+      "retired": 985,
+      "saveBytes": 3188228,
+      "regularGames": 1344,
+      "playoffGames": 86
+    },
+    {
+      "year": 2040,
+      "seasons": 14,
+      "players": 3677,
+      "retired": 1102,
+      "saveBytes": 3360036,
+      "regularGames": 1344,
+      "playoffGames": 84
+    },
+    {
+      "year": 2041,
+      "seasons": 15,
+      "players": 3693,
+      "retired": 1233,
+      "saveBytes": 3524994,
+      "regularGames": 1344,
+      "playoffGames": 91
+    },
+    {
+      "year": 2042,
+      "seasons": 16,
+      "players": 3700,
+      "retired": 1377,
+      "saveBytes": 3695342,
+      "regularGames": 1344,
+      "playoffGames": 87
+    },
+    {
+      "year": 2043,
+      "seasons": 17,
+      "players": 3673,
+      "retired": 1549,
+      "saveBytes": 3864018,
+      "regularGames": 1344,
+      "playoffGames": 75
+    },
+    {
+      "year": 2044,
+      "seasons": 18,
+      "players": 3699,
+      "retired": 1679,
+      "saveBytes": 4049232,
+      "regularGames": 1344,
+      "playoffGames": 91
+    },
+    {
+      "year": 2045,
+      "seasons": 19,
+      "players": 3710,
+      "retired": 1813,
+      "saveBytes": 4205232,
+      "regularGames": 1344,
+      "playoffGames": 82
+    },
+    {
+      "year": 2046,
+      "seasons": 20,
+      "players": 3665,
+      "retired": 1954,
+      "saveBytes": 4349304,
+      "regularGames": 1344,
+      "playoffGames": 85
+    }
+  ],
+  "completed": true
+}

@@ -1,0 +1,37 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> nhl-gm@1.0.0 test:render
+> node scripts/render-smoke.mjs
+
+Dashboard 209790 bytes
+FrontOfficePage 2591 bytes
+TrophyRoom 3391 bytes
+RecordBookPage 1473 bytes
+RegionalScouting 10014 bytes
+DraftPage 51046 bytes
+SchedulePage 953679 bytes
+LeaguePage 350553 bytes
+LinesPage 146057 bytes
+SettingsPage 4526 bytes
+HockeyOperationsPage 19115 bytes
+ActivityPage 1903 bytes
+StandingsPage 357609 bytes
+RosterPage 113507 bytes
+StatsPage 3262 bytes
+TradeBlockPage 103985 bytes
+DeadlinePage 195 bytes
+TradePage 51572 bytes
+FreeAgencyPage 20356 bytes
+PlayoffsPage 285871 bytes
+LiveGame 17409 bytes
+Dashboard:regular 209606 bytes
+Dashboard:playoffs 208626 bytes
+Dashboard:draft 195925 bytes
+Dashboard:resign 195903 bytes
+Dashboard:freeagency 195898 bytes
+HockeyOperations:analysis 9733 bytes
+HockeyOperations:agents 4522 bytes
+HockeyOperations:development 11756 bytes
+HockeyOperations:career 3463 bytes
+HockeyOperations:legacy 1349 bytes
+HockeyOperations:draft 62966 bytes

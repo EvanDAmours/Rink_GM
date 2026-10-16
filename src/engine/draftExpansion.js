@@ -5,7 +5,7 @@ import {makeBio,rankClass,prospectRead,csRank} from "./scouting.js";
 import {createPlayer} from "./players.js";
 import {defaultArchetype} from "./ratings.js";
 import {evaluateTrade,executeTrade,pickValue} from "./trade.js";
-import {currentSlot} from "./draft.js";
+import {currentSlot,visibleRatings} from "./draft.js";
 
 export function ensureFutureClasses(lg) {
   lg.futureClasses ||= {};
@@ -53,7 +53,7 @@ export function compareProspects(lg,ids) {
   return ids.slice(0,3).map(id=>lg.players[id]).filter(Boolean).map(p=>({pid:p.id,name:p.name,pos:p.pos,rank:csRank(p),league:p.bio?.lg,team:p.bio?.team,read:prospectRead(lg,p),skills:p.scout?.skills || {},combine:p.combine || null}));
 }
 export function draftOutcomes(lg,tid) {
-  return (lg.draftHistory || []).map(d=>({year:d.year,picks:d.picks.filter(s=>s.owner===tid).map(s=>{const p=lg.players[s.pid];const career=p?.career || [];return {...s,currentOvr:p?.ovr ?? null,status:p?(p.tid===tid?"In organization":p.tid>=0?lg.teams[p.tid].abbr:"Unsigned"):"Left league",games:(p?.stats.gp || 0)+career.reduce((n,c)=>n+(c.s?.gp || 0),0),points:(p?.stats.pts || 0)+career.reduce((n,c)=>n+(c.s?.pts || (c.s?.g || 0)+(c.s?.a || 0)),0)};})}));
+  return (lg.draftHistory || []).map(d=>({year:d.year,picks:d.picks.filter(s=>s.owner===tid).map(s=>{const p=lg.players[s.pid];const career=p?.career || [];return {...s,currentOvr:p?visibleRatings(lg,p).ovr:null,status:p?(p.tid===tid?"In organization":p.tid>=0?lg.teams[p.tid].abbr:"Unsigned"):"Left league",games:(p?.stats.gp || 0)+career.reduce((n,c)=>n+(c.s?.gp || 0),0),points:(p?.stats.pts || 0)+career.reduce((n,c)=>n+(c.s?.pts || (c.s?.g || 0)+(c.s?.a || 0)),0)};})}));
 }
 export function pickLocked(lg,id) {return (lg.offerSheets || []).some(s=>!s.done && s.picks.includes(id)) || (lg.conditions || []).some(c=>!c.done && (c.pickId===id || c.deferId===id));}
 export function protectionIssue(lg,offer) {

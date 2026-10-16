@@ -35,7 +35,8 @@ export const buriedCap = (p,year) => p?.signed !== false && p?.yrs>0 ? Math.max(
 export function rawPayroll(lg,t,year=lg.year) {
   let total=t.roster.reduce((n,id)=>n+(lg.players[id]?.yrs>0?lg.players[id].cap:0),0);
   total+=t.prospects.reduce((n,id)=>n+buriedCap(lg.players[id],year),0);
-  total+=(t.deadCap || []).reduce((n,d)=>n+d.amt,0)+(t.retained || []).reduce((n,d)=>n+d.amt,0);
+  total+=(t.deadCap || []).filter(d=>!(d.offset>0)).reduce((n,d)=>n+d.amt,0)+(t.retained || []).reduce((n,d)=>n+d.amt,0);
+  if(t.bonusCarry?.year===year)total+=t.bonusCarry.amount;
   return Math.round(total*100)/100;
 }
 export function ltirRelief(lg,t) {

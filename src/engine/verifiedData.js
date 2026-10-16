@@ -15,7 +15,7 @@ export function applyVerifiedRating(p){
   for(const [name,value] of Object.entries(r.stats)){const key=EA_TO_ATTR[name];if(key){attrs[key]=value;keys.push(key);}}
   p.attrs=attrs;p.ovr=r.ovr;p.ovrOffset=r.ovr-computeOvr(attrs,p.type);
   p.src='ea27';p.pot=Math.max(p.pot || r.ovr,r.ovr);
-  p.ratingData={edition:snapshot.edition,retrieved:snapshot.retrieved,source:r.source,id:r.id,keys,baseAttrs:{...attrs},baseOvr:r.ovr,abilities:r.abilities};
+  p.ratingData={edition:snapshot.edition,retrieved:snapshot.retrieved,source:r.source,id:r.id,keys,baseAttrs:{...attrs},baseOvr:r.ovr,abilities:structuredClone(r.abilities)};
   return true;
 }
 export function verifiedNumber(p,abbr){

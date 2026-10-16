@@ -16,7 +16,7 @@ This release implements the next seven gameplay and presentation areas from the 
 | Pick conditions | Top-3/5/10 first-round protection, following-year first reserved, automatic lottery resolution; compensation pick locks | Trade UI offers top-10; arbitrary games/points-based conditions are not implemented |
 | Contracts | 50 signed contracts, 90 reserve players, age/service RFA status, jurisdiction-based unsigned rights, age-based ELC terms/slides, qualifying offers, arbitration, seven-day offer sheets | Stateful gameplay rules; salary bonuses, precise historical service and exceptional CBA cases are not complete |
 | Waivers | Exemption table by first signing age, service and NHL games; next-day claims, standings priority, clearing and assignments; recall delay | Imported service estimates are marked; recall delay approximates an AHL game rather than simulating its calendar |
-| Cap transactions | Buried AHL cap charges, retained salary, limits on retaining clubs/slots/percentage, NTC/NMC destination consent, LTIR designation and activation | Flat AAV model; LTIR unused-space offset and minimum absence; no daily cap accrual or full playoff dressed-roster cap model |
+| Cap transactions | Buried AHL cap charges, retained salary, limits on retaining clubs/slots/percentage, NTC/NMC destination consent, LTIR designation and activation | AAV with optional salary schedules; LTIR unused-space offset and minimum absence; daily accrual and salary/bonus ledgers added in the follow-up; full playoff dressed-roster cap remains simplified |
 | Agents | Counteroffers, four discussion rounds, player preferences, pending bids, AI competition, reserved offer budgets, tracker and withdrawal | Free-agent bidding settles after two simulated FA days; quick re-signing remains available |
 | Extensions | Final-year future contracts activate once after the draft; projected future payroll includes retained/dead charges | Current cap hit remains unchanged until activation |
 | Coaching | Verified 2026 head-coach names for new real leagues; assistant and goalie coach jobs, hiring, scheme fit, PP/PK/goaltending effects | Coach attributes, ages and assistant identities are estimates/fictional; existing saved coaches are preserved |
@@ -53,7 +53,7 @@ This release implements the next seven gameplay and presentation areas from the 
 - CBA/MOU: https://www.nhl.com/cba/ and https://cdn.nhlpa.com/img/assets/file/NHLPA-NHL-MOU-June-27-2025.pdf
 - Imported roster service, nationalities absent from the source, birth-date exceptions, NHLPA agent representation, real NTC lists and prior career stats are incomplete. The game estimates service, uses deterministic fictional agents, and excludes unknown nationalities from authentic-name showcase selection. Fictional replacement depth is explicitly identified.
 - Offer-sheet bands use the published 2026 compensation table; later thresholds are gameplay projections indexed to the cap, not verified annual NHL figures. Arbitration eligibility/outcomes are simplified. QOs use flat AAV as a proxy for salary.
-- Buyouts retain the existing simplified one-third dead-cap calculation; detailed salary/bonus schedules, 35+ rules, injured-player buyout windows, daily cap accrual, real arbitration elections/hearings, partial no-trade lists and all CHL/AHL exceptions need additional work before calling the game CBA-complete.
+- The follow-up adds calendar-day cap accrual, optional salary/signing-bonus schedules, explicit earned performance bonuses and age-dependent buyout schedules. Imported salary data remain estimated; 35+ exceptions, buyout windows, retention/bonus allocation across trades, full playoff dressed-roster cap, real arbitration hearings and all CHL/AHL exceptions still prevent a CBA-complete claim.
 - No optional paid/network/private Madden services were brought over. Core play stays offline. Full real prospect classes, verified service/salary ledgers, event schedules/rosters and ongoing schedule updates remain data work.
 
 ## Compatibility
@@ -83,3 +83,7 @@ Verified here with Playwright 1.62.1 and headless Chromium 138 at 1440×1000 and
 ## Delivery
 
 The source archive includes the complete project, playable single HTML file and an applyable patch against the original NHL baseline. GitHub write access is still unavailable: branch creation returned `Resource not accessible by integration` (403), and direct Git had no write credentials. No remote branch, pull request, merge or deployment is claimed. Local commits and updated downloadable source are the delivered code.
+
+## Complete franchise follow-up and smoke review
+
+See [ENGINE_REBUILD_HANDOFF.md](../ENGINE_REBUILD_HANDOFF.md) for the connected planning, coaching, development, commitments, match reports, exact live recovery and permanent retired cards. [SMOKE_TEST_REPORT.md](SMOKE_TEST_REPORT.md) records the full regression/browser/data-isolation review and actual long-career audit outcome. Earlier validation paragraphs above describe the original import milestone; the new report is authoritative for this update.

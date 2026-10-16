@@ -41,7 +41,7 @@ export function takeJob(lg,tid){
   logTx(lg,`GM accepts the ${lg.teams[tid].abbr} job`,[old,tid]);return {ok:true,msg:`You now manage the ${lg.teams[tid].name}. The league's history carries on.`};
 }
 export function archiveRetirement(lg,p,tot){
-  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,tid:p.tid>=0?p.tid:lg.teams.find(t=>t.abbr===p.career.at(-1)?.t)?.id,number:p.number,...tot,peak:p.peak || p.ovr,awards:p.honours || []};
+  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,tid:p.tid>=0?p.tid:lg.teams.find(t=>t.abbr===p.career.at(-1)?.t)?.id,number:p.number,player:structuredClone(p),...tot,peak:p.peak || p.ovr,awards:p.honours || []};
   (lg.retirementArchive ||= []).push(entry);
 }
 export function inductHall(lg){

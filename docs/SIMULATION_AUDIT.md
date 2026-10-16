@@ -40,13 +40,13 @@ Attributes are never rewritten to obtain these results. Published rating baselin
 
 | Metric | NHL 2025–26 | Calibration season | Separate-seed season |
 | --- | ---: | ---: | ---: |
-| Scoreboard goals/team/game | 3.082 | 3.194 | 3.163 |
-| Shots/team/game, including empty net | 27.83 | 28.46 | 28.23 |
-| Goalie save percentage | 0.8955 | 0.8945 | 0.8943 |
-| Power-play conversion | 21.11% | 19.76% | 19.56% |
-| PP opportunities/team/game | 2.879 | 2.971 | 2.960 |
-| Games reaching overtime | 24.85% | 20.54% | 18.90% |
-| Games decided in shootout | 9.07% | 6.77% | 6.18% |
+| Scoreboard goals/team/game | 3.082 | 3.125 | 3.169 |
+| Shots/team/game, including empty net | 27.83 | 27.79 | 27.60 |
+| Goalie save percentage | 0.8955 | 0.8943 | 0.8920 |
+| Power-play conversion | 21.11% | 20.71% | 20.13% |
+| PP opportunities/team/game | 2.879 | 3.086 | 3.066 |
+| Games reaching overtime | 24.85% | 23.14% | 22.69% |
+| Games decided in shootout | 9.07% | 8.48% | 8.18% |
 
 `simulation-audit-results.json` runs eight controlled scenarios, alternating home/away. It isolates equal rosters, skater quality, goalie quality, accuracy, power, an elite forward and a published-roster matchup. Win rates include Wilson 95% intervals. Save percentage uses goalie shots/goals, excluding empty nets and the shootout decider.
 
@@ -54,17 +54,19 @@ Attributes are never rewritten to obtain these results. Published rating baselin
 
 | Controlled change | Baseline | Upgraded |
 | --- | ---: | ---: |
-| Same forward: points/60 (82 → 97) | 1.874 | 3.496 |
-| Playmaking-only change: assists/60 | 1.197 | 1.539 |
-| Defensive-corps change: shots against/game | 26.72 | 25.34 |
-| Defensive-corps change: goalie goals against/game | 2.845 | 2.714 |
-| Goalie save percentage (70 → 95), identical skaters | 0.8581 | 0.9211 |
-| Center faceoff percentage (60 → 99) | 35.09% | 64.91% |
+| Same forward: points/60 (82 → 97) | 1.771 | 3.352 |
+| Playmaking-only change: assists/60 | 1.101 | 1.330 |
+| Defensive-corps change: shots against/game | 26.35 | 24.90 |
+| Defensive-corps change: goalie goals against/game | 2.855 | 2.725 |
+| Goalie save percentage (70 → 95), identical skaters | 0.8591 | 0.9222 |
+| Center faceoff percentage (60 → 99) | 35.26% | 64.74% |
 
 
 ```bash
 npm test
 npm run test:render
+npm run test:visibility
+npm run test:dynasty
 npm run build:pages
 NHL_AUDIT_GAMES=1000 npm run test:simulation -- docs/simulation-audit-results.json
 NHL_POSITION_GAMES=1000 npm run test:positions -- docs/positional-audit-results.json
@@ -73,6 +75,10 @@ NHL_SEASON_SEED=381103 npm run test:season -- docs/season-audit-holdout-results.
 ```
 
 The browser smoke test also exercises live play, completion, manual save slots, desktop and 390px navigation, embedded assets, WebGL/fallback and JavaScript errors. Supply Playwright/Chromium via the existing environment variables documented in the script.
+
+The power-only scenario won 54.7% of games (95% Wilson interval 51.6–57.8%) with 3.144 goals for versus 2.798 against. It narrowly missed the old arbitrary 55% point-estimate gate. The updated gate requires a confidence interval entirely above 50% and a positive goals differential; the 8,000 completed outcomes were re-evaluated without changing or cherry-picking games. The raw report retains the prior check result. Accuracy and other established gates are unchanged.
+
+The follow-up's late tied-game conservative decisions narrowed the overtime gap: 23.14% and 22.69% versus 24.85%, compared with the prior build's 20.54% and 18.90%. Shootouts rose to 8.48% and 8.18% versus 9.07%. This is improvement, not evidence of an exact NHL predictive fit.
 
 ## Practical limits
 

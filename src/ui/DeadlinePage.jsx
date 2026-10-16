@@ -1,3 +1,4 @@
+import {visibleRatings} from '../engine/draft.js';
 import React, { useEffect, useRef, useState } from "react";
 import { useGame, PlayerName, TeamBadge, money } from "./common.jsx";
 import { startDeadline, deadlineTick, deadlinePending, userOffers, toggleUserBlock, onBlock, fmtClock, marketStance, DEADLINE_START, DEADLINE_END } from "../engine/market.js";
@@ -115,7 +116,7 @@ export default function DeadlinePage() {
   const offers = userOffers(league);
   const user = league.teams[league.userTid];
   const day = dl.day ?? league.deadlineDay;
-  const available = (league.block || []).filter((b) => b.tid !== user.id && league.players[b.pid]).sort((a, b) => league.players[b.pid].ovr - league.players[a.pid].ovr);
+  const available = (league.block || []).filter((b) => b.tid !== user.id && league.players[b.pid]).sort((a, b) => (Number(visibleRatings(league,league.players[b.pid]).ovr)||0)-(Number(visibleRatings(league,league.players[a.pid]).ovr)||0)||league.players[a.pid].name.localeCompare(league.players[b.pid].name));
   const sellable = user.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
   const userTrades = (league.tradeHistory || []).filter((t) => t.year === league.year && t.day === day).length;
   const total = dl.total ?? dl.feed.filter((f) => f.kind === "trade").length;
@@ -196,7 +197,7 @@ export default function DeadlinePage() {
                   <div className="item small" key={p.id}>
                     <span className="posbadge">{p.pos}</span>
                     <PlayerName p={p} />
-                    <span className="muted">{p.ovr} · {p.age}y · {p.yrs <= 1 ? "expiring" : `${p.yrs} yrs`}</span>
+                    <span className="muted">{visibleRatings(league,p).ovr} · {p.age}y · {p.yrs <= 1 ? "expiring" : `${p.yrs} yrs`}</span>
                     <button className={`tiny${onBlock(league, p.id) ? " primary" : ""}`} style={{ marginLeft: "auto" }} onClick={() => { toggleUserBlock(league, p.id); commit(); }} title={onBlock(league, p.id) ? "Take him off the block" : "Put him on the block"}>
                       {onBlock(league, p.id) ? "Listed ✓" : "List"}
                     </button>

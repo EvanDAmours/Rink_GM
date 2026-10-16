@@ -25,4 +25,4 @@ const shapes={
  check:<path d="m4 12 5 5L20 6"/>,
  bell:<><path d="M6 10a6 6 0 0 1 12 0v6l2 3H4l2-3v-6Zm4 11h4"/></>,
 };
-export default function Icon({name,size=20,...props}){return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>{shapes[name==="activity"?"bell":name] || shapes.trophies}</svg>;}
+export default function Icon({name,size=20,...props}){return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>{shapes[name==="activity"?"bell":name==="analysis"?"stats":name] || shapes.trophies}</svg>;}

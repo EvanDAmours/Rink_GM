@@ -2,7 +2,7 @@ import { resignAsk } from "./offseason.js";
 import { capForYear, minSalaryForYear, maxSalaryForYear } from "./constants.js";
 import { logTx } from "./roster.js";
 export function futurePayroll(league,team) {
-  return [...team.roster,...team.prospects].reduce((s,id)=>{const p=league.players[id];return s+(p?.extension?.aav || (p?.signed!==false && p?.yrs>1?p.cap:0));},0)+(team.retained || []).filter(d=>d.yrs>1).reduce((s,d)=>s+d.amt,0)+team.deadCap.filter(d=>d.yrs>1).reduce((s,d)=>s+d.amt,0);
+  return [...team.roster,...team.prospects].reduce((s,id)=>{const p=league.players[id];return s+(p?.extension?.aav || (p?.signed!==false && p?.yrs>1?p.cap:0));},0)+(team.retained || []).filter(d=>d.yrs>1).reduce((s,d)=>s+d.amt,0)+team.deadCap.filter(d=>d.offset===1 || !d.offset && d.yrs>1).reduce((s,d)=>s+d.amt,0);
 }
 export function extendPlayer(league,pid,aav,years) {
   const p=league.players[pid],t=league.teams[league.userTid];

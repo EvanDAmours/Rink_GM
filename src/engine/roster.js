@@ -1,3 +1,4 @@
+import {capSummary, buyoutSchedule} from './capAccounting.js';
 // Team management: payroll, roster limits, signing, releasing, call-ups.
 import { capForYear, maxSalaryForYear, capFloorForYear, MAX_ROSTER, MIN_FORWARDS, MIN_DEFENSE, MIN_GOALIES, isForward, isDefense, isGoalie, ELC_SALARY, minSalaryForYear } from "./constants.js";
 import { generatePlayer, marketValue, round2 } from "./players.js";
@@ -19,7 +20,7 @@ export function payroll(league, team) {
 }
 
 export function capSpace(league, team) {
-  return round2(capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
+  return round2(league.phase === 'regular' && team.capLedger?.year === league.year ? capSummary(league,team).available : capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
 }
 
 // One game's worth of recovery for everyone on the given teams. A player back from injury
@@ -73,7 +74,13 @@ export function hasRoomFor(league, team, extra = 1) {
   return counts(league, team).active + extra <= MAX_ROSTER;
 }
 
+function ownedElsewhere(league,team,p){
+ const owner=league.teams[p.tid];
+ return owner && owner.id!==team.id && [...owner.roster,...owner.prospects,...(owner.rfaRights||[])].includes(p.id);
+}
 export function addToRoster(league, team, p) {
+  if (!p || ownedElsewhere(league,team,p)) return false;
+  if (p.tid !== team.id) (p.moveHistory ||= []).push({year:league.year,day:league.day,from:p.tid,to:team.id,kind:'signed/acquired'});
   p.tid = team.id;
   p.assignment="nhl";
   team.rfaRights=(team.rfaRights || []).filter(id=>id!==p.id);
@@ -90,10 +97,11 @@ export function queueForLines(league, team, ids) {
 }
 
 export function signPlayer(league, team, p, aav, yrs) {
-  if(!p || !Number.isFinite(aav) || aav<minSalaryForYear(capYear(league)) || aav>maxSalaryForYear(capYear(league)) || !Number.isInteger(yrs) || yrs<1 || yrs>(p.tid===team.id?7:6))return false;
+  if(!p || ownedElsewhere(league,team,p) || !Number.isFinite(aav) || aav<minSalaryForYear(capYear(league)) || aav>maxSalaryForYear(capYear(league)) || !Number.isInteger(yrs) || yrs<1 || yrs>(p.tid===team.id?7:6))return false;
   if (contractCount(league,team)>=50 && (p.yrs<=0 || p.signed===false || p.tid!==team.id) || ![...team.roster,...team.prospects,...(team.rfaRights || [])].includes(p.id) && reserveCount(league,team)>=90) return false;
   league.freeAgents = league.freeAgents.filter((x) => x !== p.id);
   if(p.yrs<=0){delete p.clause;delete p.retentionCount;delete p.elc;}
+  delete p.salarySchedule; p.contractSigningAge=p.age;
   p.cap = round2(aav);
   p.yrs = yrs;
   p.signed = true;
@@ -104,16 +112,18 @@ export function signPlayer(league, team, p, aav, yrs) {
   return true;
 }
 
-// Release: buyout at one-third of the cap hit for twice the remaining term.
+// Release: age-dependent buyout with the remaining base salary and protected bonuses.
 export function releasePlayer(league, team, pid) {
   const p = league.players[pid];
-  if (!p || p.ltir || p.waiverPending || p.offerSheetPending) return false;
+  if (!p || p.tid!==team.id || ![...team.roster,...team.prospects,...(team.rfaRights||[])].includes(pid) || p.ltir || p.waiverPending || p.offerSheetPending) return false;
   team.roster = team.roster.filter((x) => x !== pid);
   team.prospects = team.prospects.filter((x) => x !== pid);
   if (p.yrs > 0 && p.cap > 0 && p.signed !== false) {
-    const amt = round2(p.cap / 3);
-    if (amt >= 0.05) team.deadCap.push({ name: p.name, amt, yrs: p.yrs * 2 });
+    team.deadCap.push(...buyoutSchedule(p));
   }
+  team.rfaRights=(team.rfaRights||[]).filter(id=>id!==pid);
+  (p.moveHistory ||= []).push({year:league.year,day:league.day,from:team.id,to:-1,kind:'released / bought out'});
+  delete p.rolePromise;
   p.tid = -1;
   p.yrs = 0;
   p.cap = 0;
@@ -129,7 +139,7 @@ export function canSendDown(p) {
 
 export function sendDown(league, team, pid) {
   const p = league.players[pid];
-  if (!p || !canSendDown(p)) return false;
+  if (!p || p.tid!==team.id || !team.roster.includes(pid) || !canSendDown(p)) return false;
   team.roster = team.roster.filter((x) => x !== pid);
   if (!team.prospects.includes(pid)) team.prospects.push(pid);
   p.assignment="ahl";
@@ -141,7 +151,7 @@ export function sendDown(league, team, pid) {
 // Call up from the minors; unsigned draft picks get an entry-level deal.
 export function callUp(league, team, pid, {emergency=false}={}) {
   const p = league.players[pid];
-  if (!p || !team.prospects.includes(pid)) return false;
+  if (!p || p.tid!==team.id || !team.prospects.includes(pid)) return false;
   const cost=p.signed===false?elcSalary(league.year):p.cap-buriedCap(p,capYear(league));
   if(!emergency && (counts(league,team).active>=23 || capSpace(league,team)<cost))return false;
   if (p.ahlRecallAfter>league.day && !(isGoalie(p.pos) && counts(league,team,{healthyOnly:true}).G<2)) return false;

@@ -1,3 +1,4 @@
+import {visibleRatings} from '../engine/draft.js';
 import React, { useState } from "react";
 import { useGame, TeamBadge, Ovr, PlayerName, money } from "./common.jsx";
 import { refreshBlock, toggleUserBlock, userOffers, acceptOffer, declineOffer, deadlineActive, fmtClock, DEADLINE_END } from "../engine/market.js";
@@ -14,7 +15,7 @@ export function OfferCard({ o, compact = false }) {
   const ai = league.teams[o.tid];
   const label = (id) => {
     const p = league.players[id];
-    return p ? `${p.name} (${p.pos}, ${p.ovr}${p.yrs ? `, ${money(p.cap)}×${p.yrs}` : ""})` : "?";
+    return p ? `${p.name} (${p.pos}, ${visibleRatings(league,p).ovr}${p.yrs ? `, ${money(p.cap)}×${p.yrs}` : ""})` : "?";
   };
   const picks = (ids) => ids.map((id) => pickLabel(league, league.draftPicks.find((pk) => pk.id === id)));
   const accept = () => {
@@ -92,7 +93,7 @@ export function BlockList({ entries, limit = 200 }) {
           <div key={b.pid} className="brow">
             <TeamBadge team={t} size={30} />
             <div className="bwho">
-              <div className="row" style={{ gap: 6 }}><PlayerName p={p} /> <Ovr v={p.ovr} src={p.src} />{fresh && <span className="pill new">NEW</span>}</div>
+              <div className="row" style={{ gap: 6 }}><PlayerName p={p} /> <Ovr v={visibleRatings(league,p).ovr} src={p.src} />{fresh && <span className="pill new">NEW</span>}</div>
               <div className="small muted">{p.pos} · {p.age} · {money(p.cap)}{p.yrs ? ` × ${p.yrs} yr${p.yrs > 1 ? "s" : ""}` : ""} · {t.abbr}</div>
             </div>
             <div className="bwhy">
@@ -120,7 +121,7 @@ export default function TradeBlockPage() {
   const others = (league.block || [])
     .filter((b) => b.tid !== user.id && league.players[b.pid])
     .filter((b) => pos === "all" || grp(league.players[b.pid]) === pos)
-    .sort((a, b) => league.players[b.pid].ovr - league.players[a.pid].ovr);
+    .sort((a, b) => (Number(visibleRatings(league,league.players[b.pid]).ovr)||0)-(Number(visibleRatings(league,league.players[a.pid]).ovr)||0)||league.players[a.pid].name.localeCompare(league.players[b.pid].name));
   // Only players who are still yours (a listed player may have been released or walked).
   const mine = (league.block || []).filter((b) => b.tid === user.id && league.players[b.pid]?.tid === user.id);
   const offers = userOffers(league);
@@ -178,7 +179,7 @@ export default function TradeBlockPage() {
                 const p = league.players[b.pid];
                 return (
                   <div className="item small" key={b.pid}>
-                    <span className="posbadge">{p.pos}</span><PlayerName p={p} /> <Ovr v={p.ovr} />
+                    <span className="posbadge">{p.pos}</span><PlayerName p={p} /> <Ovr v={visibleRatings(league,p).ovr} />
                     {b.reason === "Requested a trade" && <span className="pill hot">asked out</span>}
                     <span className="tiny muted" title={LINKED_TIP}>{b.interest?.length ? `Interested: ${b.interest.map((t) => league.teams[t].abbr).join(", ")}` : "No interest yet"}</span>
                     <button className="tiny ghost" style={{ marginLeft: "auto" }} onClick={() => { toggleUserBlock(league, p.id); commit(); }}>Remove</button>

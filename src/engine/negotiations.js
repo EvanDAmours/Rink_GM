@@ -1,3 +1,5 @@
+import {ROLE_MINUTES,projectedRole} from './teamPlanning.js';
+import {roleUtility,promiseRole} from './playerCommitments.js';
 import { faAsk, resignAsk } from "./offseason.js";
 import { capSpace, signPlayer, counts, logTx } from "./roster.js";
 import { contractCount, reserveCount } from "./hockeyRules.js";
@@ -10,17 +12,20 @@ export function agentPreferences(p) {
   return {priority:r.pick(["winning","role","security","loyalty"]),preferredTerm:p.age<=25?4:p.age<=30?5:2,personality:r.pick(["Patient","Businesslike","Ambitious","Loyal"])};
 }
 export function pendingSpend(lg,tid) {return Object.values(lg.negotiations || {}).filter(n=>n.status==="pending").reduce((s,n)=>s+(n.bids.find(b=>b.tid===tid)?.aav || 0),0)+(lg.offerSheets || []).filter(s=>!s.done && s.to===tid).reduce((n,s)=>n+s.aav,0);}
-export function negotiate(lg,pid,aav,yrs,clause="") {
+export function negotiate(lg,pid,aav,yrs,clause="",role="") {
   const p=lg.players[pid],t=lg.teams[lg.userTid];
   if(!p || !(p.tid===-1 || p.tid===t.id && p.yrs===0) || !["freeagency","resign","preseason"].includes(lg.phase))return {ok:false,msg:"Negotiate with free agents or your unsigned players."};
   if(!["","NTC","NMC"].includes(clause))return {ok:false,msg:"Choose a recognized contract clause."};
+  if(role && (!ROLE_MINUTES[role] || (p.pos==='G')!==['starter','backup'].includes(role) || ['topPair','topFour'].includes(role) && !['LD','RD'].includes(p.pos) || ['topLine','topSix'].includes(role) && ['LD','RD'].includes(p.pos))) return {ok:false,msg:'Choose a role appropriate to this position.'};
   const max=p.tid===t.id?7:6,year=["freeagency","resign"].includes(lg.phase)?lg.year+1:lg.year;
   if(!Number.isFinite(aav) || aav<minSalaryForYear(year) || aav>maxSalaryForYear(year) || !Number.isInteger(yrs) || yrs<1 || yrs>max)return {ok:false,msg:`Enter a legal AAV and 1–${max} year term.`};
   if(p.offerSheetPending)return {ok:false,msg:"Resolve the player's offer sheet first."};
   const old=lg.negotiations[pid],other=pendingSpend(lg,t.id)-(old?.status==="pending"?(old.bids.find(b=>b.tid===t.id)?.aav || 0):0);
   if(aav+other>capSpace(lg,t) || contractCount(lg,t)>=50)return {ok:false,msg:"Existing offers consume projected cap room or contract slots."};
   const prefs=agentPreferences(p),ask=p.tid===t.id?resignAsk(lg,p,yrs):faAsk(lg,p,yrs);
-  const modifier=prefs.priority==="winning"?(teamRatings(lg,t).ovr>=85?.97:1.05):prefs.priority==="loyalty" && p.tid===t.id?.96:1;
+  const promised=role || projectedRole(lg,t,p);
+  const continuity=Math.min(6,(p.career || []).filter(c=>c.t===t.abbr).length),trust=p.relationship?.trust??50;
+  const modifier=prefs.priority==="winning"?(teamRatings(lg,t).ovr>=85?.97:1.05):prefs.priority==="role"?1-roleUtility(lg,t,p,promised)*.05:prefs.priority==="security"?1+Math.max(-.04,Math.min(.06,(prefs.preferredTerm-yrs)*.015)):prefs.priority==="loyalty" && p.tid===t.id?1-Math.max(0,Math.min(.06,continuity*.005+(trust-50)*.0004)):1;
   const counter=Math.round(Math.max(ask.aav*modifier,p.qualified?.aav || 0)*100)/100;
   const rounds=(old?.year===lg.year?old.rounds || 0:0)+1;
   if(aav<counter){lg.negotiations[pid]={pid,year:lg.year,rounds,status:rounds>=4?"walked":"counter",counter,term:yrs,preferences:prefs};return {ok:false,msg:rounds>=4?`${p.name}'s agent ended this discussion.`:`Counteroffer: $${counter.toFixed(2)}M × ${yrs} years. Priority: ${prefs.priority}.`};}
@@ -28,11 +33,12 @@ export function negotiate(lg,pid,aav,yrs,clause="") {
   if(p.tid===t.id || lg.phase!=="freeagency") {
     if(counts(lg,t).active>=23 && !t.roster.includes(p.id))return {ok:false,msg:"Make an NHL roster spot before signing."};
     const ok=signPlayer(lg,t,p,aav,yrs);if(!ok)return {ok:false,msg:"No contract slot available."};
+    promiseRole(lg,p,t.id,promised);
     if(clause && p.age>=27)p.clause={type:clause,blocked:clause==="NTC"?lg.teams.filter(q=>q.conf!==t.conf).map(q=>q.id):[]};
     lg.negotiations[pid]={pid,year:lg.year,rounds,status:"signed",aav,yrs,preferences:prefs};return {ok:true,msg:`${p.name} agreed to your terms.`};
   }
   if(counts(lg,t).active>=23)return {ok:false,msg:"Make an NHL roster spot before bidding."};
-  const bids=[{tid:t.id,aav,yrs,clause}];
+  const bids=[{tid:t.id,aav,yrs,clause,role:promised}];
   for(const ai of lg.teams.filter(q=>q.id!==t.id && capSpace(lg,q)>ask.aav && counts(lg,q).active<23 && contractCount(lg,q)<50).sort((a,b)=>teamRatings(lg,b).ovr-teamRatings(lg,a).ovr).slice(0,3)){
     const r=stream(`${p.id}|bid|${ai.id}|${lg.year}`);if(r.next()<.65)bids.push({tid:ai.id,aav:Math.round(ask.aav*(.97+r.next()*.1)*100)/100,yrs:ask.yrs});
   }
@@ -47,11 +53,12 @@ export function withdrawBid(lg,pid) {
 export function settleNegotiations(lg) {
   for(const n of Object.values(lg.negotiations || {}).filter(n=>n.status==="pending" && n.closes<=(lg.fa?.day || 0))){
     const p=lg.players[n.pid];if(!p || p.tid!==-1){n.status="unavailable";if(p)delete p.negotiationPending;continue;}
-    const prefs=n.preferences,score=b=>b.aav+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
+    const prefs=n.preferences,score=b=>b.aav+(prefs.priority==="role"?roleUtility(lg,lg.teams[b.tid],p,b.role || projectedRole(lg,lg.teams[b.tid],p))*.5:0)+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
     const eligible=n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && counts(lg,lg.teams[b.tid]).active<23 && contractCount(lg,lg.teams[b.tid])<50).sort((a,b)=>score(b)-score(a) || a.tid-b.tid);
     const b=eligible[0];delete p.negotiationPending;
     if(!b){n.status="failed";continue;}
     if(!signPlayer(lg,lg.teams[b.tid],p,b.aav,b.yrs)){n.status="failed";continue;}
+    promiseRole(lg,p,b.tid,b.role || projectedRole(lg,lg.teams[b.tid],p));
     if(b.clause && p.age>=27)p.clause={type:b.clause,blocked:[]};n.status="signed";n.winner=b.tid;
     lg.inbox.push({year:lg.year,day:lg.day,text:`Agent update: ${p.name} chose ${lg.teams[b.tid].abbr} at $${b.aav.toFixed(2)}M × ${b.yrs}.`});
   }

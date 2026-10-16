@@ -7,10 +7,10 @@ import {activePenalties, skaterCount, strengthType, assessPenalty, delayPenalty,
 import {shotGeometry, expectedGoal} from '../src/engine/shotModel.js';
 
 const base = createLeague({mode: 'random', seed: 72169, injuries: false});
-function fixture() {
+function fixture(gameSeed=1258) {
   const lg = structuredClone(base);
   lg.teams[0].restPct = 0; lg.teams[1].restPct = 0;
-  seed(1258);
+  seed(gameSeed);
   const s = createGame(lg, lg.teams[0], lg.teams[1], {userTid: 0});
   return {lg, s, h: s.h.lines.F[0], a: s.a.lines.F[0]};
 }
@@ -157,7 +157,7 @@ test('shot geometry and chance creation change expected goals in sensible direct
 test('regulation, OT, player shots, goalie shots, scoring, TOI and points conserve across seeded games', () => {
   let empty = 0, so = 0;
   for (let i = 0; i < 100; i++) {
-    const {s} = fixture(); seed(10020 + i * 7937); simToEnd(s);
+    const {s} = fixture(10020 + i * 7937); simToEnd(s);
     assert.notEqual(s.score.h, s.score.a); assert.ok(s.elapsed >= 3600 && s.elapsed <= 3900);
     assert.equal(s.score.h + s.score.a, s.goals.length + (s.endedIn === 'SO' ? 1 : 0));
     if (s.endedIn === 'SO') { so++; assert.equal(s.elapsed, 3900); }
@@ -225,9 +225,9 @@ test('a combined shutout awards no individual goalie shutout', () => {
 test('OT really generates penalties instead of suppressing every infraction', () => {
   let called = 0;
   for (let i = 0; i < 20; i++) {
-    const {s} = fixture(); s.phase = 'ot'; s.period = 4; s.clock = 300;
+    const {s} = fixture(2300+i); s.phase = 'ot'; s.period = 4; s.clock = 300;
     for (const k of ['h', 'a']) for (const c of Object.values(s[k].comp)) if (c.dsc) c.dsc = 0;
-    seed(2300 + i); simToEnd(s);
+    simToEnd(s);
     called += (s.decisions.h.penalty || 0) + (s.decisions.a.penalty || 0);
   }
   assert.ok(called > 0);

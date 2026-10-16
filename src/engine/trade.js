@@ -1,3 +1,4 @@
+import {needFit} from './teamPlanning.js';
 // Trades: asset valuation and AI acceptance. AI teams weigh players, prospects
 // and picks differently depending on whether they're contending or rebuilding.
 import {ensureUniforms} from "./uniforms.js";
@@ -74,7 +75,7 @@ export function assetValue(league, id, viewer) {
   const owner = league.teams[p.tid];
   const inMinors = owner && owner.prospects.includes(id);
   const v = inMinors && p.age <= 23 ? Math.max(prospectValue(p, { contending }), tradeValue(p, league.year, { contending })) : tradeValue(p, league.year, { contending });
-  return v;
+  return v * needFit(league,viewer,p);
 }
 
 // Franchise cornerstones cost extra to pry loose.
@@ -166,6 +167,8 @@ export function executeTrade(league, offer, { record = true } = {}) {
     const wasProspect = fromT.prospects.includes(id);
     fromT.roster = fromT.roster.filter((x) => x !== id);
     fromT.prospects = fromT.prospects.filter((x) => x !== id);
+    (p.moveHistory ||= []).push({year:league.year,day:league.day,from:fromT.id,to:toT.id,kind:'trade'});
+    delete p.rolePromise;
     p.tid = toT.id;
     p.clause && delete p.clause.waivedTo;
     if (wasProspect) toT.prospects.push(id);

@@ -10,7 +10,7 @@ import { dayToDate } from "../engine/schedule.js";
 function Assets({ team, sel, setSel, selPicks, setSelPicks, mine }) {
   const { league } = useGame();
   const roster = team.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => POS_ORDER[a.pos] - POS_ORDER[b.pos] || b.ovr - a.ovr);
-  const minors = team.prospects.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.pot - a.pot);
+  const minors = team.prospects.map((id) => league.players[id]).filter(Boolean).sort((a,b)=>(Number((mine?b:shownRatings(b)).pot)||0)-(Number((mine?a:shownRatings(a)).pot)||0)||a.name.localeCompare(b.name));
   const picks = league.draftPicks.filter((p) => p.owner === team.id).sort((a, b) => a.year - b.year || a.round - b.round);
   const toggle = (arr, set, id) => set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
   const row = (p, minor) => {
@@ -19,7 +19,7 @@ function Assets({ team, sel, setSel, selPicks, setSelPicks, mine }) {
       <label key={p.id} className="item" style={{ cursor: "pointer", gap: 8 }}>
         <input type="checkbox" checked={sel.includes(p.id)} onChange={() => toggle(sel, setSel, p.id)} />
         <span className="posbadge">{p.pos}</span>
-        <Ovr v={r.ovr} src={minor ? undefined : p.src} />
+        <Ovr v={r.ovr} title={r.exact===false?"Scouting estimate":"Known rating"} src={minor ? undefined : p.src} />
         <PlayerName p={p} />
         {onBlock(league, p.id) && <span className="pill" title="On the trade block">block</span>}
         <span className="dim small">{p.age}y · POT {r.pot}</span>
@@ -117,7 +117,8 @@ export default function TradePage({ seed }) {
     toast(`${ai.abbr} would want ${league.players[s.give[s.give.length - 1]].name} added.`);
   };
 
-  const meter = Math.max(0, Math.min(1, ev.ratio / 1.4));
+  // A GM communicates a negotiating stance, not a precise hidden-asset value.
+  const meter = ev.accept ? .85 : ev.ratio > .85 ? .65 : ev.ratio > .6 ? .40 : .15;
   const closed = tradingClosed(league);
 
   return (

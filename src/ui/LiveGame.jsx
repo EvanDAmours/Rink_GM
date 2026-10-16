@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useGame, TeamBadge, PlayerName } from "./common.jsx";
-import { skatersForDisplay, skaterCount, takeTimeout, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel } from "../engine/sim.js";
+import { skatersForDisplay, skaterCount, takeTimeout, serializeGame, restoreGame, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel } from "../engine/sim.js";
 import { playScheduledGame, finishDay } from "../engine/league.js";
 import { recordSeriesGame, simPlayoffDay, ROUND_NAMES } from "../engine/playoffs.js";
 
@@ -181,13 +181,21 @@ function Rink({ s, home, away, stepInfo, clockRef, banner }) {
 }
 
 export default function LiveGame({ spec, onDone }) {
-  const { league } = useGame();
+  const { league, commit } = useGame();
   const home = league.teams[spec.home];
   const away = league.teams[spec.away];
   const stateRef = useRef(null);
-  if (!stateRef.current) stateRef.current = createGame(league, home, away, { live: true, userTid: league.userTid, playoff: spec.kind === "playoff" });
+  if (!stateRef.current) {
+    const saved=league.activeGame;
+    const same=saved?.spec?.kind===spec.kind && saved.spec.home===spec.home && saved.spec.away===spec.away && saved.spec.gid===spec.gid;
+    stateRef.current=same?restoreGame(league,saved.state):createGame(league,home,away,{live:true,userTid:league.userTid,playoff:spec.kind==='playoff'});
+    if(spec.kind==='playoff') spec.series=league.playoffs.rounds[spec.series.round].find(q=>q.top===spec.series.top && q.bot===spec.series.bot);
+  }
   const s = stateRef.current;
-  const [, force] = useState(0);
+  const [, rerender] = useState(0);
+  const persist = () => { league.activeGame={version:1,spec:structuredClone(spec),state:serializeGame(s)}; commit(); };
+  const force = fn => { persist(); rerender(fn); };
+  useEffect(() => { persist(); }, []); // initial puck-drop checkpoint
   const [speed, setSpeedState] = useState(() => {
     try {
       const v = Number(localStorage.getItem(SPEED_KEY));
@@ -200,7 +208,7 @@ export default function LiveGame({ spec, onDone }) {
     setSpeedState(ms);
     try { localStorage.setItem(SPEED_KEY, String(ms)); } catch { /* private mode */ }
   };
-  const [paused, setPaused] = useState(false);
+  const [paused, setPaused] = useState(!!league.activeGame);
   const [banner, setBanner] = useState(null);
   const [committed, setCommitted] = useState(false);
   const stepInfo = useRef({ at: performance.now(), dur: 1200, shot: null, periodEnd: false, paused: true });
@@ -262,13 +270,13 @@ export default function LiveGame({ spec, onDone }) {
     if (s.phase !== "final") simToEnd(s);
     if (spec.kind === "regular") {
       const g = league.schedule.find((x) => x.id === spec.gid);
-      playScheduledGame(league, g, s);
-      finishDay(league);
+      if (!g.played) { playScheduledGame(league, g, s); finishDay(league); }
     } else {
       const result = applyResult(league, s, { playoff: true });
       recordSeriesGame(league, spec.series, s, result);
       simPlayoffDay(league, { skipSeries: spec.series });
     }
+    delete league.activeGame;
     onDone();
   };
 

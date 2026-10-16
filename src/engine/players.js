@@ -45,7 +45,7 @@ export function createPlayer(opts, year) {
   const type = opts.type || defaultArchetype(pos);
   const ovrTarget = clamp(Math.round(opts.ovr), 40, 99);
   const age = opts.age ?? (opts.born ? year - opts.born : 25);
-  const attrs = opts.attrs || generateAttributes(ovrTarget, type, pos);
+  const attrs = opts.attrs ? {...opts.attrs} : generateAttributes(ovrTarget, type, pos);
   const p = {
     id: opts.id || uid("p"),
     name: opts.name,
@@ -66,7 +66,7 @@ export function createPlayer(opts, year) {
     stats: blankStats(pos),
     pstats: blankStats(pos),
     career: [],
-    draft: opts.draft || null,
+    draft: opts.draft ? {...opts.draft} : null,
     rookie: opts.rookie ?? age <= 21,
   };
   p.pot = opts.pot ? Math.max(opts.pot, p.ovr) : estimatePotential(p.ovr, age);
@@ -143,7 +143,7 @@ function randIntSeeded(p, a, b) {
 // Yearly development. Returns the OVR change.
 export function developPlayer(p, bonus = 0) {
   const before = p.ovr;
-  const age = isGoalie(p.pos) ? p.age - 2 : p.age;
+  const age = isGoalie(p.pos) ? p.age - 3 : isDefense(p.pos) ? p.age - 1 : p.age;
   let mean;
   let sd;
   if (age <= 19) [mean, sd] = [3, 2.2];
@@ -163,7 +163,7 @@ export function developPlayer(p, bonus = 0) {
     if (p.dev === "late") mean += age <= 21 ? -0.7 : 0.8;
   }
   // The air is thin at the top: elite ratings are hard to climb further.
-  if (before >= 90) mean -= (before - 88) * 0.25;
+  if (before >= 90 && mean > 0) mean = Math.max(0, mean - (before - 88) * 0.25);
   mean += bonus;
   let delta = gauss(mean, sd);
   if (before + delta > 99) delta = 99 - before;
@@ -178,12 +178,14 @@ export function developPlayer(p, bonus = 0) {
 }
 
 export function retirementChance(p) {
-  if (p.age >= 41) return 0.95;
+  if (p.age >= 45) return 0.95;
   let c = 0;
   if (p.age >= 34) c = 0.1 + 0.12 * (p.age - 34);
   if (p.ovr < 78 && p.age >= 32) c += 0.2;
   if (p.tid < 0 && p.age >= 30 && p.ovr < 76) c += 0.35;
-  if (p.ovr >= 90) c *= 0.5;
+  if (p.ovr >= 85) c *= 0.35;
+  else if (p.ovr >= 80) c *= 0.65;
+  if (isGoalie(p.pos)) c *= 0.8;
   return clamp(c, 0, 0.95);
 }
 

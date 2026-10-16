@@ -1,3 +1,4 @@
+import {teamNeeds as positionalNeeds} from './teamPlanning.js';
 // The trade market: a league-wide trade block that turns over every week, AI-to-AI
 // trades built around it, offers for players the user lists, and Trade Deadline Day,
 // a live, clock-driven frenzy of deals (talks reported first, then done) that ends at
@@ -8,7 +9,7 @@ import { capSpace, counts, logTx, ensureMinimums, canSendDown, sendDown, release
 import { chance, pick, shuffle, rand, randFloat, randInt, weighted } from "./rng.js";
 import { MAX_ROSTER, MIN_FORWARDS, MIN_DEFENSE, MIN_GOALIES, isGoalie, isDefense } from "./constants.js";
 import { isRFA } from "./players.js";
-import { pickLabel } from "./draft.js";
+import { pickLabel,visibleRatings } from "./draft.js";
 import { conferenceTable } from "./standings.js";
 
 export const DEADLINE_START = 8 * 60; // 8:00 AM ET
@@ -56,7 +57,7 @@ function assetLabel(league, id, kind) {
   const p = league.players[id];
   if (!p) return "?";
   const term = p.signed !== false && p.yrs <= 1 ? (isRFA(p) ? ", RFA" : ", UFA") : "";
-  return `${p.name} (${p.pos}, ${p.ovr}${term})`;
+  return `${p.name} (${p.pos}, ${visibleRatings(league,p).ovr}${term})`;
 }
 
 function labels(league, ids = [], picks = []) {
@@ -119,7 +120,8 @@ export function interestedTeams(league, pid, { limit = 3 } = {}) {
     const n = grp === "F" ? 6 : grp === "D" ? 4 : 1; // top six / top four / starter
     const bar = mates.sort((a, b) => b.ovr - a.ovr).slice(0, n);
     const ref = bar.length ? bar[bar.length - 1].ovr : 70;
-    const fit = p.ovr - ref + (contending ? 3 : -2) + jitter(pid, t.id, league.year) - (grp === "G" ? 4 : 0) - 1.5 * tradesThisSeason(league, t);
+    const urgency=positionalNeeds(league,t).find(n=>n.pos===p.pos)?.score || 0;
+    const fit = p.ovr - ref + urgency*.025 + (contending ? 3 : -2) + jitter(pid, t.id, league.year) - (grp === "G" ? 4 : 0) - 1.5 * tradesThisSeason(league, t);
     if (fit > 0) scored.push({ tid: t.id, fit });
   }
   return scored.sort((a, b) => b.fit - a.fit).slice(0, limit).map((x) => x.tid);

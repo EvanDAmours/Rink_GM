@@ -1,3 +1,4 @@
+import {qualityChecks,qualityMethod} from './quality-checks.mjs';
 // Repeatable, home/away-balanced Monte Carlo audit; no results are applied to saves.
 import assert from 'node:assert/strict';
 import {createLeague} from '../src/engine/league.js';
@@ -50,7 +51,7 @@ results.push(series('Elite first-line scorer vs 82-rated linemates',star,id));
 // Real roster matchup, fixed rosters and no accumulating injuries or development.
 const real=createLeague({userAbbr:'TBL',seed:34027,injuries:false});
 results.push(series('Published TBL vs PIT roster',real,null,[real.teams.find(t=>t.abbr==='TBL'),real.teams.find(t=>t.abbr==='PIT')]));
-const checks={balanced:results[0].winRate>.43&&results[0].winRate<.57,moderate:results[1].winRate>.55,strong:results[2].winRate>.75,goalies:results[3].winRate>.60,accuracy:results[4].winRate>.55,power:results[5].winRate>.55,star:results[6].starGoalsPer60>results[6].teammateGoalsPer60*1.3,scoring:results[0].goalsFor>2&&results[0].goalsFor<4.3,shots:results[0].shotsFor>24&&results[0].shotsFor<37};
-const report={seedSeries:'910007 + i * 7919',date:new Date().toISOString(),games:results.length*count,perScenario:count,results,checks};
+const checks=qualityChecks(results);
+const report={seedSeries:'910007 + i * 7919',date:new Date().toISOString(),games:results.length*count,perScenario:count,qualityMethod,results,checks};
 if(process.argv[2])writeFileSync(process.argv[2],JSON.stringify(report,null,2)+'\n');
 console.log('Checks',checks);if(Object.values(checks).some(x=>!x))process.exitCode=1;

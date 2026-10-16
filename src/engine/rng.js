@@ -79,6 +79,8 @@ export function stream(key) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const r = {
+    snapshot: () => st,
+    restore: value => { st = value >>> 0; },
     next,
     int: (a, b) => Math.floor(next() * (b - a + 1)) + a,
     pick: (arr) => arr[Math.floor(next() * arr.length)],

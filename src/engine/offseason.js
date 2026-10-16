@@ -1,3 +1,5 @@
+import {closeCapYear} from './capAccounting.js';
+import {recruitmentOrder} from './teamPlanning.js';
 // Offseason flow: contract expiry and re-signing, free agency, and the
 // rollover into a new season (aging, development, retirements, new schedule).
 import { clamp, chance, shuffle, randInt, gauss } from "./rng.js";
@@ -53,14 +55,16 @@ export function startResign(league) {
   ensureHockeyRules(league);
   if (league.expiryAppliedYear===league.year) return;
   league.expiryAppliedYear=league.year;
+  closeCapYear(league);
   for (const id in league.players) {
     const p = league.players[id];
     if (p.tid >= 0 && p.extension?.start === league.year + 1) {
-      p.prevCap=p.cap; p.cap=p.extension.aav; p.yrs=p.extension.yrs; delete p.extension;
+      delete p.salarySchedule; p.contractSigningAge=p.age; p.prevCap=p.cap; p.cap=p.extension.aav; p.yrs=p.extension.yrs; delete p.extension;
       continue;
     }
     if (p.tid >= 0 && p.signed !== false && p.yrs > 0) {
       if (p.elc && p.age<=19 && p.stats.gp<10) {p.elc.slides=(p.elc.slides || 0)+1;continue;}
+      if(p.salarySchedule?.length===p.yrs)p.salarySchedule.shift();
       p.yrs--;
       if (p.yrs === 0) {
         p.prevCap = p.cap;
@@ -70,7 +74,7 @@ export function startResign(league) {
   }
   for (const t of league.teams) {
     t.retained=t.retained.map(d=>({...d,yrs:d.yrs-1})).filter(d=>d.yrs>0);
-    t.deadCap = t.deadCap.map((d) => ({ ...d, yrs: d.yrs - 1 })).filter((d) => d.yrs > 0);
+    t.deadCap = t.deadCap.map(d => d.offset>0 ? {...d,offset:d.offset-1} : {...d,yrs:d.yrs-1}).filter(d=>d.yrs>0);
     for (const p of expiringPlayers(league, t)) {
       p.mood = playerMood(league, p);
       p.willing = isRFA(p) || p.mood >= 0.2;
@@ -193,7 +197,7 @@ export function simFADay(league) {
   settleNegotiations(league); processOfferSheets(league);aiOfferSheets(league); processWaivers(league);
   marketOffseasonDay(league);
   const order = shuffle(league.teams.filter((t) => t.id !== league.userTid));
-  const pool = () => league.freeAgents.map((id) => league.players[id]).filter(p=>p && !p.negotiationPending).sort((a, b) => b.ovr - a.ovr);
+  const pool = team => league.freeAgents.map((id) => league.players[id]).filter(p=>p && !p.negotiationPending).sort(recruitmentOrder(league,team));
   for (const t of order) {
     const c = counts(league, t);
     const short = c.G < TARGET.G ? "G" : c.D < TARGET.D ? "D" : c.F < TARGET.F ? "F" : null;
@@ -201,7 +205,7 @@ export function simFADay(league) {
     if (short) {
       if (!chance(0.55)) continue;
       const fits = (p) => (short === "G" ? isGoalie(p.pos) : short === "D" ? isDefense(p.pos) : isForward(p.pos));
-      const target = pool().find((p) => fits(p) && faAsk(league, p).aav <= space - 0.5);
+      const target = pool(t).find((p) => fits(p) && faAsk(league, p).aav <= space - 0.5);
       if (target) {
         const ask = faAsk(league, target);
         signPlayer(league, t, target, ask.aav, ask.yrs);
@@ -220,7 +224,7 @@ export function simFADay(league) {
     for (let n = mustSpend || flush ? 2 : 1; n > 0; n--) {
       const roster = t.roster.map((id) => league.players[id]).filter(Boolean);
       const room = capSpace(league, t);
-      const upgrade = pool().find((p) => {
+      const upgrade = pool(t).find((p) => {
         if (faAsk(league, p).aav > room - 1.5) return false;
         const worst = roster.filter((x) => grp(x) === grp(p)).sort((a, b) => a.ovr - b.ovr)[0];
         return worst && p.ovr >= worst.ovr + (mustSpend || flush ? 1 : 3) && (grp(p) !== "G" || p.ovr > roster.filter((x) => grp(x) === "G").sort((a, b) => b.ovr - a.ovr)[1]?.ovr + 2);
@@ -260,7 +264,7 @@ export function meetCapFloor(league, t) {
   while (payroll(league, t) < capFloorForYear(league.year) && guard++ < 6) {
     const gap = capFloorForYear(league.year) - payroll(league, t);
     const roster = t.roster.map((id) => league.players[id]).filter(Boolean);
-    const fa = league.freeAgents.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).find((p) => {
+    const fa = league.freeAgents.map((id) => league.players[id]).filter(Boolean).sort(recruitmentOrder(league,t)).find((p) => {
       const worst = roster.filter((x) => grp(x) === grp(p)).sort((a, b) => a.ovr - b.ovr)[0];
       return worst && p.ovr >= worst.ovr && faAsk(league, p).aav <= capSpace(league, t) - 0.5;
     });
@@ -277,7 +281,7 @@ export function meetCapFloor(league, t) {
   // Still short: under the CBA the shortfall is paid out to the club's players, and it
   // counts against the cap for the season.
   const short = round2(capFloorForYear(league.year) - payroll(league, t));
-  if (short > 0.05) t.deadCap.push({ name: "Cap floor shortfall (paid to players)", amt: short, yrs: 1 });
+  if (short > 0.005) t.deadCap.push({ name: "Cap floor shortfall (paid to players)", amt: short, yrs: 1 });
 }
 
 export function startNewSeason(league) {
@@ -290,10 +294,12 @@ export function startNewSeason(league) {
     const p = league.players[id];
     if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
       const abbr = league.teams[p.tid]?.abbr || "FA";
+      (p.ratingHistory ||= []).push({year:league.year,ovr:p.ovr,attrs:{...p.attrs}});
       p.career.push({ y: league.year, t: abbr, o: p.ovr, s: compactStats(p.pos, p.stats), ps: p.pstats.gp ? compactStats(p.pos, p.pstats) : null });
     }
   }
   league.year++;
+  league.phase = "preseason"; // budget against the new season, not a second future year
   const retiredNow = [];
   for (const id of Object.keys(league.players)) {
     const p = league.players[id];
@@ -321,7 +327,7 @@ export function startNewSeason(league) {
   // Free-agent pool cleanup: unsigned depth players head to Europe or retire.
   const fas = league.freeAgents.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
   fas.forEach((p, i) => {
-    if (p.ovr < 68 || p.age >= 37 || i >= 150) retire(league, p, true);
+    if (p.ovr < 68 && p.age >= 28) retire(league, p, true);
     else p.mood = clamp(0.5 + gauss(0, 0.15), 0, 1);
   });
 
@@ -366,8 +372,7 @@ export function startNewSeason(league) {
 }
 
 function compactStats(pos, st) {
-  if (isGoalie(pos)) return { gp: st.gp, w: st.w, l: st.l, otl: st.otl, sa: st.sa, ga: st.ga, so: st.so, toi: st.toi };
-  return { gp: st.gp, g: st.g, a: st.a, pts: st.pts, pm: st.pm, pim: st.pim, sog: st.sog, ppg: st.ppg };
+  return {...st}; // preserve every simulated season statistic for permanent cards
 }
 
 function retire(league, p, quiet = false) {

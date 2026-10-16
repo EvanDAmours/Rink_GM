@@ -40,6 +40,7 @@ export default function StatsPage() {
     { key: "g", label: "G", num: true, render: (p) => S(p).g, sort: (p) => S(p).g },
     { key: "a", label: "A", num: true, render: (p) => S(p).a, sort: (p) => S(p).a },
     { key: "pts", label: "P", num: true, render: (p) => <b>{S(p).pts}</b>, sort: (p) => S(p).pts * 1000 + S(p).g },
+    {key:'p60',label:'P/60',num:true,render:p=>S(p).toi?(S(p).pts*3600/S(p).toi).toFixed(2):'—',sort:p=>S(p).toi?S(p).pts*3600/S(p).toi:0},
     { key: "pm", label: "+/-", num: true, render: (p) => signed(S(p).pm), sort: (p) => S(p).pm },
     { key: "pim", label: "PIM", num: true, render: (p) => S(p).pim, sort: (p) => S(p).pim },
     { key: "ppg", label: "PPG", num: true, render: (p) => S(p).ppg, sort: (p) => S(p).ppg },

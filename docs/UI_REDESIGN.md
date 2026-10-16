@@ -1,3 +1,15 @@
+# October 16 clubhouse follow-up
+
+The current interface supersedes the earlier dark arena palette described below. It uses warm off-white pages, white and ice-blue panels, navy text, orange actions, and each club's real identity colors. The dashboard adds a roster-driven illustrated club spotlight, fan-support pulse and contextual next moves. The illustration uses bundled SVG code and reveals only your own club's known player identity/rating.
+
+Tables and controls have larger type and clearer focus states. Settings offers standard/large text, comfortable/compact density, and reduced motion; system reduced-motion preferences are also honored. Phones keep the full navigation selector and add persistent Home/Roster/Draft/Club office shortcuts. Game plans and reports have their own navigation link. Action feedback uses an accessible live status message.
+
+Whole-screen rendering, keyboard interaction, real desktop/390px browser navigation, no outer phone overflow, live recovery, the settings controls, and offline bundled logos/fonts are covered by the current smoke scripts. The dashboard, planning/report screens, and phone draft were visually reviewed. See `SMOKE_TEST_REPORT.md` and `ENGINE_VALIDATION.json` for actual outcomes and platform limits.
+
+The remainder of this document records the earlier interface milestone.
+
+---
+
 # Rink GM — Arena interface update
 
 This update keeps the existing franchise engine and replaces the presentation and management interface with a coherent arena design system.

@@ -1,3 +1,5 @@
+import {gamePlan} from './teamPlanning.js';
+import {snapshotRng, restoreRng} from './rng.js';
 import {coachingEffects, schemeFit, lineChemistry} from './development.js';
 import {recordGame} from './records.js';
 import {rand, chance, weighted, randInt, randFloat, pick, clamp, stream} from './rng.js';
@@ -53,7 +55,7 @@ function makeSide(league, team, opts) {
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
     chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
     pref: team.strategy || team.coach?.style || 'balanced', tactic: team.strategy || team.coach?.style || 'balanced',
-    lines, dressed, pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
+    lines, dressed, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
     fShiftLength: 45, dShiftLength: 55, pulledReason: null};
@@ -64,6 +66,7 @@ export function createGame(league, home, away, opts = {}) {
     live: !!opts.live, userSide: opts.userTid === home.id ? 'h' : opts.userTid === away.id ? 'a' : null,
     year: league.year, day: league.day,
     h: makeSide(league, home, opts), a: makeSide(league, away, opts),
+    shotLog: [], unitStats: {h:{}, a:{}},
     period: 1, clock: PERIOD, elapsed: 0, phase: 'reg', score: {h: 0, a: 0}, shots: {h: 0, a: 0},
     pen: {h: [], a: []}, ppTime: {h: 0, a: 0}, otCounts: null,
     special: {h: {opportunities: 0, goals: 0, seconds: 0}, a: {opportunities: 0, goals: 0, seconds: 0}},
@@ -78,6 +81,8 @@ export function createGame(league, home, away, opts = {}) {
     for (const id of side.dressed) s.box[id] = blankStats(side.pl[id].pos);
     if (side.goalie) s.gbox[side.goalie] = {sa: 0, ga: 0, toi: 0};
   }
+  s.h.plan = gamePlan(league, home, away); s.a.plan = gamePlan(league, away, home);
+  s.rng = snapshotRng();
   if (s.live) push(s, {t: 'period', text: `Puck drop! ${home.abbr} vs ${away.abbr} — 1st period underway.`});
   return s;
 }
@@ -176,7 +181,8 @@ function coach(s, k) {
   const side = s[k], diff = s.score[k] - s.score[other(k)];
   if (!(side.user && s.live)) {
     side.tactic = s.period >= 3 && s.clock <= 600 && diff < 0 ? 'attack'
-      : s.period >= 3 && s.clock <= 480 && diff > 0 ? 'defend' : side.pref;
+      : s.period >= 3 && s.clock <= 480 && diff > 0 ? 'defend'
+      : !s.playoff && s.phase === 'reg' && s.period === 3 && s.clock <= 600 && diff === 0 && strengthType(s,k)==='EV' ? 'defend' : side.pref;
     if (s.faceoffNext && !side.timeout && s.period >= 3 && diff < 0 && diff >= -2 && s.clock <= 180
       && avg(onIce(s, k).map(id => side.fatigue[id])) > 30) {
       if (takeTimeout(s, k)) {
@@ -239,6 +245,9 @@ function playingTime(s, dt, ice) {
   if (s.poss) s.possessionTime[s.poss] += dt;
   for (const k of ['h', 'a']) {
     const side = s[k], on = new Set(ice[k]);
+    s.unitStats ||= {h:{},a:{}};
+    const unit=strengthType(s,k)==='EV'?`Line ${side.fIdx+1}`:strengthType(s,k);
+    const u=s.unitStats[k][unit] ||= {seconds:0}; u.seconds+=dt;
     s.manpowerSeconds[k] += ice[k].length * dt;
     if (side.pulled) s.emptyNetSeconds[k] += dt;
     side.fShift -= dt; side.dShift -= dt; side.fToi[side.fIdx] += dt; side.dToi[side.dIdx] += dt;
@@ -314,11 +323,11 @@ function hockeyEvent(s, ice, R) {
       return;
     }
     const entryControl = carrierSkill.ctrl * .65 + R[k].ctrl * .35;
-    const carry = clamp(.63 + (entryControl - R[o].def) * .009 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0), .25, .9);
+    const carry = clamp(.63 - (def.plan?.neutral === 'trap' ? .08 : 0) + (att.plan?.attack === 'rush' ? .06 : 0) + (entryControl - R[o].def) * .009 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0), .25, .9);
     const controlled = chance(carry);
     decision(s, k, controlled ? 'controlled-entry' : 'dump-and-chase');
     const success = (controlled ? .69 + (entryControl + carrierSkill.skate * .5 + R[k].skate * .5 - R[o].def * 2) * .002
-      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * .002) + manEdge * .06;
+      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * .002) + manEdge * .06 + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0);
     s.zone = 1; s.puck = {x: zoneX(s, k, controlled ? 58 : 82), y: randFloat(12, 73)};
     if (chance(clamp(success, .25, .9))) {
       s.rush = controlled; s.lateral = false;
@@ -329,7 +338,7 @@ function hockeyEvent(s, ice, R) {
   const advantage = manEdge;
   // Protecting a lead retains the puck and avoids low-percentage point shots;
   // trailing teams attack faster but expose themselves to counterattacks.
-  let shoot = .50 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.06 : 0);
+  let shoot = .50 + (att.plan?.attack === 'shoot' ? .07 : att.plan?.attack === 'cycle' ? -.035 : 0) + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.06 : 0);
   if (att.pulled) shoot += .07;
   const carrier = att.pl[s.carrier];
   if (carrier?.type === 'PLY') shoot -= .07;
@@ -340,7 +349,7 @@ function hockeyEvent(s, ice, R) {
   decision(s, k, s.rush ? 'rush-pass' : 'cycle');
   const passing = carrierSkill.pass * .65 + R[k].pass * .35;
   const success = clamp(.78 + (passing - R[o].def) * .0045 + advantage * .035
-    - (att.tactic === 'attack' ? .035 : 0), .45, .94);
+    - (att.tactic === 'attack' ? .035 : 0) - (att.plan?.forecheck === 'aggressive' ? .025 : 0), .45, .94);
   if (chance(success)) {
     const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => {
       const p = att.pl[id], c = att.comp[id];
@@ -369,9 +378,12 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   if (!rebound && !isD) { depth = clamp((depth + depthOf(s, k)) / 2, 50, 86); y = (y + s.puck.y) / 2; }
   const x = zoneX(s, k, depth), geometry = shotGeometry(depth, y - 42.5);
   s.puck = {x, y}; s.attempts[k]++;
+  const attempt = {side:k,pid:shooter,goalie:def.pulled?null:def.goalie,period:s.period,clock:s.clock,x,y,strength:strengthType(s,k),unit:strengthType(s,k)==='EV'?`Line ${att.fIdx+1}`:strengthType(s,k),defendingUnit:strengthType(s,o)==='EV'?`Line ${def.fIdx+1}`:strengthType(s,o),result:'miss',chance:null};
+  (s.shotLog ||= []).push(attempt);
   const advantage = skaterCount(s, k) - skaterCount(s, o) + (att.pulled ? 1 : 0) - (def.pulled ? 1 : 0);
   const pBlock = rebound ? .06 : clamp(.23 * R[o].blk / 82 * (isD ? 1.35 : .86) - advantage * .02, .08, .42);
   if (chance(pBlock)) {
+    attempt.result = 'block';
     const blocker = weighted(ice[o], id => def.comp[id].blk ** 2 * (isDefense(def.pl[id].pos) ? 1.5 : 1));
     addBox(s, blocker, 'blk');
     if (s.live) push(s, {t: 'block', side: o, text: `${lastName(att, shooter)} fires — blocked by ${lastName(def, blocker)}.`, x, y});
@@ -388,6 +400,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     // Every shot that would enter an empty goal IS a goal. Failed empty-net
     // attempts are misses, never phantom saves or shots faced by a goalie.
     addBox(s, shooter, 'sog'); s.shots[k]++; s.xg[k] += 1;
+    attempt.result = 'goal'; attempt.chance = 1;
     creditGoal(s, k, shooter, ice, {empty: true, shotType: type, x, y, xg: 1}); return;
   }
   addBox(s, shooter, 'sog'); s.shots[k]++;
@@ -395,9 +408,9 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0);
   const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
-  s.xg[k] += xg;
+  s.xg[k] += xg; attempt.chance = xg; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
-  if (chance(xg)) { creditGoal(s, k, shooter, ice, {shotType: type, x, y, xg}); return; }
+  if (chance(xg)) { attempt.result = 'goal'; creditGoal(s, k, shooter, ice, {shotType: type, x, y, xg}); return; }
   if (s.live) push(s, {t: 'save', side: o, text: `${lastName(att, shooter)} with a ${type} — save ${lastName(def, def.goalie)}.`, x: zoneX(s, k, 89), y: 42.5});
   const reb = def.comp[def.goalie]?.reb ?? 75;
   if (!rebound && chance(clamp(.11 + (82 - reb) * .002 + (82 - (goalie?.attrs.rec ?? 82)) * .001, .04, .24))) {
@@ -494,7 +507,7 @@ function endGame(s, winner) {
   if (s.live) push(s, {t: 'final', text: `Final${s.endedIn ? ' (' + s.endedIn + ')' : ''}: ${s.h.abbr} ${s.score.h}, ${s.a.abbr} ${s.score.a}.`});
 }
 
-export function stepGame(s) {
+function advanceGame(s) {
   if (s.phase === 'final') return;
   if (s.phase === 'so') { shootoutStep(s); return; }
   s.steps++;
@@ -510,7 +523,10 @@ export function stepGame(s) {
     const advantage = skaterCount(s, s.poss) - skaterCount(s, other(s.poss));
     const pace = s[s.poss].tactic === 'attack' ? 1.08 : s[s.poss].tactic === 'defend' ? .94 : 1;
     const specialTeams = advantage > 0 ? (s[s.poss].coaching?.pp || 1) / (s[other(s.poss)].coaching?.pk || 1) : 1;
-    const eventRate = .108 * pace * specialTeams * (isOpenIce(s) ? 1.18 : 1) * (advantage > 0 ? 1.1 : advantage < 0 ? .9 : 1)
+    // In tied late regular-season games, conservative units hold possession
+    // rather than force transitions that risk losing the standings point.
+    const protectPoint = !s.playoff && s.phase==='reg' && s.period===3 && s.clock<=600 && s.score.h===s.score.a && s[s.poss].tactic==='defend' && advantage===0 ? .70 : 1;
+    const eventRate = .113 * protectPoint * pace * specialTeams * (isOpenIce(s) ? 1.18 : 1) * (advantage > 0 ? 1.1 : advantage < 0 ? .9 : 1)
       * clamp(1 + (R[s.poss].off - R[other(s.poss)].def) * .002, .85, 1.15);
     const wait = Math.max(1, Math.ceil(-Math.log(Math.max(1e-12, rand())) / eventRate));
     const boundary = Math.min(remaining, s.clock, nextPenaltyBoundary(s));
@@ -527,6 +543,26 @@ export function stepGame(s) {
       push(s, {t: 'play', side: s.poss, text: s.poss ? `${s[s.poss].abbr} ${s.zone === 1 ? 'work the offensive zone' : s.zone === -1 ? 'look for an outlet' : 'move through neutral ice'}.` : 'The whistle stops play.', ...s.puck});
     }
   }
+}
+// A match owns its random stream. Browsing, autosaving and other matches cannot
+// change its next outcome; the complete state can be resumed without a reroll.
+export function stepGame(s) {
+  if (!s.rng) s.rng = snapshotRng();
+  const outer = snapshotRng(); restoreRng(s.rng);
+  try { advanceGame(s); } finally { s.rng = snapshotRng(); restoreRng(outer); }
+}
+export function serializeGame(s) {
+  return structuredClone({...s, presentationRng: visual(s)?.snapshot()});
+}
+export function restoreGame(league, data) {
+  if (!data?.rng || !data.h || !data.a || !Number.isFinite(data.clock)) throw new Error('Invalid saved match.');
+  const s = structuredClone(data);
+  for (const k of ['h','a']) for (const id of s[k].dressed) {
+    if (!league.players[id]) throw new Error('Saved match player is missing.');
+    s[k].pl[id] = league.players[id];
+  }
+  const r = stream('restored-presentation'); if (data.presentationRng != null) r.restore(data.presentationRng);
+  visualStreams.set(s,r); return s;
 }
 export function simToEnd(s) {
   let guard = 0;
@@ -551,6 +587,10 @@ export function applyResult(league, s, { playoff = false } = {}) {
   const h = league.teams[s.h.tid];
   const a = league.teams[s.a.tid];
   const statKey = playoff ? "pstats" : "stats";
+  if (!playoff) for(const k of ['h','a']) for(const id of s[k].unavailable || []) {
+    const a=league.players[id]?.rolePromise;
+    if(a?.tid===s[k].tid && a.year===league.year)a.unavailable=(a.unavailable||0)+1;
+  }
   const winner = s.winner;
   const loser = other(winner);
 
@@ -605,6 +645,7 @@ export function applyResult(league, s, { playoff = false } = {}) {
       const played = isGoalie(p?.pos) ? s.gbox[id]?.toi > 0 : s.box[id]?.toi > 0;
       if (league.settings?.injuries !== false && p && played && chance(chanceInjury(p)*(1-(league.teams[s[k].tid].arena?.medical || 0)*.05))) {
         p.injury = injuryLength();
+        p.injuryEpisode = `${s.year}:${s.day}`;
         p.injuryNote = pick(["upper-body", "lower-body", "knee", "shoulder", "concussion", "ankle", "hand"]);
         if (p.tid === league.userTid) league.inbox?.push({ year: league.year, day: league.day, text: `${p.name} (${p.injuryNote}) is out about ${p.injury} game${p.injury > 1 ? "s" : ""}.` });
       }

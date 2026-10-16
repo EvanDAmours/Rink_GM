@@ -1,0 +1,20 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> nhl-gm@1.0.0 build:pages
+> vite build && node scripts/build-artifact.mjs
+
+vite v5.4.11 building for production...
+transforming...
+✓ 169 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     1.00 kB │ gzip:   0.59 kB
+dist/assets/index-CbC1kYYw.css    193.99 kB │ gzip:  91.85 kB
+dist/assets/index-CMaPh5KI.js   1,663.90 kB │ gzip: 457.98 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.30s
+dist/rink-gm.html — 1815 KB
