@@ -17,6 +17,10 @@ try {
   console.log(name,html.length,'bytes');
  }
  const {default:Home}=await server.ssrLoadModule('/src/ui/Dashboard.jsx');
+ const {default:Live}=await server.ssrLoadModule('/src/ui/LiveGame.jsx');
+ const live=renderToStaticMarkup(React.createElement(GameCtx.Provider,{value:ctx},React.createElement(Live,{spec:{home:lg.userTid,away:lg.userTid===0?1:0,kind:'regular'},onDone(){}})));
+ if(!live.includes('Live Game') || !live.includes('Timeout'))throw Error('Live game controls failed to render');
+ console.log('LiveGame',live.length,'bytes');
  const {startPlayoffs}=await server.ssrLoadModule('/src/engine/playoffs.js');
  const {startDraft}=await server.ssrLoadModule('/src/engine/draft.js');
  for(const phase of ['regular','playoffs','draft','resign','freeagency']){lg.phase=phase;if(phase==='playoffs')startPlayoffs(lg);if(phase==='draft')startDraft(lg);if(phase==='freeagency')lg.fa={day:0};const html=renderToStaticMarkup(React.createElement(GameCtx.Provider,{value:ctx},React.createElement(Home,{act:{}})));if(html.length<100)throw Error('Empty '+phase);console.log('Dashboard:'+phase,html.length,'bytes');}

@@ -1,43 +1,91 @@
-# Simulation audit — 12 October 2026
+# NHL simulation rebuild — 16 October 2026
 
-Results are stochastic hockey outcomes driven by the dressed players' attributes, roles, ice time, tactics, special teams, chemistry, coaching, goalie selection and endurance. There is no team-name win override or OVR-based forced winner. OVR affects lineup selection; on-ice attributes determine possession, shot generation, misses, blocks, finishing, saves, faceoffs, assists and penalties.
+The live game and quick simulator use the same possession/event engine. No score is drawn in advance, no team name receives a win override, and the engine never invents a winner when its safety limit is reached. Outcomes remain uncertain; ratings influence the actions players can execute.
 
-## Changes
+## Engine and rules
 
-- Slap shots use slapshot power/accuracy; wrist shots use their own values. One-timers, tips and backhands also use the appropriate hand-eye and puck skills.
-- Goalie save-side attributes and recovery affect saves and rebound opportunities. Passing contributes to chance quality and primary/secondary assist selection.
-- Shooter tendencies distinguish snipers and playmakers. Assigned even-strength centers take their team's draws instead of a natural center playing wing automatically taking every draw.
-- Longer shifts reduce performance slightly, with higher endurance limiting the penalty. This does not change the saved player ratings.
-- Live commentary has a separate random stream. Thirty seeded regression games produce identical scores, shots, box scores and goals in live and quick modes when no user intervention changes tactics.
-- The step-limit guard throws an error instead of assigning an arbitrary coin-flip winner to an unfinished game.
+`sim.js` runs ten-second UI updates, internally split into timed events, penalty expirations and period boundaries. Playing time is credited before each event; sudden death returns immediately. `gameRules.js` owns manpower, penalty clocks and stoppages. `shotModel.js` owns shot-family skills and a transparent, hand-calibrated conversion model.
 
-## Controlled audit
+The scoring ledger tracks scorer, up to two actual previous teammate touches, strength, empty-net status, on-ice players, defending goalie, location and elapsed time. Opposing possession clears assist eligibility. Blocks and misses are separate from shots on goal. On-target empty-net attempts score; nobody receives a phantom save. PP/SH credit is separate from the empty-net label. Shootouts add only the deciding scoreboard goal, with no individual goal, shot, assist or goalie goal against. Both goalies can retain a shutout after 0–0 through overtime; shared shutouts receive no individual credit.
 
-1,500 games per scenario; home/away alternates; fixed players; no accumulating injuries, development or trades. Fixed seed sequences make the audit repeatable. These are measurements of this game, not predictions for real NHL clubs.
+Rules exercised by focused regression cases:
 
-| Scenario | Club A win rate | A goals / game | B goals / game |
+| Rule | Covered behaviour |
+| --- | --- |
+| 15–16 | Delayed calls, extra attacker, goal washout, minor release |
+| 18–19 | Double-minor segments; non-terminating majors; offsetting fighting majors |
+| 26 | Queued third penalty; minimum three skaters; release at a whistle |
+| 78 | Scoring/assist ledger; special-teams and plus/minus accounting |
+| 81–82 | Icing change restriction; visitors deploy before home matching |
+| 84 | Regular 3-on-3 OT, transient 4-on-4 after expiration, penalty carryover, playoff 20-minute sudden death, shootout and tactical OT point forfeiture |
+| 87 | One timeout at a permitted stoppage; rest rather than a shooting bonus |
+
+The starting goalie receives the start. Win/loss decisions follow the eventual winning goal, including relief appearances and an empty net. Applying an unfinished result throws; applying a finished result twice does not duplicate stats.
+
+## Player and coach decisions
+
+Possession progresses through defensive-zone exits, neutral-zone entries and offensive-zone cycles. A controlled entry competes with dumping and retrieving; pressure can force a failed exit or icing. A shorthanded club prioritizes clearing. Players pass, shoot or lose possession based on their skills, role, pressure and manpower.
+
+The puck carrier's own passing/control/skating contributes to execution. Skilled receivers get open and handle more touches. Playmakers pass more often and can create lateral chances; snipers shoot more often. Assists follow those touches rather than a post-goal weighted lottery. Finishing uses the appropriate wrist/slap accuracy, power, hand-eye and puck skills. Distance, angle, rush, lateral movement, screen, rebound and manpower affect conversion. Goalies contribute save-side skill, positioning, rebound control and recovery. Defensive awareness/stick work suppress exits and entries; shot blocking removes attempts before they reach the net.
+
+Coaches choose available units with ice-time shares, accumulated shift fatigue, draw location, home matching and late-game deployment in mind. They change when the puck is safe or at a whistle; an iced unit stays out for its draw. Special teams rotate units. AI coaches react to late leads/deficits, take legal late timeouts with tired players, pull the goalie after established possession or an appropriate stoppage, and replace badly beaten starters at a whistle. AI goalie selection recognizes back-to-back starts. User live tactics retain user control.
+
+Attributes are never rewritten to obtain these results. Published rating baselines remain intact. OVR affects selection/deployment; the relevant underlying skills drive execution. A defensive forward and a sniper need not score identically just because their OVR matches. Fatigue changes effective performance during play rather than permanently lowering stored attributes.
+
+## Evidence and reproduction
+
+`nhl-calibration-2025-26.json` stores the official NHL team, power-play and goalie API responses retrieved on 16 October 2026, plus the aggregate calculation. The completed reference season used 82 games per team; the game's 2026–27 calendar uses 84. Comparisons below use per-game rates.
+
+`season-audit-results.json` uses fixed real rosters and independent game seeds. `season-audit-holdout-results.json` uses a separate seed sequence after calibration. Both replay the 1,344-game calendar without accumulating injuries, development or GM moves. Each game checks scoring and shot conservation. These are model validation runs, not real NHL forecasts.
+
+| Metric | NHL 2025–26 | Calibration season | Separate-seed season |
 | --- | ---: | ---: | ---: |
-| Equal 82-rated clubs | 49.3% | 2.64 | 2.66 |
-| 86 vs 80 skaters / equal goalies | 77.1% | 3.63 | 1.96 |
-| 92 vs 72 complete clubs | 100.0% | 8.50 | 0.61 |
-| 95 vs 70 goalies / equal skaters | 80.4% | 3.52 | 1.86 |
-| 95 vs 60 shooting accuracy | 78.3% | 3.28 | 1.74 |
-| 95 vs 60 shooting power | 66.2% | 3.01 | 2.17 |
-| Elite first-line scorer vs 82-rated linemates | 59.7% | 3.10 | 2.59 |
-| Published TBL vs PIT roster | 72.9% | 3.31 | 2.17 |
+| Scoreboard goals/team/game | 3.082 | 3.194 | 3.163 |
+| Shots/team/game, including empty net | 27.83 | 28.46 | 28.23 |
+| Goalie save percentage | 0.8955 | 0.8945 | 0.8943 |
+| Power-play conversion | 21.11% | 19.76% | 19.56% |
+| PP opportunities/team/game | 2.879 | 2.971 | 2.960 |
+| Games reaching overtime | 24.85% | 20.54% | 18.90% |
+| Games decided in shootout | 9.07% | 6.77% | 6.18% |
 
-The elite first-line scorer produced 2.29 goals per 60 minutes, compared with 0.61 for his linemates. Equal clubs averaged roughly 27 shots each. A 20-point whole-roster mismatch is an extreme synthetic stress case, not the small strength spread of actual NHL rosters.
+`simulation-audit-results.json` runs eight controlled scenarios, alternating home/away. It isolates equal rosters, skater quality, goalie quality, accuracy, power, an elite forward and a published-roster matchup. Win rates include Wilson 95% intervals. Save percentage uses goalie shots/goals, excluding empty nets and the shootout decider.
 
-## Full-calendar check
+`positional-audit-results.json` separately checks the same first-line center before/after an upgrade, a playmaking-only upgrade, a defensive-corps upgrade, goalie quality with identical skaters, and faceoff specialists. It reports goals, assists and points per 60 to separate skill from minutes. Every positional acceptance check must pass; results are never applied to a save. Each scenario uses 1,000 alternating home/away games.
 
-A fixed-roster, injury-free 1,344-game season averaged 2.96 scoreboard goals per team/game, 28.4 shots faced by goalies, and 0.899 save percentage. Scoreboard goals include the shootout deciding goal; goalie shots exclude empty-net attempts. McDavid produced 109 points with 62 goals, 47 assists, and 2294 faceoffs. A single season can have unexpected leaders; higher ratings improve probabilities rather than guaranteeing rankings.
+| Controlled change | Baseline | Upgraded |
+| --- | ---: | ---: |
+| Same forward: points/60 (82 → 97) | 1.874 | 3.496 |
+| Playmaking-only change: assists/60 | 1.197 | 1.539 |
+| Defensive-corps change: shots against/game | 26.72 | 25.34 |
+| Defensive-corps change: goalie goals against/game | 2.845 | 2.714 |
+| Goalie save percentage (70 → 95), identical skaters | 0.8581 | 0.9211 |
+| Center faceoff percentage (60 → 99) | 35.09% | 64.91% |
 
-## Reproduce
 
-`npm run test:simulation` runs eight matchup scenarios (1,000 games each by default). Set `NHL_AUDIT_GAMES=1500` for the report's sample size. `npm run test:season` runs the fixed-roster full schedule. Both accept a JSON output filename as an extra argument. Engine regression tests run with `npm test`.
+```bash
+npm test
+npm run test:render
+npm run build:pages
+NHL_AUDIT_GAMES=1000 npm run test:simulation -- docs/simulation-audit-results.json
+NHL_POSITION_GAMES=1000 npm run test:positions -- docs/positional-audit-results.json
+npm run test:season -- docs/season-audit-results.json
+NHL_SEASON_SEED=381103 npm run test:season -- docs/season-audit-holdout-results.json
+```
 
-## Limits
+The browser smoke test also exercises live play, completion, manual save slots, desktop and 390px navigation, embedded assets, WebGL/fallback and JavaScript errors. Supply Playwright/Chromium via the existing environment variables documented in the script.
 
-This is a calibrated probabilistic management simulation, not a physics engine or a claim of perfect NHL prediction. It does not yet model rink-coordinate shot geometry as physical expected goals, historical workload/fatigue between dates, goalie handedness matchups, or every EA ability as a separate gameplay modifier. The pictured rink is a presentation layer. Unpublished EA attributes and many service/contract details remain estimates. Audit coverage establishes broad skill sensitivity, plausible aggregate ranges and reproducibility; it cannot establish perfection for every roster or tactic.
+## Practical limits
 
-The complete recorded measurements are in `simulation-audit-results.json` and `season-audit-results.json`.
+This is a management model, not puck physics or a fitted NHL tracking-data predictor. Shot conversion coefficients are calibrated assumptions. Its `xg` accumulator is conditional on attempts reaching the net and is not directly comparable to public all-attempt expected-goal models. Rink coordinates represent chance geometry, not a continuous collision simulation. Shift/recovery, matching and systems remain abstractions.
+
+The measured overtime/shootout frequencies remain lower than the reference season; broad acceptance checks do not erase that difference. Individual season leaders vary, and aggregate calibration does not establish accurate forecasts for every player. Low-rated and unpublished attributes are still estimates. The model does not simulate every coincidental-penalty combination, misconduct/ejection, challenge/video-review, goalie handedness, travel/time-zone effect or EA ability. Goalie rest tracks starts; there is no fitted multi-game physiological fatigue model. The existing franchise CBA and roster systems retain their documented simplifications.
+
+A full-season regression exposed an existing AI roster hole when 50 contracts prevented signing a second goalie. Offseason AI now clears an unprotected surplus depth contract before filling the hole. A trade test now verifies a legal goalie trade in a controlled market instead of requiring one named player to move after every simulated season.
+
+## Sources
+
+- [NHL official rulebook entry page](https://www.nhl.com/info/video-rulebook), linking the 2026–27 book.
+- [2026–27 NHL Official Rules PDF](https://media.d3.nhle.com/image/private/t_document/prd/i9yumvyaojps5kixzaxz.pdf), downloaded and checked for the rules above.
+- Official NHL statistics API URLs and original responses: [calibration snapshot](nhl-calibration-2025-26.json).
+- [NHL coach discussion of lead protection and earlier goalie pulls](https://www.nhl.com/news/coaches-room-difficulty-of-protecting-leads).
+- [Seattle coaching discussion of player availability and goalie-pull timing](https://www.nhl.com/kraken/news/topic/analytics-with-alison/analytics-with-alison-pulling-the-goaltender-327235290).

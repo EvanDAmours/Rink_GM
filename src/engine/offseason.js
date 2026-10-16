@@ -422,6 +422,18 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
       signPlayer(league, t, fa, Math.max(minSalaryForYear(league.year), round2(marketValue(fa, league.year) * 0.9)), randInt(1, 3));
     }
   }
+  // A full contract list must not prevent an AI club from dressing two
+  // goalies. Free a surplus depth contract before filling positional holes.
+  // Protect the core, movement clauses and positions already at their minimum.
+  for (let attempts = 0; !inSeason && attempts < 4 && contractCount(league, t) >= 50; attempts++) {
+    const c = counts(league, t, {healthyOnly: true});
+    if (c.G >= 2 && c.D >= 6 && c.F >= 12) break;
+    const core = new Set(rosterOf().sort((a,b) => b.ovr-a.ovr).slice(0,6).map(p => p.id));
+    const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending
+      && (grp(p) === 'G' ? c.G > 2 : grp(p) === 'D' ? c.D > 6 : c.F > 12)).sort((a,b) => a.ovr-b.ovr)[0];
+    if (!surplus) break;
+    releasePlayer(league, t, surplus.id);
+  }
   ensureMinimums(league, t);
   // Too many bodies: send down or release the lowest-rated extras.
   let guard = 0;

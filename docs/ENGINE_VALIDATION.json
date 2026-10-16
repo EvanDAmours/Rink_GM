@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-16",
+  "base_commit": "a421a967fef034faef7621d55f519cb0ea958a1f",
+  "audited_engine_commit": "cd46696",
+  "regression_tests": 100,
+  "regression_passed": 100,
+  "audits": {
+    "controlled_games": 8000,
+    "positional_games": 6000,
+    "calibration_season_games": 1344,
+    "holdout_season_games": 1344,
+    "total": 16688,
+    "all_checks_passed": true
+  },
+  "checks": {
+    "source_patch_applies_to_base": true,
+    "source_patch_byte_comparison": true,
+    "live_quick_seed_equivalence": true,
+    "screen_rendering_including_live": true,
+    "desktop_mobile_pages_build": true,
+    "desktop_mobile_browser": true,
+    "javascript_errors": 0,
+    "mobile_width_px": 390
+  },
+  "repository_write": {
+    "completed": false,
+    "reason": "GitHub create-branch returned HTTP 403: Resource not accessible by integration"
+  },
+  "source_sha256": {
+    "src/engine/sim.js": "548edf5c272af9482a7c089cb2d4d99ca1608f2cf5322445231cc496c4f547a1",
+    "src/engine/gameRules.js": "9f252a01cbbde5c40361d11374ba7a7245aa249cadec36a2a505e91d9637ef8d",
+    "src/engine/shotModel.js": "3fd9cfeeee232fc5b5a5e284a9f468c80c58fea8737f424015fe7f66e0dfd257",
+    "src/engine/ratings.js": "087106ffb5f5983d8f37704f04e1377c223343aa0c2af5199a79dc5f21a072fa",
+    "src/engine/lines.js": "28b974f58371866290703a4cbfcb359addca8475ca5660d3d0d508d79daf7524",
+    "src/engine/offseason.js": "744759e473f74614e688e88f258098b42885b28383e58388fb6425ac5e49bb08",
+    "src/ui/LiveGame.jsx": "710bec2b503015fadf545bde023ee1dcfccc096ac10a6d994de2af9d382753fe"
+  },
+  "known_limits": [
+    "Overtime and shootout frequency below the NHL reference season",
+    "Calibrated management model; no continuous physics or fitted tracking-data predictor",
+    "Estimated unpublished player attributes; detailed scope in SIMULATION_AUDIT.md"
+  ]
+}

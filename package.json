@@ -20,7 +20,8 @@
     "build:pages": "vite build && node scripts/build-artifact.mjs",
     "refresh:players": "python3 scripts/refresh-player-data.py",
     "test:simulation": "node scripts/simulation-audit.mjs",
-    "test:season": "node scripts/season-audit.mjs"
+    "test:season": "node scripts/season-audit.mjs",
+    "test:positions": "node scripts/positional-audit.mjs"
   },
   "dependencies": {
     "lz-string": "1.5.0",
