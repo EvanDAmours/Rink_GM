@@ -126,7 +126,7 @@ export default function TitleScreen({ onStart, ask }) {
                 {ranked.filter(ab=>conference==="all" || TEAMS.find(t=>t.abbr===ab).conf===conference).map((ab) => {
                   const t = TEAMS.find((x) => x.abbr === ab);
                   return (
-                    <button key={ab} aria-pressed={abbr===ab} className={`teamcard ${abbr === ab ? "sel" : ""}`} onClick={() => setAbbr(ab)}>
+                    <button key={ab} aria-pressed={abbr===ab} className={`teamcard ${abbr === ab ? "sel" : ""}`} style={{ "--c1": t.colors[0], "--c2": t.colors[1] }} onClick={() => setAbbr(ab)}>
                       <TeamBadge team={t} size={58} />
                       <div>
                         <div className="tn">{t.city} {t.name}</div>

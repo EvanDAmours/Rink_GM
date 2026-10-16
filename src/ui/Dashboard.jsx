@@ -1,46 +1,198 @@
-import RinkCharacter from './RinkCharacter.jsx';
-import ClubhouseMoves from './ClubhouseMoves.jsx';
-import React from 'react';
-import {useGame,TeamBadge,PlayerName,TeamName,PlayerCell,money,recordStr,Ovr,pct,signed} from './common.jsx';
-import Icon from './Icon.jsx';
-import {divisionTable} from '../engine/standings.js';
-import {teamRatings} from '../engine/lines.js';
-import {capSpace,payroll,rosterIssues,counts} from '../engine/roster.js';
-import {capForYear,isGoalie} from '../engine/constants.js';
-import {dayToDate} from '../engine/schedule.js';
-import {savePct} from '../engine/players.js';
-import {userGameOnDay} from '../engine/league.js';
-import {userSeries} from '../engine/playoffs.js';
-import {currentSlot} from '../engine/draft.js';
-import {contractCount} from '../engine/hockeyRules.js';
-export default function Dashboard({act={}}){
- const {league:lg,go,openBox,openPlayer}=useGame(),t=lg.teams[lg.userTid],ratings=teamRatings(lg,t),div=divisionTable(lg,t.div),room=capSpace(lg,t),issues=rosterIssues(lg,t);
- const roster=t.roster.map(id=>lg.players[id]).filter(Boolean),sk=roster.filter(p=>!isGoalie(p.pos)),goalies=roster.filter(p=>isGoalie(p.pos));
- const games=lg.schedule.filter(g=>g.h===t.id || g.a===t.id),today=userGameOnDay(lg),upcoming=games.filter(g=>!g.played).slice(0,4),recent=games.filter(g=>g.played).slice(-4).reverse(),fixture=today || upcoming[0];
- const series=lg.phase==='playoffs'?userSeries(lg):null,cupWins=lg.history.filter(h=>h.champion===t.id).length;
- const leaders=[['Points',[...sk].sort((a,b)=>b.stats.pts-a.stats.pts)[0],p=>p.stats.pts],['Goals',[...sk].sort((a,b)=>b.stats.g-a.stats.g)[0],p=>p.stats.g],['Assists',[...sk].sort((a,b)=>b.stats.a-a.stats.a)[0],p=>p.stats.a],['In the crease',[...goalies].sort((a,b)=>b.stats.gp-a.stats.gp)[0],p=>p.stats.gp?pct(savePct(p.stats)):'—']];
- const budget=lg.teams[lg.userTid].scoutPts || 0,pending=lg.offerSheets?.filter(s=>!s.done && s.from===t.id).length || 0,injuries=roster.filter(p=>p.injury>0),slot=currentSlot(lg);
- const phaseText={preseason:'Fresh ice. Big plans. Your season starts here.',regular:'Good hockey starts with your next good decision.',playoffs:'The building is buzzing. Let’s make a run.',draft:'Your next fan favourite is out there.',resign:'Keep the familiar faces. Build the next chapter.',freeagency:'A new face could change everything.'}[lg.phase];
- const spotlight=[...roster].sort((a,b)=>b.ovr-a.ovr)[0],fanSupport=Math.max(0,Math.min(100,t.owner.fanSupport));
- const res=g=>{const home=g.h===t.id,us=home?g.hs:g.as,them=home?g.as:g.hs,win=us>them;return <span className={`result-score ${win?'good':g.ot?'warn':'bad'}`}><b>{win?'W':g.ot?'OTL':'L'}</b>{us}–{them}</span>;};
- return <div className="dashboard stack">
-  <section className="club-hero"><div className="hero-rink" aria-hidden="true"/><div className="hero-copy"><div className="eyebrow"><span className="live-dot"/> {t.conf.toUpperCase()}ERN CONFERENCE · {t.div.toUpperCase()}</div><h1><span>{t.city}</span>{t.name}</h1><p>{phaseText}</p><div className="crowd-pulse"><span className="crowd-label">Home-crowd spirit</span><span className="crowd-bars" aria-hidden="true">{Array.from({length:10},(_,i)=><i key={i} className={i<Math.round(fanSupport/10)?"lit":""}/>)}</span><b>{fanSupport}/100</b></div><div className="hero-chips"><span>{recordStr(t.rec)} <small>RECORD</small></span><span>{t.rec.pts} <small>POINTS</small></span><span>#{div.findIndex(d=>d.id===t.id)+1} <small>IN DIVISION</small></span></div></div><div className="clubhouse-spotlight"><TeamBadge team={t} size={58} decorative/><RinkCharacter team={t} player={spotlight}/>{spotlight && <button className="spotlight-player" onClick={()=>openPlayer?.(spotlight.id)}><span><small>Club spotlight · {spotlight.pos}</small><b>{spotlight.name}</b></span><Ovr v={spotlight.ovr}/></button>}</div></section>
-  <div className="executive-stats"><div><span className="stat-label">Team overall</span><b>{ratings.ovr}<small>OVR</small></b><span>F {ratings.fwd} <i/> D {ratings.def} <i/> G {ratings.g}</span></div><div><span className="stat-label">Cap available</span><b className={room<0?'bad':''}>{money(room)}</b><span>{money(payroll(lg,t))} committed</span><div className="budget-line"><i style={{width:Math.min(100,payroll(lg,t)/capForYear(lg.year)*100)+'%'}}/></div></div><div><span className="stat-label">Roster strength</span><b>{counts(lg,t).active}<small>/ 23 ACTIVE</small></b><span>{contractCount(lg,t)} contracts <i/> {t.prospects.length} prospects</span></div><div><span className="stat-label">Owner confidence</span><b>{t.owner.trust}<small>/ 100</small></b><span>{t.owner.goal.label}</span></div></div>
-  <ClubhouseMoves issues={issues} points={budget} phase={lg.phase}/>
-  {issues.length>0 && <div className="notice warn row"><Icon name="bell"/><div>{issues.map(i=><div key={i}>{i}</div>)}</div><button className="small" onClick={()=>go('roster')}>Review roster <Icon name="arrow" size={14}/></button></div>}
-  <div className="dashboard-main-grid">
-   <section className="panel match-centre"><div className="section-heading"><div><span className="eyebrow">ON THE ICE</span><h2>{series?'Playoff spotlight':lg.phase==='preseason'?'Opening night':'Match centre'}</h2></div><button className="ghost small" onClick={()=>go('schedule')}>Schedule <Icon name="arrow" size={15}/></button></div>
-    {fixture && !['draft','resign','freeagency','playoffs'].includes(lg.phase)?<><div className="match-date"><span>{dayToDate(lg.year,fixture.day,lg.scheduleStart)}</span><span>{fixture.venue || (fixture.h===t.id?'Home ice':'On the road')}</span>{today && lg.phase==='regular' && <b><span className="live-dot"/> GAME DAY</b>}</div><div className="match-teams"><div><TeamBadge team={lg.teams[fixture.a]} size={105}/><strong>{lg.teams[fixture.a].abbr}</strong><small>{lg.teams[fixture.a].name}</small></div><div className="versus">VS<span>REGULAR SEASON</span></div><div><TeamBadge team={lg.teams[fixture.h]} size={105}/><strong>{lg.teams[fixture.h].abbr}</strong><small>{lg.teams[fixture.h].name}</small></div></div><div className="match-actions">{lg.phase==='preseason'?<><button className="primary" onClick={act.startSeason}><Icon name="play" size={16}/>Start the season</button><button onClick={()=>go('lines')}>Set your lines</button></>:today?<><button className="primary" onClick={act.playLive}>▶ Play Live</button><button onClick={act.simDay}>Sim Game</button></>:<><button className="primary" onClick={()=>go('schedule')}>View next game</button><button onClick={act.simDay}>Advance one day</button></>}</div></>:series?<div className="playoff-spotlight"><div className="match-teams"><TeamBadge team={lg.teams[series.top]} size={96}/><strong>{series.wTop}–{series.wBot}</strong><TeamBadge team={lg.teams[series.bot]} size={96}/></div><p>Best of seven · {series.winner==null?'The series continues':'Series complete'}</p><button className="primary" onClick={series.winner==null?act.playPlayoffLive:()=>go('playoffs')}>{series.winner==null?'▶ Play Next Game Live':'View playoff bracket'}</button></div>:<div className="offseason-spotlight"><Icon name={lg.phase==='draft'?'draft':'trophies'} size={48}/><h3>{lg.phase==='draft'?slot?`Pick #${slot.overall} is on the clock`:'Your draft class is complete':lg.phase==='resign'?'Protect your core':lg.phase==='freeagency'?'Build your next contender':'Your season, your story'}</h3><p>{lg.phase==='draft'?'Your scouting work becomes your franchise’s future.':'Roster decisions start in your front office.'}</p><button className="primary" onClick={()=>go(lg.phase==='draft'?'draft':['resign','freeagency'].includes(lg.phase)?'freeagency':'playoffs')}>Open {lg.phase==='draft'?'draft room':['resign','freeagency'].includes(lg.phase)?'free agency':'playoffs'} <Icon name="arrow" size={16}/></button></div>}
-    <div className="next-fixtures"><span className="eyebrow">{recent.length?'RECENT RESULTS':'COMING UP'}</span>{(recent.length?recent:upcoming.slice(1)).map(g=><div className="fixture-row" key={g.id}><small>{dayToDate(lg.year,g.day,lg.scheduleStart)}</small><TeamBadge team={lg.teams[g.h===t.id?g.a:g.h]} size={32}/><span>{g.h===t.id?'vs':'at'} <TeamName tid={g.h===t.id?g.a:g.h} short/></span>{g.played?<button className="link" onClick={()=>openBox(g)}>{res(g)}</button>:<span className="dim small">{g.h===t.id?'HOME':'AWAY'}</span>}</div>)}</div>
-   </section>
-   <section className="panel gm-briefing"><div className="section-heading"><div><span className="eyebrow">BEHIND THE BENCH</span><h2>GM briefing</h2></div><Icon name="operations" size={24}/></div>{[
-    {icon:'draft',label:'Scouting department',value:`${budget} points available`,detail:`${lg.draftClassYear} draft class · four scouting roles`,to:'draft'},
-    {icon:'operations',label:pending?'Offer sheet decision':injuries.length?'Medical report':'Hockey operations',value:pending?`${pending} matching window${pending>1?'s':''}`:injuries.length?`${injuries.length} injured player${injuries.length>1?'s':''}`:'Your roster, in focus',detail:pending?'Review before the matching window closes':injuries.length?'Review assignments and LTIR options':'Waivers, rights, development and staff',to:'operations'},
-    {icon:'frontoffice',label:'Head coach',value:t.coach.name,detail:t.owner.goal.label,to:'frontoffice'},
-    {icon:'trophies',label:'Franchise legacy',value:`${cupWins} Stanley Cup${cupWins!==1?'s':''}`,detail:'Honours, records and championship history',to:'trophies'},
-   ].map(item=><button className="briefing-item" key={item.label} onClick={()=>go(item.to)}><span className="briefing-icon"><Icon name={item.icon}/></span><span><small>{item.label}</small><b>{item.value}</b><em>{item.detail}</em></span><Icon name="chevron" size={17}/></button>)}<div className="season-progress"><div><span>Season progress</span><b>{t.rec.gp} / {games.length}</b></div><div className="budget-line"><i style={{width:(games.length?t.rec.gp/games.length*100:0)+'%'}}/></div><small>{games.length-t.rec.gp} regular-season games remaining</small></div></section>
+import React from "react";
+import { useGame, TeamBadge, PlayerName, TeamName, money, recordStr } from "./common.jsx";
+import { divisionTable } from "../engine/standings.js";
+import { teamRatings } from "../engine/lines.js";
+import { capSpace, payroll, rosterIssues, counts, capYear } from "../engine/roster.js";
+import { capForYear, isGoalie } from "../engine/constants.js";
+import { dayToDate } from "../engine/schedule.js";
+import { userGameOnDay } from "../engine/league.js";
+import { userSeries } from "../engine/playoffs.js";
+import { currentSlot } from "../engine/draft.js";
+import { contractCount } from "../engine/hockeyRules.js";
+import { ensurePulse, repTier, tierColor, playoffOdds, powerRankings, rosterGrades, gradeColor } from "../engine/clubPulse.js";
+
+// GM Dashboard, laid out like Gridiron GM's HOME tab: a grid of dense status cards.
+const Bar = ({ v, color, h = 8 }) => (
+  <div className="gg-bar" style={{ height: h }}><i style={{ width: `${Math.max(0, Math.min(100, v))}%`, background: color }} /></div>
+);
+const Meter = ({ label, v, color, suffix = "" }) => (
+  <div className="gg-meter">
+    <span>{label}</span>
+    <Bar v={v} color={color} h={5} />
+    <b style={{ color }}>{Math.round(v)}{suffix}</b>
   </div>
-  <div className="dashboard-bottom-grid"><section className="panel"><div className="section-heading"><div><span className="eyebrow">THE PLAYOFF PICTURE</span><h2>{t.div} Division</h2></div><button className="ghost small" onClick={()=>go('standings')}><Icon name="arrow" size={18}/></button></div><div className="division-heading"><span>CLUB</span><span>GP</span><span>PTS</span></div>{div.map((club,i)=><div className={`division-row ${club.id===t.id?'my-club':''}`} key={club.id}><small>{i+1}</small><TeamBadge team={club} size={33}/><TeamName tid={club.id} short/><span>{club.rec.gp}</span><b>{club.rec.pts}</b></div>)}</section><section className="panel"><div className="section-heading"><div><span className="eyebrow">SETTING THE STANDARD</span><h2>Club leaders</h2></div><button className="ghost small" onClick={()=>go('stats')}><Icon name="arrow" size={18}/></button></div>{leaders.map(([label,p,value])=>p && <div className="leader-row" key={label}><span className="leader-category">{label}</span><PlayerCell p={p} team={t}/><b>{t.rec.gp?value(p):'—'}</b></div>)}<button className="full-width ghost small" onClick={()=>go('roster')}>Explore the roster <Icon name="arrow" size={16}/></button></section><section className="panel nhl-wire"><div className="section-heading"><div><span className="eyebrow">AROUND THE LEAGUE</span><h2>The NHL wire</h2></div><Icon name="bell" size={22}/></div>{(lg.news?.length?lg.news.slice(0,3):lg.inbox.slice(-3).reverse()).map((n,i)=><article className="wire-story" key={i}><small>{n.type || 'FRANCHISE UPDATE'}</small><p>{n.text}</p></article>)}{!lg.news?.length && !lg.inbox.length && <p className="muted">The next chapter starts when the puck drops.</p>}<button className="full-width ghost small" onClick={()=>go('activity')}>Open club activity <Icon name="arrow" size={16}/></button></section></div>
-  <section className="panel cornerstone-panel"><div className="section-heading"><div><span className="eyebrow">THE CORE</span><h2>Franchise cornerstones</h2></div><span className="dim small">YOUR TOP-RATED PLAYERS</span></div><div className="cornerstone-grid">{[...roster].sort((a,b)=>b.ovr-a.ovr).slice(0,4).map(p=><div className="cornerstone" key={p.id}><div className="cornerstone-jersey"><TeamBadge team={t} size={51} decorative/><strong>{p.number || p.pos}</strong></div><div><span className="eyebrow">{p.pos} · {p.age} YEARS</span><PlayerName p={p}/><small>{money(p.cap)} · {p.yrs} year{p.yrs!==1?'s':''}</small></div><Ovr v={p.ovr}/></div>)}</div></section>
- </div>;
+);
+const POS_GROUPS = [["C", ["C"]], ["LW", ["LW"]], ["RW", ["RW"]], ["LD", ["LD"]], ["RD", ["RD"]], ["G", ["G"]]];
+
+export default function Dashboard({ act = {} }) {
+  const { league: lg, go, openBox } = useGame();
+  const t = lg.teams[lg.userTid];
+  const gm = ensurePulse(lg);
+  const rep = repTier(gm.rep);
+  const ratings = teamRatings(lg, t);
+  const grades = rosterGrades(lg, t.id);
+  const div = divisionTable(lg, t.div);
+  const divRank = div.findIndex((d) => d.id === t.id) + 1;
+  const room = capSpace(lg, t);
+  const cap = capForYear(capYear(lg));
+  const used = payroll(lg, t);
+  const roster = t.roster.map((id) => lg.players[id]).filter(Boolean);
+  const injured = roster.filter((p) => p.injury > 0);
+  const expiring = roster.filter((p) => p.yrs <= 1).length;
+  const issues = rosterIssues(lg, t);
+  const games = lg.schedule.filter((g) => g.h === t.id || g.a === t.id);
+  const today = userGameOnDay(lg);
+  const upcoming = games.filter((g) => !g.played).slice(0, 4);
+  const recent = games.filter((g) => g.played).slice(-5).reverse();
+  const series = lg.phase === "playoffs" ? userSeries(lg) : null;
+  const slot = currentSlot(lg);
+  const odds = lg.phase === "regular" ? playoffOdds(lg)[t.id] : null;
+  const power = lg.phase === "regular" && t.rec.gp ? powerRankings(lg).find((r) => r.t.id === t.id) : null;
+  const streak = Array.isArray(t.rec.streak) ? `${t.rec.streak[0] === "O" ? "OTL" : t.rec.streak[0]}${t.rec.streak[1]}` : null;
+  const fans = t.owner?.fanSupport ?? 60;
+  const trust = t.owner?.trust ?? 65;
+  const pending = lg.offerSheets?.filter((s) => !s.done && s.from === t.id).length || 0;
+  const stars = injured.filter((p) => p.ovr >= 83);
+
+  const alerts = [];
+  if (room < 0) alerts.push(["bad", `Over the cap by ${money(-room)}. Clear space before the next game.`]);
+  issues.forEach((i) => alerts.push(["bad", i]));
+  stars.forEach((p) => alerts.push(["warn", `${p.name} (${p.pos}, ${p.ovr}) is out ${p.injury} game${p.injury === 1 ? "" : "s"}.`]));
+  if (pending) alerts.push(["warn", `${pending} offer sheet${pending > 1 ? "s" : ""} waiting for a matching decision.`]);
+  if (["resign", "freeagency"].includes(lg.phase) && expiring) alerts.push(["warn", `${expiring} expiring contract${expiring > 1 ? "s" : ""}: re-sign window open.`]);
+  if (trust < 35) alerts.push(["bad", `Owner trust is ${trust}/100. You are on the hot seat.`]);
+  if (fans < 35) alerts.push(["warn", `Fan support is low (${fans}/100).`]);
+  if (gm.presser) alerts.push(["info", "🎙️ The media is waiting for you at the podium."]);
+  if (gm.speech) alerts.push(["info", "🏒 The locker room is waiting for a word from you."]);
+
+  const res = (g) => {
+    const home = g.h === t.id, us = home ? g.hs : g.as, them = home ? g.as : g.hs, win = us > them;
+    return <b style={{ color: win ? "#22c55e" : g.ot ? "#eab308" : "#ef4444" }}>{win ? "W" : g.ot ? "OTL" : "L"} {us}-{them}{g.ot ? " (OT)" : ""}</b>;
+  };
+
+  const primary = (() => {
+    if (lg.phase === "preseason") return <button className="primary" onClick={act.startSeason}>Start Season</button>;
+    if (lg.phase === "regular" && today) return <><button className="primary" onClick={act.playLive}>▶ Play Live</button><button onClick={act.simDay}>Sim Game</button></>;
+    if (lg.phase === "regular") return <button className="primary" onClick={act.simDay}>Advance one day</button>;
+    if (series && series.winner == null) return <button className="primary" onClick={act.playPlayoffLive}>▶ Play Next Game Live</button>;
+    if (lg.phase === "playoffs") return <button className="primary" onClick={() => go("playoffs")}>Playoff bracket</button>;
+    if (lg.phase === "draft") return <button className="primary" onClick={() => go("draft")}>{slot ? `Draft room · pick #${slot.overall}` : "Draft room"}</button>;
+    return <button className="primary" onClick={() => go("freeagency")}>{lg.phase === "resign" ? "Re-sign players" : "Free agency"}</button>;
+  })();
+
+  return (
+    <div className="gg-dash stack">
+      <div className="gg-pagehead"><h2>GM Dashboard</h2><span className="dim small">{dayToDate(lg.year, lg.day, lg.scheduleStart)}</span></div>
+      <div className="gg-cards">
+        <section className="gg-card">
+          <div className="gg-k">TEAM STATUS</div>
+          <div className="row" style={{ gap: 10 }}>
+            <TeamBadge team={t} size={40} />
+            <div>
+              <div className="gg-card-title">{t.city} {t.name}</div>
+              <div className="dim small">{lg.year}-{String(lg.year + 1).slice(2)} {lg.phase === "regular" ? "Regular season" : lg.phase === "preseason" ? "Preseason" : lg.phase === "playoffs" ? "Playoffs" : "Off-season"}</div>
+            </div>
+          </div>
+          <div className="gg-record"><span className="good">{t.rec.w}W</span> <span className="bad">{t.rec.l}L</span> <span className="warn">{t.rec.otl}OTL</span> <span className="dim">· {t.rec.pts} PTS</span>{streak && <span className="gg-pill">{streak}</span>}</div>
+          <div className="dim small">{t.div} Division — <b className="good">{divRank}{["st", "nd", "rd"][divRank - 1] || "th"}</b> · {t.conf}ern Conference</div>
+          {(power || odds != null) && <div className="small" style={{ marginTop: 4 }}>{power && <>Power rank <b>#{power.rank}</b>{power.move ? <span className={power.move > 0 ? "good" : "bad"}> {power.move > 0 ? "▲" : "▽"}{Math.abs(power.move)}</span> : null}</>}{odds != null && <> · Playoff odds <b style={{ color: tierColor(odds * 100, 70, 35) }}>{Math.round(odds * 100)}%</b></>}</div>}
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">SALARY CAP</div>
+          <div className="gg-split"><span className="gg-big" style={{ color: room < 0 ? "#ef4444" : "#22c55e" }}>{money(room)}</span><span className="dim small">of {money(cap)}</span></div>
+          <Bar v={(used / cap) * 100} color={room < 2 ? "#ef4444" : room < 8 ? "#eab308" : "#22c55e"} />
+          <div className="gg-split small"><span>Used: <b className="gold">{money(used)}</b></span><span>{contractCount(lg, t)}/50 contracts</span></div>
+          <div className="small warn">{expiring} expiring contract{expiring === 1 ? "" : "s"}</div>
+          <div className="gg-link" onClick={() => go("roster")}>View Roster →</div>
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">ROSTER HEALTH</div>
+          <div><b className="good">{roster.length - injured.length} healthy</b> <b className="bad">{injured.length} injured</b> <span className="dim small">Active {counts(lg, t).active}/23 · Prospects {t.prospects.length}</span></div>
+          <div className="gg-dots">
+            {POS_GROUPS.map(([lab, ps]) => {
+              const at = roster.filter((p) => ps.includes(p.pos));
+              const hurt = at.filter((p) => p.injury > 0).length;
+              return <div key={lab}><i style={{ background: hurt >= 2 ? "#ef4444" : hurt ? "#f59e0b" : "#22c55e" }} title={`${at.length} at ${lab}, ${hurt} injured`} /><small>{lab}</small></div>;
+            })}
+          </div>
+          <div className="gg-grades">
+            {[["F", grades.F], ["D", grades.D], ["G", grades.G]].map(([k, g]) => <span key={k}>{k} <b style={{ color: gradeColor(g) }}>{g}</b></span>)}
+            <span className="dim">OVR {ratings.ovr}</span>
+          </div>
+          <div className="gg-link" onClick={() => go("lines")}>Set Lines →</div>
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">TEAM INTEL</div>
+          <Meter label="Morale" v={t.morale} color={tierColor(t.morale)} />
+          <Meter label="Chemistry" v={t.chemistry} color={tierColor(t.chemistry, 80, 65)} />
+          <div className="gg-meter"><span>GM Rep</span><span /><b style={{ color: rep.color }}>{rep.label} ({Math.round(gm.rep)})</b></div>
+          <Meter label="Fan Support" v={fans} color={tierColor(fans)} suffix="%" />
+          <Meter label="Owner Trust" v={trust} color={tierColor(trust)} />
+          <div className="gg-meter"><span>Season Pts</span><span /><b style={{ color: "#3b82f6", fontSize: 15 }}>{gm.sp} SP</b></div>
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">{series ? "PLAYOFF SERIES" : "UPCOMING GAMES"}</div>
+          {series ? (
+            <div className="gg-series">
+              <TeamBadge team={lg.teams[series.top]} size={30} /><b>{series.wTop} – {series.wBot}</b><TeamBadge team={lg.teams[series.bot]} size={30} />
+              <span className="dim small">{series.winner == null ? "Best of seven" : "Series complete"}</span>
+            </div>
+          ) : upcoming.length ? upcoming.map((g) => {
+            const opp = lg.teams[g.h === t.id ? g.a : g.h];
+            return (
+              <div key={g.id} className="gg-game">
+                <span className="dim small">{dayToDate(lg.year, g.day, lg.scheduleStart)}</span>
+                <b className={g.h === t.id ? "good" : "warn"}>{g.h === t.id ? "vs" : "@"}</b>
+                <TeamBadge team={opp} size={18} />
+                <TeamName tid={opp.id} />
+                <span className="dim small">{recordStr(opp.rec)}</span>
+              </div>
+            );
+          }) : <div className="dim small">No games scheduled.</div>}
+          <div className="gg-link" onClick={() => go("schedule")}>Full Schedule →</div>
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">ALERTS</div>
+          {alerts.length ? alerts.slice(0, 7).map(([kind, text], i) => <div key={i} className={`small ${kind === "bad" ? "bad" : kind === "warn" ? "warn" : "info"}`}>{text}</div>) : <div className="small good">All clear — no urgent issues</div>}
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">RECENT RESULTS</div>
+          {recent.length ? recent.map((g) => {
+            const opp = lg.teams[g.h === t.id ? g.a : g.h];
+            return (
+              <div key={g.id} className="gg-game clickable" onClick={() => openBox(g)}>
+                <span className="dim small">{dayToDate(lg.year, g.day, lg.scheduleStart)}</span>
+                <span>{g.h === t.id ? "vs" : "@"} {opp.abbr}</span>
+                {res(g)}
+                <span className="gg-link small">📊 Box</span>
+              </div>
+            );
+          }) : <div className="dim small">No games played yet.</div>}
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">RECENT ACTIVITY</div>
+          {(lg.news?.length ? lg.news.slice(0, 6) : lg.inbox.slice(-6).reverse()).map((n, i) => <div key={i} className="small gg-news">{n.text}</div>)}
+          {!lg.news?.length && !lg.inbox.length && <div className="dim small">The next chapter starts when the puck drops.</div>}
+          <div className="gg-link" onClick={() => go("activity")}>Full Log →</div>
+        </section>
+
+        <section className="gg-card">
+          <div className="gg-k">CLUB LEADERS</div>
+          {[["PTS", (p) => p.stats.pts], ["G", (p) => p.stats.g], ["A", (p) => p.stats.a]].map(([k, f]) => {
+            const p = roster.filter((x) => !isGoalie(x.pos)).sort((a, b) => f(b) - f(a) || b.ovr - a.ovr)[0];
+            return p ? <div key={k} className="gg-game"><span className="gg-pill">{k}</span><PlayerName p={p} /><b>{t.rec.gp ? f(p) : "—"}</b></div> : null;
+          })}
+          <div className="gg-link" onClick={() => go("hub")}>Season Leaders →</div>
+        </section>
+      </div>
+      <div className="gg-quick">{primary}<button onClick={() => go("lines")}>Lines</button><button onClick={() => go("analysis")} aria-label="Open planning & reports">Game Plan</button><button onClick={() => go("hub")}>📊 Hub</button></div>
+    </div>
+  );
 }

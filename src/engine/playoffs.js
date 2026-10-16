@@ -1,3 +1,4 @@
+import { pulseAfterPlayoffDay } from "./clubPulse.js";
 import {recordReport} from './matchReports.js';
 // Stanley Cup Playoffs: 16 teams, four best-of-seven rounds, fixed bracket.
 import { playoffPicture, compareTeams } from "./standings.js";
@@ -109,6 +110,7 @@ export function simPlayoffDay(league, { skipSeries = null } = {}) {
   }
   healInjuries(league, alive);
   advanceRoundIfDone(league);
+  pulseAfterPlayoffDay(league);
   return true;
 }
 

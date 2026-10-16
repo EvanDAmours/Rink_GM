@@ -1,11 +1,16 @@
-import FeedbackToast from './ui/FeedbackToast.jsx';
 import {decisionInterrupt} from './engine/decisionInterrupts.js';
+import HubPage from "./ui/HubPage.jsx";
+import StageStrip from "./ui/StageStrip.jsx";
+import PulsePrompts from "./ui/PulsePrompts.jsx";
+import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
+import { capForYear } from "./engine/constants.js";
+import { capYear } from "./engine/roster.js";
+import { lastDay } from "./engine/schedule.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCtx, TeamBadge, recordStr, money } from "./ui/common.jsx";
 import StanleyCup3D from "./ui/StanleyCup3D.jsx";
 import ActivityPage from "./ui/ActivityPage.jsx";
 import CommandPalette from "./ui/CommandPalette.jsx";
-import Icon from "./ui/Icon.jsx";
 import TitleScreen from "./ui/TitleScreen.jsx";
 import Dashboard from "./ui/Dashboard.jsx";
 import RosterPage from "./ui/RosterPage.jsx";
@@ -43,16 +48,15 @@ import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
 
 const NAV = [
-  {group:"Clubhouse"},
-  {id:"dashboard",label:"Dashboard"},{id:"activity",label:"News & Inbox"},{id:"roster",label:"Roster"},{id:"lines",label:"Lines"},{id:"frontoffice",label:"Front Office"},{id:"operations",label:"Hockey Operations"},{id:"analysis",label:"Game plans & reports"},
-  {group:"Competition"},
-  {id:"schedule",label:"Schedule"},{id:"standings",label:"Standings"},{id:"stats",label:"Stats"},{id:"playoffs",label:"Playoffs"},
-  {group:"Build your contender"},
-  {id:"trade",label:"Trade"},{id:"block",label:"Trade Block"},
-  {id:"deadline",label:"Deadline Day",when:lg=>(lg.phase==="regular" || lg.phase==="playoffs") && (deadlinePending(lg) || lg.deadline?.year===lg.year && !lg.deadline.synthetic)},
-  {id:"freeagency",label:"Free Agency"},{id:"draft",label:"Draft & Scouting"},
-  {group:"Legacy & league"},
-  {id:"trophies",label:"Trophy Room"},{id:"records",label:"Record Book"},{id:"league",label:"League"},{id:"settings",label:"Settings"},
+  {id:"dashboard",label:"Dashboard",short:"Home"},{id:"roster",label:"Roster",short:"Roster"},{id:"lines",label:"Lines",short:"Lines"},
+  {id:"standings",label:"Standings",short:"Standings"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"hub",label:"Hub",short:"📊Hub"},
+  {id:"stats",label:"Stats",short:"Stats"},{id:"draft",label:"Draft & Scouting",short:"Draft"},{id:"frontoffice",label:"Front Office",short:"Coaching"},
+  {id:"operations",label:"Hockey Operations",short:"Ops"},{id:"analysis",label:"Game plans & reports",short:"Game Plan"},
+  {id:"trade",label:"Trade",short:"Trade"},{id:"block",label:"Trade Block",short:"Block"},
+  {id:"deadline",label:"Deadline Day",short:"⏰Deadline",when:lg=>(lg.phase==="regular" || lg.phase==="playoffs") && (deadlinePending(lg) || lg.deadline?.year===lg.year && !lg.deadline.synthetic)},
+  {id:"freeagency",label:"Free Agency",short:"FA"},{id:"playoffs",label:"Playoffs",short:"Playoffs"},
+  {id:"activity",label:"News & Inbox",short:"Log"},{id:"trophies",label:"Trophy Room",short:"Trophies"},{id:"records",label:"Record Book",short:"Records"},
+  {id:"league",label:"League",short:"League"},{id:"settings",label:"Settings",short:"🔧"},
 ];
 
 const CLOUD_EVERY_MS = 60000;
@@ -153,7 +157,13 @@ export default function App({ resume = false }) {
     const tick = () => {
       const t0 = performance.now();
       let more = true;
-      while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){toast(notice,7000);more=false;} }
+      try {
+        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} }
+      } catch (e) {
+        console.error("Simulation step failed", e);
+        showToast("The simulation stopped because of an error. Your league is saved; try again or reload.", 7000);
+        more = false;
+      }
       setBusy({ label: label(), cancel: true });
       if (more && !cancelRef.current) setTimeout(tick, 0);
       else {
@@ -163,7 +173,7 @@ export default function App({ resume = false }) {
       }
     };
     setTimeout(tick, 20);
-  }, [commit]);
+  }, [commit, showToast]);
 
   useEffect(()=>{const key=e=>{if((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="k" && screen==="game" && !live){e.preventDefault();setSearchOpen(v=>!v);}};window.addEventListener("keydown",key);return ()=>window.removeEventListener("keydown",key);},[screen,live]);
   // A new screen starts at the top (matters most on phones).
@@ -399,15 +409,6 @@ export default function App({ resume = false }) {
   };
 
   // ---------- Top bar ----------
-  const phaseLabel = (() => {
-    const season = `${league.year}-${String(league.year + 1).slice(2)}`;
-    if (league.phase === "regular") return `${season} · ${dayToDate(league.year, league.day, league.scheduleStart)}`;
-    if (league.phase === "playoffs") return `${season} · Playoffs`;
-    if (league.phase === "freeagency") return `${league.year + 1} Free Agency · Day ${league.fa?.day ?? 0}/${FA_DAYS}`;
-    if (league.phase === "draft") return atCombine(league) ? `${league.year + 1} Scouting Combine` : `${league.year + 1} Entry Draft`;
-    if (league.phase === "resign") return `${league.year + 1} Off-season · Re-sign`;
-    return `${season} · ${PHASES[league.phase]}`;
-  })();
 
   const actions = [];
   if (league.phase === "preseason") actions.push(<button key="s" className="primary" onClick={act.startSeason}>Start Season ▶</button>);
@@ -468,47 +469,62 @@ export default function App({ resume = false }) {
     return null;
   };
 
+  const gm = ensurePulse(league);
+  const rep = repTier(gm.rep);
+  const capCeiling = capForYear(capYear(league));
+  const unread = Math.max(0, league.inbox.length - (league.settings.activityReadCount || 0));
+  const seasonLabel = `${league.year}-${String(league.year + 1).slice(2)}`;
+  const phasePill = league.phase === "regular" ? `Wk ${Math.floor(league.day / 7) + 1}/${Math.floor(lastDay(league.schedule) / 7) + 1}` : league.phase === "playoffs" ? (league.playoffs?.champion != null ? "Cup awarded" : `Playoffs R${(league.playoffs?.round ?? 0) + 1}`) : league.phase === "draft" ? (atCombine(league) ? "Combine" : "Draft") : league.phase === "resign" ? "Re-sign" : league.phase === "freeagency" ? `FA Day ${league.fa?.day ?? 0}` : "Preseason";
+
   return (
     <GameCtx.Provider value={ctx}>
-      <div className="app" data-density={league.settings.uiDensity || "comfortable"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
-        <div className="topbar">
-          <button className="brand" onClick={()=>setTab("dashboard")} aria-label="Rink GM dashboard"><span className="brand-mark">R</span><span>RINK<span className="brand-gm">GM</span><small>FRANCHISE MODE</small></span></button>
-          <div className="teaminfo">
-            <TeamBadge team={user} size={46} />
+      <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
+        <header className="gg-head">
+          <div className="gg-id">
+            <TeamBadge team={user} size={30} className="gg-badge"/>
             <div>
-              <div className="name">{user.city} {user.name}</div>
-              <div className="meta">
-                <span className="banner-record" aria-label={`Record ${recordStr(user.rec)}, ${user.rec.pts} points`}><strong>{recordStr(user.rec)}</strong><b>{user.rec.pts} <small>PTS</small></b></span><span className="banner-details">Cap space <span className={space < 0 ? "bad" : ""}>{money(space)}</span> · {phaseLabel}</span>
+              <div className="gg-name">{user.city} {user.name}</div>
+              <div className="gg-status">
+                {seasonLabel} • <span aria-label={`Record ${recordStr(user.rec)}, ${user.rec.pts} points`}>{recordStr(user.rec)}</span> • <b>{user.rec.pts}</b> PTS • Cap <span style={{color:space<0?"#ef4444":"#22c55e",fontWeight:700}}>{money(space)}</span>/{money(capCeiling)} • SP:<b className="gg-sp">{gm.sp}</b> • MOR:<span style={{color:tierColor(user.morale),fontWeight:700}}>{moraleLabel(user.morale)}</span> • CHEM:<span style={{color:tierColor(user.chemistry,80,65),fontWeight:700}}>{Math.round(user.chemistry)}</span> • REP:<span style={{color:rep.color,fontWeight:700}}>{rep.label}</span>{user.owner?.personality && <> • 👔 <span className="gg-owner">{user.owner.personality.toUpperCase()}</span></>}
               </div>
             </div>
           </div>
-          <div className="spacer" />
-          <button className="search-trigger" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens"><Icon name="search" size={17}/><span>Quick search</span><kbd>⌘ K</kbd></button>
-          <button className="notification-trigger" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox"><Icon name="bell" size={18}/>{Math.max(0,league.inbox.length-(league.settings.activityReadCount || 0))>0 && <span className="notification-dot"/>}</button>
-          {!live && <div className="actions">{actions}</div>}
+          <div className="gg-right">
+            <span className="gg-phase">{phasePill}</span>
+            {!live && <div className="actions">{actions}</div>}
+            <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search (Ctrl/⌘ K)">🔍</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("hub")} aria-label="Franchise hub" title="Hub">📊</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("trophies")} aria-label="Trophy room" title="Trophy room">🏆</button>
+            <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
+          </div>
+        </header>
+        <div className="gg-rep" aria-label={`GM reputation ${Math.round(gm.rep)} of 100`}>
+          <span style={{color:rep.color}}>{rep.label}</span>
+          <span className="gg-repbar"><i style={{width:`${Math.round(rep.pct*100)}%`,background:rep.color}}/></span>
+          <span className="gg-repnum">{Math.round(gm.rep)}/{rep.next}</span>
+          {rep.nextLabel && <span className="gg-repnext">{Math.round(rep.pct*100)}% → {rep.nextLabel}</span>}
         </div>
+        {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => setTab("deadline")} />}
-        <div className="mobile-menu"><label>Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>n.id && (!n.when || n.when(league))).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label><div className="row">{["dashboard","roster","draft","operations"].map(id=><button key={id} className={tab===id?"on small":"small"} disabled={!!live} onClick={()=>setTab(id)}><Icon name={id} size={20}/><span>{({dashboard:"Home",roster:"Roster",draft:"Draft",operations:"Club office"})[id]}</span></button>)}</div></div>
+        <nav className="gg-tabs nav" aria-label="Main navigation">
+          {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
+            <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => (n.id === "deadline" && deadlinePending(league) ? blockers() : setTab(n.id))}>
+              <span className="gg-tab-label">{n.short}</span><span className="sr-only">{n.label}</span>
+              {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
+            </button>
+          ))}
+        </nav>
+        <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label>
+        <StageStrip league={league}/>
         <div className="body">
-          <nav className="nav" aria-label="Main navigation"><div className="rail-club"><TeamBadge team={user} size={62}/><span><b>{user.abbr}</b><small>{league.year}–{String(league.year+1).slice(2)} SEASON</small></span></div>
-            {NAV.filter((n) => !n.when || n.when(league)).map((n, i) =>
-              n.group ? (
-                <div key={"group" + i} className="nav-group">{n.group}</div>
-              ) : (
-                <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} onClick={() => (n.id === "deadline" && deadlinePending(league) ? blockers() : setTab(n.id))}>
-                  <span className="ico"><Icon name={n.id} size={19}/></span>
-                  {n.label}
-                  {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
-                </button>
-              )
-            )}
-          <div className="rail-bottom"><span className="save-dot"/> AUTOSAVE ENABLED<small>Independent hockey simulation</small></div></nav>
-          <div className="main"><div className="screen-context"><span>FRANCHISE / {live?"MATCH CENTRE":NAV.find(n=>n.id===tab)?.label?.toUpperCase()}</span><span>{dayToDate(league.year,league.day,league.scheduleStart)} <i/> {phaseLabel}</span></div><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (
               <>
                 {tab === "dashboard" && <Dashboard act={act} />}
+                {tab === "hub" && <HubPage />}
                 {tab === "activity" && <ActivityPage />}
                 {tab === "roster" && <RosterPage />}
                 {tab === "lines" && <LinesPage />}
@@ -532,6 +548,7 @@ export default function App({ resume = false }) {
             )}
           </ErrorBoundary></div>
         </div>
+        {!live && !busy && <PulsePrompts />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>{if(id==="deadline" && deadlinePending(league))blockers();else setTab(id);}} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
@@ -549,7 +566,6 @@ export default function App({ resume = false }) {
             </div>
           </div>
         )}
-        {toast && <FeedbackToast message={toast}/>}
         {confirmEl}
       </div>
     </GameCtx.Provider>

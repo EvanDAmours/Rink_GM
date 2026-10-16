@@ -1,0 +1,262 @@
+/* Gridiron GM look for Rink GM: dark navy, dense type, gradient header, uppercase tab bar,
+   season-stage strip and status cards. Loaded last so it wins over the older theme layers. */
+:root {
+  --gg-bg: #080c14;
+  --gg-cd: #111827;
+  --gg-bd: #1e293b;
+  --gg-tx: #e0e6f0;
+  --gg-mt: #64748b;
+  --gg-sl: #94a3b8;
+  --gg-gn: #22c55e;
+  --gg-bl: #3b82f6;
+  --gg-gd: #eab308;
+  --gg-am: #f59e0b;
+  --gg-rd: #ef4444;
+  --gg-f: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --bg: var(--gg-bg);
+  --bg2: #0a0f1a;
+  --panel: var(--gg-cd);
+  --panel2: #0f172a;
+  --line: var(--gg-bd);
+  --border: var(--gg-bd);
+  --text: var(--gg-tx);
+  --muted: var(--gg-sl);
+  --dim: var(--gg-mt);
+  --accent: var(--gg-gn);
+  --accent2: #16a34a;
+  --good: var(--gg-gn);
+  --warn: var(--gg-gd);
+  --bad: var(--gg-rd);
+  --font: var(--gg-f);
+  --display: var(--gg-f);
+  color-scheme: dark;
+}
+html, body { background: var(--gg-bg); }
+body, .app { font-family: var(--gg-f); background: var(--gg-bg) !important; color: var(--gg-tx); font-size: 13px; line-height: 1.4; }
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app h1, .app h2, .app h3, .app h4 { font-family: var(--gg-f); letter-spacing: 0; color: var(--gg-tx); }
+.app h2 { font-size: 20px; font-weight: 900; }
+.app h3 { font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--gg-mt); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Controls: compact like Gridiron's Btn. */
+.app button, .app .main button, .app .main button:not(.link) {
+  font-family: var(--gg-f); font-size: 12px; font-weight: 700; min-height: 0; padding: 4px 10px; border-radius: 4px;
+  background: #1e293b; color: #e2e8f0; border: 1px solid #263449; line-height: 1.35;
+}
+.app button:hover:not(:disabled) { background: #334155; border-color: #334155; color: #fff; }
+.app button.primary, .app .main button.primary, .app .gg-head .actions button.primary { background: var(--gg-gn); border-color: var(--gg-gn); color: #fff; }
+.app button.primary:hover:not(:disabled) { background: #16a34a; border-color: #16a34a; }
+.app button.danger { background: #7f1d1d; border-color: #7f1d1d; color: #fca5a5; }
+.app button.ghost { background: transparent; border-color: transparent; color: var(--gg-sl); }
+.app button.small, .app .main button.small { font-size: 11px; padding: 3px 8px; }
+.app button.tiny { font-size: 10px; padding: 2px 6px; }
+.app input, .app select, .app textarea, .app .main input:not([type=checkbox]), .app .main select {
+  font-family: var(--gg-f); font-size: 12px; min-height: 0; padding: 4px 8px; border-radius: 4px; background: #0a0f1a; color: var(--gg-tx); border: 1px solid #263449;
+}
+.app input[type=checkbox] { accent-color: var(--gg-gn); width: 15px; height: 15px; min-height: 0; }
+
+/* ---------- Header ---------- */
+.gg-head { background: linear-gradient(90deg, #0f172a, #1e293b); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--gg-bd); flex-wrap: wrap; gap: 4px; position: sticky; top: 0; z-index: 40; }
+.gg-id { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gg-badge.teambadge { border-radius: 4px; background: #0a0f1a; }
+.gg-name { font-weight: 800; font-size: 15px; line-height: 1.2; }
+.gg-status { font-size: 11px; color: var(--gg-mt); }
+.gg-status b { color: var(--gg-tx); }
+.gg-status .gg-sp { color: var(--gg-bl); }
+.gg-owner { color: var(--gg-gn); font-weight: 700; }
+.gg-right { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.gg-right .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.gg-right .actions button { font-size: 12px; padding: 4px 10px; }
+.gg-phase { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #3b82f622; color: var(--gg-bl); font-weight: 700; white-space: nowrap; }
+.app button.gg-ico { background: #1e293b; color: #94a3b8; padding: 3px 7px; font-size: 12px; position: relative; border-color: #1e293b; }
+.gg-ico .notification-dot { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--gg-rd); }
+
+.gg-rep { display: flex; align-items: center; gap: 8px; padding: 2px 12px; background: #080f1e; font-size: 10px; font-weight: 800; letter-spacing: 1px; border-bottom: 1px solid #0f172a; }
+.gg-repbar { width: 240px; max-width: 30vw; height: 4px; background: var(--gg-bd); border-radius: 2px; overflow: hidden; }
+.gg-repbar i { display: block; height: 100%; }
+.gg-repnum { color: #475569; font-weight: 600; }
+.gg-repnext { color: #334155; font-weight: 600; }
+.gg-flash { background: #22c55e12; border-left: 3px solid var(--gg-gn); color: var(--gg-gn); padding: 4px 12px; font-size: 12px; font-weight: 600; }
+
+/* ---------- Tabs ---------- */
+.gg-tabs.nav { display: flex; flex-wrap: nowrap; background: #0f172a; border-bottom: 1px solid var(--gg-bd); overflow-x: auto; -webkit-overflow-scrolling: touch; width: auto; position: static; height: auto; padding: 0; border-right: 0; flex-direction: row; scrollbar-width: thin; }
+.app .gg-tabs.nav button { background: transparent; color: var(--gg-mt); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; min-height: 0; letter-spacing: 0.3px; position: relative; display: inline-flex; align-items: center; gap: 4px; width: auto; }
+.app .gg-tabs.nav button:hover:not(:disabled) { color: #fff; background: #1e293b88; }
+.app .gg-tabs.nav button.active { background: #1e293b; color: #fff; border-bottom-color: var(--gg-gn); }
+.gg-tabs .badge { font-size: 8px; background: var(--gg-gn); color: #052e16; border-radius: 6px; padding: 0 4px; font-weight: 900; }
+
+/* ---------- Season stage strip ---------- */
+.gg-strip { display: flex; align-items: flex-start; gap: 0; padding: 5px 12px 3px; background: #080f1e; border-bottom: 1px solid var(--gg-bd); overflow-x: auto; }
+.gg-stage, .gg-weeks { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+.gg-stage small, .gg-weeks > small { font-size: 9px; font-weight: 700; color: #334155; letter-spacing: 0.5px; }
+.gg-node { width: 32px; height: 12px; border-radius: 3px; border: 1px solid #334155; display: grid; place-items: center; }
+.gg-node i { width: 6px; height: 6px; border-radius: 50%; background: #334155; }
+.gg-stage.done .gg-node { border-color: #166534; } .gg-stage.done .gg-node i { background: #166534; }
+.gg-stage.now .gg-node { border-color: var(--gg-gn); background: #22c55e22; } .gg-stage.now .gg-node i { background: var(--gg-gn); }
+.gg-stage.now small { color: var(--gg-gn); } .gg-stage.done small { color: #475569; }
+.gg-link { width: 8px; height: 1px; background: #334155; margin-top: 6px; flex-shrink: 0; display: block; }
+.gg-link.done { background: #166534; }
+.gg-weekboxes { display: flex; gap: 2px; }
+.gg-wk { width: 12px; height: 12px; border-radius: 2px; background: #1e293b; font-size: 7px; font-weight: 800; color: #fff; display: grid; place-items: center; line-height: 1; }
+.gg-wk.done { background: #166534; color: #86efac; }
+.gg-wk.now { background: #22c55e66; outline: 1px solid var(--gg-gn); }
+.gg-wk.dl { background: #4c1d95; color: #e9d5ff; }
+.gg-wk.dl.done { background: #166534; }
+
+/* ---------- Body ---------- */
+.app .body { display: block; flex: 1; }
+.app .main { padding: 8px 12px 60px; max-width: none; width: 100%; margin: 0; background: transparent; }
+.app .screen-context, .app .topbar, .app .mobile-menu, .app .nav-club, .app .rail-club, .app .rail-bottom { display: none; }
+.app .panel { background: var(--gg-cd); border: 1px solid var(--gg-bd); border-radius: 6px; padding: 10px 12px; box-shadow: none; }
+.app .stack { gap: 8px; }
+.app .pagehead { margin-bottom: 8px; }
+.app .pagehead h2 { font-size: 20px; font-weight: 900; }
+.app .muted { color: var(--gg-sl); } .app .dim { color: var(--gg-mt); }
+.app .small, .app small { font-size: 11px; }
+.app .good { color: var(--gg-gn); } .app .bad { color: var(--gg-rd); } .app .warn { color: #f59e0b; } .app .gold { color: var(--gg-gd); } .app .info { color: #60a5fa; }
+.app .pill { background: #1e293b; color: #cbd5e1; border: 1px solid #263449; border-radius: 3px; font-size: 10px; padding: 1px 6px; }
+.app .notice { background: #111827; border: 1px solid #1e293b; border-left: 3px solid var(--gg-gn); color: var(--gg-tx); font-size: 12px; border-radius: 4px; }
+.app .notice.warn { border-left-color: var(--gg-am); color: #fde68a; background: #1f1a0e; }
+.app .notice.bad { border-left-color: var(--gg-rd); color: #fca5a5; background: #2a1215; }
+.app .tabs button { font-size: 11px; padding: 3px 8px; border-radius: 3px; background: transparent; color: var(--gg-mt); border: 1px solid var(--gg-bd); text-transform: none; }
+.app .tabs button.on, .app .tabs button[aria-pressed=true] { background: #22c55e33; color: #fff; border-color: var(--gg-gn); }
+.app .link, .app .player-link { color: var(--gg-tx); }
+.app .link:hover, .app .player-link:hover { color: #fff; text-decoration: underline; }
+
+/* Tables: Gridiron's dense sortable player table. */
+.app .t { font-size: 13px; border-collapse: collapse; }
+.app .t th { font-size: 11px; color: var(--gg-mt); background: var(--gg-bg); font-weight: 700; padding: 3px 6px; border-bottom: 1px solid var(--gg-bd); text-transform: uppercase; letter-spacing: 0; }
+.app .t th.sorted, .app .t th[aria-sort] { color: var(--gg-gn); }
+.app .t td { padding: 4px 6px; border-bottom: 1px solid #1e293b55; }
+.app .t tbody tr:hover { background: #1e293b44; }
+.app[data-density=compact] .t td { padding: 2px 5px; }
+.app .t .player-link, .app .player-link { font-size: 13px !important; font-weight: 600; }
+
+/* OVR as coloured numbers (Gridiron oC tiers, NHL scale). */
+.app .ovr { background: transparent !important; border: 0 !important; box-shadow: none !important; font-weight: 800; font-size: 13px; min-width: 0; height: auto; padding: 0 2px; }
+.app .ovr.elite { color: #22c55e !important; } .app .ovr.great { color: #84cc16 !important; } .app .ovr.good { color: #eab308 !important; } .app .ovr.avg { color: #f97316 !important; } .app .ovr.low { color: #ef4444 !important; }
+
+/* ---------- Dashboard & hub cards ---------- */
+.gg-pagehead { display: flex; align-items: baseline; gap: 10px; }
+.gg-pagehead h2 { margin: 0; font-size: 20px; font-weight: 900; }
+.gg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.gg-card { background: var(--gg-cd); border-radius: 8px; padding: 12px 14px; border: 1px solid var(--gg-bd); display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.gg-k { font-size: 11px; color: var(--gg-mt); letter-spacing: 1px; font-weight: 700; margin-bottom: 2px; }
+.gg-card-title { font-size: 15px; font-weight: 800; }
+.gg-big { font-size: 22px; font-weight: 900; line-height: 1.1; }
+.gg-split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.gg-record { font-size: 16px; font-weight: 900; display: flex; gap: 6px; align-items: center; }
+.gg-bar { background: var(--gg-bd); border-radius: 4px; overflow: hidden; }
+.gg-bar i { display: block; height: 100%; border-radius: 4px; }
+.gg-meter { display: grid; grid-template-columns: 90px 1fr 70px; align-items: center; gap: 8px; font-size: 12px; color: var(--gg-sl); }
+.gg-meter b { text-align: right; font-size: 12px; }
+.gg-link { cursor: pointer; font-size: 11px; color: var(--gg-bl); margin-top: auto; width: auto; height: auto; background: none; }
+.gg-link:hover { text-decoration: underline; }
+.gg-dots { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0; }
+.gg-dots > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.gg-dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.gg-dots small { font-size: 9px; color: var(--gg-mt); }
+.gg-grades { display: flex; gap: 10px; font-size: 12px; }
+.gg-game { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0; min-width: 0; }
+.gg-game > :last-child { margin-left: auto; }
+.gg-game.clickable { cursor: pointer; } .gg-game.clickable:hover { background: #1e293b44; }
+.gg-news { border-bottom: 1px solid #1e293b55; padding: 3px 0; color: #cbd5e1; }
+.gg-series { display: flex; align-items: center; gap: 10px; font-size: 20px; flex-wrap: wrap; }
+.gg-quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.app .gg-quick button { font-size: 13px; padding: 6px 16px; }
+.gg-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; background: #1e3a5f; color: #7dd3fc; }
+.gg-pill.gold { background: #78350f; color: #fde68a; }
+
+.gg-hub { max-width: 1100px; }
+.gg-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.app .gg-chips button { background: transparent; color: var(--gg-mt); border: 1px solid var(--gg-bd); font-size: 12px; padding: 4px 10px; }
+.app .gg-chips button.on { background: #22c55e22; color: var(--gg-gn); border-color: var(--gg-gn); }
+.gg-title { font-size: 12px; font-weight: 800; color: var(--gg-gd); letter-spacing: 2px; }
+.gg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.gg-grid.g4 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.gg-lrow { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 0; border-bottom: 1px solid #1e293b55; min-width: 0; }
+.gg-lrow > b { margin-left: auto; }
+.gg-lrow.mine, .gg-prow.mine { background: #22c55e11; }
+.gg-rank { width: 22px; color: var(--gg-mt); font-weight: 800; text-align: right; flex-shrink: 0; }
+.gg-power { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2px 12px; }
+.gg-prow { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 3px; font-size: 13px; }
+.gg-prow:nth-child(odd) { background: #11182766; }
+.gg-move { width: 28px; font-size: 10px; color: var(--gg-mt); } .gg-move.up { color: var(--gg-gn); } .gg-move.down { color: var(--gg-rd); }
+.gg-odds { margin-left: auto; font-weight: 800; font-size: 12px; }
+.gg-grade { align-items: center; text-align: center; }
+.gg-grade .gg-big { font-size: 36px; }
+.gg-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 4px; }
+.gg-tiles > div { background: var(--gg-bg); border-radius: 4px; padding: 6px; text-align: center; display: flex; flex-direction: column; gap: 2px; border: 1px solid #1e293b; }
+.gg-tiles small { font-size: 9px; color: var(--gg-mt); letter-spacing: 1px; font-weight: 700; }
+.gg-tiles b { font-size: 16px; font-weight: 900; }
+.gg-tiles.big b { font-size: 20px; }
+
+/* ---------- Press conference / locker-room sheet ---------- */
+.gg-sheet { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 300; width: min(560px, calc(100vw - 24px)); background: #0d1424; border: 2px solid var(--gg-am); border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 32px #000a; }
+.gg-sheet-k { font-size: 11px; font-weight: 800; color: var(--gg-am); letter-spacing: 1px; }
+.gg-sheet-q { font-size: 15px; font-weight: 700; margin: 6px 0 8px; }
+.gg-sheet-a { display: flex; flex-direction: column; gap: 4px; }
+.app .gg-sheet-a button { text-align: left; font-size: 12px; padding: 6px 10px; background: #1e293b; }
+.gg-sheet-a button small { display: block; font-weight: 500; color: var(--gg-mt); }
+
+/* Modals and overlays in the dark palette. */
+.app .modal, .app .modal .panel { background: var(--gg-cd); color: var(--gg-tx); border: 1px solid var(--gg-bd); border-radius: 14px; }
+.app .modalbg { background: rgba(0, 0, 0, 0.88); }
+.app .overlay { background: rgba(0, 0, 0, 0.88); }
+.app .overlay .box { background: var(--gg-cd); border: 1px solid var(--gg-bd); color: var(--gg-tx); }
+
+@media (max-width: 640px) {
+  .gg-head { padding: 5px 8px; position: static; }
+  .gg-status { font-size: 10px; }
+  .gg-repbar { width: 120px; }
+  .gg-repnext { display: none; }
+  .app .gg-tabs.nav { position: sticky; top: 0; z-index: 40; }
+  .app .gg-tabs.nav button { font-size: 8px; padding: 6px 7px; }
+  .app .main { padding: 6px 8px 60px; font-size: 11px; }
+  .gg-cards { grid-template-columns: 1fr; }
+  .gg-power { grid-template-columns: 1fr; }
+  .gg-meter { grid-template-columns: 76px 1fr 60px; }
+}
+
+/* Text-style buttons (player and team names, inline links) stay plain text. */
+.app button.link, .app .main button.link, .app button.player-link, .app button.team-link {
+  background: transparent !important; border: 0 !important; padding: 0 !important; min-height: 0 !important; border-radius: 0;
+  color: var(--gg-tx); font-weight: 600; font-size: inherit; text-align: left; box-shadow: none;
+}
+.app button.link:hover, .app button.player-link:hover, .app button.team-link:hover { text-decoration: underline; color: #fff; background: transparent !important; }
+.app .inj { color: var(--gg-rd); font-weight: 800; font-size: 10px; }
+.app .tablewrap { border: 1px solid var(--gg-bd); border-radius: 6px; scrollbar-color: #334155 transparent; }
+.app .roster-sweater svg, .app .roster-sweater img { width: 24px !important; height: 24px !important; }
+.app .player-cell { gap: 6px; }
+.app .player-detail { font-size: 10px; color: var(--gg-mt); }
+.app .src { font-size: 8px; padding: 0 3px; border-radius: 2px; }
+.gg-stage { min-width: 60px; }
+.gg-stage small { white-space: nowrap; }
+.gg-flash.warn { background: #f59e0b14; border-left-color: var(--gg-am); color: #fbbf24; }
+.gg-ach { align-items: center; text-align: center; opacity: 0.45; }
+.gg-ach.on { opacity: 1; border-color: #78350f; }
+.gg-ach-ico { font-size: 26px; }
+
+/* Title screen: Gridiron's team-colour gradient cards. */
+.title { background: linear-gradient(135deg, #080c14, #131b2e) !important; font-family: var(--gg-f); }
+.title .teamcard { background: linear-gradient(135deg, color-mix(in srgb, var(--c1, #1e293b) 85%, #000) 0%, #111827 78%) !important; border: 1px solid #1e293b !important; border-radius: 8px; }
+.title .teamcard:hover { border-color: var(--c2, #334155) !important; filter: brightness(1.12); }
+.title .teamcard.sel { box-shadow: 0 0 0 2px var(--gg-gn) !important; border-color: var(--gg-gn) !important; }
+.title .teamcard .tn { font-size: 14px; font-weight: 800; color: #fff; }
+.title .teamcard .tr { font-size: 10px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; }
+.title .teamcard .team-strength { color: #fff; font-family: var(--gg-f); font-weight: 900; }
+.title .teamcard .teambadge { background: #ffffffe6; border-radius: 50%; padding: 4px; }
+.title h1, .title h2 { font-family: var(--gg-f); font-weight: 900; }
+.title button.primary { background: var(--gg-gn); border-color: var(--gg-gn); color: #fff; font-weight: 800; }
+.gg-jump { display: none; }
+@media (max-width: 640px) {
+  .gg-jump { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: #0f172a; font-size: 11px; color: var(--gg-mt); border-bottom: 1px solid var(--gg-bd); }
+  .gg-jump select { flex: 1; min-width: 0; }
+  .app .main button:not(.link):not(.player-link):not(.team-link) { min-height: 44px; }
+  .app .gg-head .actions button, .app button.gg-ico { min-height: 36px; }
+}
+/* "Comfortable" density: larger, easier controls for people who prefer them. */
+.app[data-density=comfortable] .main button:not(.link):not(.player-link):not(.team-link) { font-size: 14px; min-height: 40px; padding: 6px 12px; }
+.app[data-density=comfortable] .t td { padding: 8px 8px; }
+.app[data-density=comfortable] .t, .app[data-density=comfortable] .t .player-link { font-size: 14px !important; }

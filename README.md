@@ -52,6 +52,16 @@ For a single-file deployment of the current engine, build first and publish `dis
 
 The exact feature inventory and simplified rules are documented in [FEATURE_PARITY.md](docs/FEATURE_PARITY.md). This is a working management simulation, not a claim of complete real-world CBA fidelity or perfect NHL prediction.
 
+## Gridiron GM look and club pulse
+
+Rink GM uses the presentation and franchise "pulse" of the companion Gridiron GM football game, adapted to hockey:
+
+- A dark, dense layout: a status-line header (record, cap space, Season Points, morale, chemistry, GM reputation, owner), a GM reputation strip, an uppercase tab bar, a season-stage strip (preseason, one box per week, playoffs, combine, draft, re-sign, free agency) and a card-grid **GM Dashboard**.
+- **Season Points (SP):** 2 a week during the season, more with a strong reputation and happy fans, plus playoff and Cup bonuses. Spend them on team meetings, bonding trips, fan nights, owner lunches or extra scouting.
+- **Morale and chemistry** for every club, moved by results, streaks and roster turnover, and read (with small, bounded effects) by the game engine for both teams.
+- **GM reputation** tiers (Rookie, Veteran, Respected, Elite, Legend), **press conferences** and **locker-room speeches** after games, power rankings, playoff odds, roster grades, franchise history and achievements in the **Hub**.
+- Settings → Table density: *Compact* is the classic dense look; *Comfortable* gives larger controls.
+
 ## Data and simulation documentation
 
 - [PLAYER_DATA.md](docs/PLAYER_DATA.md): EA/ESPN sources, identity matching, estimated coverage and save migration.
