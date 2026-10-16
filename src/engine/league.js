@@ -23,6 +23,7 @@ import { computeAwards, connSmythe } from "./awards.js";
 import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries } from "./roster.js";
 import { startResign, endResign, startNewSeason, aiManageRoster, ratingLevel } from "./offseason.js";
 import { marketWeek, deadlinePending, skipDeadline, refreshBlock, fitRoster, seedUserRequests, DEADLINE_END } from "./market.js";
+import { ensurePulse, pulseAfterDay, pulseNewSeason, pulseSeasonEnd, migratePulse } from "./clubPulse.js";
 import { tradingClosed } from "./trade.js";
 import { defaultScouts, refreshScoutPool, scoutWeek, runCombine, migrateScouting } from "./scouting.js";
 
@@ -107,6 +108,7 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
   refreshBlock(league);
   seedUserRequests(league);
   league.inbox.push({ year, day: 0, text: `Welcome, GM of the ${user.city} ${user.name}! Real rosters use published EA ratings where available, with marked estimates elsewhere. Teams begin with opening-week line combinations. Check the Lines tab, then start the season. Your scouting staff is under Draft & Scouting.` });
+  ensurePulse(league);
   return league;
 }
 
@@ -268,6 +270,7 @@ export function finishDay(league, played) {
   arenaWeek(league);
   developmentWeek(league);
   updateRecords(league);
+  pulseAfterDay(league);
   // AI rosters adjust to injuries periodically.
   if (league.day % 7 === 0) {
     for (const t of league.teams) {
@@ -304,6 +307,7 @@ export function endRegularSeason(league) {
   league.awards = computeAwards(league);
   startPlayoffs(league);
   league.phase = "playoffs";
+  pulseSeasonEnd(league);
   const ut = league.teams[league.userTid];
   if (ut) league.inbox.push({ year: league.year, day: league.day, text: ut.playoffResult ? `The ${ut.name} are in the playoffs! First round starts now.` : `The ${ut.name} missed the playoffs this season.` });
 }
@@ -361,6 +365,7 @@ export function beginNextSeason(league) {
   league.deadline = null;
   league.offers = [];
   refreshBlock(league);
+  pulseNewSeason(league);
 }
 
 // ---------- Save / load ----------
@@ -430,6 +435,7 @@ function migrateLeague(l) {
   updateRecords(l);
   expandLegacyDraftClass(l);
   sanitizeLegacyNews(l);
+  migratePulse(l);
   return l;
 }
 
