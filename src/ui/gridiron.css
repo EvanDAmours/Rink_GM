@@ -233,3 +233,30 @@ body, .app { font-family: var(--gg-f); background: var(--gg-bg) !important; colo
 .app .src { font-size: 8px; padding: 0 3px; border-radius: 2px; }
 .gg-stage { min-width: 60px; }
 .gg-stage small { white-space: nowrap; }
+.gg-flash.warn { background: #f59e0b14; border-left-color: var(--gg-am); color: #fbbf24; }
+.gg-ach { align-items: center; text-align: center; opacity: 0.45; }
+.gg-ach.on { opacity: 1; border-color: #78350f; }
+.gg-ach-ico { font-size: 26px; }
+
+/* Title screen: Gridiron's team-colour gradient cards. */
+.title { background: linear-gradient(135deg, #080c14, #131b2e) !important; font-family: var(--gg-f); }
+.title .teamcard { background: linear-gradient(135deg, color-mix(in srgb, var(--c1, #1e293b) 85%, #000) 0%, #111827 78%) !important; border: 1px solid #1e293b !important; border-radius: 8px; }
+.title .teamcard:hover { border-color: var(--c2, #334155) !important; filter: brightness(1.12); }
+.title .teamcard.sel { box-shadow: 0 0 0 2px var(--gg-gn) !important; border-color: var(--gg-gn) !important; }
+.title .teamcard .tn { font-size: 14px; font-weight: 800; color: #fff; }
+.title .teamcard .tr { font-size: 10px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; }
+.title .teamcard .team-strength { color: #fff; font-family: var(--gg-f); font-weight: 900; }
+.title .teamcard .teambadge { background: #ffffffe6; border-radius: 50%; padding: 4px; }
+.title h1, .title h2 { font-family: var(--gg-f); font-weight: 900; }
+.title button.primary { background: var(--gg-gn); border-color: var(--gg-gn); color: #fff; font-weight: 800; }
+.gg-jump { display: none; }
+@media (max-width: 640px) {
+  .gg-jump { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: #0f172a; font-size: 11px; color: var(--gg-mt); border-bottom: 1px solid var(--gg-bd); }
+  .gg-jump select { flex: 1; min-width: 0; }
+  .app .main button:not(.link):not(.player-link):not(.team-link) { min-height: 44px; }
+  .app .gg-head .actions button, .app button.gg-ico { min-height: 36px; }
+}
+/* "Comfortable" density: larger, easier controls for people who prefer them. */
+.app[data-density=comfortable] .main button:not(.link):not(.player-link):not(.team-link) { font-size: 14px; min-height: 40px; padding: 6px 12px; }
+.app[data-density=comfortable] .t td { padding: 8px 8px; }
+.app[data-density=comfortable] .t, .app[data-density=comfortable] .t .player-link { font-size: 14px !important; }

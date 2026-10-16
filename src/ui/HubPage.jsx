@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useGame, PlayerName, TeamBadge, TeamName, recordStr, pct, signed } from "./common.jsx";
 import { isGoalie } from "../engine/constants.js";
 import { savePct, gaa } from "../engine/players.js";
-import { powerRankings, playoffOdds, rosterGrades, gradeColor, bestAt, SP_ACTIONS, runAction, ensurePulse, repTier, tierColor } from "../engine/clubPulse.js";
+import { ACHIEVEMENTS, powerRankings, playoffOdds, rosterGrades, gradeColor, bestAt, SP_ACTIONS, runAction, ensurePulse, repTier, tierColor } from "../engine/clubPulse.js";
 
 // The franchise hub (Gridiron GM's HUB tab, in hockey form): season leaders, power rankings,
 // roster grades, franchise history and the Season Points desk.
@@ -12,6 +12,7 @@ const SECTIONS = [
   ["grades", "💪 Roster Grades"],
   ["history", "🏆 Franchise History"],
   ["sp", "💰 Season Points"],
+  ["ach", "🏅 Achievements"],
 ];
 
 const SKATER_CATS = [
@@ -197,6 +198,29 @@ function SeasonPoints({ league }) {
   );
 }
 
+function Achievements({ league }) {
+  const got = new Map((league.achievements || []).map((a) => [a.key, a]));
+  const extra = (league.achievements || []).filter((a) => !ACHIEVEMENTS.some((d) => d.key === a.key));
+  return (
+    <>
+      <div className="gg-title">🏅 ACHIEVEMENTS — {got.size}/{ACHIEVEMENTS.length + extra.length}</div>
+      <div className="gg-grid g4">
+        {[...ACHIEVEMENTS, ...extra.map((a) => ({ ...a, icon: "🏅", desc: "Franchise milestone." }))].map((d) => {
+          const a = got.get(d.key);
+          return (
+            <div key={d.key} className={`gg-card gg-ach${a ? " on" : ""}`}>
+              <div className="gg-ach-ico">{a ? d.icon : "🔒"}</div>
+              <b>{d.name}</b>
+              <span className="dim small">{d.desc}</span>
+              {a && <span className="gg-pill gold">{a.year}-{String(a.year + 1).slice(2)}</span>}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 export const ovrColor = (o) => (o >= 85 ? "#22c55e" : o >= 79 ? "#84cc16" : o >= 73 ? "#eab308" : o >= 67 ? "#f97316" : "#ef4444");
 
 export default function HubPage() {
@@ -215,6 +239,7 @@ export default function HubPage() {
       {sec === "grades" && <Grades league={league} />}
       {sec === "history" && <History league={league} />}
       {sec === "sp" && <SeasonPoints league={league} />}
+      {sec === "ach" && <Achievements league={league} />}
     </div>
   );
 }

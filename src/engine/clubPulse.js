@@ -146,6 +146,7 @@ export function pulseAfterPlayoffDay(league) {
       }
     })
   );
+  checkAchievements(league);
   if (po.champion != null && !po.pulseDone) {
     po.pulseDone = true;
     if (po.champion === league.userTid) {
@@ -179,6 +180,7 @@ export function pulseWeek(league) {
     t.pulseRoster = [...t.roster];
   }
   if (league.phase === "regular") updatePower(league, week);
+  checkAchievements(league);
 }
 
 // New season: carry a little of last year's mood, refresh the room.
@@ -393,6 +395,51 @@ export function bestAt(league, t) {
     ["D", best((p) => p.pos === "LD" || p.pos === "RD")],
     ["G", best((p) => isGoalie(p.pos))],
   ].filter(([, p]) => p);
+}
+
+// ---------- Achievements ----------
+
+// Shares league.achievements ({key, name, year}) with the franchise milestones in franchise.js.
+export const ACHIEVEMENTS = [
+  { key: "firstWin", icon: "🏒", name: "First win", desc: "Win your first game as GM." },
+  { key: "streak5", icon: "🔥", name: "Hot streak", desc: "Win five games in a row." },
+  { key: "streak10", icon: "⚡", name: "Unstoppable", desc: "Win ten games in a row." },
+  { key: "hundred", icon: "💯", name: "Century club", desc: "Finish a regular season with 100+ points." },
+  { key: "fifty", icon: "🎯", name: "50-win season", desc: "Win 50 games in a season." },
+  { key: "presidents", icon: "🏅", name: "Presidents' Trophy", desc: "Finish first in the league." },
+  { key: "playoffs", icon: "🎟️", name: "Playoff hockey", desc: "Reach the Stanley Cup Playoffs." },
+  { key: "sweep", icon: "🧹", name: "Brooms out", desc: "Sweep a playoff series." },
+  { key: "cup", icon: "🏆", name: "Stanley Cup champion", desc: "Win the Stanley Cup." },
+  { key: "dynasty", icon: "👑", name: "Dynasty", desc: "Win three Stanley Cups." },
+  { key: "award", icon: "⭐", name: "Award winner", desc: "One of your players wins an NHL award." },
+  { key: "respected", icon: "🤝", name: "Respected", desc: "Reach RESPECTED GM reputation." },
+  { key: "legend", icon: "🐐", name: "Legend", desc: "Reach LEGEND GM reputation." },
+  { key: "banker", icon: "💰", name: "Banker", desc: "Hold 50 Season Points at once." },
+];
+export function checkAchievements(league) {
+  league.achievements ||= [];
+  const t = league.teams[league.userTid];
+  const have = new Set(league.achievements.map((a) => a.key));
+  const give = (key) => {
+    if (have.has(key)) return;
+    const def = ACHIEVEMENTS.find((a) => a.key === key);
+    have.add(key);
+    league.achievements.push({ key, name: def?.name || key, year: league.year });
+    league.inbox?.push({ year: league.year, day: league.day, text: `🏅 Achievement unlocked: ${def?.name || key}.` });
+  };
+  const s = streakOf(t);
+  if (t.rec.w >= 1) give("firstWin");
+  if (s >= 5) give("streak5");
+  if (s >= 10) give("streak10");
+  if (league.gm.rep >= 60) give("respected");
+  if (league.gm.rep >= 90) give("legend");
+  if (league.gm.sp >= 50) give("banker");
+  const po = league.playoffs;
+  if (po) {
+    if (t.rec.pts >= 100) give("hundred");
+    if ([...league.teams].sort((a, b) => b.rec.pts - a.rec.pts)[0].id === t.id) give("presidents");
+    if (po.rounds.some((r) => r.some((x) => x.winner === t.id && (x.winner === x.top ? x.wBot : x.wTop) === 0))) give("sweep");
+  }
 }
 
 export function migratePulse(league) {

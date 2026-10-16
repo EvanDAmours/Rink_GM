@@ -478,7 +478,7 @@ export default function App({ resume = false }) {
 
   return (
     <GameCtx.Provider value={ctx}>
-      <div className="app" data-density={league.settings.uiDensity || "comfortable"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
+      <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
         <header className="gg-head">
           <div className="gg-id">
             <TeamBadge team={user} size={30} className="gg-badge"/>
@@ -505,7 +505,7 @@ export default function App({ resume = false }) {
           <span className="gg-repnum">{Math.round(gm.rep)}/{rep.next}</span>
           {rep.nextLabel && <span className="gg-repnext">{Math.round(rep.pct*100)}% → {rep.nextLabel}</span>}
         </div>
-        {toast && <div className="gg-flash" role="status" aria-live="polite">{String(toast)}</div>}
+        {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => setTab("deadline")} />}
         <nav className="gg-tabs nav" aria-label="Main navigation">
           {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
@@ -515,6 +515,7 @@ export default function App({ resume = false }) {
             </button>
           ))}
         </nav>
+        <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label>
         <StageStrip league={league}/>
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
