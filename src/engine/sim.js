@@ -2,7 +2,8 @@ import {gamePlan} from './teamPlanning.js';
 import {snapshotRng, restoreRng} from './rng.js';
 import {coachingEffects, schemeFit, lineChemistry} from './development.js';
 import {recordGame} from './records.js';
-import {rand, chance, weighted, randInt, randFloat, pick, clamp, stream} from './rng.js';
+import {rand, chance, weighted, randInt, randFloat, pick, clamp, stream, gauss} from './rng.js';
+import {leagueNorms, teamForm, DEFAULT_NORMS} from './matchup.js';
 import {composites} from './ratings.js';
 import {syncLines, gameLines} from './lines.js';
 import {isForward, isDefense, isGoalie} from './constants.js';
@@ -16,6 +17,38 @@ export {shotSkills, shiftEfficiency, takeTimeout, skaterCount, assessPenalty};
 // The UI advances ten seconds at a time. Internally, events occur on their own
 // playing-time clock, split at penalty expirations and period boundaries.
 const STEP = 10, PERIOD = 1200, REG_OT = 300;
+// Calibration constants (targets: NHL 2025-26 per-game means in
+// docs/nhl-calibration-2025-26.json; quality curve in docs/SIMULATION_AUDIT.md).
+// Every skill term below is a deviation from the league norm (matchup.js).
+export const SIM = Object.freeze({
+  eventRate: .1105,         // possession events per second of play
+  skillGain: .75,           // global steepness of skill-vs-skill execution terms
+  matchupSlope: .0022,      // event rate per point of (offence - opposing defence)
+  matchupClamp: .16,
+  homePace: 1.04,           // home crowd/last-change edge on the home side's tempo
+  homeQuality: .035,       // home shot-quality edge (log-odds)
+  homePenaltyShift: .05,    // home teams are penalized slightly less often
+  penaltyBase: .0138,       // per event, scaled by on-ice discipline vs league
+  scoreEffect: .10,         // trailing clubs press, leading clubs sit back (all periods)
+  goalieFormSD: 2.2,        // per-game goalie form, in save-skill rating points
+  xgMatchup: .008,          // shot quality per point of unit offence vs defence
+  xgPasser: .020,           // shot quality per point of the setup passer's skill
+  starWeight: .6,           // unit offence = average + this share of (best - average)
+  usage: 1.75,              // how strongly puck touches/shots concentrate on skilled players
+});
+// Strategy trade-offs. Risky choices create offence but leave the club open to
+// counterattacks when the puck is turned over in the attacking zone; safe
+// choices suppress the opponent but slow the club's own attack.
+export const PLAN = Object.freeze({
+  exposure: {attackTactic: .12, aggressiveForecheck: .08, rushPlan: .05},
+  trapPace: .93, defendQuality: .08, forecheckBreakout: .03,
+  // Shoot-first volume comes from lower-percentage looks; patient cycling
+  // gives up volume for better looks and cleaner passing.
+  shootQuality: -.07, cycleQuality: .07, cyclePass: .015,
+});
+// A rating's deviation from the league norm, scaled by the execution gain.
+// skillGain sets the steepness of the whole quality curve in one place.
+const zz = (s, v, key) => (v - (s.norms?.[key] ?? DEFAULT_NORMS[key])) * SIM.skillGain;
 const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
 const visualStreams = new WeakMap();
 const visual = s => visualStreams.get(s);
@@ -82,13 +115,19 @@ export function createGame(league, home, away, opts = {}) {
     if (side.goalie) s.gbox[side.goalie] = {sa: 0, ga: 0, toi: 0};
   }
   s.h.plan = gamePlan(league, home, away); s.a.plan = gamePlan(league, away, home);
+  s.norms = {...leagueNorms(league)};
+  // Morale/chemistry (bounded +/-3%: shot accuracy and finishing log-odds) and
+  // each starting goalie's form tonight.
+  s.h.form = teamForm(home); s.a.form = teamForm(away);
+  s.h.goalieForm = clamp(gauss(0, SIM.goalieFormSD), -2.5 * SIM.goalieFormSD, 2.5 * SIM.goalieFormSD);
+  s.a.goalieForm = clamp(gauss(0, SIM.goalieFormSD), -2.5 * SIM.goalieFormSD, 2.5 * SIM.goalieFormSD);
   s.rng = snapshotRng();
   if (s.live) push(s, {t: 'period', text: `Puck drop! ${home.abbr} vs ${away.abbr} — 1st period underway.`});
   return s;
 }
 
 function decision(s, k, action) { s.decisions[k][action] = (s.decisions[k][action] || 0) + 1; }
-const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2;
+const puckWeight = (side, id) => ((side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2) ** SIM.usage;
 function touch(s, k, id) {
   if (!id) return;
   if (s.poss !== k) s.touches = [];
@@ -173,7 +212,11 @@ export const skatersForDisplay = (s, k) => onIce(s, k);
 function rate(s, k, ids) {
   const side = s[k], efficiency = id => shiftEfficiency(side.pl[id].attrs.end, side.fatigue[id]);
   const get = key => avg(ids.map(id => side.comp[id][key] * efficiency(id)));
-  return {off: get('off') + (side.chemistry[side.fIdx] || 0), ctrl: get('ctrl'), pass: get('pass'),
+  // Offence is driven disproportionately by the best player on the ice; the
+  // unit's creativity sits between its average and its star.
+  const offs = ids.map(id => side.comp[id].off * efficiency(id)), offAvg = avg(offs);
+  const off = offAvg + SIM.starWeight * (Math.max(...offs, offAvg) - offAvg);
+  return {off: off + (side.chemistry[side.fIdx] || 0), ctrl: get('ctrl'), pass: get('pass'),
     def: get('def'), skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n: ids.length};
 }
 
@@ -194,7 +237,7 @@ function coach(s, k) {
     if (s.faceoffNext && s.stoppage?.icing !== k && side.backup && gb?.ga >= (s.playoff ? 6 : 5)
       && gb.toi >= 1200 && gb.ga / Math.max(1, gb.sa) > .20 && diff <= -3 && !side.replaced) {
       const old = side.goalie;
-      side.goalie = side.backup; side.backup = old; side.replaced = true;
+      side.goalie = side.backup; side.backup = old; side.replaced = true; side.goalieForm = 0;
       s.gbox[side.goalie] ||= {sa: 0, ga: 0, toi: 0};
       decision(s, k, 'goalie-change');
       if (s.live) push(s, {t: 'goalie', side: k, text: `${side.abbr} turn to ${nameOf(side, side.goalie)} in goal.`});
@@ -236,7 +279,7 @@ function faceoff(s) {
   // every faceoff. Only actual touches can become assists.
   const receiver = weighted(ice[winner].filter(id => id !== s.carrier), id => puckWeight(s[winner], id));
   touch(s, winner, receiver);
-  s.rush = false; s.lateral = false; s.faceoffNext = false; s.stoppage = null;
+  s.rush = false; s.lateral = false; s.counter = false; s.faceoffNext = false; s.stoppage = null;
   if (s.live && visual(s).chance(.3)) push(s, {t: 'fo', side: winner, text: `${lastName(s[winner], winner === 'h' ? h : a)} wins the draw.`, ...s.puck});
 }
 
@@ -263,10 +306,19 @@ function playingTime(s, dt, ice) {
   tickPenalties(s, dt); notePowerPlays(s);
 }
 
+// Risky systems are paid for here: a turnover in the attacking zone by a club
+// that pinches/forechecks/attacks aggressively can become an odd-man rush.
+export function exposure(side) {
+  const e = PLAN.exposure;
+  return (side?.tactic === 'attack' ? e.attackTactic : 0) + (side?.plan?.forecheck === 'aggressive' ? e.aggressiveForecheck : 0)
+    + (side?.plan?.attack === 'rush' ? e.rushPlan : 0);
+}
 function changePossession(s, k, ice) {
   if (s.delayedPenalty?.k === k) { setStoppage(s, 'penalty'); return; }
-  s.zone = -s.zone; s.touches = []; s.rush = false; s.lateral = false;
+  const lost = other(k), counter = s.zone === 1 && s.poss === lost && !s[lost].pulled && chance(exposure(s[lost]));
+  s.zone = counter ? 0 : -s.zone; s.touches = []; s.rush = counter; s.lateral = false; s.counter = counter;
   touch(s, k, weighted(ice[k], id => s[k].comp[id].ctrl));
+  if (counter) decision(s, k, 'counterattack');
 }
 
 function hockeyEvent(s, ice, R) {
@@ -274,8 +326,8 @@ function hockeyEvent(s, ice, R) {
   const manEdge = R[k].n - R[o].n;
   const carrierSkill = att.comp[s.carrier] || R[k];
   const discipline = (R.h.dsc + R.a.dsc) / 2;
-  if (!s.delayedPenalty && chance(.0155 * (100 - discipline) / 22)) {
-    const penalized = chance(.72) ? o : k;
+  if (!s.delayedPenalty && chance(SIM.penaltyBase * (100 - discipline) / Math.max(5, 100 - (s.norms?.dsc ?? DEFAULT_NORMS.dsc)))) {
+    const penalized = chance(.72 + (o === 'a' ? SIM.homePenaltyShift : -SIM.homePenaltyShift)) ? o : k;
     const ids = ice[penalized].filter(id => !s.pen[penalized].some(p => p.pid === id));
     const pid = weighted(ids, id => Math.max(1, 100 - s[penalized].comp[id].dsc) + s[penalized].comp[id].agr * .12);
     if (pid) {
@@ -298,14 +350,15 @@ function hockeyEvent(s, ice, R) {
     }
   }
   // Checking and puck battles are consequences of contesting possession.
-  if (chance(.065 * R[o].phys / 82)) {
+  if (chance(.065 * R[o].phys / (s.norms?.phys ?? DEFAULT_NORMS.phys))) {
     const hitter = weighted(ice[o], id => def.comp[id].phys ** 2); addBox(s, hitter, 'hit');
     if (s.live && visual(s).chance(.25)) push(s, {t: 'hit', side: o, text: `${lastName(def, hitter)} finishes a check on ${lastName(att, s.carrier)}.`, ...s.puck});
   }
   if (s.zone === -1) {
     decision(s, k, strengthType(s, k) === 'SH' ? 'clear' : 'breakout');
     const clear = strengthType(s, k) === 'SH';
-    const success = clamp((clear ? .76 : .72) + (carrierSkill.pass * .65 + R[k].pass * .35 + carrierSkill.ctrl * .5 + R[k].ctrl * .5 - R[o].def - R[o].skate) * .002 + manEdge * .055, .35, .92);
+    const exit = zz(s, carrierSkill.pass * .65 + R[k].pass * .35, 'pass') + zz(s, carrierSkill.ctrl * .5 + R[k].ctrl * .5, 'ctrl') - zz(s, R[o].def, 'def') - zz(s, R[o].skate, 'skate');
+    const success = clamp((clear ? .76 : .72) + exit * .002 + manEdge * .055 - (def.plan?.forecheck === 'aggressive' && !clear ? PLAN.forecheckBreakout : 0), .35, .92);
     if (chance(success)) {
       const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.5 : 1));
       touch(s, k, receiver); s.zone = clear ? 1 : 0; s.puck = {x: zoneX(s, k, clear ? 55 : -8), y: randFloat(15, 70)};
@@ -323,14 +376,15 @@ function hockeyEvent(s, ice, R) {
       return;
     }
     const entryControl = carrierSkill.ctrl * .65 + R[k].ctrl * .35;
-    const carry = clamp(.63 - (def.plan?.neutral === 'trap' ? .08 : 0) + (att.plan?.attack === 'rush' ? .06 : 0) + (entryControl - R[o].def) * .009 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0), .25, .9);
+    const counter = s.counter; s.counter = false;
+    const carry = clamp(.63 - (def.plan?.neutral === 'trap' ? .07 : 0) + (att.plan?.attack === 'rush' ? .06 : 0) + (zz(s, entryControl, 'ctrl') - zz(s, R[o].def, 'def')) * .009 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0) + (counter ? .2 : 0), .25, .95);
     const controlled = chance(carry);
     decision(s, k, controlled ? 'controlled-entry' : 'dump-and-chase');
-    const success = (controlled ? .69 + (entryControl + carrierSkill.skate * .5 + R[k].skate * .5 - R[o].def * 2) * .002
-      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * .002) + manEdge * .06 + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0);
+    const success = (controlled ? .69 + (zz(s, entryControl, 'ctrl') + zz(s, carrierSkill.skate * .5 + R[k].skate * .5, 'skate') - zz(s, R[o].def, 'def') * 2) * .002
+      : .48 + (zz(s, R[k].phys, 'phys') + zz(s, R[k].skate, 'skate') - zz(s, R[o].phys, 'phys') - zz(s, R[o].def, 'def')) * .002) + manEdge * .06 + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0) + (counter ? .1 : 0);
     s.zone = 1; s.puck = {x: zoneX(s, k, controlled ? 58 : 82), y: randFloat(12, 73)};
-    if (chance(clamp(success, .25, .9))) {
-      s.rush = controlled; s.lateral = false;
+    if (chance(clamp(success, .25, .93))) {
+      s.rush = controlled || counter; s.lateral = false;
       touch(s, k, weighted(ice[k], id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.8 : .5)));
     } else changePossession(s, o, ice);
     return;
@@ -348,14 +402,14 @@ function hockeyEvent(s, ice, R) {
   }
   decision(s, k, s.rush ? 'rush-pass' : 'cycle');
   const passing = carrierSkill.pass * .65 + R[k].pass * .35;
-  const success = clamp(.78 + (passing - R[o].def) * .0045 + advantage * .035
-    - (att.tactic === 'attack' ? .035 : 0) - (att.plan?.forecheck === 'aggressive' ? .025 : 0), .45, .94);
+  const success = clamp(.78 + (zz(s, passing, 'pass') - zz(s, R[o].def, 'def')) * .0045 + advantage * .035
+    - (att.tactic === 'attack' ? .035 : 0) - (att.plan?.forecheck === 'aggressive' ? .025 : 0) + (att.plan?.attack === 'cycle' ? PLAN.cyclePass : 0), .45, .94);
   if (chance(success)) {
     const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => {
       const p = att.pl[id], c = att.comp[id];
-      return (c.ctrl / 82) ** 2 * ((c.shoot / 82) ** 3 * (p.type === 'SNP' ? 1.3 : 1) + (c.pass / 82) ** 3 * (p.type === 'PLY' ? 1.3 : 1));
+      return (c.ctrl / 82) ** (2 * SIM.usage) * ((c.shoot / 82) ** (3 * SIM.usage) * (p.type === 'SNP' ? 1.3 : 1) + (c.pass / 82) ** (3 * SIM.usage) * (p.type === 'PLY' ? 1.3 : 1));
     });
-    touch(s, k, receiver); s.lateral = chance(clamp(.40 + (carrierSkill.pass - 82) * .01, .15, .65)); s.rush = false;
+    touch(s, k, receiver); s.lateral = chance(clamp(.40 + zz(s, carrierSkill.pass, 'pass') * .01, .15, .65)); s.rush = false;
     s.puck = {x: zoneX(s, k, isDefense(att.pl[receiver].pos) ? randFloat(42, 60) : randFloat(62, 80)), y: randFloat(20, 65)};
   } else changePossession(s, o, ice);
 }
@@ -364,7 +418,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   const o = other(k), att = s[k], def = s[o];
   let shooter = s.carrier;
   if (rebound || !ice[k].includes(shooter)) {
-    shooter = weighted(ice[k], id => (att.comp[id].shoot / 80) ** 3 * (isDefense(att.pl[id].pos) ? .35 : 1));
+    shooter = weighted(ice[k], id => (att.comp[id].shoot / 80) ** (3 * SIM.usage) * (isDefense(att.pl[id].pos) ? .35 : 1));
     touch(s, k, shooter);
   }
   const p = att.pl[shooter], isD = isDefense(p.pos);
@@ -381,7 +435,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   const attempt = {side:k,pid:shooter,goalie:def.pulled?null:def.goalie,period:s.period,clock:s.clock,x,y,strength:strengthType(s,k),unit:strengthType(s,k)==='EV'?`Line ${att.fIdx+1}`:strengthType(s,k),defendingUnit:strengthType(s,o)==='EV'?`Line ${def.fIdx+1}`:strengthType(s,o),result:'miss',chance:null};
   (s.shotLog ||= []).push(attempt);
   const advantage = skaterCount(s, k) - skaterCount(s, o) + (att.pulled ? 1 : 0) - (def.pulled ? 1 : 0);
-  const pBlock = rebound ? .06 : clamp(.23 * R[o].blk / 82 * (isD ? 1.35 : .86) - advantage * .02, .08, .42);
+  const pBlock = rebound ? .06 : clamp(.23 * R[o].blk / (s.norms?.blk ?? DEFAULT_NORMS.blk) * (isD ? 1.35 : .86) - advantage * .02, .08, .42);
   if (chance(pBlock)) {
     attempt.result = 'block';
     const blocker = weighted(ice[o], id => def.comp[id].blk ** 2 * (isDefense(def.pl[id].pos) ? 1.5 : 1));
@@ -390,7 +444,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     if (chance(.55)) changePossession(s, o, ice);
     return;
   }
-  const pMiss = clamp(.245 - (skill.accuracy * efficiency - 82) * .0035 + geometry.angle * .035, .10, .42);
+  const pMiss = clamp((.245 - zz(s, skill.accuracy * efficiency, 'acc') * .0035 + geometry.angle * .035) * (1 - (att.form || 0)), .10, .42);
   if (chance(pMiss)) {
     if (s.live && visual(s).chance(.5)) push(s, {t: 'miss', side: k, text: `${lastName(att, shooter)} fires wide.`, x, y});
     if (chance(.56)) changePossession(s, o, ice);
@@ -405,8 +459,16 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   }
   addBox(s, shooter, 'sog'); s.shots[k]++;
   const goalie = def.pl[def.goalie], saveKey = pick(['glh', 'gll', 'sth', 'stl', 'fiv']);
-  const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0);
+  const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0) + (def.goalieForm || 0);
+  // Shot quality is a matchup: the attacking unit against the defending unit,
+  // plus the setup pass when the shot follows a teammate's pass.
+  const passer = !rebound && s.touches.length > 1 ? s.touches.at(-2) : null;
+  const quality = clamp(SIM.xgMatchup * (zz(s, R[k].off, 'off') - zz(s, R[o].def, 'def'))
+    + (passer && att.comp[passer] ? SIM.xgPasser * zz(s, att.comp[passer].pass, 'pass') : 0)
+    + (rebound ? 0 : att.plan?.attack === 'shoot' ? PLAN.shootQuality : att.plan?.attack === 'cycle' ? PLAN.cycleQuality : 0)
+    - (def.tactic === 'defend' && !isOpenIce(s) ? PLAN.defendQuality : 0) + (k === 'h' ? SIM.homeQuality : 0) + (att.form || 0), -.35, .35);
   const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill,
+    finishingRef: s.norms?.fin ?? DEFAULT_NORMS.fin, goalieRef: s.norms?.goalie ?? DEFAULT_NORMS.goalie, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = xg; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
@@ -488,7 +550,7 @@ function shootoutStep(s) {
   const cycle = Math.min(so.hShooters.length, so.aShooters.length);
   const shooter = so[k + 'Shooters'][so.taken[k] % cycle];
   const sc = s[k].comp[shooter], g = s[o].comp[s[o].goalie];
-  const p = clamp(.32 * Math.exp(.022 * ((sc.dek + sc.shoot) / 2 - 82) - .027 * (((g?.goalie ?? 75) + (g?.brk ?? 75)) / 2 - 82)), .10, .65);
+  const p = clamp(.32 * Math.exp(.022 * zz(s, (sc.dek + sc.shoot) / 2, 'shoot') - .027 * zz(s, ((g?.goalie ?? 75) + (g?.brk ?? 75)) / 2, 'goalie')), .10, .65);
   const scored = chance(p); so.taken[k]++; if (scored) so[k]++;
   so.attempts ||= []; so.attempts.push({side: k, shooter, scored});
   if (s.live) push(s, {t: scored ? 'so-goal' : 'so-miss', side: k, x: zoneX(s, k, 89), y: 42.5,
@@ -526,8 +588,11 @@ function advanceGame(s) {
     // In tied late regular-season games, conservative units hold possession
     // rather than force transitions that risk losing the standings point.
     const protectPoint = !s.playoff && s.phase==='reg' && s.period===3 && s.clock<=600 && s.score.h===s.score.a && s[s.poss].tactic==='defend' && advantage===0 ? .70 : 1;
-    const eventRate = .113 * protectPoint * pace * specialTeams * (isOpenIce(s) ? 1.18 : 1) * (advantage > 0 ? 1.1 : advantage < 0 ? .9 : 1)
-      * clamp(1 + (R[s.poss].off - R[other(s.poss)].def) * .002, .85, 1.15);
+    const att = s[s.poss], home = s.poss === 'h' ? SIM.homePace : 1;
+    const trap = att.plan?.neutral === 'trap' ? PLAN.trapPace : 1;
+    const matchup = clamp(1 + (zz(s, R[s.poss].off, 'off') - zz(s, R[other(s.poss)].def, 'def')) * SIM.matchupSlope, 1 - SIM.matchupClamp, 1 + SIM.matchupClamp);
+    const eventRate = SIM.eventRate * protectPoint * pace * specialTeams * (isOpenIce(s) ? 1.18 : 1) * (advantage > 0 ? 1.1 : advantage < 0 ? .9 : 1)
+      * matchup * home * trap * scoreEffect(s, s.poss);
     const wait = Math.max(1, Math.ceil(-Math.log(Math.max(1e-12, rand())) / eventRate));
     const boundary = Math.min(remaining, s.clock, nextPenaltyBoundary(s));
     const dt = Math.min(wait, boundary);
@@ -543,6 +608,11 @@ function advanceGame(s) {
       push(s, {t: 'play', side: s.poss, text: s.poss ? `${s[s.poss].abbr} ${s.zone === 1 ? 'work the offensive zone' : s.zone === -1 ? 'look for an outlet' : 'move through neutral ice'}.` : 'The whistle stops play.', ...s.puck});
     }
   }
+}
+function scoreEffect(s, k) {
+  if (s.phase !== 'reg' || s.period < 2) return 1;
+  const diff = s.score[k] - s.score[other(k)];
+  return diff < 0 ? 1 + SIM.scoreEffect : diff > 0 ? 1 - SIM.scoreEffect / 2 : 1;
 }
 // A match owns its random stream. Browsing, autosaving and other matches cannot
 // change its next outcome; the complete state can be resumed without a reroll.

@@ -8,12 +8,18 @@ export function shotGeometry(depth, lateral) {
   return {distance, angle};
 }
 
-export function expectedGoal({distance, angle, finishing = 82, goalie = 82, rebound = false, rush = false, lateral = false, screen = false, advantage = 0, openIce = false}) {
-  const logit = -1.30 - .034 * distance - .72 * angle
-    + .018 * (finishing - 82) - .026 * (goalie - 82)
-    + (rebound ? .65 : 0) + (rush ? .19 : 0) + (lateral ? .34 : 0)
-    + (screen ? .14 : 0) + Math.max(-1, Math.min(2, advantage)) * .52
-    + (openIce ? .75 : 0);
+// Skill terms are deviations from reference levels. The simulator passes the
+// current league norms (matchup.js), so an average shooter facing an average
+// goalie converts at the league rate; 82 is only the standalone default.
+// `quality` is an additional log-odds term for the on-ice matchup.
+export const XG = Object.freeze({base: -1.715, distance: .034, angle: .72, finishing: .026, goalie: .027,
+  rebound: .65, rush: .19, lateral: .34, screen: .14, advantage: .64, openIce: .75});
+export function expectedGoal({distance, angle, finishing = 82, goalie = 82, finishingRef = 82, goalieRef = 82, quality = 0, rebound = false, rush = false, lateral = false, screen = false, advantage = 0, openIce = false}) {
+  const logit = XG.base - XG.distance * distance - XG.angle * angle
+    + XG.finishing * (finishing - finishingRef) - XG.goalie * (goalie - goalieRef)
+    + (rebound ? XG.rebound : 0) + (rush ? XG.rush : 0) + (lateral ? XG.lateral : 0)
+    + (screen ? XG.screen : 0) + Math.max(-1, Math.min(2, advantage)) * XG.advantage
+    + (openIce ? XG.openIce : 0) + quality;
   return clamp(1 / (1 + Math.exp(-logit)), .005, .65);
 }
 
