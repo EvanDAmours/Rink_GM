@@ -89,7 +89,9 @@ function cornerstonePremium(league, team, id) {
 export function evaluateTrade(league, offer) {
   const user = league.teams[offer.from];
   const ai = league.teams[offer.to];
-  const margin = offer.margin ?? (DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal).tradeMargin;
+  // Sellers ask a little more in the last two weeks before the deadline, when buyers are desperate.
+  const deadlinePremium = league.phase === "regular" && league.deadlineDay && league.day >= league.deadlineDay - 14 && league.day <= league.deadlineDay ? 1.05 : 1;
+  const margin = (offer.margin ?? (DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal).tradeMargin) * deadlinePremium;
   const contending = isContending(league, ai);
 
   const incoming = offer.give.map((id) => assetValue(league, id, ai));

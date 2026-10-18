@@ -34,7 +34,8 @@ function positionalNeeds(league, team) {
 }
 const GRADE_C = { A: "#22c55e", B: "#60a5fa", C: "#eab308", D: "#f97316", F: "#ef4444" };
 
-function fairness(ratio) {
+function fairness(ratio, blocked) {
+  if (blocked && ratio >= 1) return ["BLOCKED · SEE BELOW", "#f97316"];
   if (ratio >= 1.35) return ["YOU'RE OVERPAYING", "#60a5fa"];
   if (ratio >= 1) return ["THEY'D ACCEPT", "#22c55e"];
   if (ratio >= 0.85) return ["CLOSE · ADD A LITTLE", "#eab308"];
@@ -195,7 +196,7 @@ export default function TradePage({ seed }) {
   // Deal values are linear (the engine's units ×10) so they add up correctly;
   // a player's TV badge stays on the OVR scale for quick reading.
   const giveTV = Math.round(ev.valIn * 10), getTV = Math.round(ev.valOut * 10);
-  const [fairLab, fairCol] = fairness(ev.ratio);
+  const [fairLab, fairCol] = fairness(ev.ratio, !ev.accept && ev.problems.some((x) => x !== "Add something to the deal."));
   const closed = tradingClosed(league);
   const empty = !give.length && !get.length && !givePicks.length && !getPicks.length;
 

@@ -39,6 +39,7 @@ import * as L from "./engine/league.js";
 import { PHASES, FA_DAYS } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
 import { capSpace, rosterIssues } from "./engine/roster.js";
+import { automaticallyHandleRoster } from "./engine/autoRoster.js";
 import { simPlayoffDay, userSeries, nextGame } from "./engine/playoffs.js";
 import { simDraftToUser, draftDone, currentSlot } from "./engine/draft.js";
 import { atCombine, openDraftFloor } from "./engine/scouting.js";
@@ -258,7 +259,13 @@ export default function App({ resume = false }) {
       if (first) showToast("It's Trade Deadline Day! Make your moves before 3:00 PM ET.", 5000);
       return true;
     }
-    const issues = rosterIssues(league, user).filter((x) => !x.startsWith("Need"));
+    let issues = rosterIssues(league, user).filter((x) => !x.startsWith("Need"));
+    if (issues.length && league.settings?.autoRoster !== false) {
+      const r = automaticallyHandleRoster(league, user, { allowWaivers: true });
+      if (r.moved.length || r.claimed.length) showToast(`🤖 ${r.msg}`, 8000);
+      issues = rosterIssues(league, user).filter((x) => !x.startsWith("Need"));
+      if (!issues.length) commit();
+    }
     if (issues.length) {
       showToast(issues[0], 5000);
       setTab("roster");

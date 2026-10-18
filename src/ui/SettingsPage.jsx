@@ -90,6 +90,7 @@ export default function SettingsPage() {
         <div className="panel stack">
           <h3>League</h3>
           <label className="row"><input type="checkbox" checked={league.settings.injuries !== false} onChange={e=>{const enabled=e.target.checked;const healed=setInjuriesEnabled(league,enabled);commit();toast(enabled?"Injuries enabled.":`Injuries disabled. ${healed} players restored to full health.`);}}/> Injuries enabled</label><p className="muted small">Turning injuries off immediately heals every player and clears LTIR. Roster and cap limits still apply.</p>
+          <label className="row"><input type="checkbox" checked={league.settings.autoRoster !== false} onChange={e=>{league.settings.autoRoster=e.target.checked;commit();}}/> Handle roster limits automatically</label><p className="muted small">When injured players return and the roster is over the limit, the lowest-rated spare is sent down (or waived) so the simulation never stops. Turn off to make every assignment yourself.</p>
           <label className="row">Difficulty
             <select value={league.settings.difficulty} onChange={(e) => { league.settings.difficulty = e.target.value; commit(); }}>
               {Object.entries(DIFFICULTY).map(([k, d]) => <option key={k} value={k}>{d.label}</option>)}

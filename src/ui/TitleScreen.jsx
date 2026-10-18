@@ -8,7 +8,6 @@ import { cloudMeta, cloudLoad } from "../platform.js";
 import {verifiedDataSummary,verifiedRating} from "../engine/verifiedData.js";
 import {setInjuriesEnabled} from "../engine/injuries.js";
 import Icon from "./Icon.jsx";
-import StanleyCup3D from "./StanleyCup3D.jsx";
 import { HockeyTrophy } from "./TrophyRoom.jsx";
 
 const SEASON = (y) => `${y}-${String(y + 1).slice(2)}`;
@@ -92,7 +91,7 @@ export default function TitleScreen({ onStart, ask }) {
     <div className="title">
       <div className="titlecard stack" style={{"--selected-team":sel.colors[0]}}>
         <header className="title-brandbar"><div className="logo">RINK <span>GM</span><small>THE FRANCHISE EXPERIENCE</small></div><span className="edition">{rosterFile.season} EDITION</span>{step==="new" && (local || cloud) && <button onClick={()=>setStep("menu")}>Back to saved league</button>}</header>
-        <section className="title-hero"><div><span className="eyebrow">YOUR CLUB. YOUR CALL.</span><h1>Build a contender.<br/><em>Leave a legacy.</em></h1><p>From opening night to the final buzzer. Own every decision on the road to the Stanley Cup.</p><div className="title-featureline"><span>32 NHL CLUBS</span><i/><span>DEEP FRANCHISE SIMULATION</span><i/><span>LIVE HOCKEY</span></div></div><div className="title-trophy"><StanleyCup3D size={195} showControls={false}><HockeyTrophy size={115}/></StanleyCup3D></div></section>
+        <section className={`title-hero${step === "new" ? " compact" : ""}`}><div><span className="eyebrow">YOUR CLUB. YOUR CALL.</span><h1>Build a contender.<br/><em>Leave a legacy.</em></h1><p>From opening night to the final buzzer. Own every decision on the road to the Stanley Cup.</p><div className="title-featureline"><span>32 NHL CLUBS</span><i/><span>DEEP FRANCHISE SIMULATION</span><i/><span>LIVE HOCKEY</span></div></div><div className="title-trophy"><HockeyTrophy size={230}/></div></section>
 
         {err && <div className="notice bad">{err}</div>}
 
@@ -118,16 +117,15 @@ export default function TitleScreen({ onStart, ask }) {
         )}
 
         {step === "new" && (
-          <>
-            <div className="panel">
+          <div className="title-new">
+            <div className="panel title-new-clubs">
               <div className="section-heading"><div><span className="eyebrow">01 / CHOOSE YOUR FRANCHISE</span><h2>A league of possibilities.</h2></div><div className="tabs"><button className={conference==="all"?"on":""} onClick={()=>setConference("all")}>All clubs</button><button className={conference==="East"?"on":""} onClick={()=>setConference("East")}>East</button><button className={conference==="West"?"on":""} onClick={()=>setConference("West")}>West</button></div></div>
-              <div className="selected-franchise-bar"><TeamBadge team={sel} size={42}/><span><small>YOUR FRANCHISE</small><b>{sel.city} {sel.name}</b></span><button className="primary" onClick={start}>Create {sel.abbr} franchise <Icon name="arrow" size={15}/></button></div>
               <div className="teamgrid">
                 {ranked.filter(ab=>conference==="all" || TEAMS.find(t=>t.abbr===ab).conf===conference).map((ab) => {
                   const t = TEAMS.find((x) => x.abbr === ab);
                   return (
                     <button key={ab} aria-pressed={abbr===ab} className={`teamcard ${abbr === ab ? "sel" : ""}`} style={{ "--c1": t.colors[0], "--c2": t.colors[1] }} onClick={() => setAbbr(ab)}>
-                      <TeamBadge team={t} size={58} />
+                      <TeamBadge team={t} size={44} />
                       <div>
                         <div className="tn">{t.city} {t.name}</div>
                         <div className="tr">{t.div}</div>
@@ -138,42 +136,31 @@ export default function TitleScreen({ onStart, ask }) {
                 })}
               </div>
             </div>
-            <div className="grid g3">
+            <aside className="title-new-rail stack">
+              <div className="panel stack title-new-pick">
+                <div className="row"><TeamBadge team={sel} size={64} /><div><span className="eyebrow">YOUR FRANCHISE</span><div style={{ fontWeight: 800, fontSize: 18 }}>{sel.city} {sel.name}</div><div className="muted small">{sel.conf}ern Conference · {sel.div} · {strengths[abbr]} OVR</div></div></div>
+                <button className="primary" style={{ padding: 12, fontSize: 15 }} onClick={start}>Start {rosterFile.season} Season</button>
+              </div>
               <div className="panel">
                 <h3>02 / Your league</h3>
-                <div className="stack" style={{ gap: 8 }}>
+                <div className="stack" style={{ gap: 6 }}>
                   <label className="row"><input type="radio" checked={mode === "real"} onChange={() => setMode("real")} /> NHL 27 rosters (real players)</label>
                   <label className="row"><input type="radio" checked={mode === "random"} onChange={() => setMode("random")} /> Random fictional players</label>
-                  <div className="small muted">
-                    {total} real players · {verifiedDataSummary.ratings} detailed EA ratings profiles. Published attributes and verified jersey numbers are used where available; other ratings remain estimates.
-                  </div>
+                  <div className="small muted">{total} real players · {verifiedDataSummary.ratings} detailed EA ratings profiles. Published attributes and verified numbers are used where available; other ratings are estimates.</div>
                 </div>
               </div>
               <div className="panel">
                 <h3>03 / The challenge</h3>
-                <div className="stack" style={{ gap: 8 }}>
+                <div className="stack" style={{ gap: 6 }}>
                   {Object.entries(DIFFICULTY).map(([k, d]) => (
                     <label key={k} className="row"><input type="radio" checked={difficulty === k} onChange={() => setDifficulty(k)} /> {d.label}</label>
                   ))}
                   <label className="row"><input type="checkbox" checked={injuries} onChange={e=>setInjuries(e.target.checked)}/> Injuries enabled</label><div className="small muted">Harder settings make AI GMs tougher in trades and free agents pricier.</div>
                 </div>
               </div>
-              <div className="panel stack">
-                <h3>04 / Your next chapter</h3>
-                <div className="row">
-                  <TeamBadge team={sel} size={70} />
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 16 }}>{sel.city} {sel.name}</div>
-                    <div className="muted small">{sel.conf}ern Conference · {sel.div}</div>
-                  </div>
-                </div>
-                <button className="primary" style={{ padding: 12, fontSize: 15 }} onClick={start}>Start {rosterFile.season} Season</button>
-              </div>
-            </div>
-            <div className="small dim">
-              Fan-made game, not affiliated with or endorsed by the NHL, NHLPA or Electronic Arts. NHL and team logos belong to their respective owners.
-            </div>
-          </>
+              <div className="small dim">Fan-made game, not affiliated with or endorsed by the NHL, NHLPA or Electronic Arts. NHL and team logos belong to their respective owners.</div>
+            </aside>
+          </div>
         )}
       </div>
     </div>
