@@ -108,7 +108,6 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
   ensureAreaScouting(league);
   refreshBlock(league);
   seedUserRequests(league);
-  league.inbox.push({ year, day: 0, text: `Welcome, GM of the ${user.city} ${user.name}! Real rosters use published EA ratings where available, with marked estimates elsewhere. Teams begin with opening-week line combinations. Check the Lines tab, then start the season. Your scouting staff is under Draft & Scouting.` });
   ensurePulse(league);
   return league;
 }

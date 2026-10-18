@@ -2,7 +2,6 @@ import React from "react";
 import { useGame, TeamBadge } from "./common.jsx";
 import { ROUND_NAMES } from "../engine/playoffs.js";
 import { trophyUrl } from "./trophies.js";
-import Jersey from "./Jersey.jsx";
 
 // The morning paper after a playoff series: shown once per series the user
 // played (and after the Final for everyone).
@@ -31,8 +30,8 @@ export default function SeriesPaper({ paper, onClose }) {
             <div className="gg-paper-body">{paper.story.map((t, i) => <p key={i} className={i === 0 ? "drop" : ""}>{t}</p>)}<p className="dim">Continued on Page D4</p></div>
           </div>
           <div className="gg-paper-photo">
-            {mvp ? <><div className="gg-paper-frame"><Jersey team={w} player={mvp} size={150} decorative /></div><div className="gg-paper-cap">{mvp.name} of the {w.name}, the most valuable player of the {ROUND_NAMES[paper.round]}, after the final buzzer.</div></> : <div className="gg-paper-frame"><TeamBadge team={w} size={120} decorative /></div>}
-            <div className="gg-paper-frame small">{paper.round === 3 && trophyUrl("stanley") ? <img src={trophyUrl("stanley")} alt="Stanley Cup" /> : <TeamBadge team={w} size={90} decorative />}</div>
+            <div className="gg-paper-frame"><TeamBadge team={w} size={150} decorative /></div>{mvp && <div className="gg-paper-cap">{mvp.name} of the {w.name}, the most valuable player of the {ROUND_NAMES[paper.round]}.</div>}
+            <div className="gg-paper-frame small">{paper.round === 3 && trophyUrl("stanley") ? <img src={trophyUrl("stanley")} alt="Stanley Cup" /> : <TeamBadge team={l} size={90} decorative />}</div>
             <div className="gg-paper-cap">{paper.round === 3 ? `The Stanley Cup heads home to ${w.city} today.` : `${w.city} moves on; ${l.city} goes home.`}</div>
           </div>
           <aside className="gg-paper-side">
