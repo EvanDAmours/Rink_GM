@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Select from "./Select.jsx";
 import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
 import { makePick, currentSlot, draftDone, pickLabel, aiChoose } from "../engine/draft.js";
 import { DRAFT_ROUNDS, SCOUT_POINTS_START, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBINE, COMBINE_INVITES } from "../engine/constants.js";
@@ -97,14 +98,14 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
       </div>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
         <input className="search" placeholder="Search name or team" value={q} onChange={(e) => { setQ(e.target.value); setN(PAGE); }} aria-label="Search prospects" />
-        <select aria-label="Scouting league" value={region} onChange={(e) => {setRegion(e.target.value); setN(PAGE);}}><option value="all">All leagues</option><option value="CHL">CHL · all three leagues</option>{Object.entries(REGIONS).map(([k,r]) => <option key={k} value={k}>{r.name}</option>)}</select>
-        <select value={show} onChange={(e) => { setShow(e.target.value); setN(PAGE); }} aria-label="Show">
+        <Select aria-label="Scouting league" value={region} onChange={(e) => {setRegion(e.target.value); setN(PAGE);}}><option value="all">All leagues</option><option value="CHL">CHL · all three leagues</option>{Object.entries(REGIONS).map(([k,r]) => <option key={k} value={k}>{r.name}</option>)}</Select>
+        <Select value={show} onChange={(e) => { setShow(e.target.value); setN(PAGE); }} aria-label="Show">
           <option value="all">Everyone</option>
           <option value="covered">Positions my scouts cover</option>
           <option value="scouted">Scouted</option>
           <option value="unscouted">Not scouted yet</option>
           <option value="list">On my list</option>
-        </select>
+        </Select>
         {!availableOnly && league.phase === "draft" && (
           <label className="small muted row" style={{ gap: 4 }}>
             <input type="checkbox" checked={hideTaken} onChange={(e) => setHideTaken(e.target.checked)} /> Hide drafted
@@ -543,7 +544,7 @@ export default function DraftPage({ act }) {
   };
 
   return (
-    <div className="stack">
+    <div className="stack gg-draft">
       <div className="pagehead">
         <h2>{combine ? `${year} Scouting Combine` : `${year} NHL Entry Draft`}</h2>
         {slot && <span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span>}

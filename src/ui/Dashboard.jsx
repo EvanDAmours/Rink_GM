@@ -189,10 +189,10 @@ export default function Dashboard({ act = {} }) {
             const p = roster.filter((x) => !isGoalie(x.pos)).sort((a, b) => f(b) - f(a) || b.ovr - a.ovr)[0];
             return p ? <div key={k} className="gg-game"><span className="gg-pill">{k}</span><PlayerName p={p} /><b>{t.rec.gp ? f(p) : "—"}</b></div> : null;
           })}
-          <div className="gg-link" onClick={() => go("hub")}>Season Leaders →</div>
+          <div className="gg-link" onClick={() => go("stats")}>Season Leaders →</div>
         </section>
       </div>
-      <div className="gg-quick">{primary}<button onClick={() => go("lines")}>Lines</button><button onClick={() => go("analysis")} aria-label="Open planning & reports">Game Plan</button><button onClick={() => go("hub")}>📊 Hub</button></div>
+      <div className="gg-quick">{primary}<button onClick={() => go("lines")}>Lines</button><button onClick={() => go("analysis")} aria-label="Open planning & reports">Game Plan</button><button onClick={() => go("standings")}>Standings</button></div>
     </div>
   );
 }

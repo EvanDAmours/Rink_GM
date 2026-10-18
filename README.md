@@ -61,6 +61,8 @@ Rink GM uses the presentation and franchise "pulse" of the companion Gridiron GM
 - **Morale and chemistry** for every club, moved by results, streaks and roster turnover, and read (with small, bounded effects) by the game engine for both teams.
 - **GM reputation** tiers (Rookie, Veteran, Respected, Elite, Legend), **press conferences** and **locker-room speeches** after games, power rankings, playoff odds, roster grades, franchise history and achievements in the **Hub**.
 - Settings → Table density: *Compact* is the classic dense look; *Comfortable* gives larger controls.
+- **Screens in the same style:** a monthly **Schedule** calendar with opponent logos and results, division/wild-card **Standings** cards with a dashed playoff cut, a **Playoffs** bracket tree, a **Trade Center** with a partner picker, tabbed rosters/prospects/picks and a sticky deal bar, a decluttered **Free Agency** list, the **Coaching** office, **Hockey Operations** desks, the **Draft** board, and a **Trophy Room** with the franchise's Stanley Cups on a shelf. Every dropdown is a searchable, grouped picker. **Game Plan & Reports** is its own tab.
+- **Training camp** (preseason, on the Roster page): four exhibition games with a practice report, dev camp, training focus, a camp focus group that pays off at the end of the regular season, and position battles, all paid with Season Points.
 
 ## Data and simulation documentation
 

@@ -149,3 +149,6 @@ export function signed(n) {
 }
 
 export const POS_ORDER = { C: 0, LW: 1, RW: 2, LD: 3, RD: 4, G: 5 };
+
+// OVR tier colours shared by the Gridiron-style screens.
+export const ovrColor = (o) => (o >= 85 ? "#22c55e" : o >= 79 ? "#84cc16" : o >= 73 ? "#eab308" : o >= 67 ? "#f97316" : "#ef4444");

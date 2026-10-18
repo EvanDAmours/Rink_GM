@@ -1,5 +1,4 @@
 import {decisionInterrupt} from './engine/decisionInterrupts.js';
-import HubPage from "./ui/HubPage.jsx";
 import StageStrip from "./ui/StageStrip.jsx";
 import PulsePrompts from "./ui/PulsePrompts.jsx";
 import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
@@ -25,6 +24,7 @@ import DraftPage from "./ui/DraftPage.jsx";
 import TradeBlockPage from "./ui/TradeBlockPage.jsx";
 import DeadlinePage, { DeadlineTicker } from "./ui/DeadlinePage.jsx";
 import { deadlinePending, deadlineActive, startDeadline, userOffers } from "./engine/market.js";
+import GamePlanPage from "./ui/GamePlanPage.jsx";
 import HockeyOperationsPage from "./ui/HockeyOperationsPage.jsx";
 import FrontOfficePage from "./ui/FrontOfficePage.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
@@ -49,7 +49,7 @@ import ConfirmModal from "./ui/ConfirmModal.jsx";
 
 const NAV = [
   {id:"dashboard",label:"Dashboard",short:"Home"},{id:"roster",label:"Roster",short:"Roster"},{id:"lines",label:"Lines",short:"Lines"},
-  {id:"standings",label:"Standings",short:"Standings"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"hub",label:"Hub",short:"📊Hub"},
+  {id:"standings",label:"Standings",short:"Standings"},{id:"schedule",label:"Schedule",short:"Schedule"},
   {id:"stats",label:"Stats",short:"Stats"},{id:"draft",label:"Draft & Scouting",short:"Draft"},{id:"frontoffice",label:"Front Office",short:"Coaching"},
   {id:"operations",label:"Hockey Operations",short:"Ops"},{id:"analysis",label:"Game plans & reports",short:"Game Plan"},
   {id:"trade",label:"Trade",short:"Trade"},{id:"block",label:"Trade Block",short:"Block"},
@@ -494,7 +494,6 @@ export default function App({ resume = false }) {
             {!live && <div className="actions">{actions}</div>}
             <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search (Ctrl/⌘ K)">🔍</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
-            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("hub")} aria-label="Franchise hub" title="Hub">📊</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("trophies")} aria-label="Trophy room" title="Trophy room">🏆</button>
             <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
           </div>
@@ -524,7 +523,6 @@ export default function App({ resume = false }) {
             ) : (
               <>
                 {tab === "dashboard" && <Dashboard act={act} />}
-                {tab === "hub" && <HubPage />}
                 {tab === "activity" && <ActivityPage />}
                 {tab === "roster" && <RosterPage />}
                 {tab === "lines" && <LinesPage />}
@@ -538,7 +536,7 @@ export default function App({ resume = false }) {
                 {tab === "freeagency" && <FreeAgencyPage />}
                 {tab === "draft" && <DraftPage act={act} />}
                 {tab === "operations" && <HockeyOperationsPage />}
-                {tab === "analysis" && <HockeyOperationsPage initialView="analysis" />}
+                {tab === "analysis" && <GamePlanPage />}
                 {tab === "frontoffice" && <FrontOfficePage />}
                 {tab === "trophies" && <TrophyRoom />}
                 {tab === "records" && <RecordBookPage />}

@@ -11,12 +11,19 @@ import {opposite as other, isOpenIce, activePenalties, skaterCount, strengthType
   setStoppage, assessPenalty, releaseOnGoal, tickPenalties, nextPenaltyBoundary,
   notePowerPlays, resetOvertimeStrength, takeTimeout, delayPenalty, settleDelayedPenalty} from './gameRules.js';
 import {shotGeometry, expectedGoal, shotSkills, shiftEfficiency} from './shotModel.js';
+import {matchupEdge, defaultStyle} from './matchup.js';
 export {shotSkills, shiftEfficiency, takeTimeout, skaterCount, assessPenalty};
 
 // The UI advances ten seconds at a time. Internally, events occur on their own
 // playing-time clock, split at penalty expirations and period boundaries.
 const STEP = 10, PERIOD = 1200, REG_OT = 300;
 const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
+// How a club's league-relative edge (matchup.js, in rating points) moves play:
+// tempo while in possession, zone-entry and cycle execution, and shot quality.
+// starWeight lets the best player on the ice pull a unit's offence toward him.
+export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality: .015, unitQuality: .015, unitNorm: 5, starWeight: .85, starNorm: 4,
+  // Skill steepness of possession play: breakouts, controlled-entry choice, entry and cycle execution.
+  breakout: .003, carry: .012, execution: .0032, passing: .006});
 const visualStreams = new WeakMap();
 const visual = s => visualStreams.get(s);
 const avg = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
@@ -54,7 +61,7 @@ function makeSide(league, team, opts) {
   if (!opts.playoff && backup && chance(rest) || !goalie) goalie = backup || goalie;
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
     chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
-    pref: team.strategy || team.coach?.style || 'balanced', tactic: team.strategy || team.coach?.style || 'balanced',
+    pref: defaultStyle(league, team), tactic: defaultStyle(league, team),
     lines, dressed, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
@@ -82,6 +89,7 @@ export function createGame(league, home, away, opts = {}) {
     if (side.goalie) s.gbox[side.goalie] = {sa: 0, ga: 0, toi: 0};
   }
   s.h.plan = gamePlan(league, home, away); s.a.plan = gamePlan(league, away, home);
+  s.h.edge = matchupEdge(league, home, away); s.a.edge = matchupEdge(league, away, home);
   s.rng = snapshotRng();
   if (s.live) push(s, {t: 'period', text: `Puck drop! ${home.abbr} vs ${away.abbr} — 1st period underway.`});
   return s;
@@ -173,7 +181,10 @@ export const skatersForDisplay = (s, k) => onIce(s, k);
 function rate(s, k, ids) {
   const side = s[k], efficiency = id => shiftEfficiency(side.pl[id].attrs.end, side.fatigue[id]);
   const get = key => avg(ids.map(id => side.comp[id][key] * efficiency(id)));
-  return {off: get('off') + (side.chemistry[side.fIdx] || 0), ctrl: get('ctrl'), pass: get('pass'),
+  // The best player on the ice drives his unit's attack: elite skaters carry,
+  // distribute and finish far more than an equal share of the puck.
+  const pulled = key => { const xs = ids.map(id => side.comp[id][key] * efficiency(id)), m = avg(xs); return m + (Math.max(...xs) - m - EDGE.starNorm) * EDGE.starWeight; };
+  return {off: pulled('off') + (side.chemistry[side.fIdx] || 0), ctrl: pulled('ctrl'), pass: pulled('pass'),
     def: get('def'), skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n: ids.length};
 }
 
@@ -183,6 +194,8 @@ function coach(s, k) {
     side.tactic = s.period >= 3 && s.clock <= 600 && diff < 0 ? 'attack'
       : s.period >= 3 && s.clock <= 480 && diff > 0 ? 'defend'
       : !s.playoff && s.phase === 'reg' && s.period === 3 && s.clock <= 600 && diff === 0 && strengthType(s,k)==='EV' ? 'defend' : side.pref;
+    // Nobody sits back on the power play: a defensive system still attacks with the extra man.
+    if (side.tactic === 'defend' && strengthType(s, k) === 'PP' && !(s.period >= 3 && s.clock <= 480 && diff > 0)) side.tactic = 'balanced';
     if (s.faceoffNext && !side.timeout && s.period >= 3 && diff < 0 && diff >= -2 && s.clock <= 180
       && avg(onIce(s, k).map(id => side.fatigue[id])) > 30) {
       if (takeTimeout(s, k)) {
@@ -305,7 +318,7 @@ function hockeyEvent(s, ice, R) {
   if (s.zone === -1) {
     decision(s, k, strengthType(s, k) === 'SH' ? 'clear' : 'breakout');
     const clear = strengthType(s, k) === 'SH';
-    const success = clamp((clear ? .76 : .72) + (carrierSkill.pass * .65 + R[k].pass * .35 + carrierSkill.ctrl * .5 + R[k].ctrl * .5 - R[o].def - R[o].skate) * .002 + manEdge * .055, .35, .92);
+    const success = clamp((clear ? .76 : .72) + (carrierSkill.pass * .65 + R[k].pass * .35 + carrierSkill.ctrl * .5 + R[k].ctrl * .5 - R[o].def - R[o].skate) * EDGE.breakout + manEdge * .055, .35, .92);
     if (chance(success)) {
       const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.5 : 1));
       touch(s, k, receiver); s.zone = clear ? 1 : 0; s.puck = {x: zoneX(s, k, clear ? 55 : -8), y: randFloat(15, 70)};
@@ -323,11 +336,13 @@ function hockeyEvent(s, ice, R) {
       return;
     }
     const entryControl = carrierSkill.ctrl * .65 + R[k].ctrl * .35;
-    const carry = clamp(.63 - (def.plan?.neutral === 'trap' ? .08 : 0) + (att.plan?.attack === 'rush' ? .06 : 0) + (entryControl - R[o].def) * .009 + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0), .25, .9);
+    // A defending club clogs the neutral zone; an attacking one is exposed to counters.
+    const posture = def.tactic === 'defend' ? -.04 : def.tactic === 'attack' ? .03 : 0;
+    const carry = clamp(.63 - (def.plan?.neutral === 'trap' ? .08 : 0) + (att.plan?.attack === 'rush' ? .06 : 0) + (entryControl - R[o].def) * EDGE.carry + (att.tactic === 'attack' ? .07 : att.tactic === 'defend' ? -.08 : 0) + posture, .25, .9);
     const controlled = chance(carry);
     decision(s, k, controlled ? 'controlled-entry' : 'dump-and-chase');
-    const success = (controlled ? .69 + (entryControl + carrierSkill.skate * .5 + R[k].skate * .5 - R[o].def * 2) * .002
-      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * .002) + manEdge * .06 + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0);
+    const success = (controlled ? .69 + (entryControl + carrierSkill.skate * .5 + R[k].skate * .5 - R[o].def * 2) * EDGE.execution
+      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * EDGE.execution) + manEdge * .06 + (att.edge || 0) * EDGE.entry + posture + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0);
     s.zone = 1; s.puck = {x: zoneX(s, k, controlled ? 58 : 82), y: randFloat(12, 73)};
     if (chance(clamp(success, .25, .9))) {
       s.rush = controlled; s.lateral = false;
@@ -348,7 +363,7 @@ function hockeyEvent(s, ice, R) {
   }
   decision(s, k, s.rush ? 'rush-pass' : 'cycle');
   const passing = carrierSkill.pass * .65 + R[k].pass * .35;
-  const success = clamp(.78 + (passing - R[o].def) * .0045 + advantage * .035
+  const success = clamp(.78 + (passing - R[o].def) * EDGE.passing + advantage * .035 + (att.edge || 0) * EDGE.pass
     - (att.tactic === 'attack' ? .035 : 0) - (att.plan?.forecheck === 'aggressive' ? .025 : 0), .45, .94);
   if (chance(success)) {
     const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => {
@@ -406,7 +421,10 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   addBox(s, shooter, 'sog'); s.shots[k]++;
   const goalie = def.pl[def.goalie], saveKey = pick(['glh', 'gll', 'sth', 'stl', 'fiv']);
   const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0);
-  const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill,
+  // Shot quality also follows the units on the ice: a star-driven unit against a
+  // weak defending unit creates better looks than its shot location alone says.
+  const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
+  const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = xg; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
@@ -527,7 +545,7 @@ function advanceGame(s) {
     // rather than force transitions that risk losing the standings point.
     const protectPoint = !s.playoff && s.phase==='reg' && s.period===3 && s.clock<=600 && s.score.h===s.score.a && s[s.poss].tactic==='defend' && advantage===0 ? .70 : 1;
     const eventRate = .113 * protectPoint * pace * specialTeams * (isOpenIce(s) ? 1.18 : 1) * (advantage > 0 ? 1.1 : advantage < 0 ? .9 : 1)
-      * clamp(1 + (R[s.poss].off - R[other(s.poss)].def) * .002, .85, 1.15);
+      * clamp(1 + (R[s.poss].off - R[other(s.poss)].def) * .002 + (s[s.poss].edge || 0) * EDGE.pace, .82, 1.18);
     const wait = Math.max(1, Math.ceil(-Math.log(Math.max(1e-12, rand())) / eventRate));
     const boundary = Math.min(remaining, s.clock, nextPenaltyBoundary(s));
     const dt = Math.min(wait, boundary);

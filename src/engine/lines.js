@@ -225,6 +225,9 @@ export function coachLines(league, team) {
     if (moved >= 3) break;
     if (slotIn(league, team, p, { margin: 4 })) moved++;
   }
+  // The crease goes to the clearly better healthy goalie.
+  const gOvr = (id) => (id && league.players[id] && league.players[id].injury <= 0 && !league.players[id].ltir ? league.players[id].ovr : -1);
+  if (gOvr(L.G[1]) > gOvr(L.G[0]) + 1) { L.G = [L.G[1], L.G[0]]; moved++; }
   if (moved) Object.assign(L, specialTeams(dressedSkaters(league, L.F, L.D)));
   return L;
 }

@@ -1,4 +1,4 @@
-# NHL simulation rebuild — 16 October 2026
+# NHL simulation rebuild — 16 October 2026 (team-quality update 18 October 2026)
 
 The live game and quick simulator use the same possession/event engine. No score is drawn in advance, no team name receives a win override, and the engine never invents a winner when its safety limit is reached. Outcomes remain uncertain; ratings influence the actions players can execute.
 
@@ -22,6 +22,16 @@ Rules exercised by focused regression cases:
 
 The starting goalie receives the start. Win/loss decisions follow the eventual winning goal, including relief appearances and an empty net. Applying an unfinished result throws; applying a finished result twice does not duplicate stats.
 
+## Team-versus-team quality (October 18 update)
+
+Results follow how good a club is relative to the rest of the league, in three places:
+
+- `matchup.js` pools each club's dressed offence **convexly** (a rating `STAR` = 7 points above the reference is worth e times an average player, pooled across lines by ice-time share before taking the log), so a club with two superstars and ordinary depth is an elite offence while a deep club of 80s is merely good. Defence is the ice-time weighted defence corps (70%) and forwards' defensive play (30%); goaltending blends the starter and backup. Every term is relative to the current league's mean (fixed per season), so league averages hold as the rating scale drifts. The club's edge against an opponent's defence moves tempo, zone-entry and cycle execution and shot quality (`sim.js` `EDGE`), and the unit on the ice adds its own shot-quality term (unit offence minus defending unit's defence, centred on the league).
+- The best player on the ice **pulls his unit's** offence, puck control and passing toward him (`EDGE.starWeight`), and the possession curves (breakouts, controlled-entry choice, entry execution, cycle passing) are steeper in skill than before, so stars drive shot volume and not only finishing. Finishing is weighted 0.022 log-odds per rating point and goaltending 0.018.
+- Coaching systems are a trade-off: a **defensive structure** suppresses opponents' entries and shot quality at the cost of its own tempo and shooting, an **up-tempo** system is exposed on counters, and nobody sits back on the power play. A bench plays its coach's system unless the personnel plainly call for another (`defaultStyle`), and the GM's chosen identity always wins. AI benches dress clearly better healthy scratches weekly and start their better healthy goalie.
+
+Controlled 160-game check in `tests/team-quality.test.js`: Edmonton's offence ranks in the top five by strength, matchup edges average zero across all pairings, and McDavid's line out-produces an ordinary first line per 60 minutes. In five independent 1,344-game seasons (`scratchpad` evaluator, AI benches dressed), Edmonton finished 7th–14th overall and 3rd–6th in its conference, where the previous engine had it 25th–27th with the second-fewest goals in the league.
+
 ## Player and coach decisions
 
 Possession progresses through defensive-zone exits, neutral-zone entries and offensive-zone cycles. A controlled entry competes with dumping and retrieving; pressure can force a failed exit or icing. A shorthanded club prioritizes clearing. Players pass, shoot or lose possession based on their skills, role, pressure and manpower.
@@ -40,13 +50,13 @@ Attributes are never rewritten to obtain these results. Published rating baselin
 
 | Metric | NHL 2025–26 | Calibration season | Separate-seed season |
 | --- | ---: | ---: | ---: |
-| Scoreboard goals/team/game | 3.082 | 3.125 | 3.169 |
-| Shots/team/game, including empty net | 27.83 | 27.79 | 27.60 |
-| Goalie save percentage | 0.8955 | 0.8943 | 0.8920 |
-| Power-play conversion | 21.11% | 20.71% | 20.13% |
-| PP opportunities/team/game | 2.879 | 3.086 | 3.066 |
-| Games reaching overtime | 24.85% | 23.14% | 22.69% |
-| Games decided in shootout | 9.07% | 8.48% | 8.18% |
+| Scoreboard goals/team/game | 3.082 | 3.196 | 3.131 |
+| Shots/team/game, including empty net | 27.83 | 28.34 | 28.03 |
+| Goalie save percentage | 0.8955 | 0.8942 | 0.8956 |
+| Power-play conversion | 21.11% | 19.25% | 19.20% |
+| PP opportunities/team/game | 2.879 | 3.009 | 2.971 |
+| Games reaching overtime | 24.85% | 21.43% | 22.92% |
+| Games decided in shootout | 9.07% | 7.81% | 8.41% |
 
 `simulation-audit-results.json` runs eight controlled scenarios, alternating home/away. It isolates equal rosters, skater quality, goalie quality, accuracy, power, an elite forward and a published-roster matchup. Win rates include Wilson 95% intervals. Save percentage uses goalie shots/goals, excluding empty nets and the shootout decider.
 
