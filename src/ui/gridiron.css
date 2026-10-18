@@ -260,3 +260,128 @@ body, .app { font-family: var(--gg-f); background: var(--gg-bg) !important; colo
 .app[data-density=comfortable] .main button:not(.link):not(.player-link):not(.team-link) { font-size: 14px; min-height: 40px; padding: 6px 12px; }
 .app[data-density=comfortable] .t td { padding: 8px 8px; }
 .app[data-density=comfortable] .t, .app[data-density=comfortable] .t .player-link { font-size: 14px !important; }
+
+/* ---------- Trade Center (Gridiron layout) ---------- */
+.gg-pos { display: inline-block; min-width: 26px; text-align: center; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.gg-need { border: 1px solid; border-radius: 4px; padding: 2px 8px; font-size: 13px; color: #cbd5e1; background: #0a0f1a; }
+.app button.gg-finder-btn { background: #0f1b2e; color: #7dd3fc; border: 1px solid #3b82f6; font-size: 13px; font-weight: 800; padding: 5px 12px; }
+.app button.gg-finder-btn.on { background: #1e3a5f; }
+.gg-finder { display: flex; flex-direction: column; gap: 4px; }
+.gg-idea { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--gg-cd); border: 1px solid var(--gg-bd); border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+.gg-idea > button { margin-left: auto; }
+.gg-tag { border: 1px solid #475569; border-radius: 3px; padding: 0 5px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; margin-left: 4px; color: #94a3b8; }
+.gg-teampick { display: flex; flex-wrap: wrap; gap: 4px; }
+.app .gg-teampick button { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; font-size: 12px; font-weight: 800; background: #111827; border: 1px solid var(--gg-bd); color: #94a3b8; }
+.app .gg-teampick button .teambadge { background: transparent; }
+.app .gg-teampick button.on { background: linear-gradient(135deg, var(--c1), #111827 85%); border-color: #fff; color: #fff; }
+.gg-analyzer { background: var(--gg-cd); border: 1px solid var(--gg-bd); border-radius: 8px; padding: 10px 12px; font-size: 13px; position: sticky; top: 0; z-index: 5; }
+.gg-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.gg-side { min-width: 0; }
+.gg-side-h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px; }
+.gg-side-h .dim { margin-left: auto; letter-spacing: 0; font-weight: 600; }
+.gg-sub { font-size: 11px; font-weight: 800; color: var(--gg-gd); letter-spacing: 1px; margin: 8px 0 3px; }
+.gg-tlist { display: flex; flex-direction: column; max-height: 520px; overflow-y: auto; }
+.gg-tlist.short { max-height: 260px; }
+.gg-trow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 30px 52px; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 14px; border: 1px solid transparent; }
+.gg-trow:hover { background: #1e293b66; }
+.gg-trow.on { background: #22c55e1a; border-color: #22c55e88; }
+.gg-trow.pick { grid-template-columns: minmax(0, 1fr) auto 60px; }
+.gg-tname { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gg-tovr { text-align: right; font-size: 15px; }
+.gg-tv { font-size: 11px; color: var(--gg-mt); text-align: right; }
+.gg-tv.gold { color: var(--gg-gd); }
+@media (max-width: 760px) { .gg-sides { grid-template-columns: 1fr; } .gg-trow { grid-template-columns: auto minmax(0, 1fr) 30px 46px; } .gg-trow > .dim.small { display: none; } }
+
+/* ---------- Readability pass: slightly larger type everywhere, same dense layout ---------- */
+body, .app { font-size: 14px; }
+.app .small, .app small { font-size: 12px; }
+.app .t { font-size: 14px; }
+.app .t th { font-size: 11.5px; }
+.app .t .player-link, .app .player-link { font-size: 14px !important; }
+.app .ovr { font-size: 14px; }
+.app .player-detail { font-size: 11px; }
+.app .gg-tabs.nav button { font-size: 10.5px; padding: 7px 11px; }
+.gg-status { font-size: 12px; }
+.gg-name { font-size: 16px; }
+.gg-rep { font-size: 11px; }
+.gg-k { font-size: 11.5px; }
+.gg-lrow, .gg-meter, .gg-grades { font-size: 13px; }
+.gg-prow, .gg-game { font-size: 14px; }
+.gg-tiles small { font-size: 10px; }
+.app button, .app .main button { font-size: 13px; }
+.app button.small, .app .main button.small { font-size: 12px; }
+.app input, .app select, .app textarea { font-size: 13px; }
+.app .notice { font-size: 13px; }
+.app .pill { font-size: 11px; }
+.app .kv { font-size: 13px; }
+.app .tabs button { font-size: 12px; }
+.app .roster-group-title { font-size: 11px; }
+.app .roster-group-title span { font-size: 10px; }
+.app .team-banner p, .app .banner-details { font-size: 12px; }
+.app .banner-stats small, .app .stat-label { font-size: 10px; }
+/* Lines page: bigger names, numbers and ratings on the line cards */
+.app .lcard { padding: 12px 12px; min-height: 84px; column-gap: 12px; }
+.app .lfirst { font-size: 12px; color: #94a3b8; letter-spacing: 0.3px; margin-bottom: 3px; }
+.app .llast { font-size: 23px; letter-spacing: 0.4px; }
+.app .lav { width: 42px; height: 48px; font-size: 20px; }
+.app .lmeta { gap: 8px; margin-top: 2px; }
+.app .lmeta .ovr { font-size: 15px; height: 22px; min-width: 30px; }
+.app .lposb { font-size: 12px; color: #94a3b8; }
+.app .llabel { font-size: 20px; }
+.app .llabel small, .app .llabel .small { font-size: 13px; }
+.app .lhead { font-size: 12px; }
+.app .lout { font-size: 11px; }
+.app .lchip { font-size: 13px; }
+.app .lchip .ovr { font-size: 12px; }
+.app .lhero-t { font-size: 36px; }
+@media (max-width: 640px) {
+  .app .main { font-size: 13px; }
+  .app .gg-tabs.nav button { font-size: 9.5px; }
+  .app .lgrid.f { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .app .lgrid.d { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .app .lcard { padding: 9px 7px; min-height: 72px; }
+  .app .llast { font-size: 14px; letter-spacing: 0; }
+  .app .lfirst { font-size: 10px; }
+  .app .lmeta .ovr { font-size: 13px; height: 20px; min-width: 26px; }
+  .app .lposb { font-size: 10px; }
+  .app .llabel { font-size: 15px; }
+  .app .lhero-t { font-size: 26px; }
+}
+
+/* ---------- Training camp (preseason) ---------- */
+.gg-camp { background: linear-gradient(135deg, #0f172a, #111827); border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; gap: 10px; }
+.gg-camp-h { font-size: 16px; font-weight: 900; letter-spacing: 1px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.gg-campbox { background: #0b1220; border: 1px solid #1e293b; border-left-width: 3px; border-radius: 6px; padding: 10px 12px; }
+.gg-camp-k { font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.app button.gg-chip { background: #1e293b; color: var(--gg-tx); border: 1px solid #334155; padding: 5px 10px; font-size: 12.5px; font-weight: 600; border-radius: 4px; }
+.app button.gg-chip:hover:not(:disabled) { filter: brightness(1.2); }
+.app button.gg-chip.violet { border-color: #7c3aed; background: #7c3aed22; }
+.app button.gg-chip.blue { border-color: #0ea5e9; background: #0ea5e918; }
+.app button.gg-chip.green { border-color: #22c55e; background: #22c55e18; color: #86efac; }
+.app button.gg-chip.cyan { border-color: #22d3ee; background: #22d3ee14; }
+.app button.gg-chip.cyan.on { background: #22d3ee; color: #082f49; }
+.app button.gg-chip.amber { border-color: #f59e0b; background: #f59e0b18; }
+.gg-chip.done { display: inline-flex; align-items: center; padding: 5px 10px; font-size: 12.5px; font-weight: 700; border-radius: 4px; background: #22c55e22; border: 1px solid #22c55e; color: #86efac; }
+.app button.gg-risk { background: #1e293b; color: #cbd5e1; border: 1px solid #475569; font-size: 12px; }
+.app button.gg-risk.on { background: #ef444422; border-color: #ef4444; color: #fca5a5; }
+.gg-result { display: inline-flex; gap: 4px; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: 800; cursor: pointer; border: 1px solid; }
+.gg-result.w { color: #86efac; border-color: #22c55e66; background: #22c55e14; }
+.gg-result.l { color: #fca5a5; border-color: #ef444466; background: #ef444414; }
+.gg-report { max-width: 560px; padding: 16px 18px; background: #0f172a; border: 1px solid #334155; }
+.gg-report-h { font-size: 15px; font-weight: 900; letter-spacing: 1px; margin-bottom: 10px; }
+.gg-camp-line { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+.gg-grade-chip { display: inline-grid; place-items: center; width: 30px; height: 22px; border: 1px solid; border-radius: 3px; font-weight: 900; font-size: 12px; }
+
+/* ---------- Trophy / Legacy room shelves ---------- */
+.gg-shelf-wrap { display: flex; flex-direction: column; gap: 0; }
+.app .trophy-shelf { background: linear-gradient(#0f172a, #111827); border: 1px solid #334155; }
+.app .trophy-display { border-bottom: 14px solid #5b3a1e; box-shadow: 0 14px 0 #1a0f08, 0 18px 24px #00000088; background: radial-gradient(ellipse at 50% 90%, #eab30811, transparent 70%); min-height: 220px; gap: 6px 14px; }
+.app .trophy-piece { width: 150px; min-height: 250px; }
+.app .trophy-piece.real { width: 130px; min-height: 230px; }
+.app .trophy-plaque { font-size: 12px; }
+.app .trophy-plaque b { font-size: 16px; color: #fde68a; }
+.app .trophy-plaque > span { font-size: 11px; }
+.app .trophy-plaque small { font-size: 11px; }
+.app .empty-shelf { font-size: 13px; }
+.app .trophy-hero h2 { font-size: 30px; }
+@media (max-width: 640px) { .app .trophy-piece, .app .trophy-piece.real { width: 46%; min-height: 200px; } }
