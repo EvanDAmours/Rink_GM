@@ -15,7 +15,7 @@ const fmt = (p) => p && `${p.stats.g}G ${p.stats.a}A ${p.stats.pts}P`;
 
 export function computeAwards(league) {
   const ps = rostered(league);
-  const gp = Math.max(1, ...league.teams.map((t) => t.rec.gp));
+  const gp = Math.max(1, ...league.teams.map((t) => t.rec.gp), ...ps.map((p) => p.stats.gp || 0));
   const minGp = Math.round(gp * 0.5), minG = Math.round(gp * 0.3);
   const skaters = ps.filter((p) => !isGoalie(p.pos) && p.stats.gp >= minGp);
   const goalies = ps.filter((p) => isGoalie(p.pos) && p.stats.gp >= minG);
@@ -39,7 +39,7 @@ export function computeAwards(league) {
   const calder = best(rookies, (p) => (isGoalie(p.pos) ? (savePct(p.stats) - 0.9) * 1200 + p.stats.w * 1.1 + p.stats.so : p.stats.pts * 1.1 + p.stats.g * 0.35 + Math.max(-10, Math.min(15, p.stats.pm)) * 0.3 + (isDefense(p.pos) ? p.stats.toi / 3600 * 0.3 : 0)));
   const selke = best(skaters.filter((p) => !isDefense(p.pos)), (p) => p.attrs.daw * 0.5 + p.attrs.stk * 0.25 + Math.max(-10, Math.min(20, p.stats.pm)) * 0.6 + p.stats.pts * 0.12 + (p.stats.fow - p.stats.fol) * 0.015 + p.stats.blk * 0.08 + p.stats.shg * 2);
   const ladyByng = best(skaters.filter((p) => p.stats.pim <= Math.max(12, gp * 0.3)), (p) => p.stats.pts - p.stats.pim * 1.2);
-  const jenningsTeam = [...league.teams].filter((t) => t.rec.gp && goalies.some((p) => p.tid === t.id)).sort((a, b) => a.rec.ga - b.rec.ga)[0];
+  const jenningsTeam = [...league.teams].filter((t) => goalies.some((p) => p.tid === t.id)).sort((a, b) => a.rec.ga - b.rec.ga || b.rec.gp - a.rec.gp)[0];
   const jenningsGoalies = goalies.filter((p) => p.tid === jenningsTeam?.id && p.stats.gp >= 25);
   // Jack Adams: the coach whose club most outperformed its roster.
   const expectation = (t) => { const r = t.roster.map((id) => league.players[id]?.ovr || 0).sort((a, b) => b - a).slice(0, 18); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : 75; };
