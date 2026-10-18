@@ -854,3 +854,76 @@ body, .app { font-size: 14px; }
 .app .gg-camp2 .gg-chips button { font-size: 13px; }
 @media (max-width: 1100px) { .gg-camp2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .gg-camp2-grid { grid-template-columns: 1fr; } .gg-camp2-focus { grid-template-columns: 1fr; } }
+
+.gg-hero-row.logos { grid-template-columns: 1fr auto 1fr; margin: 10px 0 6px; }
+.gg-hero-club { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gg-hero-club .teambadge { filter: drop-shadow(0 14px 18px #000000aa); }
+.gg-hero-club small { font-size: 13px; color: var(--gg-sl); font-weight: 700; }
+.gg-hero-row.logos .gg-hero-at { font-size: 30px; }
+@media (max-width: 640px) { .gg-hero-row.logos { grid-template-columns: 1fr auto 1fr; } .gg-hero-club .teambadge { width: 84px !important; height: 84px !important; } }
+
+/* ---------- Training camp v3 (condensed) ---------- */
+.gg-camp3-top { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; }
+.gg-camp3-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.gg-camp3-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .gg-camp3-t b { font-size: 16px; } .gg-camp3-t span { font-size: 12px; color: var(--gg-sl); }
+.gg-camp3-card .gg-camp2-focus button { min-height: 40px; }
+.gg-camp3-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #1e293b; }
+.app .gg-camp3-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--gg-mt); font-size: 14px; font-weight: 800; padding: 6px 12px; text-transform: none; letter-spacing: 0; }
+.app .gg-camp3-tabs button span { font-size: 11px; color: #60a5fa; margin-left: 4px; font-weight: 700; }
+.app .gg-camp3-tabs button.on { color: var(--gg-tx); border-bottom-color: #3b82f6; }
+.gg-camp3-sub { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--gg-sl); flex-wrap: wrap; }
+.gg-camp3-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.app .gg-bchip, .gg-bchip { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #0b1220; border: 1px solid #334155; border-radius: 6px; text-align: left; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--gg-tx); min-height: 0; }
+.gg-bchip i { font-style: normal; color: var(--gg-mt); } .gg-bchip em { font-style: normal; color: var(--gg-mt); font-size: 12px; }
+.gg-bchip.done { border-color: #22c55e55; color: var(--gg-sl); }
+@media (max-width: 760px) { .gg-camp3-top { grid-template-columns: 1fr; } }
+
+/* ---------- Unified chrome: every legacy page header, tab row and panel gets the same look ---------- */
+.app .pagehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 0; padding: 0; margin: 0 0 4px; }
+.app .pagehead h2 { font-size: 22px; font-weight: 900; margin: 0; letter-spacing: -.2px; }
+.app .pagehead .pill { background: #0f172a; border: 1px solid #334155; color: var(--gg-sl); font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.app .main .tabs { display: flex; gap: 4px; background: transparent; border: 0; padding: 0; flex-wrap: wrap; width: auto; }
+.app .main .tabs button { background: #0f172a; color: var(--gg-mt); border: 1px solid #1e293b; border-radius: 6px; font-size: 12px; font-weight: 700; padding: 5px 12px; min-height: 0; flex: 0 0 auto; }
+.app .main .tabs button.on, .app .main .tabs button.primary { background: #22c55e18; color: #86efac; border-color: #22c55e; }
+.app .main .panel { background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 12px 14px; box-shadow: none; }
+.app .main .panel > h3, .app .main .panel .pagehead h3 { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gg-mt); font-weight: 800; margin: 0 0 8px; }
+.app .main .notice { border-radius: 8px; }
+.app .main .item { border-bottom: 1px solid #1e293b66; }
+.app .main .eyebrow { font-size: 10px; letter-spacing: 1.2px; color: var(--gg-mt); font-weight: 800; }
+.app .main .screen-context { display: none; }
+.app .main .section-heading h2 { font-size: 20px; font-weight: 900; }
+.app .main h2 { font-weight: 900; }
+.app .main .grid.g2, .app .main .grid.g3 { gap: 10px; }
+.app .main .franchise-hero { background: linear-gradient(100deg, #1e293b, #0f172a 70%); border: 1px solid #334155; border-radius: 10px; padding: 14px 18px; }
+.app .main .franchise-hero h2 { font-size: 24px; margin: 2px 0; }
+.app .main .list .item { padding: 7px 6px; font-size: 13px; }
+.app .main .stat .l { font-size: 10px; letter-spacing: 1.2px; color: var(--gg-mt); font-weight: 800; } .app .main .stat .v { font-size: 22px; font-weight: 900; }
+.app .main .lchip, .app .main .pill.on { border-color: #22c55e; }
+.app .main .tablewrap { border: 1px solid #1e293b; border-radius: 8px; background: #0f172a; }
+.app .main table.t th { background: #0b1220; }
+
+/* ---------- Home v2 additions ---------- */
+.gg-stages { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.gg-stagechip { font-size: 11px; font-weight: 800; letter-spacing: .3px; padding: 3px 10px; border-radius: 12px; border: 1px solid #334155; color: var(--gg-mt); background: #0f172a; white-space: nowrap; }
+.gg-stagechip.done { color: #86efac; border-color: #22c55e66; } .gg-stagechip.now { color: #86efac; border-color: #22c55e; background: #22c55e18; }
+.gg-stages i { color: #334155; font-style: normal; font-size: 12px; }
+.gg-stat { border-color: #7f1d1d66; } .gg-stat:not(.alert):not(.warn) { border-color: #1e293b; }
+.gg-stat-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .gg-stat-line b { font-size: 19px; } .gg-stat-line span { min-width: 0; }
+.gg-side-title { margin: 0 0 6px; font-size: 20px; font-weight: 900; letter-spacing: 0; text-transform: none; color: var(--gg-tx); border-bottom: 1px solid #1e293b; padding-bottom: 6px; }
+.gg-main-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; } .gg-main-title h3 { margin: 0; font-size: 20px; font-weight: 900; text-transform: none; letter-spacing: 0; color: var(--gg-tx); }
+.gg-weektiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.app button.gg-weektile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; background: #0b1220; border: 1px solid #334155; border-radius: 8px; min-height: 0; }
+.app button.gg-weektile small { font-size: 10px; letter-spacing: 1px; color: var(--gg-mt); font-weight: 800; text-transform: uppercase; }
+.app button.gg-weektile.on { border-color: #fff; background: color-mix(in srgb, var(--c1) 40%, #0b1220); box-shadow: inset 0 0 0 1px #fff; } .app button.gg-weektile.on small { color: var(--gg-tx); }
+.gg-match { position: relative; border-radius: 10px; border: 1px solid #1e293b; padding: 12px 16px; overflow: hidden; background: radial-gradient(ellipse at 15% 40%, color-mix(in srgb, var(--c1) 30%, transparent), transparent 55%), radial-gradient(ellipse at 85% 40%, color-mix(in srgb, var(--c2) 30%, transparent), transparent 55%), linear-gradient(#0f172a, #0b1220); }
+.gg-match::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 70px, #ffffff06 70px 71px); pointer-events: none; }
+.gg-match-when { text-align: center; display: flex; flex-direction: column; gap: 1px; margin: 2px 0 8px; } .gg-match-when b { font-size: 15px; } .gg-match-when small { font-size: 12px; color: var(--gg-sl); }
+.gg-match-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; border-top: 1px solid #ffffff14; padding-top: 10px; }
+.gg-match-teams > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .gg-match-teams > div:last-child { text-align: right; align-items: flex-end; }
+.gg-match-teams small { font-size: 12px; color: var(--gg-sl); } .gg-match-teams b { font-size: 24px; font-weight: 900; letter-spacing: .5px; } .gg-match-teams .dim { font-size: 12px; }
+.gg-rtiles { display: flex; gap: 6px; margin-top: 6px; }
+.gg-rtiles > div { display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 4px 8px 3px; border-radius: 6px; background: color-mix(in srgb, var(--c) 22%, #0b1220); border: 1px solid var(--c); }
+.gg-rtiles b { font-size: 22px; font-weight: 900; line-height: 1; color: var(--gg-tx); } .gg-rtiles small { font-size: 9px; letter-spacing: 1px; color: var(--gg-sl); font-weight: 800; }
+.gg-lab { margin-top: 12px; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.gg-lab-empty { border: 1px dashed #334155; border-radius: 6px; padding: 12px; text-align: center; color: var(--gg-mt); font-size: 13px; }
+@media (max-width: 760px) { .gg-weektiles { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; } .app button.gg-weektile small { font-size: 8px; } .gg-match-teams b { font-size: 16px; } .gg-rtiles > div { min-width: 44px; padding: 3px 4px; } .gg-rtiles b { font-size: 16px; } .gg-stages { display: none; } }

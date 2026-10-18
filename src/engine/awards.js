@@ -55,9 +55,9 @@ export function computeAwards(league) {
   };
   const masterton = best(skaters.filter((p) => mastertonScore(p) > 0), mastertonScore);
   // King Clancy (leadership and community): a respected veteran on a good club.
-  const kingClancy = best(skaters.filter((p) => p.age >= 29), (p) => (p.career?.length || 0) * 2 + p.stats.pts * 0.3 + teamPct(p) * 30 + (p.attrs.lea || p.attrs.oaw || 70) * 0.2 + Math.min(p.stats.gp, gp) * 0.1);
+  const kingClancy = best(skaters.filter((p) => p.age >= 29 && p !== hart), (p) => (p.career?.length || 0) * 2 + p.stats.pts * 0.3 + teamPct(p) * 30 + (p.attrs.lea || p.attrs.oaw || 70) * 0.2 + Math.min(p.stats.gp, gp) * 0.1);
   // Mark Messier Leadership: the captain-type who carried a contender.
-  const messier = best(skaters.filter((p) => p.age >= 26 && teamPct(p) >= 0.55), (p) => p.stats.pts * 0.5 + Math.max(0, p.stats.pm) * 0.5 + (league.teams[p.tid].rec.pts) * 0.3 + (p.attrs.lea || p.attrs.oaw || 70) * 0.3);
+  const messier = best(skaters.filter((p) => p.age >= 26 && teamPct(p) >= 0.55 && p !== hart && p !== kingClancy), (p) => p.stats.pts * 0.5 + Math.max(0, p.stats.pm) * 0.5 + (league.teams[p.tid].rec.pts) * 0.3 + (p.attrs.lea || p.attrs.oaw || 70) * 0.3);
   // Jim Gregory GM of the Year: the club that improved most on last season's points.
   const lastYear = league.history?.[0]?.year === league.year - 1 ? league.seasonArchive?.find((s) => s.year === league.year - 1) : league.seasonArchive?.find((s) => s.year === league.year - 1);
   const improvement = (t) => { const prev = lastYear?.teams.find((x) => x.tid === t.id)?.rec.pts; return prev != null ? t.rec.pts - prev : t.rec.pts - 92; };
@@ -85,7 +85,7 @@ export function computeAwards(league) {
     messier: pack(messier, messier && `led a ${league.teams[messier.tid].rec.pts}-point club · ${fmt(messier)}`),
     jackAdams: jackTeam ? { name: jackTeam.coach?.name || "Head coach", tid: jackTeam.id, why: `${jackTeam.rec.pts} points, well above roster expectations` } : null,
     jimGregory: gregoryTeam ? { name: gregoryTeam.id === league.userTid ? "You" : `${gregoryTeam.abbr} general manager`, tid: gregoryTeam.id, why: `${gregoryTeam.rec.pts} points${improvement(gregoryTeam) > 0 ? `, up ${improvement(gregoryTeam)} on last season` : ""}` } : null,
-    willieORee: pack(oree, oree && `${tenure(oree) || 1} season${tenure(oree) === 1 ? "" : "s"} of community work in ${league.teams[oree.tid].city}`),
+    willieORee: pack(oree, oree && `${Math.max(1, tenure(oree))} season${Math.max(1, tenure(oree)) === 1 ? "" : "s"} of community work in ${league.teams[oree.tid].city}`),
     presidents: teamAward(presidents, presidents && `${presidents.rec.pts} points, best regular season`),
   };
 }

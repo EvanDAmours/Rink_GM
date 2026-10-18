@@ -1,5 +1,4 @@
 import {decisionInterrupt} from './engine/decisionInterrupts.js';
-import PulsePrompts from "./ui/PulsePrompts.jsx";
 import SeriesPaper from "./ui/SeriesPaper.jsx";
 import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
 import { capForYear } from "./engine/constants.js";
@@ -545,7 +544,6 @@ export default function App({ resume = false }) {
             )}
           </ErrorBoundary></div>
         </div>
-        {!live && !busy && tab === "dashboard" && <PulsePrompts />}
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>{if(id==="deadline" && deadlinePending(league))blockers();else setTab(id);}} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}

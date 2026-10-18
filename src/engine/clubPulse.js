@@ -279,6 +279,8 @@ const SPEECHES = {
 
 function offerPrompts(league, res, key) {
   const gm = league.gm;
+  // Press conferences and speeches are off: the game plays on without prompts.
+  if (!league.settings?.prompts) { gm.presser = null; gm.speech = null; return; }
   const r = stream(`${key}|prompt`);
   // Unanswered prompts go stale after a few days; the newest result is what the room cares about.
   if (gm.presser && league.day - (gm.presser.day ?? 0) > 3) gm.presser = null;
