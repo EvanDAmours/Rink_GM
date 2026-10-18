@@ -1,6 +1,7 @@
 import React from "react";
 import { useGame, TeamBadge, TeamName } from "./common.jsx";
 import { ROUND_NAMES } from "../engine/playoffs.js";
+import { Trophy } from "./TrophyRoom.jsx";
 import { playoffPicture } from "../engine/standings.js";
 
 // One best-of-seven matchup: two team rows with series wins, game chips below.
@@ -96,7 +97,7 @@ export default function PlayoffsPage({ act }) {
       </div>
       {champ && (
         <div className="gg-champ">
-          <span className="gg-champ-cup">🏆</span>
+          <Trophy kind="stanley" size={84} className="gg-champ-cup" />
           <TeamBadge team={champ} size={64} decorative />
           <div>
             <div className="gg-champ-name">{champ.city} {champ.name}</div>

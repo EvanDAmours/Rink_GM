@@ -29,7 +29,7 @@ export function computeAwards(league) {
   // Hart: value to his team. Points relative to the leader, goals, plus/minus
   // and how good his club was; a dominant goalie can win it.
   const hartScore = (p) => isGoalie(p.pos)
-    ? (p.stats.gp >= gp * 0.55 ? (savePct(p.stats) - 0.9) * 1400 + p.stats.w * 0.9 + p.stats.so * 2 + teamPct(p) * 40 - 8 : -99)
+    ? (p.stats.gp >= gp * 0.55 && savePct(p.stats) >= 0.92 ? (savePct(p.stats) - 0.9) * 1400 + p.stats.w * 0.9 + p.stats.so * 2 + teamPct(p) * 40 - 22 : -99)
     : (p.stats.pts / topPts) * 60 + p.stats.g * 0.25 + Math.max(-10, Math.min(15, p.stats.pm)) * 0.5 + teamPct(p) * 40 + (isDefense(p.pos) ? 4 : 0);
   const hart = best([...skaters, ...goalies], hartScore);
   const tedLindsay = best(skaters, (p) => p.stats.pts * 1.0 + p.stats.g * 0.4 + per60(p, p.stats.pts) * 6);
@@ -37,7 +37,9 @@ export function computeAwards(league) {
   const vezina = best(goalies.filter((p) => p.stats.gp >= gp * 0.45), (p) => (savePct(p.stats) - 0.9) * 1500 - gaa(p.stats) * 6 + p.stats.w * 0.5 + p.stats.so * 1.5 + Math.min(p.stats.gp, 65) * 0.15);
   const rookies = [...skaters.filter((p) => p.rookie), ...goalies.filter((p) => p.rookie && p.stats.gp >= gp * 0.4)];
   const calder = best(rookies, (p) => (isGoalie(p.pos) ? (savePct(p.stats) - 0.9) * 1200 + p.stats.w * 1.1 + p.stats.so : p.stats.pts * 1.1 + p.stats.g * 0.35 + Math.max(-10, Math.min(15, p.stats.pm)) * 0.3 + (isDefense(p.pos) ? p.stats.toi / 3600 * 0.3 : 0)));
-  const selke = best(skaters.filter((p) => !isDefense(p.pos)), (p) => p.attrs.daw * 0.5 + p.attrs.stk * 0.25 + Math.max(-10, Math.min(20, p.stats.pm)) * 0.6 + p.stats.pts * 0.12 + (p.stats.fow - p.stats.fol) * 0.015 + p.stats.blk * 0.08 + p.stats.shg * 2);
+  // Selke: the best defensive forward. Defensive awareness, stick checking, shorthanded work,
+  // blocks, faceoffs and plus/minus; scoring counts only a little and the top scorers rarely win it.
+  const selke = best(skaters.filter((p) => !isDefense(p.pos) && p.stats.gp >= gp * 0.6), (p) => p.attrs.daw * 1.1 + p.attrs.stk * 0.4 + p.attrs.blk * 0.3 + Math.max(-10, Math.min(20, p.stats.pm)) * 0.5 + Math.min(p.stats.pts, 70) * 0.06 + (p.stats.fow - p.stats.fol) * 0.03 + p.stats.blk * 0.15 + p.stats.shg * 3 + p.stats.hit * 0.03);
   const ladyByng = best(skaters.filter((p) => p.stats.pim <= Math.max(12, gp * 0.3)), (p) => p.stats.pts - p.stats.pim * 1.2);
   const jenningsTeam = [...league.teams].filter((t) => goalies.some((p) => p.tid === t.id)).sort((a, b) => a.rec.ga - b.rec.ga || b.rec.gp - a.rec.gp)[0];
   const jenningsGoalies = goalies.filter((p) => p.tid === jenningsTeam?.id && p.stats.gp >= 25);

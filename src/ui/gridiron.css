@@ -488,7 +488,7 @@ body, .app { font-size: 14px; }
 .gg-score-n { margin-left: auto; font-size: 24px; font-weight: 900; }
 .gg-score-foot { font-size: 11px; color: var(--gg-mt); border-top: 1px solid #1e293b; padding-top: 4px; margin-top: 2px; }
 @media (max-width: 760px) {
-  .gg-cal-cell { min-height: 74px; padding: 2px; }
+  .gg-cal-cell { min-height: 74px; padding: 2px; } .gg-cal-cell.today::after { display: none; }
   .gg-cal-game .teambadge { width: 30px !important; height: 30px !important; }
   .gg-cal-opp { font-size: 11px; } .gg-cal-res { font-size: 9px; padding: 0 4px; }
   .gg-grow { grid-template-columns: 24px 56px 28px minmax(0, 1fr) 80px; } .gg-grec, .gg-gshots { display: none; }

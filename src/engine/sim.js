@@ -311,7 +311,7 @@ function hockeyEvent(s, ice, R) {
     }
   }
   // Checking and puck battles are consequences of contesting possession.
-  if (chance(.065 * R[o].phys / 82)) {
+  if (chance(.125 * R[o].phys / 82)) {
     const hitter = weighted(ice[o], id => def.comp[id].phys ** 2); addBox(s, hitter, 'hit');
     if (s.live && visual(s).chance(.25)) push(s, {t: 'hit', side: o, text: `${lastName(def, hitter)} finishes a check on ${lastName(att, s.carrier)}.`, ...s.puck});
   }

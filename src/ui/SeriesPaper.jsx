@@ -12,7 +12,7 @@ export default function SeriesPaper({ paper, onClose }) {
   const mvp = paper.mvp && league.players[paper.mvp.pid];
   const date = new Date(Date.UTC(paper.year + 1, 3, 20 + paper.round * 14));
   const dateStr = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
-  const road = (league.playoffs?.rounds || []).flatMap((r, i) => r.filter((s) => (s.top === w.id || s.bot === w.id) && s.winner != null).map((s) => ({ round: i, opp: league.teams[s.top === w.id ? s.bot : s.top], won: s.winner === w.id, score: s.winner === w.id ? `${Math.max(s.wTop, s.wBot)}-${Math.min(s.wTop, s.wBot)}` : `${Math.min(s.wTop, s.wBot)}-${Math.max(s.wTop, s.wBot)}` })));
+  const road = (league.playoffs?.rounds || []).flatMap((r, i) => r.filter((s) => i <= paper.round && (s.top === w.id || s.bot === w.id) && s.winner != null).map((s) => ({ round: i, opp: league.teams[s.top === w.id ? s.bot : s.top], won: s.winner === w.id, score: s.winner === w.id ? `${Math.max(s.wTop, s.wBot)}-${Math.min(s.wTop, s.wBot)}` : `${Math.min(s.wTop, s.wBot)}-${Math.max(s.wTop, s.wBot)}` })));
   const cups = (league.history || []).filter((h) => h.champion === w.id).length + (paper.round === 3 ? 1 : 0);
   return (
     <div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
