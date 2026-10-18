@@ -25,11 +25,16 @@ export function capSpace(league, team) {
 
 // One game's worth of recovery for everyone on the given teams. A player back from injury
 // who'd lost his spot is considered for the lineup again.
+// A player placed on injured reserve stays off the active count until he is
+// healthy, as in the NHL, instead of counting again a few games early.
+export const onIR = (p) => !!p && p.injury > 0 && (p.injury >= IR_GAMES || !!p.onIR);
 export function healInjuries(league, tids) {
   for (const id in league.players) {
     const p = league.players[id];
     if (p.injury > 0 && tids.has(p.tid)) {
+      if (p.injury >= IR_GAMES) p.onIR = true;
       p.injury--;
+      if (p.injury === 0) delete p.onIR;
       const t = p.injury === 0 && league.teams[p.tid];
       if (t && t.lines && !lineupIds(t.lines).includes(p.id)) (t.linesNew ||= []).push(p.id);
     }
@@ -43,7 +48,7 @@ export function counts(league, team, { healthyOnly = false } = {}) {
     if (!p) continue;
     if (healthyOnly && (p.injury > 0 || p.ltir)) continue;
     c.total++;
-    if (p.injury < IR_GAMES && !p.ltir) c.active++;
+    if (!onIR(p) && !p.ltir) c.active++;
     if (isGoalie(p.pos)) c.G++;
     else if (isDefense(p.pos)) c.D++;
     else c.F++;
@@ -192,6 +197,7 @@ export function ensureMinimums(league, team, { notify = false } = {}) {
     const prospect = ready.find((p) => (p.signed === false ? ELC_SALARY : p.cap) <= room) || ready[0];
     if (prospect) {
       if (!callUp(league, team, prospect.id,{emergency:true})) { prospect.ahlRecallAfter = Math.max(prospect.ahlRecallAfter || 0, league.day+1); break; }
+      prospect.emergencyCallUp = league.year;
       if (notify) league.inbox.push({ year: league.year, day: league.day, text: `Emergency call-up: ${prospect.name} (${prospect.pos}, ${prospect.ovr}) joins the roster.` });
       continue;
     }
@@ -223,3 +229,26 @@ export function payrollBreakdown(league, team) {
 }
 
 export { round2 };
+
+// When the injured come back, emergency call-ups who are no longer needed go
+// back to the minors on their own (waiver-exempt players only), so a healthy
+// club does not sit over the 23-man limit waiting for paperwork.
+export function returnCallUps(league, team, { notify = false } = {}) {
+  let sent = [];
+  let guard = 0;
+  while (counts(league, team).active > MAX_ROSTER && guard++ < 6) {
+    // Emergency call-ups first, then the lowest-rated waiver-exempt player not in the lineup.
+    const inLineup = new Set(team.lines ? [...team.lines.F.flat(), ...team.lines.D.flat(), ...team.lines.G].filter(Boolean) : []);
+    const cands = team.roster.map((id) => league.players[id]).filter((p) => p && p.injury <= 0 && canSendDown(p)).sort((a, b) => (b.emergencyCallUp === league.year) - (a.emergencyCallUp === league.year) || inLineup.has(a.id) - inLineup.has(b.id) || a.ovr - b.ovr);
+    const p = cands.find((x) => {
+      const grp = isGoalie(x.pos) ? "G" : isDefense(x.pos) ? "D" : "F";
+      const h = counts(league, team, { healthyOnly: true });
+      return (grp === "G" ? h.G > MIN_GOALIES : grp === "D" ? h.D > MIN_DEFENSE : h.F > MIN_FORWARDS);
+    });
+    if (!p || !sendDown(league, team, p.id)) break;
+    delete p.emergencyCallUp;
+    sent.push(p.name);
+  }
+  if (sent.length && notify) league.inbox.push({ year: league.year, day: league.day, text: `Roster move: ${sent.join(", ")} sent to the minors to make room as the injured return.` });
+  return sent;
+}

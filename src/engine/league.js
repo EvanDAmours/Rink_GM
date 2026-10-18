@@ -19,8 +19,8 @@ import { buildSeasonSchedule, lastDay } from "./schedule.js";
 import { createGame, simToEnd, applyResult, blankRecord } from "./sim.js";
 import { generateDraftClass, createDraftPicks, startDraft, finishDraft, draftDone, expandLegacyDraftClass } from "./draft.js";
 import { startPlayoffs, simPlayoffDay } from "./playoffs.js";
-import { computeAwards, connSmythe } from "./awards.js";
-import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries } from "./roster.js";
+import { computeAwards, connSmythe, conferenceTrophies } from "./awards.js";
+import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries, returnCallUps, onIR } from "./roster.js";
 import { startResign, endResign, startNewSeason, aiManageRoster, ratingLevel } from "./offseason.js";
 import { marketWeek, deadlinePending, skipDeadline, refreshBlock, fitRoster, seedUserRequests, DEADLINE_END } from "./market.js";
 import { applyCampGroup } from "./camp.js";
@@ -182,7 +182,7 @@ function addMinorLeaguers(league, t) {
 function trimToLimit(league, t, keep = new Set()) {
   let guard = 0;
   while (counts(league, t).active > MAX_ROSTER && guard++ < 12) {
-    const ps = t.roster.map((id) => league.players[id]).filter((p) => p.injury < IR_GAMES).sort((a, b) => a.ovr - b.ovr);
+    const ps = t.roster.map((id) => league.players[id]).filter((p) => !onIR(p)).sort((a, b) => a.ovr - b.ovr);
     const g = ps.filter((p) => isGoalie(p.pos));
     const extras = ps.filter((p) => !keep.has(p.id) && (!isGoalie(p.pos) || g.length > 2));
     const victim = extras[0] || (g.length > 2 ? g[0] : ps.find((p) => !isGoalie(p.pos)));
@@ -246,6 +246,7 @@ export function simDay(league, { holdUserGame = false } = {}) {
   for (const t of league.teams) {
     ensureMinimums(league, t, { notify: t.id === league.userTid });
     if (t.id !== league.userTid) fitRoster(league, t);
+    else returnCallUps(league, t, { notify: true });
   }
   for (const g of todays) {
     if (holdUserGame && (g.h === league.userTid || g.a === league.userTid)) continue;
@@ -319,6 +320,8 @@ export function endRegularSeason(league) {
 export function finishPlayoffs(league) {
   const champ = league.playoffs.champion;
   league.awards.connSmythe = connSmythe(league, champ);
+  Object.assign(league.awards, conferenceTrophies(league));
+  league.awards.stanley = { name: `${league.teams[champ].city} ${league.teams[champ].name}`, tid: champ, team: true, why: "Stanley Cup champions" };
   archiveSeason(league);
   const final = league.playoffs.rounds[3][0];
   league.history.unshift({

@@ -6,7 +6,7 @@ import { futurePayroll, extendPlayer } from "../engine/extensions.js";
 import { resignAsk } from "../engine/offseason.js";
 import { capForYear, isGoalie } from "../engine/constants.js";
 
-function ExtensionModal({p,onClose}) {
+export function ExtensionModal({p,onClose}) {
   const {league,toast,commit}=useGame();const [years,setYears]=useState(3);const [aav,setAav]=useState(resignAsk(league,p,3).aav);
   const ask=resignAsk(league,p,years);
   return <Modal title={`Extend ${p.name}`} onClose={onClose}><div className="stack"><p className="muted">The new deal begins next season. Current deal: {money(p.cap)} × {p.yrs} year.</p><p>Ask: <b>{money(ask.aav)}</b> × {years} years</p><div className="row"><label>Years <Select value={years} onChange={e=>{const y=Number(e.target.value);setYears(y);setAav(resignAsk(league,p,y).aav);}}>{[1,2,3,4,5,6,7].map(y=><option key={y} value={y}>{y}</option>)}</Select></label><label>AAV ($M) <input type="number" step="0.05" value={aav} onChange={e=>setAav(e.target.value)} /></label></div><button className="primary" onClick={()=>{const r=extendPlayer(league,p.id,Number(aav),years);toast(r.msg);if(r.ok){commit();onClose();}}}>Offer extension</button></div></Modal>;

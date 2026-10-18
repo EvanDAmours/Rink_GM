@@ -145,6 +145,11 @@ export function evaluateTrade(league, offer) {
   });
   if (posLeft(ai, offer.get, offer.give, (p) => isGoalie(p.pos)) + (minorG ? 1 : 0) < 2) problems.push(`${ai.abbr} need two goalies.`);
   if (posLeft(ai, offer.get, offer.give, (p) => isDefense(p.pos)) < 6) problems.push(`${ai.abbr} would be too thin on defense.`);
+  // Your own club must still be able to dress a lineup (counting healthy minor-leaguers).
+  const userLeft = (test) => [...user.roster, ...user.prospects].filter((id) => !offer.give.includes(id) && test(league.players[id])).length + offer.get.filter((id) => test(league.players[id])).length;
+  if (userLeft((p) => p && isGoalie(p.pos)) < 2) problems.push("You need to keep two goalies in the organization.");
+  if (userLeft((p) => p && isDefense(p.pos)) < 6) problems.push("You'd be left with fewer than six defensemen.");
+  if (userLeft((p) => p && !isGoalie(p.pos) && !isDefense(p.pos)) < 12) problems.push("You'd be left with fewer than twelve forwards.");
 
   const ratio = valOut > 0 ? valIn / (valOut * margin) : valIn > 0 ? 9 : 0;
   const accept = problems.length === 0 && valIn >= valOut * margin && valIn > 0;

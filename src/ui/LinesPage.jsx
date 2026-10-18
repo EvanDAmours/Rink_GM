@@ -140,17 +140,17 @@ export default function LinesPage() {
   const selPlayer = sel ? get(read(sel)) : null;
 
   return (
-    <div className="stack lines" style={{ "--c1": c1, "--c2": c2 }}>
-      <div className="lhero">
-        <TeamBadge team={team} size={44} />
+    <div className="stack lines gg-lines" style={{ "--c1": c1, "--c2": c2 }}>
+      <div className="gg-pagehead gg-lines-head">
+        <TeamBadge team={team} size={44} decorative />
         <div style={{ minWidth: 0 }}>
-          <div className="lhero-t">{team.city} {team.name}</div>
-          <div className="small muted">
-            Line combinations · {league.year}-{String(league.year + 1).slice(2)}
+          <h2>Lines</h2>
+          <div className="gg-status">
+            {team.city} {team.name} · {league.year}-{String(league.year + 1).slice(2)}
             {nhl && (matchesNhl ? " · opening-night NHL lines" : " · changed from opening night")}
           </div>
         </div>
-        <div style={{ flex: 1 }} />
+        <div className="gg-tiles" style={{ marginLeft: "auto" }}><div><small>TEAM</small><b>{tr.ovr}</b></div><div><small>FWD</small><b>{tr.fwd}</b></div><div><small>DEF</small><b>{tr.def}</b></div><div><small>G</small><b>{tr.g}</b></div></div>
         <Select value={viewTid} onChange={(e) => { setViewTid(Number(e.target.value)); setSel(null); }} aria-label="Team">
           {[...league.teams].sort((a, b) => a.city.localeCompare(b.city)).map((t) => (
             <option key={t.id} value={t.id}>{t.city} {t.name}{t.id === league.userTid ? " (you)" : ""}</option>
@@ -158,11 +158,8 @@ export default function LinesPage() {
         </Select>
       </div>
 
-      <div className="row">
-        <span className="pill">Team {tr.ovr}</span>
-        <span className="pill">Forwards {tr.fwd}</span>
-        <span className="pill">Defense {tr.def}</span>
-        <span className="pill">Goalie {tr.g}</span>
+      <div className="row gg-lines-tools">
+        <span className="dim small">{mine ? "Tap a player, then tap another to swap them, or tap a scratch to put him in." : "Viewing another club's lines."}</span>
         <div style={{ flex: 1 }} />
         {mine && nhl && !matchesNhl && (
           <button className="small" onClick={() => { resetNhlLines(league, team); setSel(null); commit(); toast("Back to the opening-night NHL lines."); }}>
@@ -174,11 +171,6 @@ export default function LinesPage() {
             Auto-set by rating
           </button>
         )}
-      </div>
-      <div className="muted small">
-        {mine
-          ? "Tap a player, then tap another to swap them — or tap a scratch to put him in. Injured players keep their spot; the best healthy scratch plays until they're back."
-          : "Viewing another team's lines. Their coach adjusts them for injuries, trades and call-ups during the season."}
       </div>
 
       <div className="lmain">

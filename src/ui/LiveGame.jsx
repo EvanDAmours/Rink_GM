@@ -1,3 +1,4 @@
+import CupFinalSplash from "./CupFinalSplash.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useGame, TeamBadge, PlayerName } from "./common.jsx";
 import { skatersForDisplay, skaterCount, takeTimeout, serializeGame, restoreGame, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel } from "../engine/sim.js";
@@ -75,7 +76,7 @@ function targetsFor(s, homeRight) {
   return { puck, h: out.h, a: out.a, gh: goalie("h"), ga: goalie("a"), netX: (k) => 100 + dir(k) * 89 };
 }
 
-function Rink({ s, home, away, stepInfo, clockRef, banner }) {
+function Rink({ s, home, away, stepInfo, clockRef, banner, final = false }) {
   const clash = colorDist(home.colors[0], away.colors[0]) < 140;
   const color = { h: home.colors[0], a: clash ? away.colors[1] : away.colors[0] };
   const ring = { h: home.colors[1], a: clash ? away.colors[0] : away.colors[1] };
@@ -142,10 +143,10 @@ function Rink({ s, home, away, stepInfo, clockRef, banner }) {
     </g>
   );
   return (
-    <div className="rinkwrap">
+    <div className={`rinkwrap${final ? " final" : ""}`}>
       <svg viewBox="-4 -4 208 93">
-        <rect x="0" y="0" width="200" height="85" rx="28" fill="#eef5fd" stroke="#2a3a5a" strokeWidth="1.6" />
-        <text x="100" y="47" textAnchor="middle" fontSize="11" fontWeight="900" fill={home.colors[0]} opacity="0.18">{home.abbr}</text>
+        <rect x="0" y="0" width="200" height="85" rx="28" fill={final ? "#f3f6fb" : "#eef5fd"} stroke={final ? "#b8860b" : "#2a3a5a"} strokeWidth={final ? "2.2" : "1.6"} />
+        {final ? <><text x="100" y="40" textAnchor="middle" fontSize="7" fontWeight="900" fill="#b8860b" opacity="0.45" letterSpacing="1.5">STANLEY CUP</text><text x="100" y="50" textAnchor="middle" fontSize="7" fontWeight="900" fill="#b8860b" opacity="0.45" letterSpacing="1.5">FINAL</text><text x="40" y="12" fontSize="4" fontWeight="800" fill={away.colors[0]} opacity="0.5">{away.abbr}</text><text x="150" y="12" fontSize="4" fontWeight="800" fill={home.colors[0]} opacity="0.5">{home.abbr}</text></> : <text x="100" y="47" textAnchor="middle" fontSize="11" fontWeight="900" fill={home.colors[0]} opacity="0.18">{home.abbr}</text>}
         <line x1="11" y1="2" x2="11" y2="83" stroke="#d33" strokeWidth="0.35" />
         <line x1="189" y1="2" x2="189" y2="83" stroke="#d33" strokeWidth="0.35" />
         <line x1="75" y1="0" x2="75" y2="85" stroke="#2b5cd6" strokeWidth="1.2" />
@@ -210,6 +211,8 @@ export default function LiveGame({ spec, onDone }) {
   };
   const [paused, setPaused] = useState(!!league.activeGame);
   const [banner, setBanner] = useState(null);
+  const isFinal = spec.kind === 'playoff' && spec.series?.round === 3;
+  const [curtain, setCurtain] = useState(isFinal && !league.activeGame?.state?.elapsed);
   const [committed, setCommitted] = useState(false);
   const stepInfo = useRef({ at: performance.now(), dur: 1200, shot: null, periodEnd: false, paused: true });
   const clockRef = useRef(null);
@@ -260,9 +263,9 @@ export default function LiveGame({ spec, onDone }) {
         else force((x) => x + 1);
       }, delay);
     };
-    run(speedRef.current);
+    if (!curtain) run(speedRef.current);
     return () => clearTimeout(timer);
-  }, [paused, speed, s]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paused, speed, s, curtain]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finish = () => {
     if (committed) return;
@@ -316,6 +319,7 @@ export default function LiveGame({ spec, onDone }) {
         <h2>Live Game</h2>
         <span className="pill">{title}</span>
       </div>
+      {isFinal && <div className="gg-final-banner"><span>🏆</span><div><b>STANLEY CUP FINAL · GAME {(spec.series?.games?.length || 0) + 1}</b><small>{league.year}-{String(league.year + 1).slice(2)} · the winner takes home the Stanley Cup</small></div><span>🏆</span></div>}
       <div className="scorebug">
         <div className="side away">
           <TeamBadge team={away} size={40} />
@@ -341,7 +345,8 @@ export default function LiveGame({ spec, onDone }) {
 
       <div className="grid livegrid">
         <div className="stack">
-          <Rink s={s} home={home} away={away} stepInfo={stepInfo} clockRef={clockRef} banner={banner} />
+          <Rink s={s} home={home} away={away} stepInfo={stepInfo} clockRef={clockRef} banner={banner} final={isFinal} />
+          {curtain && <CupFinalSplash home={home} away={away} game={(spec.series?.games?.length || 0) + 1} onStart={() => setCurtain(false)} />}
           {lastPlay && (
             <div className={`lastplay ${lastPlay.t}`} key={s.events.length}>
               <span className="when">{lastPlay.phase === "so" ? "SO" : `${lastPlay.period > 3 ? (s.playoff ? `${lastPlay.period - 3}OT` : "OT") : ["1st", "2nd", "3rd"][lastPlay.period - 1]} ${clockLabel(lastPlay.clock)}`}</span>

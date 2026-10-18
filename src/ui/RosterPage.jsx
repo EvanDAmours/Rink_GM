@@ -12,9 +12,9 @@ import TrainingCamp from "./TrainingCamp.jsx";
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
-  const [view, setView] = useState("roster");
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
+  const [view, setView] = useState(league.phase === "preseason" && !(user.camp?.year === league.year && user.camp.games.length >= 4) ? "camp" : "roster");
   const roster = user.roster.map((id) => league.players[id]).filter(Boolean);
   const minors = user.prospects.map((id) => league.players[id]).filter(Boolean);
   const c = counts(league, user);
@@ -79,9 +79,9 @@ export default function RosterPage() {
   ];
 
   return (
-    <div className="stack">
-      <TrainingCamp />
-      <div className="team-banner"><TeamBadge team={user} size={78}/><div><span className="eyebrow">HOCKEY OPERATIONS / ACTIVE CLUB</span><h2>{user.name} roster</h2><p>Manage the people who define your season.</p></div><div className="banner-stats"><span><b>{c.active}<small> / {MAX_ROSTER}</small></b><small>ACTIVE ROSTER</small></span><span><b>{money(capSpace(league,user))}</b><small>CAP AVAILABLE</small></span><span><b>{c.F} / {c.D} / {c.G}</b><small>FORWARDS / DEFENSE / GOALIES</small></span></div></div>
+    <div className="stack gg-roster">
+      <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
+        <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
         <div className="notice warn">
           {issues.map((i) => <div key={i}>⚠️ {i}</div>)}
@@ -96,17 +96,19 @@ export default function RosterPage() {
           You're {money(capFloorGap(league, user))} under the {money(capFloorForYear(capYear(league)))} cap floor. NHL teams have to spend at least that much; sign free agents or trade for salary to get there.
         </div>
       )}
-      <div className="tabs">
+      <div className="gg-chips">
         <button className={view === "roster" ? "on" : ""} onClick={() => setView("roster")}>NHL Roster</button>
         <button className={view === "minors" ? "on" : ""} onClick={() => setView("minors")}>Minors & Prospects ({minors.length})</button>
         <button className={view === "contracts" ? "on" : ""} onClick={() => setView("contracts")}>Contracts</button>
+        {league.phase === "preseason" && <button className={view === "camp" ? "on" : ""} onClick={() => setView("camp")}>🏕️ Training Camp</button>}
       </div>
 
-      <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>
+      {view !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>}
+      {view === "camp" && <TrainingCamp />}
       {view === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
-            <div className="roster-group-title"><b>{title} <span>{rows.filter(fits).length}</span></b><span>OVR / CONTRACT / SEASON PERFORMANCE</span></div>
+            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>OVR · CONTRACT · SEASON</em></div>
             <Table columns={[...base, statusCol, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "ovr", dir: "desc" }} />
           </div>
         ))}
