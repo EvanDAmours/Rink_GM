@@ -242,7 +242,7 @@ export function randomAgeForDepth() {
 
 export function chanceInjury(p) {
   const dur = p.attrs.dur ?? 80;
-  return 0.0022 * (1 + (85 - dur) / 40);
+  return 0.0055 * (1 + (85 - dur) / 40);
 }
 
 export function injuryLength() {

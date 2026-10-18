@@ -350,7 +350,7 @@ export default function App({ resume = false }) {
     simPlayoffsAll: () => {
       runChunked(
         () => "Simulating the playoffs…",
-        () => league.playoffs.champion == null && simPlayoffDay(league)
+        () => { if (league.playoffs.champion != null || league.playoffs.papers?.some((p) => !p.seen)) return false; simPlayoffDay(league); return !league.playoffs.papers?.some((p) => !p.seen); }
       );
     },
     playPlayoffLive: () => {
