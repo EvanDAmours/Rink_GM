@@ -1,6 +1,6 @@
 import {decisionInterrupt} from './engine/decisionInterrupts.js';
-import StageStrip from "./ui/StageStrip.jsx";
 import PulsePrompts from "./ui/PulsePrompts.jsx";
+import SeriesPaper from "./ui/SeriesPaper.jsx";
 import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
 import { capForYear } from "./engine/constants.js";
 import { capYear } from "./engine/roster.js";
@@ -515,7 +515,6 @@ export default function App({ resume = false }) {
           ))}
         </nav>
         <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label>
-        <StageStrip league={league}/>
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
@@ -547,6 +546,7 @@ export default function App({ resume = false }) {
           </ErrorBoundary></div>
         </div>
         {!live && !busy && <PulsePrompts />}
+        {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>{if(id==="deadline" && deadlinePending(league))blockers();else setTab(id);}} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}

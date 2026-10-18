@@ -1,36 +1,111 @@
-import {CUP_HISTORY,CUP_HISTORY_SOURCE} from "../data/cupHistory.js";
+import { CUP_HISTORY, CUP_HISTORY_SOURCE } from "../data/cupHistory.js";
+import React, { useState } from "react";
+import { useGame, TeamName, TeamBadge, PlayerName } from "./common.jsx";
 import Select from "./Select.jsx";
-import StanleyCup3D from "./StanleyCup3D.jsx";
-import React, { useId, useState } from "react";
-import { useGame, TeamName, PlayerName } from "./common.jsx";
-import { AWARD_NAMES } from "../engine/awards.js";
+import { AWARD_NAMES, AWARD_BLURB } from "../engine/awards.js";
+import { trophyUrl, TROPHY_ORDER } from "./trophies.js";
 
-// Original vector illustrations with separate silhouettes for the NHL's trophies.
-export function HockeyTrophy({kind="stanley",size=170}) {
-  const id=useId().replace(/:/g,"");const silver=`url(#${id}s)`,gold=`url(#${id}g)`,wood=`url(#${id}w)`;
-  const base=<><path d="M20 187 L100 187 L106 198 L14 198 Z" fill={wood}/><rect x="25" y="176" width="70" height="12" rx="2" fill={wood}/><rect x="43" y="180" width="34" height="7" fill={gold}/></>;
-  const cup=(top=38)=> <><path d={`M35 ${top} Q60 ${top-8} 85 ${top} L80 ${top+28} Q60 ${top+55} 40 ${top+28} Z`} fill={silver}/><ellipse cx="60" cy={top} rx="25" ry="5" fill="#f1f5f9"/><ellipse cx="60" cy={top+1} rx="20" ry="3" fill="#566575"/><path d={`M36 ${top+4} C10 ${top-4} 12 ${top+38} 43 ${top+26} M84 ${top+4} C110 ${top-4} 108 ${top+38} 77 ${top+26}`} fill="none" stroke={silver} strokeWidth="6"/><path d={`M55 ${top+46} L65 ${top+46} L68 150 L52 150 Z`} fill={silver}/><ellipse cx="60" cy="153" rx="21" ry="6" fill={silver}/></>;
-  const skater=<><circle cx="61" cy="38" r="7" fill={gold}/><path d="M57 46 L76 63 L70 81 L53 80 L41 98 L33 92 L48 71 L45 57 Z" fill={gold}/><path d="M61 80 L78 101 L73 139 L65 139 L65 108 L50 94 L40 116 L31 139 L23 137 L32 108 L44 81" fill={gold}/><path d="M45 57 L28 72 L18 82 M70 57 L88 70 L81 93 L96 133 L106 135" stroke={gold} strokeWidth="7" fill="none" strokeLinejoin="round"/><path d="M21 140 L37 140 M64 141 L82 141" stroke="#d9e1e8" strokeWidth="4"/><rect x="22" y="146" width="75" height="12" fill={wood}/></>;
-  return <svg width={size} height={size*1.45} viewBox="0 0 120 210" role="img" aria-label={kind==="stanley"?"Stanley Cup illustration":`${AWARD_NAMES[kind] || kind} illustration`}><defs><linearGradient id={`${id}s`}><stop stopColor="#5e6e7f"/><stop offset=".25" stopColor="#dae3eb"/><stop offset=".47" stopColor="#fff"/><stop offset=".65" stopColor="#8194a3"/><stop offset="1" stopColor="#e3ebf0"/></linearGradient><linearGradient id={`${id}g`}><stop stopColor="#835817"/><stop offset=".32" stopColor="#f9e2a3"/><stop offset=".55" stopColor="#cba25c"/><stop offset="1" stopColor="#8e632b"/></linearGradient><linearGradient id={`${id}w`}><stop stopColor="#1d1413"/><stop offset=".4" stopColor="#674632"/><stop offset="1" stopColor="#211819"/></linearGradient></defs>
-    {kind==="stanley"?<><ellipse cx="60" cy="184" rx="41" ry="9" fill="#0c1017"/><path d="M31 111 L89 111 L99 173 Q60 193 21 173 Z" fill={silver}/>{[120,133,147,161,175].map(y=><ellipse key={y} cx="60" cy={y} rx={29+(y-111)*.16} ry="7" fill="none" stroke="#536272" strokeWidth="1.4"/>)}{[122,138,153,168].map(y=><g key={y} opacity=".5">{[35,45,55,65,75,85].map(x=><path key={x} d={`M${x} ${y} h6 m-6 2 h6 m-6 2 h6`} stroke="#667987" strokeWidth=".5"/>)}</g>)}<path d="M41 74 L79 74 L87 109 Q60 120 33 109 Z" fill={silver}/><ellipse cx="60" cy="94" rx="24" ry="5" fill="none" stroke="#566575"/><path d="M53 54 L67 54 L76 74 L44 74 Z" fill={silver}/><path d="M31 25 Q60 13 89 25 L83 42 Q60 66 37 42 Z" fill={silver}/><ellipse cx="60" cy="25" rx="29" ry="7" fill="#f4f8fb"/><ellipse cx="60" cy="26" rx="24" ry="4" fill="#526575"/><path d="M23 178 Q60 190 97 178" stroke="#f2f6f9" strokeWidth="2" fill="none"/></>:
-    kind==="connSmythe"?<><path d="M25 52 L35 45 L43 51 L45 39 L60 52 L75 39 L77 51 L85 45 L95 52 L82 69 L91 76 L72 82 L60 97 L48 82 L29 76 L38 69 Z" fill={gold}/><rect x="28" y="95" width="64" height="80" fill={wood}/><path d="M38 99 L38 170 M82 99 L82 170" stroke={gold} strokeWidth="2"/><rect x="40" y="111" width="40" height="50" fill={gold}/><path d="M60 117 L66 131 L61 148 L53 145 L56 135 L50 126" fill="#715b34"/>{base}</>:
-    kind==="rocket" || kind==="calder"?<>{skater}<rect x="35" y="158" width="50" height="18" fill={wood}/>{base}</>:
-    kind==="hart"?<><path d="M24 31 L96 31 L88 63 L76 76 L69 123 L51 123 L44 76 L32 63 Z" fill={gold}/><path d="M26 36 C3 22 7 72 41 68 M94 36 C117 22 113 72 79 68" stroke={gold} strokeWidth="6" fill="none"/><ellipse cx="60" cy="31" rx="36" ry="5" fill="#ead4a0"/><path d="M46 124 L74 124 L82 141 L38 141 Z" fill={gold}/><rect x="33" y="142" width="54" height="34" fill={wood}/>{base}</>:
-    kind==="artRoss"?<><path d="M20 110 L100 110 L87 143 Q60 162 33 143 Z" fill={silver}/><path d="M50 151 L70 151 L76 175 L44 175 Z" fill={silver}/><circle cx="62" cy="41" r="7" fill={gold}/><path d="M56 49 L74 60 L65 84 L53 76 L43 105 M65 80 L79 103 M55 57 L36 71 M74 61 L88 78 L102 106" stroke={gold} strokeWidth="9" fill="none" strokeLinejoin="round"/>{base}</>:
-    kind==="norris"?<><path d="M24 100 L96 100 L90 148 Q60 170 30 148 Z" fill={silver}/><path d="M26 107 C5 88 7 137 30 136 M94 107 C115 88 113 137 90 136" stroke={silver} strokeWidth="5" fill="none"/><path d="M50 72 Q30 43 46 27 Q60 13 75 27 Q89 44 70 72 Z" fill={silver}/><rect x="48" y="70" width="24" height="20" fill={silver}/><path d="M44 93 L76 93 L72 100 L48 100" fill={silver}/>{base}</>:
-    kind==="selke"?<><path d="M23 38 L97 38 L84 77 L36 77 Z" fill={silver}/><path d="M50 77 L70 77 L81 165 L39 165 Z" fill={silver}/>{[46,54,62,70].map(x=><path key={x} d={`M${x} 83 L${x-4} 161`} stroke="#5a6c7b" strokeWidth="2"/>)}<path d="M34 166 L86 166 L92 176 L28 176 Z" fill={silver}/>{base}</>:
-    <>{cup(kind==="vezina"?32:45)}<path d="M37 158 L83 158 L88 176 L32 176" fill={silver}/>{base}</>}
-  </svg>;
+export function Trophy({ kind, size = 110, className = "" }) {
+  const url = trophyUrl(kind);
+  return url ? <img className={`gg-trophy ${className}`} src={url} alt={AWARD_NAMES[kind] || kind} style={{ height: size }} draggable={false} /> : <span className="gg-trophy-fallback" style={{ fontSize: size * 0.6 }}>🏆</span>;
 }
 
+// A trophy on the shelf with its plaque.
+function Piece({ kind, year, title, line, small, size = 120 }) {
+  return (
+    <div className="gg-piece">
+      <div className="gg-piece-light" />
+      <Trophy kind={kind} size={size} />
+      <div className="gg-plaque"><b>{year}</b><span>{title}</span>{line && <em>{line}</em>}{small && <small>{small}</small>}</div>
+    </div>
+  );
+}
+const Shelf = ({ title, count, children, empty }) => (
+  <section className="gg-shelf"><div className="gg-shelf-h"><span>{title}</span>{count != null && <small>{count}</small>}</div><div className="gg-shelf-row">{React.Children.count(children) ? children : <p className="gg-shelf-empty">{empty}</p>}</div><div className="gg-shelf-wood" /></section>
+);
+
 export default function TrophyRoom() {
-  const {league}=useGame();const [tid,setTid]=useState(String(league.userTid));const team=Number(tid);
-  const seasons=[...league.history];
-  const realCups=CUP_HISTORY.filter(c=>c.abbr===league.teams[team].abbr);
-  const awards=[...seasons.flatMap(h=>Object.entries(h.awards || {}).filter(([,a])=>a?.tid===team).map(([kind,a])=>({kind,year:h.year,...a})))];
-  if(league.awards && !seasons.some(h=>h.year===league.year))awards.unshift(...Object.entries(league.awards).filter(([,a])=>a?.tid===team).map(([kind,a])=>({kind,year:league.year,...a})));
-  const cups=seasons.filter(h=>h.champion===team).map(h=>({kind:"stanley",year:h.year,name:"Stanley Cup",why:`Defeated ${league.teams[h.runnerUp]?.abbr}`}));
-  const presidents=seasons.filter(h=>h.presidents===team).map(h=>({kind:"presidents",year:h.year,name:"Presidents' Trophy",why:"Best regular-season record"}));
-  const shelf=(title,items)=><section className="trophy-shelf"><h3>{title} <span className="dim">{items.length}</span></h3><div className="trophy-display">{items.length?items.map((a,i)=><div className="trophy-piece" key={`${a.kind}-${a.year}-${i}`}><div className="trophy-light"/><HockeyTrophy kind={a.kind} size={a.kind==="stanley"?125:100}/><div className="trophy-plaque"><b>{a.year}–{String(a.year+1).slice(2)}</b><span>{a.kind==="stanley"?"Stanley Cup":AWARD_NAMES[a.kind] || a.name}</span>{a.pid && league.players[a.pid] && !a.shared?<PlayerName p={league.players[a.pid]}/>:<small>{a.name}</small>}<small className="dim">{a.why}</small></div></div>):<p className="empty-shelf">Your franchise's next chapter belongs here.</p>}</div></section>;
-  return <div className="stack"><div className="pagehead"><h2>Trophy Room</h2><Select aria-label="Trophy room team" value={tid} onChange={e=>setTid(e.target.value)}>{league.teams.map(t=><option key={t.id} value={t.id}>{t.city} {t.name}</option>)}</Select></div><div className="trophy-hero"><StanleyCup3D size={170}><HockeyTrophy size={110}/></StanleyCup3D><div><span className="eyebrow">LEGACY ROOM · FRANCHISE HISTORY</span><h2><TeamName tid={team}/></h2><p>{cups.length} Stanley Cups · {awards.length} individual awards · {presidents.length} Presidents' Trophies</p><span className="muted small">Your simulated franchise history · original trophy illustrations</span></div></div><section className="trophy-shelf"><h3>Stanley Cup banners · {realCups.length} NHL titles since 1927</h3><div className="trophy-display">{realCups.length?realCups.map(c=><div className="trophy-piece real" key={c.year}><div className="trophy-light"/><HockeyTrophy kind="stanley" size={100}/><div className="trophy-plaque"><b>{c.year}</b><span>Stanley Cup</span><small className="dim">{c.opponent?`Defeated ${c.opponent}`:"NHL champions"}</small></div></div>):<p className="empty-shelf">No Stanley Cups yet for this franchise.</p>}</div><p className="muted small" style={{padding:"10px 0"}}>Checked championship history through 2026. <a href={CUP_HISTORY_SOURCE} target="_blank" rel="noreferrer">NHL historical source</a>. Original Ottawa Senators titles belong to that earlier franchise.</p></section>{shelf("Your dynasty: Stanley Cup champions",cups)}{shelf("Individual NHL honours",awards)}{shelf("Regular-season excellence",presidents)}</div>;
+  const { league } = useGame();
+  const [tid, setTid] = useState(String(league.userTid));
+  const [view, setView] = useState("club");
+  const team = Number(tid);
+  const seasons = [...league.history];
+  const realCups = CUP_HISTORY.filter((c) => c.abbr === league.teams[team].abbr);
+  const yearsWith = (f) => seasons.filter(f);
+  const cups = yearsWith((h) => h.champion === team);
+  const pres = yearsWith((h) => h.presidents === team);
+  const confs = seasons.flatMap((h) => [["princeOfWales", h.awards?.princeOfWales], ["campbellBowl", h.awards?.campbellBowl]].filter(([, a]) => a?.tid === team).map(([k]) => ({ kind: k, year: h.year })));
+  const individual = seasons.flatMap((h) => Object.entries(h.awards || {}).filter(([k, a]) => a?.tid === team && !a.team && k !== "presidents").map(([kind, a]) => ({ kind, year: h.year, ...a })));
+  const thisYear = league.awards && !seasons.some((h) => h.year === league.year) ? Object.entries(league.awards).filter(([k, a]) => a?.tid === team && !a.team).map(([kind, a]) => ({ kind, year: league.year, ...a })) : [];
+  const latest = seasons[0];
+  const ceremonyYear = league.awards && Object.keys(league.awards).length > 3 ? (seasons.some((h) => h.year === league.year) ? league.year : league.year) : latest?.year;
+  const ceremony = league.awards && Object.keys(league.awards).length > 3 ? league.awards : latest?.awards;
+
+  return (
+    <div className="stack gg-trophyroom">
+      <div className="gg-pagehead">
+        <div><h2>Trophy Room</h2><div className="gg-status">Legacy room · the Stanley Cups, banners and silverware of your franchise, and the league's annual awards</div></div>
+        <div className="gg-chips"><button className={view === "club" ? "on" : ""} onClick={() => setView("club")}>Franchise</button><button className={view === "awards" ? "on" : ""} onClick={() => setView("awards")}>Awards ceremony</button><button className={view === "case" ? "on" : ""} onClick={() => setView("case")}>Trophy case</button></div>
+      </div>
+
+      {view === "club" && (
+        <>
+          <div className="gg-legacy-hero" style={{ "--c1": league.teams[team].colors[0] }}>
+            <Trophy kind="stanley" size={190} className="hero" />
+            <div className="gg-legacy-who">
+              <span className="gg-k">FRANCHISE LEGACY</span>
+              <h2><TeamName tid={team} /></h2>
+              <div className="gg-tiles"><div><small>STANLEY CUPS</small><b>{realCups.length + cups.length}</b></div><div><small>IN YOUR LEAGUE</small><b>{cups.length}</b></div><div><small>INDIVIDUAL AWARDS</small><b>{individual.length + thisYear.length}</b></div><div><small>PRESIDENTS' TROPHIES</small><b>{pres.length}</b></div></div>
+              <Select aria-label="Trophy room team" value={tid} onChange={(e) => setTid(e.target.value)} style={{ marginTop: 8, minWidth: 220 }}>{league.teams.map((t) => <option key={t.id} value={t.id}>{t.city} {t.name}</option>)}</Select>
+            </div>
+            <TeamBadge team={league.teams[team]} size={110} decorative />
+          </div>
+          <Shelf title="Stanley Cup banners" count={realCups.length + cups.length} empty="No Stanley Cups yet for this franchise.">
+            {realCups.map((c) => <Piece key={`r${c.year}`} kind="stanley" year={c.year} title="Stanley Cup" small="NHL history" size={110} />)}
+            {cups.map((h) => <Piece key={`s${h.year}`} kind="stanley" year={`${h.year}–${String(h.year + 1).slice(2)}`} title="Stanley Cup" line={`Defeated ${league.teams[h.runnerUp]?.abbr}`} small="your league" size={110} />)}
+          </Shelf>
+          <Shelf title="Conference and regular-season honours" count={confs.length + pres.length} empty="Win a conference or the Presidents' Trophy to fill this shelf.">
+            {pres.map((h) => <Piece key={`p${h.year}`} kind="presidents" year={`${h.year}–${String(h.year + 1).slice(2)}`} title="Presidents' Trophy" line="Best regular-season record" size={100} />)}
+            {confs.map((c) => <Piece key={`${c.kind}${c.year}`} kind={c.kind} year={`${c.year}–${String(c.year + 1).slice(2)}`} title={AWARD_NAMES[c.kind]} line={AWARD_BLURB[c.kind]} size={100} />)}
+          </Shelf>
+          <Shelf title="Individual honours" count={individual.length + thisYear.length} empty="Your players' trophies will be displayed here.">
+            {[...thisYear, ...individual].map((a, i) => <Piece key={`${a.kind}${a.year}${i}`} kind={a.kind} year={`${a.year}–${String(a.year + 1).slice(2)}`} title={AWARD_NAMES[a.kind]} line={a.pid && league.players[a.pid] ? league.players[a.pid].name : a.name} small={a.why} size={96} />)}
+          </Shelf>
+          <p className="muted small">Checked championship history through 2026. <a href={CUP_HISTORY_SOURCE} target="_blank" rel="noreferrer">NHL historical source</a>. Original Ottawa Senators titles belong to that earlier franchise.</p>
+        </>
+      )}
+
+      {view === "awards" && (
+        <section className="gg-ceremony">
+          <div className="gg-ceremony-h"><Trophy kind="hart" size={70} /><div><span className="gg-k">NHL AWARDS</span><h2>{ceremonyYear ? `${ceremonyYear}–${String(ceremonyYear + 1).slice(2)} winners` : "Awards night"}</h2><div className="dim small">Decided from the season's statistics: production, rate, team success and position. The Conn Smythe follows the Final.</div></div></div>
+          {ceremony ? (
+            <div className="gg-award-grid">
+              {TROPHY_ORDER.filter((k) => ceremony[k]).map((k) => { const a = ceremony[k]; const p = a.pid && league.players[a.pid]; return (
+                <div key={k} className={`gg-award${a.tid === league.userTid ? " mine" : ""}`}>
+                  <Trophy kind={k} size={84} />
+                  <div className="gg-award-body"><small>{AWARD_NAMES[k]}</small><b>{p ? <PlayerName p={p} /> : a.name}</b><span className="row" style={{ gap: 6 }}>{a.tid != null && <TeamBadge team={league.teams[a.tid]} size={18} decorative />}<span className="dim">{a.tid != null ? league.teams[a.tid].abbr : ""}{p ? ` · ${p.pos}` : ""}</span></span><em>{AWARD_BLURB[k]}{a.why ? ` · ${a.why}` : ""}</em></div>
+                </div>
+              ); })}
+            </div>
+          ) : <div className="gg-card"><div className="dim">The first awards are handed out after the regular season. Play through a season to see the winners here.</div></div>}
+        </section>
+      )}
+
+      {view === "case" && (
+        <section className="gg-case">
+          <div className="dim small" style={{ marginBottom: 8 }}>Every trophy the league awards, and who holds it right now.</div>
+          <div className="gg-case-grid">
+            {TROPHY_ORDER.map((k) => { const a = (league.awards && Object.keys(league.awards).length > 3 ? league.awards : latest?.awards)?.[k]; const p = a?.pid && league.players[a.pid]; return (
+              <div key={k} className="gg-case-item"><Trophy kind={k} size={120} /><b>{AWARD_NAMES[k]}</b><small>{AWARD_BLURB[k]}</small>{a ? <span className="gg-case-holder">{p ? p.name : a.name}{a.tid != null ? ` · ${league.teams[a.tid].abbr}` : ""}</span> : <span className="dim small">not yet awarded</span>}</div>
+            ); })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+// Compatibility for the title screen's 3D cup fallback: the premium sprite.
+export function HockeyTrophy({ kind = "stanley", size = 170 }) {
+  return <Trophy kind={kind} size={size * 1.3} />;
 }

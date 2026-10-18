@@ -83,3 +83,11 @@ export function defaultStyle(league, team) {
   if (attack <= -3.5) return 'defend';
   return style;
 }
+
+// Pre-game win probability from the two clubs' strength (offence, defence and
+// goaltending) plus home ice. Used by previews and odds; never by the simulator.
+export function winProbability(league, team, opponent, { home = true } = {}) {
+  const a = teamStrength(league, team), b = teamStrength(league, opponent);
+  const net = (a.off - b.off) + (a.def - b.def) + (a.goalie - b.goalie) * .6;
+  return clamp(1 / (1 + Math.exp(-(net * .11 + (home ? .09 : -.09)))), .12, .88);
+}

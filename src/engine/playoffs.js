@@ -82,8 +82,38 @@ export function recordSeriesGame(league, s, state, result) {
     league.teams[loser].playoffResult = `Lost ${ROUND_NAMES[s.round]}`;
     const next = ["R2", "R3", "Final", "Champion"][s.round];
     league.teams[s.winner].playoffResult = next;
+    seriesPaper(league, s);
   }
 }
+
+// Front page for a finished series: headline, story, series MVP and the road so
+// far. Written for every series the user's club plays and for the Final.
+export function seriesPaper(league, s) {
+  const user = league.userTid;
+  if (s.top !== user && s.bot !== user && s.round !== 3) return;
+  const w = league.teams[s.winner], l = league.teams[s.winner === s.top ? s.bot : s.top];
+  const wins = s.winner === s.top ? s.wTop : s.wBot, losses = s.winner === s.top ? s.wBot : s.wTop;
+  // Series MVP: three-star points across the series for the winning club.
+  const pts = {};
+  for (const g of s.games) (g.stars || []).forEach((st, i) => { const pid = st.pid || st.id || st; const p = league.players[pid]; if (p && p.tid === w.id) pts[pid] = (pts[pid] || 0) + [3, 2, 1][i]; });
+  let mvpId = Object.entries(pts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (!mvpId) mvpId = w.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => (b.pstats?.pts || 0) - (a.pstats?.pts || 0))[0]?.id;
+  const mvp = league.players[mvpId];
+  const last = s.games[s.games.length - 1];
+  const ot = last?.ot ? " in overtime" : "";
+  const sweep = losses === 0, seven = losses === 3;
+  const round = ROUND_NAMES[s.round];
+  const headline = s.round === 3 ? `${w.name.toUpperCase()} WIN THE STANLEY CUP` : sweep ? `${w.name.toUpperCase()} SWEEP ${l.name.toUpperCase()}` : seven ? `${w.name.toUpperCase()} SURVIVE GAME SEVEN` : `${w.name.toUpperCase()} OUST ${l.name.toUpperCase()}`;
+  const sub = `${w.city} takes the ${round} ${wins}-${losses}${ot}${mvp ? `, as ${mvp.name} is named series MVP` : ""}`;
+  const story = [
+    `${w.city.toUpperCase()} — The ${w.name} ${s.round === 3 ? "are Stanley Cup champions" : `are moving on`}. In front of a ${last && last.h === w.id ? "roaring home crowd" : "silenced building on the road"}, ${w.city} closed out the ${l.city} ${l.name} ${last ? `${Math.max(last.hs, last.as)}-${Math.min(last.hs, last.as)}` : ""}${ot} to take the series ${wins} games to ${losses}.`,
+    mvp ? `${mvp.name}, the ${mvp.pos}, ${isGoalieLike(mvp) ? `was the wall in goal, ${mvp.pstats?.w || wins} wins this spring` : `finished the series as the club's engine with ${mvp.pstats?.g || 0} goals and ${mvp.pstats?.a || 0} assists in the playoffs so far`}.` : "",
+    s.round === 3 ? `It is the franchise's ${ordinal((league.history || []).filter((h) => h.champion === w.id).length + 1)} championship. The parade is set for Tuesday.` : `Next up: the ${["Second Round", "Conference Final", "Stanley Cup Final"][s.round]}.`,
+  ].filter(Boolean);
+  (league.playoffs.papers ||= []).push({ id: `${league.year}:${s.round}:${s.top}:${s.bot}`, year: league.year, round: s.round, winner: w.id, loser: l.id, wins, losses, headline, sub, story, mvp: mvp ? { pid: mvp.id, name: mvp.name, pos: mvp.pos } : null, games: s.games.map((g) => ({ h: g.h, a: g.a, hs: g.hs, as: g.as, ot: g.ot })), seen: false });
+}
+const isGoalieLike = (p) => p.pos === "G";
+const ordinal = (n) => n + (["st", "nd", "rd"][((n + 90) % 100 - 10) % 10 - 1] || "th");
 
 // Play one game in every live series of the current round. `skip` lets the UI
 // hold back the user's game for live play.

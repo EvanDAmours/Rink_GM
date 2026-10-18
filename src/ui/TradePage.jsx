@@ -35,11 +35,11 @@ function positionalNeeds(league, team) {
 const GRADE_C = { A: "#22c55e", B: "#60a5fa", C: "#eab308", D: "#f97316", F: "#ef4444" };
 
 function fairness(ratio) {
-  if (ratio >= 1.35) return ["LOPSIDED (for you)", "#22c55e"];
-  if (ratio >= 1) return ["FAIR", "#22c55e"];
-  if (ratio >= 0.85) return ["SLIGHT EDGE (them)", "#eab308"];
-  if (ratio >= 0.6) return ["UNEVEN", "#f97316"];
-  return ["LOPSIDED", "#ef4444"];
+  if (ratio >= 1.35) return ["YOU'RE OVERPAYING", "#60a5fa"];
+  if (ratio >= 1) return ["THEY'D ACCEPT", "#22c55e"];
+  if (ratio >= 0.85) return ["CLOSE · ADD A LITTLE", "#eab308"];
+  if (ratio >= 0.6) return ["NOT ENOUGH", "#f97316"];
+  return ["NO CHANCE", "#ef4444"];
 }
 
 function TradeFinder({ league, user, onLoad }) {
@@ -119,17 +119,21 @@ function Side({ title, color, team, viewer, mine, sel, setSel, selPicks, setSelP
       <div className="gg-tlist">
         {tab === "roster" && roster.map((p) => row(p, false))}
         {tab === "minors" && (minors.length ? minors.map((p) => row(p, true)) : <div className="dim small" style={{ padding: 8 }}>No prospects.</div>)}
-        {tab === "picks" && (picks.length ? picks.map((pk) => {
-          const on = selPicks.includes(pk.id);
-          return (
-            <div key={pk.id} role="checkbox" aria-checked={on} tabIndex={0} className={`gg-trow pick${on ? " on" : ""}`} onClick={() => toggle(selPicks, setSelPicks, pk.id)} onKeyDown={(e) => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle(selPicks, setSelPicks, pk.id))}>
-              <span className="gg-tcheck">{on ? "✓" : ""}</span>
-              <span className="gg-pos" style={{ background: "#475569" }}>R{pk.round}</span>
-              <span className="gg-tname"><b>{pickLabel(league, pk)}</b><small>{pk.orig !== team.id ? `from ${league.teams[pk.orig].abbr}` : "own pick"}</small></span>
-              <span className="gg-tv gold">{tvOf(pickValue(league, pk))}</span>
-            </div>
-          );
-        }) : <div className="dim small" style={{ padding: 8 }}>No picks.</div>)}
+        {tab === "picks" && (picks.length ? (
+          <div className="gg-pickgrid">
+            <div className="gg-pickgrid-h"><span>Year</span>{[1, 2, 3, 4, 5, 6, 7].map((r) => <span key={r}>R{r}</span>)}</div>
+            {[...new Set(picks.map((p) => p.year))].sort().map((year) => (
+              <div key={year} className="gg-pickgrid-row"><b>{year}</b>
+                {[1, 2, 3, 4, 5, 6, 7].map((round) => {
+                  const mine = picks.filter((p) => p.year === year && p.round === round);
+                  if (!mine.length) return <span key={round} className="gg-pickcell empty">—</span>;
+                  return <span key={round} className="gg-pickcell-wrap">{mine.map((pk) => { const on = selPicks.includes(pk.id); return <button key={pk.id} type="button" aria-pressed={on} className={`gg-pickcell${on ? " on" : ""}${pk.orig !== team.id ? " via" : ""}`} title={`${pickLabel(league, pk)} · value ${tvOf(pickValue(league, pk))}${pk.orig !== team.id ? ` · from ${league.teams[pk.orig].abbr}` : ""}`} onClick={() => toggle(selPicks, setSelPicks, pk.id)}>{pk.orig !== team.id ? league.teams[pk.orig].abbr : "own"}<small>{tvOf(pickValue(league, pk))}</small></button>; })}</span>;
+                })}
+              </div>
+            ))}
+            <div className="dim small" style={{ padding: "6px 4px" }}>Tap a pick to add it. Darker cells came from another club. The small number is its trade value.</div>
+          </div>
+        ) : <div className="dim small" style={{ padding: 8 }}>No picks.</div>)}
       </div>
     </div>
   );
@@ -188,8 +192,9 @@ export default function TradePage({ seed }) {
     setGive(s.give);
     toast(`${ai.abbr} would want ${league.players[s.give[s.give.length - 1]].name} added.`);
   };
-  const giveTV = give.reduce((n, id) => n + tvOf(assetValue(league, id, ai)), 0) + givePicks.map((id) => league.draftPicks.find((p) => p.id === id)).filter(Boolean).reduce((n, pk) => n + tvOf(pickValue(league, pk)), 0);
-  const getTV = get.reduce((n, id) => n + tvOf(assetValue(league, id, ai)), 0) + getPicks.map((id) => league.draftPicks.find((p) => p.id === id)).filter(Boolean).reduce((n, pk) => n + tvOf(pickValue(league, pk)), 0);
+  // Deal values are linear (the engine's units ×10) so they add up correctly;
+  // a player's TV badge stays on the OVR scale for quick reading.
+  const giveTV = Math.round(ev.valIn * 10), getTV = Math.round(ev.valOut * 10);
   const [fairLab, fairCol] = fairness(ev.ratio);
   const closed = tradingClosed(league);
   const empty = !give.length && !get.length && !givePicks.length && !getPicks.length;

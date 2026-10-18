@@ -79,9 +79,10 @@ export default function RosterPage() {
   ];
 
   return (
-    <div className="stack">
+    <div className="stack gg-roster">
       <TrainingCamp />
-      <div className="team-banner"><TeamBadge team={user} size={78}/><div><span className="eyebrow">HOCKEY OPERATIONS / ACTIVE CLUB</span><h2>{user.name} roster</h2><p>Manage the people who define your season.</p></div><div className="banner-stats"><span><b>{c.active}<small> / {MAX_ROSTER}</small></b><small>ACTIVE ROSTER</small></span><span><b>{money(capSpace(league,user))}</b><small>CAP AVAILABLE</small></span><span><b>{c.F} / {c.D} / {c.G}</b><small>FORWARDS / DEFENSE / GOALIES</small></span></div></div>
+      <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
+        <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
         <div className="notice warn">
           {issues.map((i) => <div key={i}>⚠️ {i}</div>)}
@@ -96,7 +97,7 @@ export default function RosterPage() {
           You're {money(capFloorGap(league, user))} under the {money(capFloorForYear(capYear(league)))} cap floor. NHL teams have to spend at least that much; sign free agents or trade for salary to get there.
         </div>
       )}
-      <div className="tabs">
+      <div className="gg-chips">
         <button className={view === "roster" ? "on" : ""} onClick={() => setView("roster")}>NHL Roster</button>
         <button className={view === "minors" ? "on" : ""} onClick={() => setView("minors")}>Minors & Prospects ({minors.length})</button>
         <button className={view === "contracts" ? "on" : ""} onClick={() => setView("contracts")}>Contracts</button>
@@ -106,7 +107,7 @@ export default function RosterPage() {
       {view === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
-            <div className="roster-group-title"><b>{title} <span>{rows.filter(fits).length}</span></b><span>OVR / CONTRACT / SEASON PERFORMANCE</span></div>
+            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>OVR · CONTRACT · SEASON</em></div>
             <Table columns={[...base, statusCol, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "ovr", dir: "desc" }} />
           </div>
         ))}

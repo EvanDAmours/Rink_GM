@@ -19,7 +19,7 @@ import { buildSeasonSchedule, lastDay } from "./schedule.js";
 import { createGame, simToEnd, applyResult, blankRecord } from "./sim.js";
 import { generateDraftClass, createDraftPicks, startDraft, finishDraft, draftDone, expandLegacyDraftClass } from "./draft.js";
 import { startPlayoffs, simPlayoffDay } from "./playoffs.js";
-import { computeAwards, connSmythe } from "./awards.js";
+import { computeAwards, connSmythe, conferenceTrophies } from "./awards.js";
 import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries } from "./roster.js";
 import { startResign, endResign, startNewSeason, aiManageRoster, ratingLevel } from "./offseason.js";
 import { marketWeek, deadlinePending, skipDeadline, refreshBlock, fitRoster, seedUserRequests, DEADLINE_END } from "./market.js";
@@ -319,6 +319,8 @@ export function endRegularSeason(league) {
 export function finishPlayoffs(league) {
   const champ = league.playoffs.champion;
   league.awards.connSmythe = connSmythe(league, champ);
+  Object.assign(league.awards, conferenceTrophies(league));
+  league.awards.stanley = { name: `${league.teams[champ].city} ${league.teams[champ].name}`, tid: champ, team: true, why: "Stanley Cup champions" };
   archiveSeason(league);
   const final = league.playoffs.rounds[3][0];
   league.history.unshift({
