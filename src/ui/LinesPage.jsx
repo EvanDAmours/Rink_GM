@@ -1,4 +1,5 @@
 import Jersey from "./Jersey.jsx";
+import Select from "./Select.jsx";
 import React, { useState } from "react";
 import { useGame, Ovr, TeamBadge } from "./common.jsx";
 import { autoLines, resetNhlLines, syncLines, gameLines, healthy, teamRatings, lineupIds } from "../engine/lines.js";
@@ -150,11 +151,11 @@ export default function LinesPage() {
           </div>
         </div>
         <div style={{ flex: 1 }} />
-        <select value={viewTid} onChange={(e) => { setViewTid(Number(e.target.value)); setSel(null); }} aria-label="Team">
+        <Select value={viewTid} onChange={(e) => { setViewTid(Number(e.target.value)); setSel(null); }} aria-label="Team">
           {[...league.teams].sort((a, b) => a.city.localeCompare(b.city)).map((t) => (
             <option key={t.id} value={t.id}>{t.city} {t.name}{t.id === league.userTid ? " (you)" : ""}</option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="row">
@@ -228,13 +229,13 @@ export default function LinesPage() {
             mine ? (
               <label className="row small" style={{ marginLeft: "auto" }} title="How often your backup starts in the regular season. The starter plays every playoff game.">
                 Starter rests
-                <select value={Math.round(restShare(league, team) * 100)} onChange={(e) => { team.restPct = Number(e.target.value); team.autoGoalie = team.restPct > 0; commit(); }} aria-label="How often the starter rests">
+                <Select value={Math.round(restShare(league, team) * 100)} onChange={(e) => { team.restPct = Number(e.target.value); team.autoGoalie = team.restPct > 0; commit(); }} aria-label="How often the starter rests">
                   {REST_OPTIONS.map((r) => (
                     <option key={r} value={r}>
                       {r === 0 ? "never" : `${r}%`} · ~{Math.round(league.schedule.filter((g) => g.h === team.id || g.a === team.id).length * (1 - r / 100))} starts{r === 20 ? " (typical)" : r >= 40 ? " (1A/1B)" : ""}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             ) : (
               <span className="muted small" style={{ marginLeft: "auto" }}>

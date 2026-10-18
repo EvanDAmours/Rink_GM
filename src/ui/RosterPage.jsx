@@ -1,4 +1,5 @@
 import {buyoutSummary} from '../engine/capAccounting.js';
+import Select from "./Select.jsx";
 import {automaticallyHandleRoster,automaticRosterPlan} from "../engine/autoRoster.js";
 import React, { useState } from "react";
 import { useGame, Table, PlayerName, PlayerCell, TeamBadge, Ovr, money, pct, signed, POS_ORDER } from "./common.jsx";
@@ -101,7 +102,7 @@ export default function RosterPage() {
         <button className={view === "contracts" ? "on" : ""} onClick={() => setView("contracts")}>Contracts</button>
       </div>
 
-      <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</select><span className="muted small">Click a player to open their profile.</span></div>
+      <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>
       {view === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>

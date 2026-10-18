@@ -1,4 +1,5 @@
 import React,{useState} from "react";
+import Select from "./Select.jsx";
 import {useGame,TeamName} from "./common.jsx";
 import {HISTORICAL_RECORDS as H} from "../data/historicalRecords.js";
 import {RECORD_LABELS,franchiseRecords} from "../engine/records.js";
@@ -26,7 +27,7 @@ export default function HistoricalRecords(){
   const avg5=Math.round(F.history.slice(-5).reduce((a,h)=>a+h.pts,0)/Math.max(1,F.history.slice(-5).length));
   const tot=F.totals;
   return <div className="stack">
-    <div className="row"><h3 style={{margin:0}}>{F.name} · real NHL history</h3><select aria-label="Historical record club" value={tid} onChange={e=>setTid(e.target.value)}>{league.teams.map(t=><option key={t.id} value={t.id}>{t.city} {t.name}</option>)}</select></div>
+    <div className="row"><h3 style={{margin:0}}>{F.name} · real NHL history</h3><Select aria-label="Historical record club" value={tid} onChange={e=>setTid(e.target.value)}>{league.teams.map(t=><option key={t.id} value={t.id}>{t.city} {t.name}</option>)}</Select></div>
     <p className="muted small">Real NHL regular-season records through 2025-26 from the NHL's public records service (pulled {H.generated}). Compare your simulated seasons against what this franchise has actually done. {F.id===40&&"Utah's franchise record begins in 2024-25 in the NHL's records."}</p>
     <div className="executive-stats ops-summary"><span>Franchise since<b>{F.firstSeason}</b></span><span>Stanley Cups<b>{tot.cups}</b></span><span>All-time record<b>{tot.w}-{tot.l}-{(tot.t||0)+(tot.otl||0)}</b></span><span>Points %<b>{tot.pointPct?(tot.pointPct*100).toFixed(1)+"%":"—"}</b></span><span>Playoff seasons<b>{tot.playoffSeasons}</b></span><span>Last 5 seasons avg<b>{avg5} PTS</b></span></div>
     {mine&&<section className="panel"><h3>Is your franchise progressing?</h3>

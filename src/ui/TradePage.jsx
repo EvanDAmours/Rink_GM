@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Select from "./Select.jsx";
 import { useGame, TeamBadge, PlayerName, money, POS_ORDER } from "./common.jsx";
 import { evaluateTrade, executeTrade, suggestBalance, tradingClosed, assetValue, pickValue } from "../engine/trade.js";
 import { noteUserTrade, tradeLabels, onBlock, deadlineActive, fmtClock } from "../engine/market.js";
@@ -81,41 +82,54 @@ function TradeFinder({ league, user, onLoad }) {
 
 function Side({ title, color, team, viewer, mine, sel, setSel, selPicks, setSelPicks }) {
   const { league } = useGame();
+  const [tab, setTab] = useState("roster");
+  const [pos, setPos] = useState("all");
+  const [q, setQ] = useState("");
   const toggle = (arr, set, id) => set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
-  const roster = team.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr || POS_ORDER[a.pos] - POS_ORDER[b.pos]);
-  const minors = team.prospects.map((id) => league.players[id]).filter(Boolean).sort((a, b) => (mine ? b.pot - a.pot : shownRatings(b).pot - shownRatings(a).pot));
+  const match = (p) => (pos === "all" || (pos === "F" ? ["C", "LW", "RW"].includes(p.pos) : pos === "D" ? ["LD", "RD"].includes(p.pos) : p.pos === pos)) && (!q || p.name.toLowerCase().includes(q.toLowerCase()));
+  const roster = team.roster.map((id) => league.players[id]).filter(Boolean).filter(match).sort((a, b) => b.ovr - a.ovr || POS_ORDER[a.pos] - POS_ORDER[b.pos]);
+  const minors = team.prospects.map((id) => league.players[id]).filter(Boolean).filter(match).sort((a, b) => (mine ? b.pot - a.pot : shownRatings(b).pot - shownRatings(a).pot));
   const picks = league.draftPicks.filter((p) => p.owner === team.id).sort((a, b) => a.year - b.year || a.round - b.round);
   const row = (p, minor) => {
     const r = minor && !mine ? shownRatings(p) : { ovr: p.ovr, pot: p.pot };
     const on = sel.includes(p.id);
     return (
       <div key={p.id} role="checkbox" aria-checked={on} tabIndex={0} className={`gg-trow${on ? " on" : ""}`} onClick={() => toggle(sel, setSel, p.id)} onKeyDown={(e) => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle(sel, setSel, p.id))}>
+        <span className="gg-tcheck">{on ? "✓" : ""}</span>
         <PosBadge pos={p.pos} />
-        <span className="gg-tname">{p.name}{p.injury > 0 && <span className="inj"> +{p.injury}</span>}{onBlock(league, p.id) && <span className="gg-tag">BLOCK</span>}</span>
-        <span className="dim small">{p.age}y · {minor && !p.signed ? "unsigned" : `${money(p.cap)}×${p.yrs}`}</span>
+        <span className="gg-tname"><b>{p.name}</b>{p.injury > 0 && <span className="inj"> +{p.injury}</span>}{onBlock(league, p.id) && <span className="gg-tag">BLOCK</span>}<small>{p.age}y · {minor && !p.signed ? "unsigned" : `${money(p.cap)} × ${p.yrs}`}{minor ? ` · POT ${r.pot}` : ""}</small></span>
         <b className="gg-tovr" style={{ color: ovrColor(r.ovr) }}>{r.ovr}</b>
-        <span className="gg-tv">TV:{tvOf(assetValue(league, p.id, viewer))}</span>
+        <span className="gg-tv">{tvOf(assetValue(league, p.id, viewer))}</span>
       </div>
     );
   };
+  const counts = { roster: team.roster.length, minors: team.prospects.length, picks: picks.length };
   return (
     <div className="gg-side">
-      <div className="gg-side-h" style={{ color }}><TeamBadge team={team} size={22} />{title}<span className="dim small">{team.abbr} · cap space {money(capSpace(league, team))}</span></div>
-      <div className="gg-tlist">{roster.map((p) => row(p, false))}</div>
-      {minors.length > 0 && <><div className="gg-sub">PROSPECTS & MINORS</div><div className="gg-tlist short">{minors.map((p) => row(p, true))}</div></>}
-      <div className="gg-sub">DRAFT PICKS</div>
-      <div className="gg-tlist short">
-        {picks.map((pk) => {
+      <div className="gg-side-h" style={{ "--c": color }}><TeamBadge team={team} size={30} decorative /><div><b>{title}</b><small>{team.city} {team.name} · cap space {money(capSpace(league, team))}</small></div></div>
+      <div className="gg-side-tabs">
+        {[["roster", "Roster"], ["minors", "Prospects"], ["picks", "Picks"]].map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} <span>{counts[k]}</span></button>)}
+      </div>
+      {tab !== "picks" && (
+        <div className="gg-side-filter">
+          <div className="gg-chips">{["all", "F", "D", "G"].map((x) => <button key={x} className={pos === x ? "on" : ""} onClick={() => setPos(x)}>{x === "all" ? "All" : x}</button>)}</div>
+          <input placeholder="Search…" aria-label={`Search ${team.abbr} players`} value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+      )}
+      <div className="gg-tlist">
+        {tab === "roster" && roster.map((p) => row(p, false))}
+        {tab === "minors" && (minors.length ? minors.map((p) => row(p, true)) : <div className="dim small" style={{ padding: 8 }}>No prospects.</div>)}
+        {tab === "picks" && (picks.length ? picks.map((pk) => {
           const on = selPicks.includes(pk.id);
           return (
             <div key={pk.id} role="checkbox" aria-checked={on} tabIndex={0} className={`gg-trow pick${on ? " on" : ""}`} onClick={() => toggle(selPicks, setSelPicks, pk.id)} onKeyDown={(e) => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle(selPicks, setSelPicks, pk.id))}>
-              <b>{pickLabel(league, pk)}</b>
-              <span className="dim small">from {league.teams[pk.orig].abbr}</span>
-              <span className="gg-tv gold">Val:{tvOf(pickValue(league, pk))}</span>
+              <span className="gg-tcheck">{on ? "✓" : ""}</span>
+              <span className="gg-pos" style={{ background: "#475569" }}>R{pk.round}</span>
+              <span className="gg-tname"><b>{pickLabel(league, pk)}</b><small>{pk.orig !== team.id ? `from ${league.teams[pk.orig].abbr}` : "own pick"}</small></span>
+              <span className="gg-tv gold">{tvOf(pickValue(league, pk))}</span>
             </div>
           );
-        })}
-        {!picks.length && <div className="dim small">No picks.</div>}
+        }) : <div className="dim small" style={{ padding: 8 }}>No picks.</div>)}
       </div>
     </div>
   );
@@ -180,54 +194,61 @@ export default function TradePage({ seed }) {
   const closed = tradingClosed(league);
   const empty = !give.length && !get.length && !givePicks.length && !getPicks.length;
 
+  const chip = (id, side) => { const p = league.players[id]; return p ? <span key={`${side}${id}`} className="gg-deal-chip"><PosBadge pos={p.pos} /> {p.name} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><i onClick={() => (side === "give" ? setGive(give.filter((x) => x !== id)) : setGet(get.filter((x) => x !== id)))} aria-label={`Remove ${p.name}`}>✕</i></span> : null; };
+  const pickChip = (id, side) => { const pk = league.draftPicks.find((p) => p.id === id); return pk ? <span key={`${side}p${id}`} className="gg-deal-chip pick">{pickLabel(league, pk)}<i onClick={() => (side === "give" ? setGivePicks(givePicks.filter((x) => x !== id)) : setGetPicks(getPicks.filter((x) => x !== id)))} aria-label="Remove pick">✕</i></span> : null; };
+  const retainables = [...give.map((id) => ({ id, side: "give" })), ...get.map((id) => ({ id, side: "get" }))].filter((x) => league.players[x.id]?.yrs > 0);
+  const protectable = givePicks.map((id) => league.draftPicks.find((p) => p.id === id)).filter((p) => p?.round === 1 && p.orig === user.id);
   return (
     <div className="stack gg-trade">
-      <div className="gg-pagehead"><h2>Trade Center</h2>{league.phase === "regular" && <span className="dim small">Deadline: {dayToDate(league.year, league.deadlineDay, league.scheduleStart)}</span>}</div>
+      <div className="gg-pagehead">
+        <div><h2>Trade Center</h2><div className="gg-status">{league.phase === "regular" ? `Deadline ${dayToDate(league.year, league.deadlineDay, league.scheduleStart)} · ` : ""}pick a partner, tap assets on both sides, then check the deal bar</div></div>
+        <div className="gg-chips"><button className={finder ? "on" : ""} onClick={() => setFinder(!finder)} aria-expanded={finder}>🔍 Trade Finder</button></div>
+      </div>
       {closed && <div className="notice warn">Trading is frozen until the playoffs end.</div>}
       {deadlineActive(league) && <div className="notice">⏰ Trade Deadline Day: it's {fmtClock(league.deadline.minute)} ET. Deals close at 3:00 PM. <span className="link" onClick={() => go("deadline")}>Back to the deadline desk →</span></div>}
-
-      <div className="gg-card">
-        <div className="gg-k">POSITIONAL NEEDS</div>
-        <div className="row" style={{ gap: 6 }}>
-          {needs.map((n) => <span key={n.k} className="gg-need" style={{ borderColor: GRADE_C[n.g] }}>{n.k} <b style={{ color: GRADE_C[n.g] }}>{n.g}</b></span>)}
-        </div>
-      </div>
-
-      <div className="row" style={{ gap: 6 }}>
-        <button className={`gg-finder-btn${finder ? " on" : ""}`} onClick={() => setFinder(!finder)} aria-expanded={finder}>🔍 TRADE FINDER {finder ? "▲" : "▼"}</button>
-      </div>
       {finder && <TradeFinder league={league} user={user} onLoad={(tid, pid, qid) => { setPartner(tid); setGive([pid]); setGet([qid]); setGivePicks([]); setGetPicks([]); setFinder(false); }} />}
 
-      <div className="gg-teampick" role="radiogroup" aria-label="Trade partner">
-        {others.map((t) => (
-          <button key={t.id} role="radio" aria-checked={t.id === partner} aria-label={`${t.city} ${t.name}`} className={t.id === partner ? "on" : ""} style={{ "--c1": t.colors[0] }} onClick={() => pickTeam(t.id)} title={`${t.city} ${t.name}`}>
-            <TeamBadge team={t} size={22} decorative /><span>{t.abbr}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="gg-analyzer">
-        <div className="row" style={{ gap: 10 }}>
-          <span className="gg-k" style={{ margin: 0 }}>TRADE ANALYZER</span>
-          <span>Give <b>{giveTV}</b></span><span>Get <b>{getTV}</b></span>
-          <span>Net <b style={{ color: getTV - giveTV >= 0 ? "#22c55e" : "#ef4444" }}>{getTV - giveTV >= 0 ? "+" : ""}{getTV - giveTV}</b></span>
-          {!empty && <span className="gg-tag" style={{ color: fairCol, borderColor: fairCol }}>{fairLab}</span>}
-          <span className="muted small">{ai.abbr} GM: <b style={{ color: "#e2e8f0" }}>“{ev.mood}”</b> · {ev.contending ? "contending, values proven players" : "rebuilding, values youth & picks"}</span>
+      <div className="gg-partner">
+        <div className="gg-partner-pick">
+          <span className="gg-k" style={{ margin: 0 }}>TRADE PARTNER</span>
+          <Select value={String(partner)} onChange={(e) => pickTeam(Number(e.target.value))} aria-label="Trade partner" style={{ minWidth: 240 }}>
+            {["East", "West"].map((c) => <optgroup key={c} label={`${c}ern Conference`}>{others.filter((t) => t.conf === c).sort((a, b) => a.city.localeCompare(b.city)).map((t) => <option key={t.id} value={t.id}>{t.city} {t.name} ({t.abbr}) · {t.rec.w}-{t.rec.l}-{t.rec.otl}</option>)}</optgroup>)}
+          </Select>
+          <div className="gg-partner-logos" role="radiogroup" aria-label="Trade partner quick pick">
+            {others.map((t) => <button key={t.id} role="radio" aria-checked={t.id === partner} aria-label={`${t.city} ${t.name}`} className={t.id === partner ? "on" : ""} style={{ "--c1": t.colors[0] }} onClick={() => pickTeam(t.id)} title={`${t.city} ${t.name}`}><TeamBadge team={t} size={24} decorative /></button>)}
+          </div>
         </div>
-        <div className="gg-bar" style={{ height: 8, margin: "6px 0" }}><i style={{ width: `${Math.min(100, (ev.ratio / 1.4) * 100)}%`, background: ev.accept ? "#22c55e" : ev.ratio > 0.85 ? "#eab308" : "#ef4444" }} /></div>
-        {ev.problems.filter((p) => !empty || p !== "Add something to the deal.").map((p) => <div key={p} className="small bad">{p}</div>)}
-        <div className="row" style={{ gap: 6, marginTop: 4 }}>
-          {givePicks.map((id) => league.draftPicks.find((p) => p.id === id)).filter((p) => p?.round === 1 && p.orig === user.id).map((p) => <label className="row small" key={p.id}><input type="checkbox" checked={protections.some((c) => c.pickId === p.id)} onChange={(e) => setProtections(e.target.checked ? [...protections, { pickId: p.id, threshold: 10 }] : protections.filter((c) => c.pickId !== p.id))} />Top-10 protect {pickLabel(league, p)}</label>)}
-          {[...give.map((id) => ({ id, side: "give" })), ...get.map((id) => ({ id, side: "get" }))].filter((x) => league.players[x.id]?.yrs > 0).map(({ id, side }) => <label className="row small" key={id}>Retain {league.players[id].name}<select aria-label={`Retain salary for ${league.players[id].name}`} value={(side === "give" ? giveRetention : getRetention)[id] || 0} onChange={(e) => (side === "give" ? setGiveRetention({ ...giveRetention, [id]: Number(e.target.value) }) : setGetRetention({ ...getRetention, [id]: Number(e.target.value) }))}>{[0, 0.1, 0.25, 0.5].map((v) => <option key={v} value={v}>{Math.round(v * 100)}%</option>)}</select></label>)}
-          <button className="primary" disabled={!ev.accept} onClick={propose}>Execute Trade</button>
-          <button onClick={balance} disabled={!get.length && !getPicks.length}>What would it take?</button>
-          <button className="ghost" onClick={reset}>Clear</button>
+        <div className="gg-partner-card" style={{ "--c1": ai.colors[0], "--c2": ai.colors[1] }}>
+          <TeamBadge team={ai} size={56} decorative />
+          <div className="gg-partner-info"><b>{ai.city} {ai.name}</b><small>{ai.rec.w}-{ai.rec.l}-{ai.rec.otl} · cap space {money(capSpace(league, ai))} · {ev.contending ? "contending: values proven players" : "rebuilding: values youth & picks"}</small><div className="gg-partner-mood">GM: <b>“{ev.mood}”</b></div></div>
+          <div className="gg-partner-needs"><span className="gg-k" style={{ margin: 0 }}>YOUR NEEDS</span><div className="row" style={{ gap: 4 }}>{needs.map((n) => <span key={n.k} className="gg-need" style={{ borderColor: GRADE_C[n.g] }}>{n.k} <b style={{ color: GRADE_C[n.g] }}>{n.g}</b></span>)}</div></div>
         </div>
       </div>
 
       <div className="gg-sides">
         <Side title="YOU SEND" color="#22c55e" team={user} viewer={ai} mine sel={give} setSel={setGive} selPicks={givePicks} setSelPicks={setGivePicks} />
         <Side title="YOU GET" color="#3b82f6" team={ai} viewer={ai} sel={get} setSel={setGet} selPicks={getPicks} setSelPicks={setGetPicks} />
+      </div>
+
+      <div className={`gg-dealbar${empty ? " empty" : ""}`}>
+        <div className="gg-deal-cols">
+          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#86efac" }}>YOU SEND · {giveTV}</span><div className="gg-deal-chips">{give.map((id) => chip(id, "give"))}{givePicks.map((id) => pickChip(id, "give"))}{!give.length && !givePicks.length && <span className="dim small">Tap players or picks on the left</span>}</div></div>
+          <div className="gg-deal-mid"><span className={`gg-deal-net ${getTV - giveTV >= 0 ? "good" : "bad"}`}>{getTV - giveTV >= 0 ? "+" : ""}{getTV - giveTV}</span>{!empty && <span className="gg-tag" style={{ color: fairCol, borderColor: fairCol }}>{fairLab}</span>}<div className="gg-bar" style={{ height: 6, width: 120 }}><i style={{ width: `${Math.min(100, (ev.ratio / 1.4) * 100)}%`, background: ev.accept ? "#22c55e" : ev.ratio > 0.85 ? "#eab308" : "#ef4444" }} /></div></div>
+          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#93c5fd" }}>YOU GET · {getTV}</span><div className="gg-deal-chips">{get.map((id) => chip(id, "get"))}{getPicks.map((id) => pickChip(id, "get"))}{!get.length && !getPicks.length && <span className="dim small">Tap players or picks on the right</span>}</div></div>
+        </div>
+        {!empty && ev.problems.filter((p) => p !== "Add something to the deal.").map((p) => <div key={p} className="small bad">{p}</div>)}
+        {(retainables.length > 0 || protectable.length > 0) && (
+          <div className="gg-deal-opts">
+            {protectable.map((p) => <label className="row small" key={p.id}><input type="checkbox" checked={protections.some((c) => c.pickId === p.id)} onChange={(e) => setProtections(e.target.checked ? [...protections, { pickId: p.id, top: 10 }] : protections.filter((c) => c.pickId !== p.id))} /> Top-10 protect {pickLabel(league, p)}</label>)}
+            {retainables.map(({ id, side }) => <label className="row small" key={id}>Retain {league.players[id].name.split(" ").at(-1)} <Select aria-label={`Retain salary for ${league.players[id].name}`} value={String((side === "give" ? giveRetention : getRetention)[id] || 0)} onChange={(e) => (side === "give" ? setGiveRetention({ ...giveRetention, [id]: Number(e.target.value) }) : setGetRetention({ ...getRetention, [id]: Number(e.target.value) }))} style={{ minWidth: 80 }}>{[0, 25, 50].map((v) => <option key={v} value={v}>{v}%</option>)}</Select></label>)}
+          </div>
+        )}
+        <div className="gg-deal-actions">
+          <button className="primary" disabled={!ev.accept} onClick={propose}>{ev.accept ? "✓ Execute Trade" : "They'd decline"}</button>
+          <button onClick={balance} disabled={!get.length && !getPicks.length}>What would it take?</button>
+          <button className="ghost" onClick={reset} disabled={empty}>Clear</button>
+          <span className="dim small">Values (TV) are on the OVR scale from {ai.abbr}'s point of view.</span>
+        </div>
       </div>
 
       {league.tradeHistory?.length > 0 && (

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import Select from "./Select.jsx";
 import { useGame, Table, PlayerName, TeamBadge, Ovr, pct, signed, POS_ORDER } from "./common.jsx";
 import { isGoalie, isDefense } from "../engine/constants.js";
 import { savePct, gaa } from "../engine/players.js";
@@ -80,20 +81,20 @@ export default function StatsPage() {
           <button className={kind === "sk" ? "on" : ""} onClick={() => setKind("sk")}>Skaters</button>
           <button className={kind === "g" ? "on" : ""} onClick={() => setKind("g")}>Goalies</button>
         </div>
-        <select value={season} onChange={(e) => setSeason(e.target.value)}>
+        <Select value={season} onChange={(e) => setSeason(e.target.value)}>
           <option value="rs">Regular season</option>
           <option value="po">Playoffs</option>
-        </select>
-        <select value={team} onChange={(e) => setTeam(e.target.value)}>
+        </Select>
+        <Select value={team} onChange={(e) => setTeam(e.target.value)}>
           <option value="all">All teams</option>
           {league.teams.map((t) => <option key={t.id} value={t.id}>{t.city} {t.name}</option>)}
-        </select>
+        </Select>
         {kind === "sk" && (
-          <select value={pos} onChange={(e) => setPos(e.target.value)}>
+          <Select value={pos} onChange={(e) => setPos(e.target.value)}>
             <option value="all">All skaters</option>
             <option value="F">Forwards</option>
             <option value="D">Defense</option>
-          </select>
+          </Select>
         )}
         <label className="row small"><input type="checkbox" checked={rookies} onChange={(e) => setRookies(e.target.checked)} /> Rookies</label>
       </div>

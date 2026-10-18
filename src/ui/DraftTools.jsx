@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Select from "./Select.jsx";
 import { useGame, TeamName, PlayerName } from "./common.jsx";
 import {tradeUpOffers,acceptTradeUp} from "../engine/draftExpansion.js";
 import { currentSlot } from "../engine/draft.js";
@@ -43,7 +44,7 @@ export function DraftRecap() {
   const draft=drafts.find(d=>d.year===Number(year)) || drafts[0];
   return <div className="stack"><div className="tabs"><button className={view==="recap"?"on":""} onClick={()=>setView("recap")}>Draft history</button><button className={view==="mock"?"on":""} onClick={()=>setView("mock")}>First-round mock</button></div>
     {view==="mock"?<div className="panel"><h3>Public consensus mock draft</h3><p className="muted small">Projection from public ranks and team needs. Picks and prospects are unchanged.</p><div className="list">{mockDraft(league).map(s=><div className="item" key={s.overall}><b>#{s.overall}</b><TeamName tid={s.owner} /><span style={{marginLeft:"auto"}}>{league.players[s.pid]?<PlayerName p={league.players[s.pid]} />:"—"}</span></div>)}</div></div>:<>
-      <div className="row"><select aria-label="Draft year" value={draft?.year || year} onChange={e=>setYear(Number(e.target.value))}>{drafts.map(d=><option key={d.year} value={d.year}>{d.year} draft</option>)}</select><select aria-label="Draft team" value={team} onChange={e=>setTeam(e.target.value)}><option value="all">All teams</option>{league.teams.map(t=><option value={t.id} key={t.id}>{t.abbr}</option>)}</select></div>
+      <div className="row"><Select aria-label="Draft year" value={draft?.year || year} onChange={e=>setYear(Number(e.target.value))}>{drafts.map(d=><option key={d.year} value={d.year}>{d.year} draft</option>)}</Select><Select aria-label="Draft team" value={team} onChange={e=>setTeam(e.target.value)}><option value="all">All teams</option>{league.teams.map(t=><option value={t.id} key={t.id}>{t.abbr}</option>)}</Select></div>
       <div className="panel"><div className="list">{draft?.picks.filter(s=>team==="all" || s.owner===Number(team)).map(s=><div className="item" key={s.overall}><b>#{s.overall}</b><span className="muted">R{s.round}</span><TeamName tid={s.owner} />{league.players[s.pid]?<PlayerName p={league.players[s.pid]} />:<b>{s.name}</b>}<span className="dim">{s.pos}</span><span className="pill" style={{marginLeft:"auto"}}>{s.grade}</span></div>)}{!draft && <p className="muted">Draft selections will be preserved here, including players who later leave or retire.</p>}</div></div>
     </>}
   </div>;

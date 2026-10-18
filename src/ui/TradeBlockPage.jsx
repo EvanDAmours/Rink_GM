@@ -1,4 +1,5 @@
 import {visibleRatings} from '../engine/draft.js';
+import Select from "./Select.jsx";
 import React, { useState } from "react";
 import { useGame, TeamBadge, Ovr, PlayerName, money } from "./common.jsx";
 import { refreshBlock, toggleUserBlock, userOffers, acceptOffer, declineOffer, deadlineActive, fmtClock, DEADLINE_END } from "../engine/market.js";
@@ -191,10 +192,10 @@ export default function TradeBlockPage() {
             {!closed && (
               <>
                 <div className="row" style={{ marginTop: 10 }}>
-                  <select value={add} onChange={(e) => setAdd(e.target.value)} style={{ flex: 1, minWidth: 0 }} aria-label="Player to list">
-                    <option value="">Choose a player to list…</option>
-                    {roster.map((p) => <option key={p.id} value={p.id}>{p.ovr} · {p.name} ({p.pos}, {p.age})</option>)}
-                  </select>
+                  <Select value={add} onChange={(e) => setAdd(e.target.value)} style={{ flex: 1, minWidth: 0 }} aria-label="Player to list">
+                    <option value="">— choose a player to list —</option>
+                    {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, {p.age} yrs) · {money(p.cap)}×{p.yrs}</option>)}</optgroup>)}
+                  </Select>
                   <button className="small" disabled={!add} onClick={() => { toggleUserBlock(league, add); setAdd(""); toast(`Listed. ${callsText}`); commit(); }}>List</button>
                 </div>
                 <div className="muted small" style={{ marginTop: 6 }}>{callsText}</div>

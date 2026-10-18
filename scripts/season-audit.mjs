@@ -2,11 +2,13 @@
 import assert from 'node:assert/strict';
 import {createLeague} from '../src/engine/league.js';
 import {createGame, simToEnd, applyResult} from '../src/engine/sim.js';
-import {teamRatings} from '../src/engine/lines.js';
+import {teamRatings, coachLines} from '../src/engine/lines.js';
 import {seed} from '../src/engine/rng.js';
 import {readFileSync, writeFileSync} from 'node:fs';
 const auditSeed = Number(process.env.NHL_SEASON_SEED || 91000);
 const l = createLeague({userAbbr: 'EDM', injuries: false, seed: 732027});
+// Benches dress their best healthy players, as AI coaches do in play after week one.
+for (const t of l.teams) coachLines(l, t);
 const strength = new Map(l.teams.map(t => [t.id, teamRatings(l, t).ovr]));
 const total = {pp: 0, ppg: 0, ot: 0, so: 0, empty: 0, assists: 0, goals: 0, decisions: {}, regulationGoals: 0};
 for (const [i, g] of l.schedule.entries()) {
