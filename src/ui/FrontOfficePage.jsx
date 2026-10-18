@@ -1,16 +1,13 @@
 import React, { useState } from "react";
 import Select from "./Select.jsx";
+import ContractModal from "./ContractModal.jsx";
 import { useGame, PlayerName, money, Modal, Ovr } from "./common.jsx";
 import { COACH_STYLES, TRAINING, hireCoach, setTraining, trainingCamp } from "../engine/franchise.js";
 import { futurePayroll, extendPlayer } from "../engine/extensions.js";
 import { resignAsk } from "../engine/offseason.js";
 import { capForYear, isGoalie } from "../engine/constants.js";
 
-export function ExtensionModal({p,onClose}) {
-  const {league,toast,commit}=useGame();const [years,setYears]=useState(3);const [aav,setAav]=useState(resignAsk(league,p,3).aav);
-  const ask=resignAsk(league,p,years);
-  return <Modal title={`Extend ${p.name}`} onClose={onClose}><div className="stack"><p className="muted">The new deal begins next season. Current deal: {money(p.cap)} × {p.yrs} year.</p><p>Ask: <b>{money(ask.aav)}</b> × {years} years</p><div className="row"><label>Years <Select value={years} onChange={e=>{const y=Number(e.target.value);setYears(y);setAav(resignAsk(league,p,y).aav);}}>{[1,2,3,4,5,6,7].map(y=><option key={y} value={y}>{y}</option>)}</Select></label><label>AAV ($M) <input type="number" step="0.05" value={aav} onChange={e=>setAav(e.target.value)} /></label></div><button className="primary" onClick={()=>{const r=extendPlayer(league,p.id,Number(aav),years);toast(r.msg);if(r.ok){commit();onClose();}}}>Offer extension</button></div></Modal>;
-}
+export function ExtensionModal({p,onClose}) { return <ContractModal p={p} kind="extension" onClose={onClose} />; }
 export default function FrontOfficePage({view:forced}) {
   const {league,commit,toast}=useGame();const [viewState,setView]=useState("coaching"),[extend,setExtend]=useState(null);const view=forced || viewState;
   const t=league.teams[league.userTid],c=t.coach,owner=t.owner;
