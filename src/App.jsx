@@ -545,7 +545,7 @@ export default function App({ resume = false }) {
             )}
           </ErrorBoundary></div>
         </div>
-        {!live && !busy && <PulsePrompts />}
+        {!live && !busy && tab === "dashboard" && <PulsePrompts />}
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>{if(id==="deadline" && deadlinePending(league))blockers();else setTab(id);}} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}

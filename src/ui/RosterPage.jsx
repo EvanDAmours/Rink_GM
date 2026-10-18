@@ -12,9 +12,9 @@ import TrainingCamp from "./TrainingCamp.jsx";
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
-  const [view, setView] = useState("roster");
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
+  const [view, setView] = useState(league.phase === "preseason" && !(user.camp?.year === league.year && user.camp.games.length >= 4) ? "camp" : "roster");
   const roster = user.roster.map((id) => league.players[id]).filter(Boolean);
   const minors = user.prospects.map((id) => league.players[id]).filter(Boolean);
   const c = counts(league, user);
@@ -80,7 +80,6 @@ export default function RosterPage() {
 
   return (
     <div className="stack gg-roster">
-      <TrainingCamp />
       <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
         <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
@@ -101,9 +100,11 @@ export default function RosterPage() {
         <button className={view === "roster" ? "on" : ""} onClick={() => setView("roster")}>NHL Roster</button>
         <button className={view === "minors" ? "on" : ""} onClick={() => setView("minors")}>Minors & Prospects ({minors.length})</button>
         <button className={view === "contracts" ? "on" : ""} onClick={() => setView("contracts")}>Contracts</button>
+        {league.phase === "preseason" && <button className={view === "camp" ? "on" : ""} onClick={() => setView("camp")}>🏕️ Training Camp</button>}
       </div>
 
-      <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>
+      {view !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>}
+      {view === "camp" && <TrainingCamp />}
       {view === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
