@@ -11,12 +11,12 @@ import { userSeries } from "../engine/playoffs.js";
 import { currentSlot } from "../engine/draft.js";
 import { ensurePulse, repTier, playoffOdds } from "../engine/clubPulse.js";
 import { winProbability, teamStrength } from "../engine/matchup.js";
-import { matchupPlan } from "../engine/teamPlanning.js";
 import { TRAINING, setTraining } from "../engine/franchise.js";
 import { composites } from "../engine/ratings.js";
 import { savePct } from "../engine/players.js";
 import { atCombine } from "../engine/scouting.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import GamePlanPicker from "./GamePlanPicker.jsx";
 
 // Home: the gameday front page. Season header with the stages, five status
 // tiles, a "this week" rail, the next games as logo tiles, a matchup card with
@@ -63,6 +63,7 @@ export default function Dashboard({ act = {} }) {
   const focused = Object.keys(t.training?.assignments || {}).filter((id) => lg.players[id]?.tid === t.id);
   const campDone = t.camp?.year === lg.year && t.camp.games.length >= 4;
   const [pick, setPick] = useState(0);
+  const [allAttention, setAllAttention] = useState(false);
   const [more, setMore] = useState(false);
   const [rightTab, setRightTab] = useState("stories");
   const [labPick, setLabPick] = useState("");
@@ -105,10 +106,6 @@ export default function Dashboard({ act = {} }) {
     const pos = confRank <= 8 ? `Inside the playoff picture: ${ORD(confRank)} in the ${t.conf}.` : `Outside the playoff picture, ${Math.max(0, (cut?.rec.pts || 0) - t.rec.pts)} points behind the 8th seed.`;
     return [divGame ? `Division game: a four-point swing in the ${t.div}.` : confGame ? "Conference game: it counts in the playoff race." : "Cross-conference game.", t.rec.gp ? pos : "Opening night: every point counts."];
   })();
-  const plan = matchupPlan(lg, t, opp || t);
-  const current = t.autoPlan === false ? { forecheck: "balanced", neutral: "balanced", attack: "balanced", ...t.gamePlan } : plan;
-  const setPlan = (key, value) => { t.autoPlan = false; t.gamePlan = { ...current, [key]: value }; commit(); toast(`Game plan: ${value} ${key}.`); };
-  const grade = (key, value) => value === plan[key] ? ["best fit", "#22c55e"] : value === "balanced" ? ["B", "#60a5fa"] : ["C", "#eab308"];
 
   const primary = (() => {
     if (lg.phase === "preseason") return <button className="primary big" onClick={act.startSeason}>Start Season</button>;
@@ -149,8 +146,8 @@ export default function Dashboard({ act = {} }) {
           <h3 className="gg-side-title">This week</h3>
           <div className="gg-rail">
             {lg.phase === "preseason" ? <div className="gg-rail-card primary" onClick={() => go("roster")}><b>Training Camp</b><span>Camp work and mini games to improve your roster before the season</span></div> : <div className="gg-rail-card primary" onClick={() => go("schedule")}><b>Schedule</b><span>Your games, this week's game plan and the playoff picture</span></div>}
-            {attention.slice(0, 7).map(([kind, text, tab], i) => <div key={i} className={`gg-rail-item ${kind}`} onClick={() => tab && go(tab)}>{text}</div>)}
-            {attention.length > 7 && <div className="gg-rail-item info">+{attention.length - 7} more in Needs Attention</div>}
+            {attention.slice(0, allAttention ? attention.length : 5).map(([kind, text, tab], i) => <div key={i} className={`gg-rail-item ${kind}`} onClick={() => tab && go(tab)}>{text}</div>)}
+            {attention.length > 5 && <button className="gg-rail-item info" onClick={() => setAllAttention((v) => !v)}>{allAttention ? "Show fewer" : `See all ${attention.length} items`}</button>}
             {recent.length > 0 && <div className="gg-k" style={{ marginTop: 8 }}>LAST RESULTS</div>}
             {recent.map((g) => { const o = lg.teams[g.h === t.id ? g.a : g.h], h = g.h === t.id, us = h ? g.hs : g.as, them = h ? g.as : g.hs; return <div key={g.id} className="gg-rail-game click" onClick={() => openBox(g)}><span className="dim">{dayToDate(lg.year, g.day, lg.scheduleStart)}</span><b style={{ color: us > them ? "#22c55e" : g.ot ? "#eab308" : "#ef4444" }}>{us > them ? "W" : g.ot ? "OTL" : "L"} {us}-{them}</b><TeamBadge team={o} size={20} decorative /><span className="gg-rail-name">{o.abbr}</span></div>; })}
           </div>
@@ -198,12 +195,7 @@ export default function Dashboard({ act = {} }) {
                     {myD && theirScorer && (() => { const [l, c] = edge(composites(myD).def, composites(theirScorer).off); return <div className="gg-km"><span className="dim">Your best defender vs their top scorer</span><div><b>{myD.name}</b> <span className="dim">{myD.pos} {myD.ovr}</span> <i>vs</i> <b>{theirScorer.name}</b> <span className="dim">{theirScorer.pos} {theirScorer.ovr}</span><em style={{ color: c }}>{l}</em></div></div>; })()}
                     {myG && theirG && (() => { const [l, c] = edge(myG.ovr, theirG.ovr); return <div className="gg-km"><span className="dim">Goaltending</span><div><b>{myG.name}</b> <span className="dim">{myG.stats.gp ? `${savePct(myG.stats).toFixed(3).slice(1)} SV%` : `${myG.ovr} OVR`}</span> <i>vs</i> <b>{theirG.name}</b> <span className="dim">{theirG.stats.gp ? `${savePct(theirG.stats).toFixed(3).slice(1)} SV%` : `${theirG.ovr} OVR`}</span><em style={{ color: c }}>{l}</em></div></div>; })()}
                   </section>
-                  <section className="gg-card gg-plan"><div className="gg-k">🎯 GAME PLAN vs {opp.abbr} <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>{t.autoPlan === false ? "your call" : "your coaches' pick (best fit)"}</span>{t.autoPlan === false && <button className="small ghost" style={{ marginLeft: "auto" }} onClick={() => { t.autoPlan = true; commit(); }}>Let the coaches pick</button>}</div>
-                    {[["forecheck", "FORECHECK", ["balanced", "aggressive"]], ["neutral", "NEUTRAL ZONE", ["balanced", "trap"]], ["attack", "ATTACK", ["balanced", "rush", "shoot", "cycle"]]].map(([key, label, values]) => (
-                      <div key={key} className="gg-plan-row"><small>{label}</small><div className="gg-plan-opts">{values.map((v) => { const [g, c] = grade(key, v); return <button key={v} className={current[key] === v ? "on" : ""} onClick={() => setPlan(key, v)}><b>{v}</b><span style={{ color: c }}>{g}</span></button>; })}</div></div>
-                    ))}
-                    <div className="dim small">{plan.reason}</div>
-                  </section>
+                  <GamePlanPicker opp={opp} compact />
                 </>
               )}
             </>
@@ -222,7 +214,7 @@ export default function Dashboard({ act = {} }) {
           <section className="gg-lab">
             <div className="gg-k">DEVELOPMENT FOCUS</div>
             <div className="dim small">Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.</div>
-            {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in the lab. Pick a player below.</div>}
+            {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in the lab. Pick a player below.</div>}
             {focused.length < 3 && (
               <Select value={labPick} onChange={(e) => labAdd(e.target.value)} aria-label="Add a development focus player" placeholder="— choose a player —" style={{ width: "100%" }}>
                 <option value="">— choose a player —</option>
