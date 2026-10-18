@@ -305,6 +305,22 @@ export function fitRoster(league, t) {
     if (!cut) break;
     releasePlayer(league, t, cut.id);
   }
+  // Over the cap after a call-up: the cheapest fix is a waiver-exempt spare back to the farm.
+  for (let shed = 0; capSpace(league, t) < -0.001 && shed < 3; shed++) {
+    const lineup = new Set(t.lines ? lineupIds(t.lines) : []);
+    const healthy = counts(league, t, { healthyOnly: true });
+    const spare = (p) => (groupOf(p) === "G" ? healthy.G > MIN_GOALIES : groupOf(p) === "D" ? healthy.D > MIN_DEFENSE : healthy.F > MIN_FORWARDS);
+    const down = players(league, t.roster).filter((p) => !lineup.has(p.id) && canSendDown(p) && spare(p)).sort((a, b) => a.ovr - b.ovr)[0];
+    if (down) { sendDown(league, t, down.id); continue; }
+    // No exempt spare left: a cheap depth player goes on waivers, as a real club would.
+    const stamp = league.phase === "freeagency" ? league.fa?.day ?? 0 : league.day;
+    const waive = players(league, t.roster).filter((p) => !lineup.has(p.id) && spare(p) && p.injury <= 0 && !p.ltir && !p.waiverPending && p.clause?.type !== "NMC" && p.cap <= 2.5).sort((a, b) => a.ovr - b.ovr)[0];
+    if (!waive || league.phase !== "regular") break;
+    league.waivers.push({ id: `${waive.id}|${league.year}|${stamp}`, pid: waive.id, from: t.id, phase: league.phase, expires: stamp + 1, claims: [], done: false });
+    waive.waiverPending = true;
+    logTx(league, `${t.abbr} place ${waive.name} on waivers`, [t.id]);
+    break;
+  }
 }
 
 // Find a deal that moves a block player from one AI team to another (nothing changes yet).

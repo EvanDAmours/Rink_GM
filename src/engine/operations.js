@@ -40,7 +40,7 @@ export function processWaivers(lg,{resolveIds=[]}={}) {
     eligible.sort((a,b)=>priority(a)-priority(b) || a.id-b.id);
     const winner=eligible[0];
     if(winner){from.roster=from.roster.filter(id=>id!==p.id);from.prospects=from.prospects.filter(id=>id!==p.id);p.tid=winner.id;p.assignment="nhl";winner.roster.push(p.id);syncLines(lg,from);syncLines(lg,winner);w.result=`Claimed by ${winner.abbr}`;logTx(lg,`${winner.abbr} claim ${p.name} from ${from.abbr}`,[winner.id,from.id]);}
-    else {p.waiverClear={until:lg.day+30,gp:p.stats.gp};sendDown(lg,from,p.id);w.result="Cleared and assigned to AHL";logTx(lg,`${p.name} clears waivers`,[from.id]);}
+    else {p.waiverClear={until:lg.day+30,gp:p.stats.gp};p.waivedDown={year:lg.year,day:lg.day};sendDown(lg,from,p.id);w.result="Cleared and assigned to AHL";logTx(lg,`${p.name} clears waivers`,[from.id]);}
   }
   if(lg.waivers.length>100)lg.waivers=lg.waivers.filter(w=>!w.done).concat(lg.waivers.filter(w=>w.done).slice(-60));
 }

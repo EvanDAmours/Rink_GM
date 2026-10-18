@@ -289,6 +289,11 @@ export function startNewSeason(league) {
   const bonus = diff(league).progressionBonus;
   league.ratingAnchor ??= ratingLevel(league);
   const correction = clamp(-0.6 * (ratingLevel(league) - league.ratingAnchor), -1.5, 1.5);
+  // The star count is anchored too: when more players sit at 90+ than the league began
+  // with, the air at the top gets thinner for everyone already near it.
+  const elite = () => Object.values(league.players).filter((p) => p.tid >= 0 && p.ovr >= 90).length;
+  league.eliteAnchor ??= elite();
+  const eliteCorrection = clamp(-0.05 * (elite() - league.eliteAnchor), -2, 0);
   // Archive stats.
   for (const id in league.players) {
     const p = league.players[id];
@@ -309,7 +314,7 @@ export function startNewSeason(league) {
     if(p.signed!==false)p.service.years++;
     const before = p.ovr;
     applyTrainingYear(league,p);
-    developPlayer(p, (p.usageGrowth || 0) + correction + (p.tid === league.userTid ? bonus : 0));
+    developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0));
     p.lastChange = p.ovr - before;
     p.injury = 0;
     delete p.ltir; delete p.waiverPending;
@@ -322,7 +327,16 @@ export function startNewSeason(league) {
   }
   for (const p of retiredNow) retire(league, p);
 
-  for(const t of league.teams)for(const id of [...t.rfaRights]){const p=league.players[id];if(p && !isRFA(p))letWalk(league,id);}
+  for(const t of league.teams)for(const id of [...t.rfaRights]){
+    const p=league.players[id];if(!p)continue;
+    if(!isRFA(p)){letWalk(league,id);continue;}
+    // Nobody sits out a season in limbo: the qualifying offer is signed when the club has
+    // cap and contract room, otherwise the rights lapse and he hits the open market.
+    const aav=p.qualified?.aav || qualifyingAmount(p,league.year);
+    const ok=capSpace(league,t)>=aav && contractCount(league,t)<50 && signPlayer(league,t,p,aav,1);
+    if(ok){t.rfaRights=t.rfaRights.filter(x=>x!==id);delete p.qualified;if(t.id===league.userTid)league.inbox.push({year:league.year,day:0,text:`${p.name} signed his one-year qualifying offer ($${aav.toFixed(2)}M).`});}
+    else letWalk(league,id);
+  }
 
   // Free-agent pool cleanup: unsigned depth players head to Europe or retire.
   const fas = league.freeAgents.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
