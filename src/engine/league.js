@@ -23,6 +23,7 @@ import { computeAwards, connSmythe } from "./awards.js";
 import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries } from "./roster.js";
 import { startResign, endResign, startNewSeason, aiManageRoster, ratingLevel } from "./offseason.js";
 import { marketWeek, deadlinePending, skipDeadline, refreshBlock, fitRoster, seedUserRequests, DEADLINE_END } from "./market.js";
+import { applyCampGroup } from "./camp.js";
 import { ensurePulse, pulseAfterDay, pulseNewSeason, pulseSeasonEnd, migratePulse } from "./clubPulse.js";
 import { tradingClosed } from "./trade.js";
 import { defaultScouts, refreshScoutPool, scoutWeek, runCombine, migrateScouting } from "./scouting.js";
@@ -308,6 +309,7 @@ export function endRegularSeason(league) {
   startPlayoffs(league);
   league.phase = "playoffs";
   pulseSeasonEnd(league);
+  applyCampGroup(league);
   const ut = league.teams[league.userTid];
   if (ut) league.inbox.push({ year: league.year, day: league.day, text: ut.playoffResult ? `The ${ut.name} are in the playoffs! First round starts now.` : `The ${ut.name} missed the playoffs this season.` });
 }

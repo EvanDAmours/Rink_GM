@@ -7,6 +7,7 @@ import { capSpace, payroll, counts, sendDown, callUp, releasePlayer, canSendDown
 import { savePct, gaa } from "../engine/players.js";
 import Icon from "./Icon.jsx";
 import { shownRatings } from "../engine/draft.js";
+import TrainingCamp from "./TrainingCamp.jsx";
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
@@ -78,6 +79,7 @@ export default function RosterPage() {
 
   return (
     <div className="stack">
+      <TrainingCamp />
       <div className="team-banner"><TeamBadge team={user} size={78}/><div><span className="eyebrow">HOCKEY OPERATIONS / ACTIVE CLUB</span><h2>{user.name} roster</h2><p>Manage the people who define your season.</p></div><div className="banner-stats"><span><b>{c.active}<small> / {MAX_ROSTER}</small></b><small>ACTIVE ROSTER</small></span><span><b>{money(capSpace(league,user))}</b><small>CAP AVAILABLE</small></span><span><b>{c.F} / {c.D} / {c.G}</b><small>FORWARDS / DEFENSE / GOALIES</small></span></div></div>
       {issues.length > 0 && (
         <div className="notice warn">

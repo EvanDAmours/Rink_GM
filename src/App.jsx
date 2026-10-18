@@ -55,7 +55,7 @@ const NAV = [
   {id:"trade",label:"Trade",short:"Trade"},{id:"block",label:"Trade Block",short:"Block"},
   {id:"deadline",label:"Deadline Day",short:"⏰Deadline",when:lg=>(lg.phase==="regular" || lg.phase==="playoffs") && (deadlinePending(lg) || lg.deadline?.year===lg.year && !lg.deadline.synthetic)},
   {id:"freeagency",label:"Free Agency",short:"FA"},{id:"playoffs",label:"Playoffs",short:"Playoffs"},
-  {id:"activity",label:"News & Inbox",short:"Log"},{id:"trophies",label:"Trophy Room",short:"Trophies"},{id:"records",label:"Record Book",short:"Records"},
+  {id:"activity",label:"News & Inbox",short:"Log"},{id:"trophies",label:"Trophy Room",short:"Trophy Room"},{id:"records",label:"Record Book",short:"Records"},
   {id:"league",label:"League",short:"League"},{id:"settings",label:"Settings",short:"🔧"},
 ];
 
