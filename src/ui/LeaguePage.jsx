@@ -6,19 +6,20 @@ import { AWARD_NAMES } from "../engine/awards.js";
 import { leagueTable } from "../engine/standings.js";
 import { dayToDate } from "../engine/schedule.js";
 
-export default function LeaguePage() {
+export default function LeaguePage({ view: forced }) {
   const { league, openTeam } = useGame();
-  const [view, setView] = useState("teams");
+  const [viewState, setView] = useState("teams");
+  const view = forced || viewState;
   const awardsNow = league.awards;
   return (
     <div className="stack">
       <div className="pagehead">
         <h2>League</h2>
-        <div className="tabs" style={{ margin: 0 }}>
+        {!forced && <div className="tabs" style={{ margin: 0 }}>
           {[["teams", "Teams"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]].map(([k, l]) => (
             <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>
           ))}
-        </div>
+        </div>}
       </div>
 
       {view === "teams" && (

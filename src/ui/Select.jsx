@@ -1,4 +1,5 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Drop-in replacement for a native <select>: same props and <option>/<optgroup> children,
 // rendered as a Gridiron-style button with a searchable, grouped popover list.
@@ -20,7 +21,28 @@ export default function Select({ value, onChange, children, disabled, className 
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [cursor, setCursor] = useState(-1);
-  const ref = useRef(null), inputRef = useRef(null), listRef = useRef(null);
+  const ref = useRef(null), inputRef = useRef(null), listRef = useRef(null), popRef = useRef(null);
+  // The popover is portalled to <body> and fixed to the viewport, clamped inside it, so an
+  // open list never widens the page, scrolls it sideways, or gets clipped by a panel.
+  const [pos, setPos] = useState(null);
+  const place = () => {
+    const r = ref.current?.getBoundingClientRect(); if (!r) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const width = Math.min(Math.max(r.width, 220), 420, vw - 16);
+    const left = Math.max(8, Math.min(r.left, vw - width - 8));
+    const below = vh - r.bottom - 8, above = r.top - 8;
+    const up = below < 240 && above > below;
+    const maxH = Math.max(140, Math.min(380, (up ? above : below) - 12));
+    setPos(up ? { left, bottom: vh - r.top + 4, width, maxH } : { left, top: r.bottom + 4, width, maxH });
+  };
+  useLayoutEffect(() => {
+    if (!open) { setPos(null); return; }
+    place();
+    const on = () => place();
+    window.addEventListener("resize", on);
+    window.addEventListener("scroll", on, true);
+    return () => { window.removeEventListener("resize", on); window.removeEventListener("scroll", on, true); };
+  }, [open]);
   const uid = useId();
   const current = items.find((i) => i.value === String(value ?? ""));
   const canSearch = searchable ?? items.length > 8;
@@ -30,10 +52,10 @@ export default function Select({ value, onChange, children, disabled, className 
   }, [items, q]);
   useEffect(() => {
     if (!open) return;
-    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target) && !(popRef.current && popRef.current.contains(e.target))) setOpen(false); };
     document.addEventListener("mousedown", close);
     document.addEventListener("touchstart", close);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("touchstart", close); };
   }, [open]);
   useEffect(() => { if (!open) { setQ(""); setCursor(-1); } }, [open]);
@@ -56,10 +78,10 @@ export default function Select({ value, onChange, children, disabled, className 
         <span className="gg-select-val">{current ? current.label : placeholder || "—"}</span>
         <span className="gg-select-caret">{open ? "▲" : "▼"}</span>
       </button>
-      {open && (
-        <div className="gg-select-pop" role="presentation">
+      {open && pos && createPortal(
+        <div ref={popRef} className="gg-select-pop" role="presentation" style={{ position: "fixed", left: pos.left, top: pos.top ?? "auto", bottom: pos.bottom ?? "auto", width: pos.width, minWidth: 0, maxWidth: "none", zIndex: 1000 }} onKeyDown={onKey}>
           {canSearch && <input ref={inputRef} className="gg-select-search" placeholder="Search…" value={q} onChange={(e) => { setQ(e.target.value); setCursor(0); }} onKeyDown={onKey} aria-label="Search options" />}
-          <div className="gg-select-list" role="listbox" id={`${uid}-list`} ref={listRef} aria-label={ariaLabel}>
+          <div className="gg-select-list" role="listbox" id={`${uid}-list`} ref={listRef} aria-label={ariaLabel} style={{ maxHeight: pos.maxH - (canSearch ? 60 : 16) }}>
             {shown.map((item, i) => {
               const head = item.group && item.group !== lastGroup ? <div className="gg-opt-group" key={`g${item.group}${i}`}>{item.group}</div> : null;
               lastGroup = item.group || lastGroup;
@@ -74,7 +96,8 @@ export default function Select({ value, onChange, children, disabled, className 
             })}
             {!shown.length && <div className="gg-opt off">No matches</div>}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
