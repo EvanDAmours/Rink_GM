@@ -966,3 +966,7 @@ body, .app { font-size: 14px; }
 .gg-case-item.won { border-color: #fbbf2466; box-shadow: inset 0 0 0 1px #fbbf2433, 0 0 24px #fbbf2414; }
 .gg-case-count { font-size: 12px; font-weight: 800; color: #fbbf24; }
 .gg-legacy-who .gg-tiles { flex-wrap: wrap; }
+
+/* camp sections: always open, extensions folds */
+.gg-camp3-sec-h { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: var(--gg-tx); } .gg-camp3-sec-h span { font-size: 11px; color: #60a5fa; font-weight: 700; } .gg-camp3-sec-h i { margin-left: auto; font-style: normal; font-size: 11px; color: var(--gg-mt); }
+.app button.gg-camp3-sec-h { background: transparent; border: 0; padding: 0; min-height: 0; width: 100%; text-align: left; text-transform: none; letter-spacing: 0; cursor: pointer; }

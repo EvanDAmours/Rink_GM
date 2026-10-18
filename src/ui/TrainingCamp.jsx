@@ -31,7 +31,7 @@ function PracticeReport({ game, onClose }) {
 export default function TrainingCamp() {
   const { league, commit, toast } = useGame();
   const [report, setReport] = useState(null);
-  const [tab, setTab] = useState("battles");
+  const [extOpen, setExtOpen] = useState(false);
   const [focusPid, setFocusPid] = useState("");
   const [skill, setSkill] = useState("");
   const [extend, setExtend] = useState(null);
@@ -55,7 +55,6 @@ export default function TrainingCamp() {
   const runAll = () => { let n = 0; for (const [pos] of open) { const r = runBattle(league, pos); if (!r.ok) { toast(r.msg); break; } n++; } toast(`${n} position battle${n === 1 ? "" : "s"} decided.`); commit(); };
   const extendable = roster.filter((p) => p.signed !== false && p.yrs === 1 && !p.extension).sort((a, b) => b.ovr - a.ovr);
   const extended = roster.filter((p) => p.extension).length;
-  const TABS = [["battles", "Position battles", `${Object.keys(camp.battles).length}/${pairs.length}`], ["focus", "Training focus", `${camp.focused.length} trained`], ["dev", "Dev camp", camp.devCamp ? "done" : "open"], ["ext", "Extensions", `${extended}/${extendable.length + extended}`]];
 
   return (
     <div className="gg-camp3 stack">
@@ -76,38 +75,35 @@ export default function TrainingCamp() {
       </div>
 
       <section className="gg-camp3-card">
-        <div className="gg-camp3-tabs">{TABS.map(([k, l, n]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l} <span>{n}</span></button>)}</div>
-        {tab === "battles" && (
-          <>
-            <div className="gg-camp3-sub"><span>{CAMP_COSTS.battle} SP each. The top two at a spot compete; the winner (usually the better player) gains +1 OVR.</span>{open.length > 0 && <button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.battle} onClick={runAll}>⚔️ Run {Math.min(open.length, gm.sp)} of {open.length} · {Math.min(open.length, gm.sp)} SP</button>}</div>
-            <div className="gg-camp3-chips">
-              {pairs.map(([pos, [a, b]]) => camp.battles[pos] ? <div key={pos} className="gg-bchip done"><PosBadge pos={pos} /><span>✓ <b>{last(camp.battles[pos].winner)}</b> beat {last(camp.battles[pos].loser)}</span></div> : <button key={pos} className="gg-bchip" disabled={gm.sp < CAMP_COSTS.battle} onClick={() => run(runBattle(league, pos))}><PosBadge pos={pos} /><span>{last(a.name)} <i>vs</i> {last(b.name)}</span></button>)}
-            </div>
-          </>
+        <div className="gg-camp3-sec-h"><b>Position battles</b><span>{Object.keys(camp.battles).length}/{pairs.length}</span></div>
+        <div className="gg-camp3-sub"><span>{CAMP_COSTS.battle} SP each. The top two at a spot compete; the winner (usually the better player) gains +1 OVR.</span>{open.length > 0 && <button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.battle} onClick={runAll}>⚔️ Run {Math.min(open.length, gm.sp)} of {open.length} · {Math.min(open.length, gm.sp)} SP</button>}</div>
+        <div className="gg-camp3-chips">
+          {pairs.map(([pos, [a, b]]) => camp.battles[pos] ? <div key={pos} className="gg-bchip done"><PosBadge pos={pos} /><span>✓ <b>{last(camp.battles[pos].winner)}</b> beat {last(camp.battles[pos].loser)}</span></div> : <button key={pos} className="gg-bchip" disabled={gm.sp < CAMP_COSTS.battle} onClick={() => run(runBattle(league, pos))}><PosBadge pos={pos} /><span>{last(a.name)} <i>vs</i> {last(b.name)}</span></button>)}
+        </div>
+      </section>
+      <section className="gg-camp3-card">
+        <div className="gg-camp3-sec-h"><b>Training focus</b><span>{camp.focused.length} trained</span></div>
+        <div className="gg-camp3-sub"><span>{CAMP_COSTS.focus} SP. Extra reps for one player: +1.5 to every attribute in a skill group, once per player each camp.</span><button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.focus} onClick={autoFocus}>🎲 Auto-pick 5 · {CAMP_COSTS.focus * 5} SP</button></div>
+        <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <Select value={focusPid} onChange={(e) => { setFocusPid(e.target.value); setSkill(""); }} aria-label="Training focus player" placeholder="Choose a player…" style={{ minWidth: 260 }}>
+            <option value="">Choose a player…</option>
+            {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !camp.focused.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot})</option>)}</optgroup>)}
+          </Select>
+          {focusP && <div className="gg-chips">{skillsFor(focusP).map(([k, sk]) => <button key={k} className={skill === k ? "on" : ""} onClick={() => setSkill(k)}>{sk.name}</button>)}</div>}
+          <button className="primary" disabled={!focusP || !skill || gm.sp < CAMP_COSTS.focus} onClick={() => run(runTrainingFocus(league, focusP.id, skill), () => { setFocusPid(""); setSkill(""); })}>Train{skill ? ` · ${TRAINING[skill].name}` : ""}</button>
+        </div>
+        {camp.focused.length > 0 && <div className="gg-camp3-chips" style={{ marginTop: 8 }}>{camp.focused.map((id) => league.players[id]).filter(Boolean).map((p) => <div key={p.id} className="gg-bchip done"><PosBadge pos={p.pos} /><span>✓ {p.name}</span></div>)}</div>}
+      </section>
+      <section className="gg-camp3-card">
+        <div className="gg-camp3-sec-h"><b>Dev camp</b><span>{camp.devCamp ? "done" : "open"}</span></div>
+        <div className="gg-camp3-sub"><span>{CAMP_COSTS.devCamp} SP. Once per preseason, one player 23 or under gains up to +3 OVR, never past his potential.</span></div>
+        {camp.devCamp ? <div className="gg-camp2-done">✓ {camp.devCamp.name}: {camp.devCamp.before} → {camp.devCamp.after} OVR</div> : (
+          <div className="gg-camp3-chips">{devCampCandidates(league).map((p) => <button key={p.id} className="gg-bchip" disabled={gm.sp < CAMP_COSTS.devCamp} onClick={() => run(runDevCamp(league, p.id))}><PosBadge pos={p.pos} /><span>{p.name} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b> <em>POT {p.pot}</em></span></button>)}</div>
         )}
-        {tab === "focus" && (
-          <>
-            <div className="gg-camp3-sub"><span>{CAMP_COSTS.focus} SP. Extra reps for one player: +1.5 to every attribute in a skill group, once per player each camp.</span><button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.focus} onClick={autoFocus}>🎲 Auto-pick 5 · {CAMP_COSTS.focus * 5} SP</button></div>
-            <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <Select value={focusPid} onChange={(e) => { setFocusPid(e.target.value); setSkill(""); }} aria-label="Training focus player" placeholder="Choose a player…" style={{ minWidth: 260 }}>
-                <option value="">Choose a player…</option>
-                {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !camp.focused.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot})</option>)}</optgroup>)}
-              </Select>
-              {focusP && <div className="gg-chips">{skillsFor(focusP).map(([k, sk]) => <button key={k} className={skill === k ? "on" : ""} onClick={() => setSkill(k)}>{sk.name}</button>)}</div>}
-              <button className="primary" disabled={!focusP || !skill || gm.sp < CAMP_COSTS.focus} onClick={() => run(runTrainingFocus(league, focusP.id, skill), () => { setFocusPid(""); setSkill(""); })}>Train{skill ? ` · ${TRAINING[skill].name}` : ""}</button>
-            </div>
-            {camp.focused.length > 0 && <div className="gg-camp3-chips" style={{ marginTop: 8 }}>{camp.focused.map((id) => league.players[id]).filter(Boolean).map((p) => <div key={p.id} className="gg-bchip done"><PosBadge pos={p.pos} /><span>✓ {p.name}</span></div>)}</div>}
-          </>
-        )}
-        {tab === "dev" && (
-          <>
-            <div className="gg-camp3-sub"><span>{CAMP_COSTS.devCamp} SP. Once per preseason, one player 23 or under gains up to +3 OVR, never past his potential.</span></div>
-            {camp.devCamp ? <div className="gg-camp2-done">✓ {camp.devCamp.name}: {camp.devCamp.before} → {camp.devCamp.after} OVR</div> : (
-              <div className="gg-camp3-chips">{devCampCandidates(league).map((p) => <button key={p.id} className="gg-bchip" disabled={gm.sp < CAMP_COSTS.devCamp} onClick={() => run(runDevCamp(league, p.id))}><PosBadge pos={p.pos} /><span>{p.name} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b> <em>POT {p.pot}</em></span></button>)}</div>
-            )}
-          </>
-        )}
-        {tab === "ext" && (
+      </section>
+      <section className={`gg-camp3-card fold${extOpen ? " open" : ""}`}>
+        <button className="gg-camp3-sec-h fold" onClick={() => setExtOpen((v) => !v)} aria-expanded={extOpen}><b>Extensions</b><span>{extended}/{extendable.length + extended}</span><i>{extOpen ? "▲" : "▼"}</i></button>
+        {extOpen && (
           <>
             <div className="gg-camp3-sub"><span>Extend players heading into the last year of their deals. The new deal starts next season and must fit under next year's cap.</span></div>
             <div className="gg-camp3-chips">{extendable.map((p) => <button key={p.id} className="gg-bchip" onClick={() => setExtend(p)}><PosBadge pos={p.pos} /><span>{p.name} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b> <em>asks {money(resignAsk(league, p, 3).aav)}</em></span></button>)}{!extendable.length && <div className="dim small">Nobody is in the last year of his deal.</div>}</div>
