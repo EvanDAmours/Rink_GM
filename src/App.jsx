@@ -46,18 +46,17 @@ import { atCombine, openDraftFloor } from "./engine/scouting.js";
 import { simFADay } from "./engine/offseason.js";
 import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
+import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub } from "./ui/hubs.jsx";
 
 const NAV = [
-  {id:"dashboard",label:"Dashboard",short:"Home"},{id:"roster",label:"Roster",short:"Roster"},{id:"lines",label:"Lines",short:"Lines"},
-  {id:"standings",label:"Standings",short:"Standings"},{id:"schedule",label:"Schedule",short:"Schedule"},
-  {id:"stats",label:"Stats",short:"Stats"},{id:"draft",label:"Draft & Scouting",short:"Draft"},{id:"frontoffice",label:"Front Office",short:"Coaching"},
-  {id:"operations",label:"Hockey Operations",short:"Ops"},{id:"analysis",label:"Game plans & reports",short:"Game Plan"},
-  {id:"trade",label:"Trade",short:"Trade"},{id:"block",label:"Trade Block",short:"Block"},
-  {id:"deadline",label:"Deadline Day",short:"⏰Deadline",when:lg=>(lg.phase==="regular" || lg.phase==="playoffs") && (deadlinePending(lg) || lg.deadline?.year===lg.year && !lg.deadline.synthetic)},
-  {id:"freeagency",label:"Free Agency",short:"FA"},{id:"playoffs",label:"Playoffs",short:"Playoffs"},
-  {id:"activity",label:"News & Inbox",short:"Log"},{id:"trophies",label:"Trophy Room",short:"Trophy Room"},{id:"records",label:"Record Book",short:"Records"},
-  {id:"league",label:"League",short:"League"},{id:"settings",label:"Settings",short:"🔧"},
+  {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},
+  {id:"stats",label:"Stats",short:"Stats"},{id:"draft",label:"Draft & Scouting",short:"Draft"},{id:"coaching",label:"Coaching",short:"Coaching"},
+  {id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
+  {id:"legacy",label:"Legacy Hall",short:"Legacy Hall"},{id:"records",label:"Record Book",short:"Records"},{id:"league",label:"League",short:"League"},
 ];
+// Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
+const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], trade:["trade","trade"] };
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -69,6 +68,10 @@ export default function App({ resume = false }) {
   const [confirmReq, setConfirmReq] = useState(null);
   const cloudRef = useRef({ last: 0, timer: null, phase: null, busy: false });
   const [tab, setTab] = useState("dashboard");
+  const [sub, setSubState] = useState({});
+  const setSub = useCallback((t, k) => setSubState((prev) => (prev[t] === k ? prev : { ...prev, [t]: k })), []);
+  // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
+  const go = useCallback((id, k) => { const [t, kk] = ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
@@ -194,7 +197,7 @@ export default function App({ resume = false }) {
       league: leagueRef.current,
       commit,
       toast: showToast,
-      go: setTab,
+      go,
       openPlayer: (id) => setModal({ type: "player", id }),
       openTeam: (tid) => setModal({ type: "team", tid }),
       openBox: (game) => setModal({ type: "box", game }),
@@ -202,13 +205,13 @@ export default function App({ resume = false }) {
       proposeTradeFor: (pid, tid) => {
         setTradeSeed({ pid, tid, n: Date.now() });
         setModal(null);
-        setTab("trade");
+        go("trade");
       },
       // Open an AI offer in the Trade Center so the user can change it.
       counterOffer: (o) => {
         setTradeSeed({ tid: o.tid, give: o.give, get: o.get, givePicks: o.givePicks, getPicks: o.getPicks, n: Date.now() });
         setModal(null);
-        setTab("trade");
+        go("trade");
       },
       clearTradeSeed: () => setTradeSeed(null),
       save: () => saveTimer.current && flushSave(),
@@ -248,11 +251,11 @@ export default function App({ resume = false }) {
   // ---------- Phase actions ----------
   const openDeadline = () => {
     startDeadline(league);
-    setTab("deadline");
+    go("deadline");
     commit();
   };
   const blockers = () => {
-    if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations before continuing.",5000);setTab("operations");return true;}
+    if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations before continuing.",5000);go("operations");return true;}
     if (deadlinePending(league)) {
       const first = !deadlineActive(league);
       openDeadline();
@@ -268,7 +271,7 @@ export default function App({ resume = false }) {
     }
     if (issues.length) {
       showToast(issues[0], 5000);
-      setTab("roster");
+      go("roster");
       return true;
     }
     return false;
@@ -333,7 +336,7 @@ export default function App({ resume = false }) {
     },
     startPlayoffs: () => {
       L.endRegularSeason(league);
-      setTab("playoffs");
+      go("playoffs");
       commit();
     },
     simPlayoffDay: () => {
@@ -379,12 +382,12 @@ export default function App({ resume = false }) {
     },
     toResign: () => {
       L.completeDraft(league);
-      setTab("freeagency");
+      go("freeagency");
       commit();
     },
     toFA: () => {
       L.goToFreeAgency(league);
-      setTab("freeagency");
+      go("freeagency");
       commit();
     },
     faDay: () => {
@@ -396,7 +399,7 @@ export default function App({ resume = false }) {
       commit();
     },
     nextSeason: () => {
-      if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations.",5000);setTab("operations");return;}
+      if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations.",5000);go("operations");return;}
       runChunked(
         () => "Aging players and building the new season…",
         () => {
@@ -463,15 +466,9 @@ export default function App({ resume = false }) {
 
   const space = capSpace(league, user);
   const badgeFor = (id) => {
-    if(id==="activity"){const n=Math.max(0,league.inbox.length-(league.settings.activityReadCount || 0));return n || null;}
     if (id === "draft" && league.phase === "draft") return "LIVE";
-    if (id === "freeagency" && (league.phase === "resign" || league.phase === "freeagency")) return "OPEN";
-    if (id === "playoffs" && league.phase === "playoffs") return "ON";
-    if (id === "deadline" && deadlinePending(league)) return "LIVE";
-    if (id === "block") {
-      const n = userOffers(league).length;
-      return n ? String(n) : null;
-    }
+    if (id === "trade") { if (deadlinePending(league)) return "LIVE"; if (league.phase === "resign" || league.phase === "freeagency") return "OPEN"; const n = userOffers(league).length; return n ? String(n) : null; }
+    if (id === "league" && league.phase === "playoffs") return "ON";
     return null;
   };
 
@@ -500,8 +497,9 @@ export default function App({ resume = false }) {
             {!live && <div className="actions">{actions}</div>}
             <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search (Ctrl/⌘ K)">🔍</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
-            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("trophies")} aria-label="Trophy room" title="Trophy room">🏆</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>go("trophies")} aria-label="Trophy room" title="Trophy room">🏆</button>
             <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("settings")} aria-label="Settings" title="Settings">🔧</button>
           </div>
         </header>
         <div className="gg-rep" aria-label={`GM reputation ${Math.round(gm.rep)} of 100`}>
@@ -511,16 +509,16 @@ export default function App({ resume = false }) {
           {rep.nextLabel && <span className="gg-repnext">{Math.round(rep.pct*100)}% → {rep.nextLabel}</span>}
         </div>
         {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
-        {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => setTab("deadline")} />}
+        {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <nav className="gg-tabs nav" aria-label="Main navigation">
           {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
-            <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => (n.id === "deadline" && deadlinePending(league) ? blockers() : setTab(n.id))}>
+            <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => setTab(n.id)}>
               <span className="gg-tab-label">{n.short}</span><span className="sr-only">{n.label}</span>
               {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
             </button>
           ))}
         </nav>
-        <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>(e.target.value==="deadline" && deadlinePending(league)?blockers():setTab(e.target.value))}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}</select></label>
+        <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>go(e.target.value)}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}<option value="activity">News & Inbox</option><option value="settings">Settings</option></select></label>
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
@@ -529,30 +527,23 @@ export default function App({ resume = false }) {
               <>
                 {tab === "dashboard" && <Dashboard act={act} />}
                 {tab === "activity" && <ActivityPage />}
-                {tab === "roster" && <RosterPage />}
-                {tab === "lines" && <LinesPage />}
+                {tab === "lines" && <LinesHub sub={sub.lines} onSub={(k) => setSub("lines", k)} />}
                 {tab === "schedule" && <SchedulePage />}
-                {tab === "standings" && <StandingsPage />}
                 {tab === "stats" && <StatsPage />}
-                {tab === "playoffs" && <PlayoffsPage act={act} />}
-                {tab === "trade" && <TradePage seed={tradeSeed} />}
-                {tab === "block" && <TradeBlockPage />}
-                {tab === "deadline" && <DeadlinePage />}
-                {tab === "freeagency" && <FreeAgencyPage />}
                 {tab === "draft" && <DraftPage act={act} />}
-                {tab === "operations" && <HockeyOperationsPage />}
-                {tab === "analysis" && <GamePlanPage />}
-                {tab === "frontoffice" && <FrontOfficePage />}
-                {tab === "trophies" && <TrophyRoom />}
+                {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}
+                {tab === "frontoffice" && <FrontOfficeHub sub={sub.frontoffice} onSub={(k) => setSub("frontoffice", k)} />}
+                {tab === "trade" && <TradeHub sub={sub.trade} onSub={(k) => setSub("trade", k)} seed={tradeSeed} />}
+                {tab === "legacy" && <TrophyRoom />}
                 {tab === "records" && <RecordBookPage />}
-                {tab === "league" && <LeaguePage />}
+                {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
               </>
             )}
           </ErrorBoundary></div>
         </div>
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
-        {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>{if(id==="deadline" && deadlinePending(league))blockers();else setTab(id);}} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
+        {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}

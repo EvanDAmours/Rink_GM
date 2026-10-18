@@ -99,7 +99,6 @@ export default function RosterPage() {
       <div className="gg-chips">
         <button className={view === "roster" ? "on" : ""} onClick={() => setView("roster")}>NHL Roster</button>
         <button className={view === "minors" ? "on" : ""} onClick={() => setView("minors")}>Minors & Prospects ({minors.length})</button>
-        <button className={view === "contracts" ? "on" : ""} onClick={() => setView("contracts")}>Contracts</button>
         {league.phase === "preseason" && <button className={view === "camp" ? "on" : ""} onClick={() => setView("camp")}>🏕️ Training Camp</button>}
       </div>
 
