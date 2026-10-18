@@ -12,7 +12,7 @@ export function agentPreferences(p) {
   return {priority:r.pick(["winning","role","security","loyalty"]),preferredTerm:p.age<=25?4:p.age<=30?5:2,personality:r.pick(["Patient","Businesslike","Ambitious","Loyal"])};
 }
 export function pendingSpend(lg,tid) {return Object.values(lg.negotiations || {}).filter(n=>n.status==="pending").reduce((s,n)=>s+(n.bids.find(b=>b.tid===tid)?.aav || 0),0)+(lg.offerSheets || []).filter(s=>!s.done && s.to===tid).reduce((n,s)=>n+s.aav,0);}
-export function negotiate(lg,pid,aav,yrs,clause="",role="") {
+export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash=0}={}) {
   const p=lg.players[pid],t=lg.teams[lg.userTid];
   if(!p || !(p.tid===-1 || p.tid===t.id && p.yrs===0) || !["freeagency","resign","preseason"].includes(lg.phase))return {ok:false,msg:"Negotiate with free agents or your unsigned players."};
   if(!["","NTC","NMC"].includes(clause))return {ok:false,msg:"Choose a recognized contract clause."};
@@ -26,7 +26,7 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="") {
   const promised=role || projectedRole(lg,t,p);
   const continuity=Math.min(6,(p.career || []).filter(c=>c.t===t.abbr).length),trust=p.relationship?.trust??50;
   const modifier=prefs.priority==="winning"?(teamRatings(lg,t).ovr>=85?.97:1.05):prefs.priority==="role"?1-roleUtility(lg,t,p,promised)*.05:prefs.priority==="security"?1+Math.max(-.04,Math.min(.06,(prefs.preferredTerm-yrs)*.015)):prefs.priority==="loyalty" && p.tid===t.id?1-Math.max(0,Math.min(.06,continuity*.005+(trust-50)*.0004)):1;
-  const counter=Math.round(Math.max(ask.aav*modifier,p.qualified?.aav || 0)*100)/100;
+  const counter=floor!=null?floor:Math.round(Math.max(ask.aav*modifier,p.qualified?.aav || 0)*100)/100;
   const rounds=(old?.year===lg.year?old.rounds || 0:0)+1;
   if(aav<counter){lg.negotiations[pid]={pid,year:lg.year,rounds,status:rounds>=4?"walked":"counter",counter,term:yrs,preferences:prefs};return {ok:false,msg:rounds>=4?`${p.name}'s agent ended this discussion.`:`Counteroffer: $${counter.toFixed(2)}M × ${yrs} years. Priority: ${prefs.priority}.`};}
   if(old?.status==="walked")return {ok:false,msg:"The agent will reopen talks next season."};
@@ -38,7 +38,7 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="") {
     lg.negotiations[pid]={pid,year:lg.year,rounds,status:"signed",aav,yrs,preferences:prefs};return {ok:true,msg:`${p.name} agreed to your terms.`};
   }
   if(counts(lg,t).active>=23)return {ok:false,msg:"Make an NHL roster spot before bidding."};
-  const bids=[{tid:t.id,aav,yrs,clause,role:promised}];
+  const bids=[{tid:t.id,aav,yrs,clause,role:promised,bonusCash}];
   for(const ai of lg.teams.filter(q=>q.id!==t.id && capSpace(lg,q)>ask.aav && counts(lg,q).active<23 && contractCount(lg,q)<50).sort((a,b)=>teamRatings(lg,b).ovr-teamRatings(lg,a).ovr).slice(0,3)){
     const r=stream(`${p.id}|bid|${ai.id}|${lg.year}`);if(r.next()<.65)bids.push({tid:ai.id,aav:Math.round(ask.aav*(.97+r.next()*.1)*100)/100,yrs:ask.yrs});
   }
@@ -56,6 +56,7 @@ export function settleNegotiations(lg) {
     const prefs=n.preferences,score=b=>b.aav+(prefs.priority==="role"?roleUtility(lg,lg.teams[b.tid],p,b.role || projectedRole(lg,lg.teams[b.tid],p))*.5:0)+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
     const eligible=n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && counts(lg,lg.teams[b.tid]).active<23 && contractCount(lg,lg.teams[b.tid])<50).sort((a,b)=>score(b)-score(a) || a.tid-b.tid);
     const b=eligible[0];delete p.negotiationPending;
+    const mine=n.bids.find(x=>x.tid===lg.userTid);if(mine?.bonusCash && (!b || b.tid!==lg.userTid)){const ut=lg.teams[lg.userTid];ut.arena.cash=Math.round((ut.arena.cash+mine.bonusCash)*100)/100;}
     if(!b){n.status="failed";continue;}
     if(!signPlayer(lg,lg.teams[b.tid],p,b.aav,b.yrs)){n.status="failed";continue;}
     promiseRole(lg,p,b.tid,b.role || projectedRole(lg,lg.teams[b.tid],p));

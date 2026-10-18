@@ -2,6 +2,7 @@ import { negotiate } from "../engine/negotiations.js";
 import React, { useMemo, useState } from "react";
 import { useGame, PlayerName, money, Modal, ovrColor } from "./common.jsx";
 import Select from "./Select.jsx";
+import ContractModal from "./ContractModal.jsx";
 import { faAsk, offerContract, expiringPlayers, resignAsk, resignPlayer, letWalk } from "../engine/offseason.js";
 import { capSpace, counts, capYear } from "../engine/roster.js";
 import { MAX_ROSTER, FA_DAYS, ARCHETYPES, capForYear } from "../engine/constants.js";
@@ -11,45 +12,14 @@ import { POS_COLOR } from "./TradePage.jsx";
 const PosBadge = ({ pos }) => <span className="gg-pos" style={{ background: POS_COLOR[pos] || "#64748b" }}>{pos}</span>;
 const POS = ["C", "LW", "RW", "LD", "RD", "G"];
 
-function OfferModal({ p, onClose }) {
-  const { league, commit, toast } = useGame();
-  const ask = faAsk(league, p);
-  const [yrs, setYrs] = useState(ask.yrs);
-  const askY = faAsk(league, p, yrs);
-  const [aav, setAav] = useState(askY.aav);
-  const user = league.teams[league.userTid];
-  const submit = () => {
-    const r = negotiate(league, p.id, Number(aav), yrs);
-    toast(r.msg, 4500); commit();
-    if (r.ok) onClose();
-  };
-  const total = Number(aav) * yrs;
-  return (
-    <Modal title={`Contract offer · ${p.name}`} onClose={onClose}>
-      <div className="stack gg-offer">
-        <div className="gg-offer-head"><PosBadge pos={p.pos} /><b style={{ fontSize: 18 }}>{p.name}</b><span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span><span className="dim">POT {p.pot} · {p.age} yrs · {ARCHETYPES[p.type]?.name}</span></div>
-        <div className="gg-tiles">
-          <div><small>ASKING</small><b>{money(askY.aav)} × {yrs}</b></div>
-          <div><small>PREFERS</small><b>{ask.prefYrs} yrs</b></div>
-          <div><small>YOUR CAP SPACE</small><b style={{ color: capSpace(league, user) >= Number(aav) ? "#22c55e" : "#ef4444" }}>{money(capSpace(league, user))}</b></div>
-          <div><small>ROSTER</small><b>{counts(league, user).active}/{MAX_ROSTER}</b></div>
-        </div>
-        <div className="gg-offer-ctl">
-          <label>Years<div className="gg-chips">{[1, 2, 3, 4, 5, 6].map((y) => <button key={y} className={yrs === y ? "on" : ""} onClick={() => { setYrs(y); setAav(faAsk(league, p, y).aav); }}>{y}</button>)}</div></label>
-          <label>AAV ($M)<input type="number" step="0.05" min="0.85" value={aav} onChange={(e) => setAav(e.target.value)} /></label>
-          <div className="dim small">Total value {money(total)} · better clubs get a small discount and asking prices drop as free agency goes on.</div>
-        </div>
-        <div className="row" style={{ gap: 8 }}><button className="primary" onClick={submit}>Make Offer</button><button className="ghost" onClick={onClose}>Cancel</button></div>
-      </div>
-    </Modal>
-  );
-}
+function OfferModal({ p, onClose }) { return <ContractModal p={p} kind="fa" onClose={onClose} />; }
 
 function ResignView() {
   const { league, commit, toast } = useGame();
   const user = league.teams[league.userTid];
   const expiring = expiringPlayers(league, user).sort((a, b) => b.ovr - a.ovr);
   const [terms, setTerms] = useState({});
+  const [talk, setTalk] = useState(null);
   const termFor = (p) => terms[p.id] ?? resignAsk(league, p).prefYrs;
   const doSign = (p) => { const r = resignPlayer(league, p.id, termFor(p)); if (!r.ok) toast(r.msg, 4500); commit(); };
   const walk = (p) => { if (p.offerSheetPending) { toast("Resolve the pending offer sheet in Hockey Operations."); return; } letWalk(league, p.id); commit(); };
@@ -72,7 +42,7 @@ function ResignView() {
               </Select>
               <span className="gg-faask">{ask ? money(ask.aav) : "—"}</span>
               <span className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
-                <button className="small primary" disabled={!p.willing} onClick={() => doSign(p)}>Re-sign</button>
+                <button className="small primary" onClick={() => setTalk(p)}>Negotiate</button>
                 <button className="small ghost" onClick={() => walk(p)}>Let walk</button>
               </span>
             </div>
@@ -80,6 +50,7 @@ function ResignView() {
         })}
         {!expiring.length && <div className="dim small">No expiring contracts left to decide on.</div>}
       </div>
+      {talk && league.players[talk.id] && <ContractModal p={league.players[talk.id]} kind="resign" onClose={() => setTalk(null)} />}
     </section>
   );
 }
