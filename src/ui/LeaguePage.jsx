@@ -4,6 +4,7 @@ import { teamRatings } from "../engine/lines.js";
 import { payroll, capSpace } from "../engine/roster.js";
 import { AWARD_NAMES } from "../engine/awards.js";
 import { leagueTable } from "../engine/standings.js";
+import { dayToDate } from "../engine/schedule.js";
 
 export default function LeaguePage() {
   const { league, openTeam } = useGame();
@@ -78,14 +79,15 @@ export default function LeaguePage() {
 
       {view === "tx" && (
         <div className="panel">
-          <div className="list">
-            {league.transactions.slice(0, 250).map((t, i) => (
-              <div className={`item small ${t.tids?.includes(league.userTid) ? "" : "muted"}`} key={i}>
-                <span className="dim" style={{ width: 46 }}>{t.year}</span>
-                {t.text}
+          <div className="gg-tx">
+            {league.transactions.slice(0, 250).map((t, i) => { const tid = t.tids?.[0]; const mine = t.tids?.includes(league.userTid); return (
+              <div className={`gg-tx-row ${mine ? "mine" : "other"}`} key={i}>
+                <small>{t.day != null && t.phase === "regular" ? dayToDate(t.year, t.day, league.scheduleStart) : t.phase === "playoffs" ? `${t.year} playoffs` : t.phase === "draft" ? `${t.year} draft` : t.phase === "freeagency" || t.phase === "resign" ? `${t.year} summer` : t.year}</small>
+                {tid != null && league.teams[tid] ? <TeamBadge team={league.teams[tid]} size={22} decorative /> : <span />}
+                <span>{t.text}</span>
               </div>
-            ))}
-            {!league.transactions.length && <div className="dim small">Nothing yet.</div>}
+            ); })}
+            {!league.transactions.length && <div className="gg-empty"><i>📰</i><b>No transactions yet</b>Signings, trades, waivers and call-ups around the league land here.</div>}
           </div>
         </div>
       )}

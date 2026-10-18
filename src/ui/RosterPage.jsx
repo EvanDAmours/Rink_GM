@@ -159,7 +159,7 @@ export default function RosterPage() {
             rows={roster.filter(fits)}
             initialSort={{ key: "cap", dir: "desc" }}
           />
-          <div className="panel">
+          <div className="panel gg-deadcap">
             <h3>Dead Cap (buyouts)</h3>
             <div className="list">
               {user.deadCap.map((d, i) => (

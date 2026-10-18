@@ -909,7 +909,7 @@ body, .app { font-size: 14px; }
 .gg-stagechip.done { color: #86efac; border-color: #22c55e66; } .gg-stagechip.now { color: #86efac; border-color: #22c55e; background: #22c55e18; }
 .gg-stages i { color: #334155; font-style: normal; font-size: 12px; }
 .gg-stat { border-color: #7f1d1d66; } .gg-stat:not(.alert):not(.warn) { border-color: #1e293b; }
-.gg-stat-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .gg-stat-line b { font-size: 19px; } .gg-stat-line span { min-width: 0; }
+.gg-stat-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .gg-stat-line b { font-size: 19px; white-space: nowrap; flex: 0 0 auto; } .gg-stat-line span { min-width: 0; flex: 1 1 auto; }
 .gg-side-title { margin: 0 0 6px; font-size: 20px; font-weight: 900; letter-spacing: 0; text-transform: none; color: var(--gg-tx); border-bottom: 1px solid #1e293b; padding-bottom: 6px; }
 .gg-main-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; } .gg-main-title h3 { margin: 0; font-size: 20px; font-weight: 900; text-transform: none; letter-spacing: 0; color: var(--gg-tx); }
 .gg-weektiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
@@ -970,3 +970,27 @@ body, .app { font-size: 14px; }
 /* camp sections: always open, extensions folds */
 .gg-camp3-sec-h { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: var(--gg-tx); } .gg-camp3-sec-h span { font-size: 11px; color: #60a5fa; font-weight: 700; } .gg-camp3-sec-h i { margin-left: auto; font-style: normal; font-size: 11px; color: var(--gg-mt); }
 .app button.gg-camp3-sec-h { background: transparent; border: 0; padding: 0; min-height: 0; width: 100%; text-align: left; text-transform: none; letter-spacing: 0; cursor: pointer; }
+
+/* premium pass: readable record holders, tidy box score, empty states, staff cards, transaction rows */
+.gg-rec.light .player-link, .gg-rec.light .gg-rec-holder .dim, .gg-rec.light .dim, .app .gg-rec.light button.team-link, .app .gg-rec.light button.player-link { color: #1e293b !important; }
+.app .gg-rec.light button.team-link { opacity: .75; }
+.gg-rec.light .gg-rec-holder .dim { opacity: .7; }
+.app .modal .list .item .mono { white-space: nowrap; flex: 0 0 auto; }
+.app .gg-deadcap { align-self: start; }
+.gg-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px 12px; text-align: center; color: var(--gg-mt); font-size: 13px; border: 1px dashed #1e293b; border-radius: 8px; }
+.gg-empty i { font-style: normal; font-size: 22px; opacity: .8; }
+.gg-empty b { color: var(--gg-sl); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.gg-staff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.gg-staff-card { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.gg-staff-card.current { border-color: #22c55e66; box-shadow: inset 0 0 0 1px #22c55e22; }
+.gg-staff-card .gg-k { margin: 0; }
+.gg-staff-card b.name { font-size: 15px; }
+.gg-staff-card .gg-meter { display: grid; grid-template-columns: 86px 1fr 28px; align-items: center; gap: 8px; font-size: 11px; color: var(--gg-sl); }
+.gg-staff-card .gg-meter b { text-align: right; color: var(--gg-tx); }
+.app .gg-staff-card button { margin-top: 4px; }
+.gg-tx { display: flex; flex-direction: column; }
+.gg-tx-row { display: grid; grid-template-columns: 54px 26px minmax(0, 1fr); align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid #1e293b66; font-size: 13px; }
+.gg-tx-row:last-child { border-bottom: 0; }
+.gg-tx-row.mine { background: #22c55e0d; box-shadow: inset 3px 0 0 var(--gg-gn); }
+.gg-tx-row small { font-size: 11px; color: var(--gg-mt); font-weight: 700; letter-spacing: .5px; }
+.gg-tx-row.other { color: var(--gg-sl); }
