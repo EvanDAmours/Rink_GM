@@ -21,7 +21,7 @@ const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
 // How a club's league-relative edge (matchup.js, in rating points) moves play:
 // tempo while in possession, zone-entry and cycle execution, and shot quality.
 // starWeight lets the best player on the ice pull a unit's offence toward him.
-export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality: .015, unitQuality: .015, unitNorm: 5, starWeight: .85, starNorm: 4,
+export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality: .0135, unitQuality: .0135, unitNorm: 5, starWeight: .85, starNorm: 4,
   // Skill steepness of possession play: breakouts, controlled-entry choice, entry and cycle execution.
   breakout: .003, carry: .012, execution: .0032, passing: .006});
 const visualStreams = new WeakMap();
@@ -633,6 +633,7 @@ export function applyResult(league, s, { playoff = false } = {}) {
     const appearances = Object.keys(s.gbox).filter(id => side.pl[id] && s.gbox[id].toi > 0);
     const decisionGoalie = s.endedIn === 'SO' ? side.goalie
       : k === winner ? gw?.scoringGoalie || side.goalie : gw?.defendingGoalie || side.goalie;
+    const credited = appearances.includes(decisionGoalie) ? decisionGoalie : appearances.sort((x, y) => s.gbox[y].toi - s.gbox[x].toi)[0];
     for (const gid in s.gbox) {
       if (!side.pl[gid]) continue;
       const gb = s.gbox[gid];
@@ -645,7 +646,7 @@ export function applyResult(league, s, { playoff = false } = {}) {
       st.ga += gb.ga;
       st.toi += gb.toi;
       if (appearances.length === 1 && s.goals.every(g => g.side !== other(k))) st.so++;
-      if (gid === decisionGoalie) {
+      if (gid === credited) {
         if (k === winner) st.w++;
         else if (s.endedIn && !playoff && s.forfeitPoint !== k) st.otl++;
         else st.l++;

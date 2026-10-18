@@ -10,7 +10,7 @@ export function shotGeometry(depth, lateral) {
 
 // `quality` is an extra log-odds term for the team matchup (sim.js EDGE).
 export function expectedGoal({distance, angle, finishing = 82, goalie = 82, quality = 0, rebound = false, rush = false, lateral = false, screen = false, advantage = 0, openIce = false}) {
-  const logit = -1.355 - .034 * distance - .72 * angle + quality
+  const logit = -1.39 - .034 * distance - .72 * angle + quality
     + .022 * (finishing - 82) - .018 * (goalie - 82)
     + (rebound ? .65 : 0) + (rush ? .19 : 0) + (lateral ? .34 : 0)
     + (screen ? .14 : 0) + Math.max(-1, Math.min(2, advantage)) * .52

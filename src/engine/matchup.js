@@ -47,15 +47,17 @@ export function teamStrength(league, team) {
 
 // League means, fixed for a season so that one club's injuries or trades
 // cannot shift every other club's results mid-season.
-const cache = new WeakMap();
+// The means are stored on the league itself so a loaded save plays exactly
+// like the live session: a cache held outside the save would be recomputed
+// from mid-season rosters and injuries and quietly change every result.
 export const DEFAULT_MEANS = Object.freeze({off: 83.2, def: 81.6, goalie: 85.5});
 export function leagueStrength(league) {
   if (!league?.teams?.length) return DEFAULT_MEANS;
-  const hit = cache.get(league);
-  if (hit && hit.year === league.year) return hit.means;
+  const hit = league.strengthMeans;
+  if (hit && hit.year === league.year && hit.means) return hit.means;
   const all = league.teams.map(t => teamStrength(league, t));
   const means = {off: avg(all.map(s => s.off)), def: avg(all.map(s => s.def)), goalie: avg(all.map(s => s.goalie))};
-  cache.set(league, {year: league.year, means});
+  league.strengthMeans = {year: league.year, means};
   return means;
 }
 

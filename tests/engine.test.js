@@ -262,7 +262,8 @@ test("trade market review fixes: goalies move, no buried vets, standings-based b
     if (t.id === lg.userTid) continue;
     for (const id of t.prospects) {
       const p = lg.players[id];
-      if (!startMinors.has(id) && p.signed !== false) assert.ok(canSendDown(p), `${t.abbr} buried ${p.name}`);
+      // A veteran who cleared waivers on the way down was assigned legally.
+      if (!startMinors.has(id) && p.signed !== false) assert.ok(canSendDown(p) || p.waivedDown, `${t.abbr} buried ${p.name}`);
     }
   }
   // Buyers and sellers follow the standings: every team in a playoff spot is buying.

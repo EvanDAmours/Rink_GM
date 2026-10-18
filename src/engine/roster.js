@@ -147,6 +147,9 @@ export function sendDown(league, team, pid) {
   if (!p || p.tid!==team.id || !team.roster.includes(pid) || !canSendDown(p)) return false;
   team.roster = team.roster.filter((x) => x !== pid);
   if (!team.prospects.includes(pid)) team.prospects.push(pid);
+  // Going down on the strength of a recent waiver clearance is a legal assignment that
+  // outlives the 30-day window itself.
+  if (p.waiverClear && !waiverStatus(p).exempt) p.waivedDown = {year: league.year, day: league.day};
   p.assignment="ahl";
   p.ahlRecallAfter=(league.day || 0)+2;
   syncLines(league, team);
@@ -169,6 +172,7 @@ export function callUp(league, team, pid, {emergency=false}={}) {
     p.signed = true;
     logTx(league, `${team.abbr} sign ${p.name} to an entry-level contract`, [team.id]);
   }
+  delete p.waivedDown;
   addToRoster(league, team, p);
   return true;
 }

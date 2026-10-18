@@ -163,7 +163,7 @@ export function developPlayer(p, bonus = 0) {
     if (p.dev === "late") mean += age <= 21 ? -0.7 : 0.8;
   }
   // The air is thin at the top: elite ratings are hard to climb further.
-  if (before >= 90 && mean > 0) mean = Math.max(0, mean - (before - 88) * 0.25);
+  if (before >= 88 && mean > 0) mean = Math.max(0, mean - (before - 86) * 0.3);
   mean += bonus;
   let delta = gauss(mean, sd);
   if (before + delta > 99) delta = 99 - before;
