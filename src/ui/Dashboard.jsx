@@ -110,7 +110,7 @@ export default function Dashboard({ act = {} }) {
   const primary = (() => {
     if (lg.phase === "preseason") return <button className="primary big" onClick={act.startSeason}>Start Season</button>;
     if (lg.phase === "regular" && today) return <><button className="primary big" onClick={act.playLive}>▶ Play Live</button><button className="big" onClick={act.simDay}>Sim Game</button>{act.simDays && <button className="big" onClick={() => act.simDays(7, "Simulating a week")}>Sim Week</button>}{act.simToDeadline && lg.day < lg.deadlineDay && <button className="big" onClick={act.simToDeadline}>Sim to Deadline</button>}</>;
-    if (lg.phase === "regular") return <><button className="primary big" onClick={act.simDay}>Advance one day</button>{act.simDays && <button className="big" onClick={() => act.simDays(7, "Simulating a week")}>Sim Week</button>}</>;
+    if (lg.phase === "regular") return <><button className="primary big" onClick={act.simDay}>Sim Day</button>{act.simDays && <button className="big" onClick={() => act.simDays(7, "Simulating a week")}>Sim Week</button>}</>;
     if (series && series.winner == null) return <><button className="primary big" onClick={act.playPlayoffLive}>▶ Play Game Live</button><button className="big" onClick={act.simPlayoffDay}>Sim Day</button></>;
     if (lg.phase === "playoffs") return <><button className="primary big" onClick={() => go("playoffs")}>Bracket</button>{lg.playoffs?.champion == null && <button className="big" onClick={act.simPlayoffDay}>Sim Day</button>}</>;
     if (lg.phase === "draft") return <button className="primary big" onClick={() => go("draft")}>{slot ? `Draft room · pick #${slot.overall}` : "Draft room"}</button>;
@@ -119,7 +119,7 @@ export default function Dashboard({ act = {} }) {
 
   const stage = lg.phase === "draft" ? (atCombine(lg) ? "combine" : "draft") : lg.phase;
   const stageIdx = STAGES.findIndex(([k]) => k === stage);
-  const stories = (lg.news?.length ? lg.news : lg.inbox.slice().reverse()).slice(0, 7);
+  const stories = (() => { const seen = new Set(); return (lg.news?.length ? lg.news : lg.inbox.slice().reverse()).filter((n) => { const k = (n.title || n.text || "").replace(/\d+/g, "#").slice(0, 60); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 7); })();
   const leaders = [["PTS", (p) => p.stats.pts], ["G", (p) => p.stats.g], ["A", (p) => p.stats.a]].map(([k, f]) => [k, roster.filter((x) => !isGoalie(x.pos)).sort((a, b) => f(b) - f(a) || b.ovr - a.ovr)[0], f]);
   const labAdd = (pid) => { const p = lg.players[pid]; if (!p) return; const groups = Object.entries(TRAINING).filter(([k]) => isGoalie(p.pos) === (k === "goaltending")); const [k] = groups.sort((a, b) => a[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / a[1].keys.length - b[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / b[1].keys.length)[0]; const r = setTraining(lg, pid, k); toast(r.msg); commit(); setLabPick(""); };
   const labRemove = (pid) => { const r = setTraining(lg, pid, ""); toast(r.msg); commit(); };
