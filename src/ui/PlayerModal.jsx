@@ -11,6 +11,8 @@ import { DevChip } from "./scoutingBits.jsx";
 import { shownRatings } from "../engine/draft.js";
 import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } from "../engine/roster.js";
 import { careerTotals, careerMilestones } from "../engine/records.js";
+import { prospectReport, isProspectWatch } from "../engine/prospectWatch.js";
+import { Sparkline } from "./ProspectWatch.jsx";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
@@ -33,6 +35,7 @@ export default function PlayerModal({ pid }) {
 
   const career = [...p.career].reverse();
   const totals = careerTotals(p);
+  const watch = team && isProspectWatch(league, team, p) ? prospectReport(league, team, p) : null;
   const milestones = careerMilestones(p);
 
   if (p.tid === -2) {
@@ -77,6 +80,21 @@ export default function PlayerModal({ pid }) {
           </div>
         </div>
 
+        {watch && !hidden && (
+          <div className="panel gg-pm-dev">
+            <h3>Development</h3>
+            <div className="gg-pm-dev-grid">
+              <div><small>THIS SEASON</small><b>{watch.level}</b><span className="dim small">{watch.line.text}{watch.farm ? ` · ${watch.role} role` : ""}</span></div>
+              <div><small>RATING</small><b style={{ color: watch.delta > 0 ? "#22c55e" : watch.delta < 0 ? "#ef4444" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span className="dim small">{watch.delta > 0 ? "+" : ""}{watch.delta} since camp · {watch.trend === "surging" ? "surging" : watch.trend === "up" ? "trending up" : watch.trend === "down" ? "slipping" : "holding"}</span></div>
+              <div><small>CEILING</small><b>{p.pot}</b><span className="dim small">ETA {watch.eta}{watch.drafted ? ` · drafted ${watch.drafted}` : ""}</span></div>
+              <div className="gg-pm-dev-spark"><Sparkline path={watch.path} width={160} height={40} color={watch.delta > 0 ? "#22c55e" : watch.delta < 0 ? "#ef4444" : "#94a3b8"} /><span className="dim small">{watch.prod === "dominant" ? "Dominating his level" : watch.prod === "solid" ? "Holding his own" : watch.prod === "struggling" ? "Struggling at this level" : "Early in the season"}{watch.next ? ` · ${watch.next.label}` : ""}</span></div>
+            </div>
+            {(p.progress || []).filter((x) => x.year === league.year).length > 0 && <div className="dim small" style={{ marginTop: 8 }}>Growth this season: {(p.progress || []).filter((x) => x.year === league.year).map((x) => `wk ${x.week} ${x.from}→${x.to} (${x.note})`).join(" · ")}</div>}
+            {(p.farmHistory || []).length > 0 && <div className="tablewrap" style={{ marginTop: 10 }}><table className="t"><thead><tr><th>Season</th><th>League</th><th>Role</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th></>}</tr></thead><tbody>
+              {[...p.farmHistory].reverse().map((h, i) => <tr key={i}><td>{h.year}-{String(h.year + 1).slice(2)}</td><td>{h.lg}</td><td>{h.role}</td><td className="num">{h.gp}</td>{goalie ? <><td className="num">{h.w}</td><td className="num">{h.sa ? pct((h.sa - h.ga) / h.sa) : "—"}</td></> : <><td className="num">{h.g}</td><td className="num">{h.a}</td><td className="num">{h.g + h.a}</td></>}</tr>)}
+            </tbody></table></div>}
+          </div>
+        )}
         {!hidden && (
           <div className="panel">
             <h3>Attributes</h3><p className="muted small">{p.ratingData?"EA values are used where published; remaining attributes are estimated. Ratings can develop during your franchise.":"Individual attributes are gameplay estimates where EA has not published values."}</p>

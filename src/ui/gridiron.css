@@ -1175,3 +1175,37 @@ body, .app { font-size: 14px; }
 .gg-paper.kind-allstar .gg-paper-kv span, .gg-paper.kind-deadline .gg-paper-kv span, .gg-paper.kind-review .gg-paper-kv span { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: #555; }
 .gg-paper.kind-review .gg-paper-side { columns: 1; }
 @media (max-width: 760px) { .app .ln-card { grid-template-columns: 30px minmax(0, 1fr); } .app .ln-num .gg-mug, .app .ln-unit .ln-num .gg-mug { width: 28px !important; height: 28px !important; border-width: 1.5px; } .app .ln-num { width: 28px; height: 28px; } }
+
+/* ---------- Prospect watch ---------- */
+.app .gg-watch-filters { margin: 4px 0 10px; }
+.app .gg-watch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.app .gg-watch.compact .gg-watch-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.app .gg-watch-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.app .gg-watch-card.decide { border-color: #fbbf2466; box-shadow: inset 3px 0 0 #fbbf24; }
+.app .gg-watch-head { display: flex; align-items: center; gap: 10px; }
+.app .gg-watch-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.app .gg-watch-name { font-weight: 800; font-size: 15px; text-align: left; padding: 0; background: none; border: 0; color: #fff; min-height: 0; }
+.app .gg-watch-who .gg-pos { font-size: 9px; padding: 1px 5px; border-radius: 4px; font-style: normal; font-weight: 800; color: #fff; }
+.app .gg-watch-level { font-size: 10px; font-weight: 900; letter-spacing: .6px; padding: 4px 8px; border-radius: 6px; background: #3b2a06; border: 1px solid #eab308; color: #fde68a; white-space: nowrap; }
+.app .gg-watch-level.ahl { background: #1e3a8a; border-color: #3b82f6; color: #bfdbfe; } .app .gg-watch-level.nhl { background: #14532d; border-color: #16a34a; color: #bbf7d0; }
+.app .gg-watch-mid { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.app .gg-watch-ovr { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.app .gg-watch-ovr > b { font-family: var(--display); font-size: 30px; line-height: 1; }
+.app .gg-watch-ovr > small { font-size: 9px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
+.app .gg-watch-ovr > span { font-weight: 900; font-size: 14px; } .app .gg-watch-ovr > span em { font-style: normal; font-weight: 600; font-size: 9px; color: var(--muted); margin-left: 4px; letter-spacing: .4px; }
+.app .gg-watch-trend { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.app .gg-watch-line { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; flex-wrap: wrap; }
+.app .gg-watch-prod { font-size: 10px; font-weight: 800; letter-spacing: .5px; padding: 2px 7px; border-radius: 999px; background: #1e293b; border: 1px solid #334155; }
+.app .gg-watch-prod.dominant { background: #052e16; border-color: #16a34a; color: #86efac; } .app .gg-watch-prod.struggling { background: #450a0a; border-color: #ef4444; color: #fca5a5; } .app .gg-watch-prod.solid { background: #172554; border-color: #3b82f6; color: #bfdbfe; }
+.app .gg-watch-flags { display: flex; gap: 6px; flex-wrap: wrap; }
+.app .gg-watch-flag { font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+.app .gg-watch-flag.good { background: #052e16; border-color: #16a34a; color: #86efac; } .app .gg-watch-flag.inj { background: #450a0a; border-color: #ef4444; color: #fca5a5; } .app .gg-watch-flag.focus { background: #2a2208; border-color: #fbbf24; color: #fde68a; }
+.app .gg-watch-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid #1e293b; padding-top: 10px; }
+.app .gg-spark { display: block; }
+.app .gg-home-watch-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #ffffff10; }
+.app .gg-home-watch-row > div { min-width: 0; display: flex; flex-direction: column; } .app .gg-home-watch-row > div > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .gg-pm-dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.app .gg-pm-dev-grid > div { display: flex; flex-direction: column; gap: 3px; padding: 10px; background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; }
+.app .gg-pm-dev-grid small:first-child { font-size: 9px; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
+.app .gg-pm-dev-grid > div > b { font-family: var(--display); font-size: 22px; line-height: 1.1; }
+@media (max-width: 760px) { .app .gg-watch-grid, .app .gg-watch.compact .gg-watch-grid { grid-template-columns: 1fr; } }

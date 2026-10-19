@@ -60,7 +60,7 @@ const NAV = [
 ];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], trade:["trade","trade"] };
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], trade:["trade","trade"], development:["frontoffice","development"], pipeline:["frontoffice","pipeline"] };
 
 const CLOUD_EVERY_MS = 60000;
 

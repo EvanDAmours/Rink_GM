@@ -18,6 +18,7 @@ import { settleNegotiations, processOfferSheets, aiOfferSheets } from "./negotia
 import { processWaivers } from "./operations.js";
 import { holdQualifiedRFA } from "./operations.js";
 import {usageGrowth} from "./development.js";
+import { archiveFarmSeasons } from "./prospectWatch.js";
 import { applyTrainingYear } from "./franchise.js";
 
 const diff = (league) => DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal;
@@ -303,6 +304,7 @@ export function startNewSeason(league) {
       p.career.push({ y: league.year, t: abbr, o: p.ovr, s: compactStats(p.pos, p.stats), ps: p.pstats.gp ? compactStats(p.pos, p.pstats) : null });
     }
   }
+  archiveFarmSeasons(league);
   league.year++;
   league.phase = "preseason"; // budget against the new season, not a second future year
   const retiredNow = [];
@@ -314,8 +316,10 @@ export function startNewSeason(league) {
     if(p.signed!==false)p.service.years++;
     const before = p.ovr;
     applyTrainingYear(league,p);
-    developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0));
-    p.lastChange = p.ovr - before;
+    const banked = p.inSeasonGain?.year === league.year - 1 ? p.inSeasonGain.n : 0;
+    developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0) - banked);
+    p.lastChange = p.ovr - before + banked;
+    delete p.inSeasonGain;
     p.injury = 0;
     delete p.ltir; delete p.waiverPending;
     p.stats = blankStats(p.pos);
