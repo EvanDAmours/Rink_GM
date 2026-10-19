@@ -40,6 +40,7 @@ import BoxScoreModal from "./ui/BoxScoreModal.jsx";
 import SeasonPreview from "./ui/SeasonPreview.jsx";
 import OwnerReview from "./ui/OwnerReview.jsx";
 import StageConfirm from "./ui/StageConfirm.jsx";
+import Tour, { TourWelcome } from "./ui/Tour.jsx";
 import { expiringPlayers } from "./engine/offseason.js";
 import { counts } from "./engine/roster.js";
 import { myOffers } from "./engine/negotiations.js";
@@ -113,6 +114,7 @@ export default function App({ resume = false }) {
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [ffOpen,setFfOpen]=useState(false);
+  const [tour,setTour]=useState(null); // null | "welcome" | "run"
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
   const [toast, setToast] = useState(null);
@@ -194,6 +196,9 @@ export default function App({ resume = false }) {
     setTab("dashboard");
     commit();
     syncCloud(true);
+    // A brand-new franchise is offered the tour once, unless the player opted out for good.
+    let optOut = false; try { optOut = localStorage.getItem("rinkgm_tour_optout") === "1"; } catch {}
+    if (!lg.settings?.tourSeen && lg.year === lg.startYear && lg.phase === "preseason" && !optOut) setTour("welcome");
   };
 
   // In-page confirmation (the claude.ai viewer doesn't show window.confirm).
@@ -247,6 +252,7 @@ export default function App({ resume = false }) {
       openPlayer: (id) => setModal({ type: "player", id }),
       openTeam: (tid) => setModal({ type: "team", tid }),
       openBox: (game) => setModal({ type: "box", game }),
+      startTour: () => { setModal(null); setMenuOpen(false); setTour("run"); },
       closeModal: () => setModal(null),
       proposeTradeFor: (pid, tid) => {
         setTradeSeed({ pid, tid, n: Date.now() });
@@ -594,6 +600,7 @@ export default function App({ resume = false }) {
             <button role="menuitem" data-id="activity" className={tab === "activity" ? "active" : ""} onClick={() => { setMenuOpen(false); go("activity"); }}>News & Inbox{unread>0 && <span className="badge">{unread}</span>}</button>
             <button role="menuitem" data-id="trophies" onClick={() => { setMenuOpen(false); go("trophies"); }}>Trophy room</button>
             <button role="menuitem" data-id="settings" className={tab === "settings" ? "active" : ""} onClick={() => { setMenuOpen(false); go("settings"); }}>Settings</button>
+            <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}>Take the tour</button>
           </div>}
         </header>
         {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
@@ -630,6 +637,8 @@ export default function App({ resume = false }) {
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
         {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
         {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}
+        {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
+        {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {!modal && !live && !busy && league.ownerReviewPending != null && !unseenPaper(league) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}
         {busy && (
           <div className="overlay">
