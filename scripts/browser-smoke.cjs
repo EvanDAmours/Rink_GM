@@ -7,7 +7,7 @@ const {chromium:pw}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MODULE || '@sparticuz/chromium').args:[];
 (async()=>{
  const browser=await pw.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH || undefined,args,headless:true});
- const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],requests=[];page.on("request",r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],requests=[];const mugs=[];await page.route(/assets\.nhle\.com\/mugs\//,route=>{mugs.push(route.request().url());route.abort();});page.on("request",r=>{if(/^https?:/.test(r.url())&&!/assets\.nhle\.com\/mugs\//.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(artifact);
  await page.evaluate(()=>document.fonts.ready);
  await page.waitForFunction(()=>[...document.querySelectorAll('.teamcard img')].every(img=>img.complete && img.naturalWidth>0));
@@ -41,7 +41,7 @@ const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MO
  for(const id of ['dashboard','lines','schedule','stats','draft','coaching','frontoffice','trade','legacy','records','league','activity','settings']){await page.getByLabel('Game navigation',{exact:true}).selectOption(id);assert.ok(await page.locator('.main').isVisible());assert.ok(await page.locator('body').evaluate(el=>el.scrollWidth<=window.innerWidth+2),`Mobile overflow on ${id}`);if(id==='roster'){const tap=await page.getByRole('button',{name:'Release',exact:true}).first().evaluate(e=>e.getBoundingClientRect().height);assert.ok(tap>=44,'Phone roster actions need a usable tap height');}}
  console.log('Overflow diagnosis',await page.evaluate(()=>({width:innerWidth,body:document.body.scrollWidth,elements:[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,cls:e.className,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right,text:e.textContent.slice(0,60)})).filter(e=>e.right>innerWidth+2).slice(0,10)})));assert.ok(await page.locator('body').evaluate(el=>el.scrollWidth<=window.innerWidth+2),'Mobile page overflows horizontally');
  await page.getByLabel('Game navigation',{exact:true}).selectOption('dashboard');await page.screenshot({path:qaDir+'/dashboard-mobile.png',fullPage:true});
- assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);console.log('Mobile 390px navigation and offline logos/fonts passed; zero JavaScript errors');
+ assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);assert.ok(mugs.length>0,'NHL headshots were requested');assert.equal(await page.locator('.gg-mug img').count(),0,'every blocked headshot fell back to the sweater');console.log(`Mobile 390px navigation and offline logos/fonts passed; zero JavaScript errors; ${mugs.length} headshot requests fell back to sweaters`);
  if(fs.existsSync(qaDir+'/draft-save.txt')){
    const save=fs.readFileSync(qaDir+'/draft-save.txt','utf8');await page.evaluate(save=>{localStorage.setItem('rinkgm_save_v1',save);},save);await page.reload();
    const resume=page.getByRole('button',{name:/Continue League/});if(await resume.count())await resume.click();

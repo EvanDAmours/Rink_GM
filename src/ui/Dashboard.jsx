@@ -76,7 +76,7 @@ export default function Dashboard({ act = {} }) {
   // Roster limits and depth only matter once camp opens; over the summer the list is noise.
   if (["preseason", "regular", "playoffs"].includes(lg.phase)) issues.forEach((i) => attention.push(["bad", i, "roster"]));
   if (lg.phase === "preseason" && !campDone) attention.push(["bad", "🏕️ Training camp isn't finished", "roster"]);
-  starters.forEach((p) => attention.push(["warn", `🚑 ${p.name} (${p.pos} ${p.ovr}) out ${p.injury} game${p.injury === 1 ? "" : "s"}`, "lines"]));
+  starters.forEach((p) => attention.push([lg.settings?.coachLines ? "info" : "warn", `🚑 ${p.name} (${p.pos} ${p.ovr}) out ${p.injury} game${p.injury === 1 ? "" : "s"}${lg.settings?.coachLines ? " · coach covered" : ""}`, "lines"]));
   if (!focused.length) attention.push(["warn", "🧪 No development focus players set", null]);
   if (t.autoPlan !== false && lg.phase === "preseason") attention.push(["warn", "📋 Set your systems and game plan", "analysis"]);
   roster.filter((p) => p.yrs === 1 && p.ovr >= 80 && !p.extension).slice(0, 3).forEach((p) => attention.push(["warn", `✍️ Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`, "frontoffice"]));
