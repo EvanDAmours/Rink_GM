@@ -20,7 +20,7 @@ export function payroll(league, team) {
 }
 
 export function capSpace(league, team) {
-  return round2(league.phase === 'regular' && team.capLedger?.year === league.year ? capSummary(league,team).available : capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
+  return round2((league.phase === 'regular' || league.phase === 'playoffs') && team.capLedger?.year === league.year ? capSummary(league,team).available : capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
 }
 
 // One game's worth of recovery for everyone on the given teams. A player back from injury

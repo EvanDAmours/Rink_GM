@@ -27,10 +27,12 @@ export function accrueCap(lg,through=lg.day){
 }
 export function capSummary(lg,t){
  const cap=capForYear(lg.year),salary=rawPayroll(lg,t),relief=ltirRelief(lg,t),c=t.capLedger;
- if(lg.phase!=='regular'||!c||c.year!==lg.year)return {cap,payroll:salary,bank:0,available:cap-salary+relief,remainingDays:null,spent:0,estimated:true};
+ if(!['regular','playoffs'].includes(lg.phase)||!c||c.year!==lg.year)return {cap,payroll:salary,bank:0,available:cap-salary+relief,remainingDays:null,spent:0,estimated:true};
  const D=endDay(lg)+1,remaining=Math.max(0,D-c.lastDay-1),budget=cap*(D-c.startDay)/D;
  const bank=Math.max(0,cap*(c.lastDay-c.startDay+1)/D-c.spent);
- const available=relief>0||remaining===0?cap-salary+relief:(budget-c.spent)*D/remaining-salary;
+ // Once every day has accrued (final day and the playoffs), compliance is the season total:
+ // a club that used banked space to add salary at the deadline is not "over the cap".
+ const available=remaining===0?Math.max(budget-c.spent,cap-salary+relief):relief>0?cap-salary+relief:(budget-c.spent)*D/remaining-salary;
  return {cap,payroll:salary,bank,available,remainingDays:remaining,spent:c.spent,estimated:c.startDay>0,ltirDays:c.ltirDays};
 }
 export function salaryYears(p){return p.salarySchedule?.length===p.yrs?p.salarySchedule:Array.from({length:Math.max(0,p.yrs)},()=>({base:p.cap||0,signing:0,performance:0,estimated:true}));}
