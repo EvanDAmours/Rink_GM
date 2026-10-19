@@ -33,6 +33,7 @@ export default function NewsPaper({ paper, onClose }) {
             {paper.side.map((sec, i) => <React.Fragment key={i}><h4>{sec.h}</h4>{sec.text && <p>{sec.text}</p>}{sec.rows.map((r, j) => r[0] ? <div key={j} className="gg-paper-kv"><span>{r[0]}</span><b>{r[1]}</b></div> : <p key={j} className="gg-paper-line">{r[1]}</p>)}</React.Fragment>)}
           </aside>
         </div>
+        {paper.lists?.length > 0 && <div className="gg-paper-lists">{paper.lists.map((l, i) => <div key={i}><h4>{l.h}</h4><p>{l.text}</p></div>)}</div>}
         <div className="gg-paper-foot">{paper.foot}</div>
       </div>
       <button className="gg-paper-btn" onClick={onClose}>{paper.button || "Continue →"}</button>

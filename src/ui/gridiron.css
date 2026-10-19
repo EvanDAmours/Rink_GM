@@ -747,7 +747,7 @@ body, .app { font-size: 14px; }
 .gg-paper-title { font-family: "Old English Text MT", "UnifrakturCook", Georgia, serif; font-size: 44px; font-weight: 700; text-align: center; letter-spacing: 1px; }
 .gg-paper-rule { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 1px; border-top: 2px solid #1b1a17; border-bottom: 1px solid #1b1a17; padding: 4px 0; margin: 8px 0 12px; text-transform: uppercase; }
 .gg-paper-h1 { font-size: 42px; line-height: 1.02; text-align: center; margin: 4px 0 14px; letter-spacing: -.5px; font-weight: 900; }
-.gg-paper-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) 220px 200px; gap: 16px; border-top: 1px solid #1b1a17; padding-top: 12px; }
+.gg-paper-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) 220px 200px; gap: 16px; border-top: 1px solid #1b1a17; padding-top: 12px; align-items: start; }
 .gg-paper-h2 { font-size: 20px; line-height: 1.2; text-align: center; margin: 0 0 6px; border-bottom: 1px solid #1b1a17; padding-bottom: 6px; }
 .gg-paper-byline { text-align: center; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
 .gg-paper-body { column-count: 2; column-gap: 14px; font-size: 13px; line-height: 1.45; } .gg-paper-body p { margin: 0 0 8px; } .gg-paper-body p.drop::first-letter { font-size: 42px; float: left; line-height: .8; padding: 4px 6px 0 0; font-weight: 700; }
@@ -1465,3 +1465,16 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .app .gg-tour-actions button { font-size: 14px; padding: 8px 16px; } .app .gg-tour-actions button.ghost { padding-left: 4px; color: #94a3b8; }
 .gg-welcome .modal { max-width: 440px; }
 @media (max-width: 760px) { .gg-tour-card { bottom: 10px; } .gg-tour-card p { font-size: 13px; } }
+/* Training focus: a ranked list of who is worth the reps, not a dropdown */
+.gg-focus-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; } .gg-focus-tools .gg-fa-search { max-width: 220px; }
+.gg-focus-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 6px; }
+.app button.gg-focus-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "pos name age ovr" "pos weak room room"; align-items: center; column-gap: 8px; row-gap: 1px; text-align: left; background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 7px 10px; height: auto; white-space: normal; }
+.app button.gg-focus-row.on { border-color: #22c55e; box-shadow: inset 0 0 0 1px #22c55e; background: rgba(34, 197, 94, 0.08); }
+.app button.gg-focus-row .gg-pos { grid-area: pos; } .app button.gg-focus-row b { grid-area: name; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .app button.gg-focus-row > small:first-of-type { grid-area: age; color: #94a3b8; }
+.gg-focus-ovr { grid-area: ovr; font-weight: 900; font-size: 13px; color: #94a3b8; } .gg-focus-ovr i { font-style: normal; }
+.gg-focus-room { grid-area: room; justify-self: end; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: #1e293b; color: #94a3b8; } .gg-focus-room.warm { background: rgba(245, 158, 11, 0.18); color: #fcd34d; } .gg-focus-room.hot { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+.app button.gg-focus-row > small.dim { grid-area: weak; font-size: 11px; }
+
+.gg-paper-lists { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; border-top: 1px solid #1b1a17; margin-top: 12px; padding-top: 10px; font-size: 12px; }
+.gg-paper-lists h4 { margin: 0 0 4px; font-size: 13px; border-bottom: 1px solid #1b1a17; } .gg-paper-lists p { margin: 0; line-height: 1.4; }
+@media (max-width: 760px) { .gg-paper-lists { grid-template-columns: 1fr 1fr; } }

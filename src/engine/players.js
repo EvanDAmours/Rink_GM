@@ -190,8 +190,11 @@ export function retirementChance(p) {
 }
 
 // Asset value for trade logic (roughly exponential in OVR).
-export function tradeValue(p, year, { contending = false } = {}) {
+export function tradeValue(p, year, { contending = false, rental = 0 } = {}) {
   let v = Math.exp((p.ovr - 70) / 6.2);
+  // A player in the last year of his deal is a rental once the season is under way: the
+  // buyer gets what is left of it, not a contract. At the deadline that is about half.
+  if (rental > 0 && p.yrs <= 1 && p.age >= 24) v *= 1 - 0.55 * rental;
   if (p.age <= 23) v *= 1 + Math.max(0, p.pot - p.ovr) * 0.05;
   else if (p.age >= 35) v *= 0.35;
   else if (p.age >= 32) v *= 0.6;

@@ -1,3 +1,4 @@
+import { lastDay } from "./schedule.js";
 import {needFit} from './teamPlanning.js';
 // Trades: asset valuation and AI acceptance. AI teams weigh players, prospects
 // and picks differently depending on whether they're contending or rebuilding.
@@ -74,7 +75,9 @@ export function assetValue(league, id, viewer) {
   const contending = isContending(league, viewer);
   const owner = league.teams[p.tid];
   const inMinors = owner && owner.prospects.includes(id);
-  const v = inMinors && p.age <= 23 ? Math.max(prospectValue(p, { contending }), tradeValue(p, league.year, { contending })) : tradeValue(p, league.year, { contending });
+  // How much of the season is gone: 0 in preseason, about 0.8 at the deadline.
+  const rental = league.phase === "regular" ? Math.min(1, league.day / Math.max(1, lastDay(league.schedule))) : league.phase === "playoffs" ? 1 : 0;
+  const v = inMinors && p.age <= 23 ? Math.max(prospectValue(p, { contending }), tradeValue(p, league.year, { contending, rental })) : tradeValue(p, league.year, { contending, rental });
   return v * needFit(league,viewer,p);
 }
 

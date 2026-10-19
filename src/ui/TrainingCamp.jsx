@@ -42,6 +42,13 @@ export default function TrainingCamp() {
   const run = (r, after) => { toast(r.msg); if (r.ok) after?.(r); commit(); };
   const roster = t.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
   const focusP = focusPid && league.players[focusPid];
+  const [focusView, setFocusView] = useState("bets");
+  const [focusQ, setFocusQ] = useState("");
+  // Who is worth the reps: room between potential and overall, youngest first; the stars are already there.
+  const farmIds = new Set(t.prospects);
+  const focusCands = [...t.roster, ...t.prospects].map((id) => league.players[id]).filter((p) => p && !camp.focused.includes(p.id))
+    .filter((p) => (focusView === "bets" ? p.pot - p.ovr >= 2 && p.age <= 27 : focusView === "young" ? p.age <= 25 : true) && (!focusQ || p.name.toLowerCase().includes(focusQ.toLowerCase())))
+    .sort((a, b) => (b.pot - b.ovr) - (a.pot - a.ovr) || a.age - b.age || b.ovr - a.ovr).slice(0, focusView === "all" ? 60 : 12);
   const skillsFor = (p) => Object.entries(TRAINING).filter(([k]) => isGoalie(p.pos) === (k === "goaltending"));
   const avg = (p, keys) => keys.reduce((s, k) => s + (p.attrs[k] || 0), 0) / keys.length;
   const pairs = battlePairs(league);
@@ -84,12 +91,24 @@ export default function TrainingCamp() {
       <section className="gg-camp3-card">
         <div className="gg-camp3-sec-h"><b>Training focus</b><span>{camp.focused.length} trained</span></div>
         <div className="gg-camp3-sub"><span>{CAMP_COSTS.focus} SP. Extra reps for one player: +1.5 to every attribute in a skill group, once per player each camp.</span><button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.focus} onClick={autoFocus}>🎲 Auto-pick 5 · {CAMP_COSTS.focus * 5} SP</button></div>
-        <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <Select value={focusPid} onChange={(e) => { setFocusPid(e.target.value); setSkill(""); }} aria-label="Training focus player" placeholder="Choose a player…" style={{ minWidth: 260 }}>
-            <option value="">Choose a player…</option>
-            {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !camp.focused.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot})</option>)}</optgroup>)}
-          </Select>
-          {focusP && <div className="gg-chips">{skillsFor(focusP).map(([k, sk]) => <button key={k} className={skill === k ? "on" : ""} onClick={() => setSkill(k)}>{sk.name}</button>)}</div>}
+        <div className="gg-focus-tools">
+          <div className="gg-chips">{[["bets", "Best bets"], ["young", "Under 25"], ["all", "Everyone"]].map(([k, l]) => <button key={k} className={focusView === k ? "on" : ""} onClick={() => setFocusView(k)}>{l}</button>)}</div>
+          <input className="gg-fa-search" placeholder="Find a player…" aria-label="Find a player to train" value={focusQ} onChange={(e) => setFocusQ(e.target.value)} />
+          <span className="dim small">Ranked by room to grow: potential minus overall, youngest first. A 99 is already there.</span>
+        </div>
+        <div className="gg-focus-list">
+          {focusCands.map((p) => { const room = p.pot - p.ovr, weak = skillsFor(p).sort((a, b) => avg(p, a[1].keys) - avg(p, b[1].keys))[0]; return (
+            <button type="button" key={p.id} className={`gg-focus-row${focusPid === p.id ? " on" : ""}`} onClick={() => { setFocusPid(p.id); setSkill(weak?.[0] || ""); }}>
+              <PosBadge pos={p.pos} /><b>{p.name}</b><small>{p.age} yrs{farmIds.has(p.id) ? " · farm" : ""}</small>
+              <span className="gg-focus-ovr"><i style={{ color: ovrColor(p.ovr) }}>{p.ovr}</i> → <i style={{ color: ovrColor(p.pot) }}>{p.pot}</i></span>
+              <span className={`gg-focus-room${room >= 6 ? " hot" : room >= 3 ? " warm" : ""}`}>{room > 0 ? `+${room} room` : "at his ceiling"}</span>
+              <small className="dim">weakest: {weak?.[1].name}</small>
+            </button>
+          ); })}
+          {!focusCands.length && <div className="dim small">Nobody left to train on this view.</div>}
+        </div>
+        <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+          {focusP ? <><b>{focusP.name}</b><div className="gg-chips">{skillsFor(focusP).map(([k, sk]) => <button key={k} className={skill === k ? "on" : ""} onClick={() => setSkill(k)}>{sk.name}</button>)}</div></> : <span className="dim small">Pick a player above, then the skill group to drill.</span>}
           <button className="primary" disabled={!focusP || !skill || gm.sp < CAMP_COSTS.focus} onClick={() => run(runTrainingFocus(league, focusP.id, skill), () => { setFocusPid(""); setSkill(""); })}>Train{skill ? ` · ${TRAINING[skill].name}` : ""}</button>
         </div>
         {camp.focused.length > 0 && <div className="gg-camp3-chips" style={{ marginTop: 8 }}>{camp.focused.map((id) => league.players[id]).filter(Boolean).map((p) => <div key={p.id} className="gg-bchip done"><PosBadge pos={p.pos} /><span>✓ {p.name}</span></div>)}</div>}
