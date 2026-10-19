@@ -41,11 +41,49 @@ export function ensureFranchise(league) {
   league.achievements ||= [];
 }
 export function hireCoach(league, id) {
-  if (!["preseason","resign","freeagency"].includes(league.phase)) return {ok:false,msg:"Change your head coach during the offseason or preseason."};
+  const interim=league.teams[league.userTid].coach?.interim;
+  if (!interim && !["preseason","resign","freeagency"].includes(league.phase)) return {ok:false,msg:"Change your head coach during the offseason or preseason, or dismiss him first to hire in season."};
   const c=league.coachMarket.find(c=>c.id===id);if(!c)return {ok:false,msg:"That coach is no longer available."};
   const t=league.teams[league.userTid],old=t.coach;
   t.coach={...c,hiredYear:league.year};league.coachMarket=league.coachMarket.filter(x=>x.id!==id);if(old)league.coachMarket.push(old);
   logTx(league,`${t.abbr} hire ${c.name} as head coach`,[t.id]);return {ok:true,msg:`${c.name} is your new head coach.`};
+}
+// Dismiss your head coach. An interim coach from the staff runs the bench until you hire;
+// the owner notes the cost and the room takes a hit.
+export function fireCoach(league) {
+  const t=league.teams[league.userTid],old=t.coach;
+  if (!old || old.interim) return {ok:false,msg:"You have no head coach to dismiss."};
+  if (!["preseason","regular"].includes(league.phase)) return {ok:false,msg:"Coaching changes happen in the preseason or during the season."};
+  const r=stream(`${league.year}|interim|${t.id}|${league.day}`);
+  t.coach={id:`${league.year}|interim|${t.id}`,name:`${r.pick(FIRST)} ${r.pick(LAST)}`,style:old.style,development:Math.max(50,old.development-12),specialTeams:Math.max(50,old.specialTeams-10),leadership:Math.max(50,old.leadership-8),age:r.int(36,58),interim:true,hiredYear:league.year,tenure:[]};
+  league.coachMarket=[...(league.coachMarket || []),{...old,interim:false,firedYear:league.year}];
+  t.owner.trust=Math.max(0,t.owner.trust-(league.phase==="regular"?6:3));
+  if(t.morale!=null)t.morale=Math.max(0,t.morale-4);
+  logTx(league,`${t.abbr} dismiss head coach ${old.name}; ${t.coach.name} named interim`,[t.id]);
+  league.news ||= [];league.news.unshift({year:league.year,day:league.day,type:"coach",text:`${t.city} fire head coach ${old.name}. ${t.coach.name} takes over on an interim basis.`});
+  league.inbox?.push({year:league.year,day:league.day,text:`👔 ${old.name} has been dismissed. ${t.coach.name} runs the bench until you hire a head coach on the Coaching page.`});
+  return {ok:true,msg:`${old.name} dismissed. ${t.coach.name} is your interim head coach.`};
+}
+// Around the league, a club well under expectations by midseason changes its coach.
+// At most three in-season changes a year, never in the first six weeks.
+export function aiCoachingChanges(league) {
+  if (league.phase!=="regular" || league.day<42) return;
+  league.coachChanges ||= {};const n=league.coachChanges[league.year] || 0;if(n>=3)return;
+  for (const t of league.teams) {
+    if (t.id===league.userTid || !t.rec.gp || t.rec.gp<20 || t.coach?.changedYear===league.year) continue;
+    const pct=t.rec.pts/(2*t.rec.gp),expected=league.preseasonRank?.[t.id] ?? 16;
+    const risk=(0.46-pct)*3+(expected<=12?0.25:0)+(t.owner.trust<40?0.2:0);
+    if (risk<=0 || stream(`${league.year}|hotseat|${t.id}|${league.day}`).next()>risk*0.35) continue;
+    const next=(league.coachMarket || []).filter(c=>!league.teams.some(o=>o.coach.id===c.id)).sort((a,b)=>(b.development+b.specialTeams+b.leadership)-(a.development+a.specialTeams+a.leadership))[0];
+    if (!next) return;
+    const old=t.coach;
+    league.coachMarket=league.coachMarket.filter(c=>c.id!==next.id);league.coachMarket.push({...old,firedYear:league.year});
+    t.coach={...next,hiredYear:league.year,changedYear:league.year,tenure:[]};
+    league.coachChanges[league.year]=(league.coachChanges[league.year] || 0)+1;
+    logTx(league,`${t.abbr} fire head coach ${old.name}, hire ${next.name}`,[t.id]);
+    league.news ||= [];league.news.unshift({year:league.year,day:league.day,type:"coach",text:`${t.city} fire ${old.name} after a ${t.rec.w}-${t.rec.l}-${t.rec.otl} start. ${next.name} takes over behind the bench.`});
+    if(league.coachChanges[league.year]>=3)return;
+  }
 }
 export function setTraining(league, pid, focus) {
   const t=league.teams[league.userTid],p=league.players[pid];

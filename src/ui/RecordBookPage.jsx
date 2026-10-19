@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Select from "./Select.jsx";
 import { useGame, PlayerName, TeamName, TeamBadge } from "./common.jsx";
 import { HISTORICAL_RECORDS as H } from "../data/historicalRecords.js";
-import { franchiseRecords } from "../engine/records.js";
+import { franchiseRecords, careerLeaders } from "../engine/records.js";
 import { isGoalie } from "../engine/constants.js";
 
 // Record Book: the real NHL marks for every franchise and the league, with your
@@ -64,7 +64,7 @@ export default function RecordBookPage() {
     <div className="stack gg-records">
       <div className="gg-pagehead">
         <div><h2>Record Book</h2><div className="gg-status">Real NHL records for every franchise and the league, through {H.generated.slice(0, 4)}. They stand until someone in your league beats them.</div></div>
-        <div className="gg-chips"><button className={view === "franchise" ? "on" : ""} onClick={() => setView("franchise")}>Franchise</button><button className={view === "league" ? "on" : ""} onClick={() => setView("league")}>NHL records</button><button className={view === "mine" ? "on" : ""} onClick={() => setView("mine")}>Your league</button></div>
+        <div className="gg-chips"><button className={view === "franchise" ? "on" : ""} onClick={() => setView("franchise")}>Franchise</button><button className={view === "league" ? "on" : ""} onClick={() => setView("league")}>NHL records</button><button className={view === "mine" ? "on" : ""} onClick={() => setView("mine")}>Your league</button><button className={view === "careers" ? "on" : ""} onClick={() => setView("careers")}>Career leaders</button></div>
       </div>
 
       {view === "franchise" && F && (
@@ -114,6 +114,7 @@ export default function RecordBookPage() {
         </>
       )}
 
+      {view === "careers" && <CareerLeaders league={league} />}
       {view === "mine" && (
         <>
           <div className="gg-rec-sec"><h3>RECORDS SET IN YOUR LEAGUE</h3><span className="dim small">Single-game, single-season and career marks from simulated play only.</span></div>
@@ -134,5 +135,20 @@ export default function RecordBookPage() {
         </>
       )}
     </div>
+  );
+}
+
+const CAREER_KEYS = [["pts", "Points"], ["g", "Goals"], ["a", "Assists"], ["gp", "Games played"], ["w", "Goalie wins"], ["so", "Shutouts"]];
+function CareerLeaders({ league }) {
+  const rows = useMemo(() => careerLeaders(league, { limit: 10 }), [league, league.day, league.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  const user = league.userTid;
+  return (
+    <>
+      <div className="gg-rec-sec"><h3>ALL-TIME LEADERS · YOUR LEAGUE</h3><span className="dim small">Every season simulated in this franchise, active and retired players alike. Milestones (500 goals, 1,000 games, 1,000 points) are marked on player cards.</span></div>
+      <div className="gg-rec-grid">
+        {CAREER_KEYS.map(([k, label]) => <div key={k} className="gg-rec gold gg-rec-career"><small>{label}</small><b>{fmt(rows[k][0]?.value)}</b><span className="gg-rec-holder">{rows[k][0] ? `${rows[k][0].name}${rows[k][0].active ? "" : " (retired)"}` : "No games played yet"}</span>
+          <ol className="gg-rec-list">{rows[k].slice(1).map((r, i) => <li key={r.pid + i}><span>{i + 2}.</span><span className={r.active ? "active" : ""}>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} showInj={false} /> : r.name}{r.tid === user ? " ★" : ""}{r.active ? "" : " (ret.)"}</span><b>{fmt(r.value)}</b></li>)}</ol></div>)}
+      </div>
+    </>
   );
 }
