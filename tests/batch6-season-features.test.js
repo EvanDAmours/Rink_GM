@@ -37,7 +37,8 @@ test("All-Star weekend, the deadline extra and the season-in-review paper all pr
   assert.ok(l.allStar.rosters.every((r) => r.players.length === 11), "11 players per division");
   assert.ok(l.allStar.rosters.every((r) => new Set(r.players.map((p) => p.tid)).size >= 7), "every division roster spreads across clubs");
   const kinds = (l.papers || []).map((p) => p.kind);
-  assert.deepEqual(kinds, ["allstar", "deadline"]);
+  assert.deepEqual(kinds.filter((k) => k !== "scouting"), ["allstar", "deadline"]);
+  assert.ok(kinds.filter((k) => k === "scouting").length >= 2, "scouting checkpoints print every eight weeks");
   assert.ok(unseenPaper(l), "papers wait to be read");
   endRegularSeason(l);
   let guard = 0; while (l.playoffs.champion == null && guard++ < 200) simPlayoffDay(l);

@@ -47,3 +47,14 @@ test('retirements are announced when re-sign week opens, not on the first day of
   assert.equal(Object.keys(lg.players).length, count, 'a second call in the same year is a no-op');
   for (const t of lg.teams) for (const id of [...t.roster, ...t.prospects]) assert.ok(lg.players[id], 'rosters hold no retired ids');
 });
+
+test('the owner review after the Final queues a card for the user with patience before and after', () => {
+  const lg = createLeague({ userAbbr: 'TOR', seed: 9 });
+  startRegularSeason(lg);
+  let d = 0; while (lg.phase === 'regular' && !seasonOver(lg) && d++ < 400) { if (deadlinePending(lg)) skipDeadline(lg); simDay(lg); }
+  endRegularSeason(lg); let g = 0; while (lg.playoffs.champion == null && g++ < 400) simPlayoffDay(lg); finishPlayoffs(lg);
+  assert.equal(lg.ownerReviewPending, lg.year);
+  const r = lg.teams[lg.userTid].owner.reviews.find((x) => x.year === lg.year);
+  assert.ok(r && Number.isFinite(r.before) && Number.isFinite(r.trust) && typeof r.met === 'boolean');
+  assert.ok((lg.papers || []).filter((p) => p.kind === 'scouting').length >= 2, 'two scouting checkpoints in a season');
+});

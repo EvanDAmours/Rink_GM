@@ -1445,3 +1445,9 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .gg-hq-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); } .gg-hq-row > div { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .gg-hq-row > div > span { font-size: 12px; color: #94a3b8; } .gg-hq-ico { font-size: 20px; }
 @media (max-width: 900px) { .gg-capov-years, .gg-capov-bottom, .gg-guide { grid-template-columns: 1fr 1fr; } .gg-pv-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .gg-capov-years, .gg-capov-bottom, .gg-guide { grid-template-columns: 1fr; } }
+
+.gg-confirm .modal { max-width: 560px; }
+.gg-confirm-lines { display: flex; flex-direction: column; gap: 6px; }
+.gg-confirm-line { background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
+.gg-confirm-line b { font-size: 13.5px; } .gg-confirm-line span { font-size: 12px; color: #94a3b8; }
+.gg-confirm-line.warn { border-left-color: #f59e0b; } .gg-confirm-line.good { border-left-color: #22c55e; } .gg-confirm-line.bad { border-left-color: #ef4444; }

@@ -13,6 +13,7 @@ import { isGoalie, isDefense, posGroup, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBIN
 // ---------- Scouting staff ----------
 
 import { creditAreaWeeks, regionRead } from "./regions.js";
+import { scoutingPaper } from "./papers.js";
 
 export const SCOUT_GROUPS = { C: "Centers", W: "Wingers", D: "Defensemen", G: "Goalies" };
 export const scoutGroup = (pos) => (pos === "C" ? "C" : pos === "LW" || pos === "RW" ? "W" : isDefense(pos) ? "D" : "G");
@@ -123,6 +124,7 @@ export function scoutWeek(league) {
   for (let w = paid + 1; w <= week; w++) {
     t.scoutPts = (t.scoutPts || 0) + SCOUT_POINTS_WEEKLY;
     if (workhorse && w > 0 && w % 4 === 0) t.scoutPts++;
+    if (w > 0 && w % 8 === 0 && league.phase === "regular") scoutingPaper(league, w);
   }
   t.scoutWeekPaid = Math.max(paid, week);
 }
