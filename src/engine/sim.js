@@ -149,7 +149,8 @@ function rotate(s, k, whistle) {
 
 function onIce(s, k) {
   const side = s[k], n = skaterCount(s, k), type = strengthType(s, k);
-  const free = id => id && !isGoalie(side.pl[id]?.pos) && !s.pen[k].some(p => p.pid === id);
+  const boxed = s.pen[k].length ? new Set(s.pen[k].map(p => p.pid)) : null;
+  const free = id => id && !isGoalie(side.pl[id]?.pos) && !(boxed && boxed.has(id));
   let ids;
   if (type === 'PP') {
     const first = side.lines.PP[0].filter(free);
@@ -179,13 +180,17 @@ function onIce(s, k) {
 export const skatersForDisplay = (s, k) => onIce(s, k);
 
 function rate(s, k, ids) {
-  const side = s[k], efficiency = id => shiftEfficiency(side.pl[id].attrs.end, side.fatigue[id]);
-  const get = key => avg(ids.map(id => side.comp[id][key] * efficiency(id)));
+  // Hot path: called twice per ten-second step. Composites and shift efficiency are
+  // looked up once per skater, then each key is a plain loop (same numbers as the
+  // map/avg version, without the allocations).
+  const side = s[k], n = ids.length, comps = new Array(n), eff = new Array(n);
+  for (let i = 0; i < n; i++) { const id = ids[i]; comps[i] = side.comp[id]; eff[i] = shiftEfficiency(side.pl[id].attrs.end, side.fatigue[id]); }
+  const get = key => { if (!n) return 0; let sum = 0; for (let i = 0; i < n; i++) sum += comps[i][key] * eff[i]; return sum / n; };
   // The best player on the ice drives his unit's attack: elite skaters carry,
   // distribute and finish far more than an equal share of the puck.
-  const pulled = key => { const xs = ids.map(id => side.comp[id][key] * efficiency(id)), m = avg(xs); return m + (Math.max(...xs) - m - EDGE.starNorm) * EDGE.starWeight; };
+  const pulled = key => { let sum = 0, max = -Infinity; for (let i = 0; i < n; i++) { const v = comps[i][key] * eff[i]; sum += v; if (v > max) max = v; } const m = n ? sum / n : 0; return m + (max - m - EDGE.starNorm) * EDGE.starWeight; };
   return {off: pulled('off') + (side.chemistry[side.fIdx] || 0), ctrl: pulled('ctrl'), pass: pulled('pass'),
-    def: get('def'), skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n: ids.length};
+    def: get('def'), skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n};
 }
 
 function coach(s, k) {
@@ -257,20 +262,22 @@ function playingTime(s, dt, ice) {
   s.elapsed += dt; s.clock = Math.max(0, s.clock - dt);
   if (s.poss) s.possessionTime[s.poss] += dt;
   for (const k of ['h', 'a']) {
-    const side = s[k], on = new Set(ice[k]);
+    const side = s[k], on = ice[k], type = strengthType(s, k);
     s.unitStats ||= {h:{},a:{}};
-    const unit=strengthType(s,k)==='EV'?`Line ${side.fIdx+1}`:strengthType(s,k);
+    const unit = type === 'EV' ? `Line ${side.fIdx + 1}` : type;
     const u=s.unitStats[k][unit] ||= {seconds:0}; u.seconds+=dt;
-    s.manpowerSeconds[k] += ice[k].length * dt;
+    s.manpowerSeconds[k] += on.length * dt;
     if (side.pulled) s.emptyNetSeconds[k] += dt;
     side.fShift -= dt; side.dShift -= dt; side.fToi[side.fIdx] += dt; side.dToi[side.dIdx] += dt;
-    for (const id of side.dressed) {
-      if (isGoalie(side.pl[id].pos)) continue;
-      side.fatigue[id] = Math.max(0, side.fatigue[id] + (on.has(id) ? dt : -dt * .75));
-      if (on.has(id)) addBox(s, id, 'toi', dt);
+    // Skaters on the ice tire by dt; everyone else recovers at three quarters of that.
+    const skaters = side.skaters || (side.skaters = side.dressed.filter(id => !isGoalie(side.pl[id].pos)));
+    for (let i = 0; i < skaters.length; i++) {
+      const id = skaters[i];
+      if (on.includes(id)) { side.fatigue[id] += dt; addBox(s, id, 'toi', dt); }
+      else side.fatigue[id] = Math.max(0, side.fatigue[id] - dt * .75);
     }
     if (!side.pulled && s.gbox[side.goalie]) s.gbox[side.goalie].toi += dt;
-    if (strengthType(s, k) === 'PP') { s.ppTime[k] += dt; s.special[k].seconds += dt; }
+    if (type === 'PP') { s.ppTime[k] += dt; s.special[k].seconds += dt; }
     else s.ppTime[k] = 0;
   }
   tickPenalties(s, dt); notePowerPlays(s);
@@ -633,7 +640,9 @@ export function applyResult(league, s, { playoff = false } = {}) {
     const appearances = Object.keys(s.gbox).filter(id => side.pl[id] && s.gbox[id].toi > 0);
     const decisionGoalie = s.endedIn === 'SO' ? side.goalie
       : k === winner ? gw?.scoringGoalie || side.goalie : gw?.defendingGoalie || side.goalie;
-    const credited = appearances.includes(decisionGoalie) ? decisionGoalie : appearances.sort((x, y) => s.gbox[y].toi - s.gbox[x].toi)[0];
+    // Someone always gets the decision: the goalie in net for the deciding goal, else
+    // whoever played the most, else the starter.
+    const credited = (appearances.includes(decisionGoalie) ? decisionGoalie : appearances.sort((x, y) => s.gbox[y].toi - s.gbox[x].toi)[0]) || side.goalie || side.starter;
     for (const gid in s.gbox) {
       if (!side.pl[gid]) continue;
       const gb = s.gbox[gid];

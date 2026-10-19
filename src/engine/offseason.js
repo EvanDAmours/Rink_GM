@@ -294,7 +294,8 @@ export function startNewSeason(league) {
   // with, the air at the top gets thinner for everyone already near it.
   const elite = () => Object.values(league.players).filter((p) => p.tid >= 0 && p.ovr >= 90).length;
   league.eliteAnchor ??= elite();
-  const eliteCorrection = clamp(-0.05 * (elite() - league.eliteAnchor), -2, 0);
+  // More 90+ players than the league started with pulls the top end back harder each summer.
+  const eliteCorrection = clamp(-0.12 * (elite() - league.eliteAnchor), -3, 0);
   // Archive stats.
   for (const id in league.players) {
     const p = league.players[id];
@@ -330,6 +331,7 @@ export function startNewSeason(league) {
     if (!inMinors && chance(retirementChance(p))) retiredNow.push(p);
   }
   for (const p of retiredNow) retire(league, p);
+  pruneFreeAgents(league);
 
   for(const t of league.teams)for(const id of [...t.rfaRights]){
     const p=league.players[id];if(!p)continue;
@@ -393,6 +395,21 @@ function compactStats(pos, st) {
   return {...st}; // preserve every simulated season statistic for permanent cards
 }
 
+// Unsigned draft picks whose rights ran out and journeymen nobody signed all year leave
+// pro hockey quietly, so the free-agent pool and the save don't grow without limit.
+function pruneFreeAgents(league) {
+  let gone = 0;
+  for (const id of [...league.freeAgents]) {
+    const p = league.players[id];
+    if (!p || p.tid !== -1) continue;
+    const playedLastYear = p.career.at(-1)?.y === league.year - 1 && (p.career.at(-1)?.s?.gp || 0) > 0;
+    let leave = false;
+    if (p.signed === false) leave = p.age >= 22 || (p.age >= 20 && p.pot < 74) || (p.age >= 19 && p.pot < 68);
+    else if (!playedLastYear) leave = (p.age >= 31 && p.ovr < 76) || (p.age >= 27 && p.ovr < 70) || p.ovr < 65 ? chance(0.75) : false;
+    if (leave) { retire(league, p, true); gone++; }
+  }
+  if (gone) logTx(league, `${gone} unsigned players leave the league for Europe or retirement`);
+}
 function retire(league, p, quiet = false) {
   const t = league.teams[p.tid];
   if (t) {

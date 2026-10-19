@@ -1,5 +1,6 @@
 import {visibleRatings} from '../engine/draft.js';
 import Select from "./Select.jsx";
+import Headshot from "./Headshot.jsx";
 import React, { useState } from "react";
 import { useGame, TeamBadge, Ovr, PlayerName, money } from "./common.jsx";
 import { refreshBlock, toggleUserBlock, userOffers, acceptOffer, declineOffer, deadlineActive, fmtClock, DEADLINE_END } from "../engine/market.js";
@@ -94,7 +95,7 @@ export function BlockList({ entries, limit = 200 }) {
           <div key={b.pid} className="brow">
             <TeamBadge team={t} size={30} />
             <div className="bwho">
-              <div className="row" style={{ gap: 6 }}><PlayerName p={p} /> <Ovr v={visibleRatings(league,p).ovr} src={p.src} />{fresh && <span className="pill new">NEW</span>}</div>
+              <div className="row" style={{ gap: 6 }}><Headshot p={p} team={league.teams[p.tid]} size={28} decorative /><PlayerName p={p} /> <Ovr v={visibleRatings(league,p).ovr} src={p.src} />{fresh && <span className="pill new">NEW</span>}</div>
               <div className="small muted">{p.pos} · {p.age} · {money(p.cap)}{p.yrs ? ` × ${p.yrs} yr${p.yrs > 1 ? "s" : ""}` : ""} · {t.abbr}</div>
             </div>
             <div className="bwhy">

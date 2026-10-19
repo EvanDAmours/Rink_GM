@@ -1,3 +1,4 @@
+import Headshot from "./Headshot.jsx";
 import React, { useMemo, useState } from "react";
 import Select from "./Select.jsx";
 import { useGame, Table, PlayerName, TeamBadge, Ovr, pct, signed, POS_ORDER } from "./common.jsx";
@@ -33,7 +34,7 @@ export default function StatsPage() {
 
   const skCols = [
     { key: "rk", label: "#", render: (_, i) => <span className="dim">{i + 1}</span> },
-    { key: "name", label: "Player", render: (p) => <PlayerName p={p} />, sort: (p) => p.name },
+    { key: "name", label: "Player", render: (p) => <span className="gg-mugname"><Headshot p={p} team={league.teams[p.tid]} size={26} decorative /><PlayerName p={p} /></span>, sort: (p) => p.name },
     teamCol,
     { key: "pos", label: "Pos", sort: (p) => POS_ORDER[p.pos] },
     { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} />, sort: (p) => p.ovr },
@@ -58,7 +59,7 @@ export default function StatsPage() {
   const minGp = season === "po" ? 1 : Math.max(1, Math.floor((league.teams[0].rec.gp || 0) * 0.25));
   const gCols = [
     { key: "rk", label: "#", render: (_, i) => <span className="dim">{i + 1}</span> },
-    { key: "name", label: "Goalie", render: (p) => <PlayerName p={p} />, sort: (p) => p.name },
+    { key: "name", label: "Goalie", render: (p) => <span className="gg-mugname"><Headshot p={p} team={league.teams[p.tid]} size={26} decorative /><PlayerName p={p} /></span>, sort: (p) => p.name },
     teamCol,
     { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} />, sort: (p) => p.ovr },
     { key: "gp", label: "GP", num: true, render: (p) => S(p).gp, sort: (p) => S(p).gp },
