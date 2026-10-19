@@ -1135,3 +1135,41 @@ body, .app { font-size: 14px; }
 .app .ln-num em { position: absolute; right: -7px; bottom: -5px; font-style: normal; font-size: 8px; font-weight: 900; line-height: 1; padding: 2px 4px; border-radius: 6px; background: inherit; color: inherit; border: 1px solid; border-color: inherit; }
 .app .ln-unit .ln-num .gg-mug { width: 28px !important; height: 28px !important; }
 .app .gg-attn.info, .app .gg-attn-item.info { border-left-color: #60a5fa; }
+
+/* ---------- Sim summary ---------- */
+.app .gg-sum-hero { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+.app .gg-sum-rec { display:block; font-family:var(--display); font-size:44px; line-height:1; margin:4px 0; }
+.app .gg-sum-ranks { display:flex; gap:14px; }
+.app .gg-sum-ranks > div { display:flex; flex-direction:column; align-items:center; min-width:76px; padding:8px 10px; border:1px solid var(--gg-line,#1f2a3a); border-radius:10px; background:#0f172a; }
+.app .gg-sum-ranks small { font-size:9px; letter-spacing:1px; color:var(--muted); font-weight:800; }
+.app .gg-sum-ranks b { font-family:var(--display); font-size:24px; }
+.app .gg-sum-games { display:flex; flex-wrap:wrap; gap:6px; }
+.app .gg-sum-g { font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; border:1px solid #ffffff22; background:#1e293b; }
+.app .gg-sum-g.w { border-color:#16a34a; color:#4ade80; } .app .gg-sum-g.l { border-color:#ef4444aa; color:#fca5a5; } .app .gg-sum-g.o { border-color:#eab308aa; color:#fde68a; }
+.app .gg-sum-row { display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid #ffffff10; font-size:13px; }
+.app .gg-sum-row span:last-child { color:var(--muted); text-align:right; }
+.app .gg-sum-row.bad span:last-child { color:#fca5a5; } .app .gg-sum-row.good span:last-child { color:#4ade80; }
+/* ---------- Career ---------- */
+.app .gg-miles { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 10px; }
+.app .gg-mile { font-size:11px; font-weight:800; padding:4px 9px; border-radius:999px; background:#2a2208; color:#fbbf24; border:1px solid #fbbf2455; }
+.app tr.gg-totals td { font-weight:800; border-top:2px solid #334155; background:#0f172a; }
+.app .gg-rec-career ol { max-height:none; }
+/* ---------- Pipeline ---------- */
+.app .gg-pipe-top { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+.app .gg-chips button small { opacity:.7; margin-left:4px; font-size:10px; }
+.app .gg-pipe-sugg-rows { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:10px; }
+.app .gg-pipe-sugg-row { display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #16a34a55; border-radius:10px; background:#052e1633; }
+.app .gg-pipe-sugg-row > div { flex:1; min-width:0; }
+.app .gg-pipe-lv { font-size:10px; font-weight:800; letter-spacing:.6px; padding:3px 7px; border-radius:6px; background:#1e293b; border:1px solid #ffffff22; }
+.app .gg-pipe-lv.nhl { background:#14532d; border-color:#16a34a; color:#bbf7d0; } .app .gg-pipe-lv.ahl { background:#1e3a8a; border-color:#3b82f6; color:#bfdbfe; } .app .gg-pipe-lv.junior, .app .gg-pipe-lv.college, .app .gg-pipe-lv.europe { background:#3b2a06; border-color:#eab308; color:#fde68a; }
+.app .gg-pipe-table tr.nhl td { background:#0f172a44; }
+/* ---------- Coaching ---------- */
+.app .gg-fire { margin-left:12px; align-self:center; }
+.app .gg-interim-note { font-size:11px; color:#fbbf24; align-self:center; margin-left:10px; }
+/* ---------- Papers ---------- */
+.gg-paper-line { margin:2px 0 6px; font-size:12px; line-height:1.4; }
+.gg-paper.kind-review .gg-paper-side { max-height:none; }
+.gg-paper.kind-allstar .gg-paper-kv, .gg-paper.kind-deadline .gg-paper-kv, .gg-paper.kind-review .gg-paper-kv { flex-direction: column; align-items: flex-start; gap: 0; padding: 4px 0; }
+.gg-paper.kind-allstar .gg-paper-kv b, .gg-paper.kind-deadline .gg-paper-kv b, .gg-paper.kind-review .gg-paper-kv b { white-space: normal; line-height: 1.3; }
+.gg-paper.kind-allstar .gg-paper-kv span, .gg-paper.kind-deadline .gg-paper-kv span, .gg-paper.kind-review .gg-paper-kv span { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: #555; }
+.gg-paper.kind-review .gg-paper-side { columns: 1; }

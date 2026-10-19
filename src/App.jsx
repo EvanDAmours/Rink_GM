@@ -1,5 +1,9 @@
 import {decisionInterrupt} from './engine/decisionInterrupts.js';
 import SeriesPaper from "./ui/SeriesPaper.jsx";
+import NewsPaper from "./ui/NewsPaper.jsx";
+import SimSummary from "./ui/SimSummary.jsx";
+import { snapshotForSummary, buildSummary } from "./engine/simSummary.js";
+import { unseenPaper } from "./engine/papers.js";
 import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
 import { capForYear } from "./engine/constants.js";
 import { capYear } from "./engine/roster.js";
@@ -288,9 +292,11 @@ export default function App({ resume = false }) {
       L.simDay(league);
       commit();
     },
+    showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
       if (blockers()) return;
       let i = 0;
+      const snap = snapshotForSummary(league);
       runChunked(
         () => `${label} — ${dayToDate(league.year, league.day, league.scheduleStart)}`,
         () => {
@@ -299,11 +305,12 @@ export default function App({ resume = false }) {
           i++;
           return true;
         },
-        () => deadlinePending(league) && blockers()
+        () => { act.showSummary(snap); if (deadlinePending(league)) blockers(); }
       );
     },
     simToDeadline: () => {
       if (blockers()) return;
+      const snap = snapshotForSummary(league);
       runChunked(
         () => `Simulating to the trade deadline — ${dayToDate(league.year, league.day, league.scheduleStart)}`,
         () => {
@@ -311,11 +318,12 @@ export default function App({ resume = false }) {
           L.simDay(league);
           return true;
         },
-        () => deadlinePending(league) && blockers()
+        () => { act.showSummary(snap); if (deadlinePending(league)) blockers(); }
       );
     },
     simToEnd: () => {
       if (blockers()) return;
+      const snap = snapshotForSummary(league);
       runChunked(
         () => `Simulating the regular season — ${dayToDate(league.year, league.day, league.scheduleStart)}`,
         () => {
@@ -323,7 +331,7 @@ export default function App({ resume = false }) {
           L.simDay(league);
           return true;
         },
-        () => deadlinePending(league) && blockers()
+        () => { act.showSummary(snap); if (deadlinePending(league)) blockers(); }
       );
     },
     playLive: () => {
@@ -544,6 +552,8 @@ export default function App({ resume = false }) {
         </div>
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
+        {!live && !busy && modal?.type !== "simsummary" && !league.playoffs?.papers?.some((p) => !p.seen) && unseenPaper(league) && <NewsPaper paper={unseenPaper(league)} onClose={() => { unseenPaper(league).seen = true; commit(); }} />}
+        {modal?.type === "simsummary" && <SimSummary data={modal.data} onClose={() => setModal(null)} />}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}

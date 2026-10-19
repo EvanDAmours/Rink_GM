@@ -15,6 +15,10 @@ import { seed as seedRng, randInt, pick, chance, gauss, clamp } from "./rng.js";
 import { createPlayer, generatePlayer, marketValue } from "./players.js";
 import { FIRST_SEASON, SCOUT_POINTS_START, SAVE_KEY, SAVE_VERSION, MAX_ROSTER, DRAFT_ROUNDS, isGoalie, isDefense, minSalaryForYear } from "./constants.js";
 import { autoLines, linesFromNames, coachLines, headCoachLines } from "./lines.js";
+import { freezeExpectations, deadlinePaper, seasonReviewPaper } from "./papers.js";
+import { allStarDue, allStarWeekend } from "./allstar.js";
+import { checkMilestones } from "./records.js";
+import { aiCoachingChanges } from "./franchise.js";
 import { buildSeasonSchedule, lastDay } from "./schedule.js";
 import { createGame, simToEnd, applyResult, blankRecord } from "./sim.js";
 import { generateDraftClass, createDraftPicks, startDraft, finishDraft, draftDone, expandLegacyDraftClass } from "./draft.js";
@@ -222,6 +226,7 @@ export function startRegularSeason(league) {
   league.day = 0;
   for (const t of league.teams) startCapLedger(league,t);
   league.deadlineDay = Math.floor(lastDay(league.schedule) * 0.78);
+  freezeExpectations(league);
   logTx(league, `${league.year}-${String(league.year + 1).slice(2)} regular season begins`);
 }
 
@@ -272,8 +277,13 @@ export function finishDay(league, played) {
   developmentWeek(league);
   updateRecords(league);
   pulseAfterDay(league);
+  // The deadline recap prints the morning after deadline day.
+  if (league.deadline?.done && !league.deadline.synthetic && league.deadline.year === league.year && !league.deadline.papered) { league.deadline.papered = true; deadlinePaper(league); }
+  if (allStarDue(league)) allStarWeekend(league);
   // AI rosters adjust to injuries periodically.
   if (league.day % 7 === 0) {
+    checkMilestones(league);
+    aiCoachingChanges(league);
     for (const t of league.teams) {
       if (t.id === league.userTid) {
         if (league.settings?.coachLines && league.day >= 7) {
@@ -343,6 +353,7 @@ export function finishPlayoffs(league) {
   logTx(league, `The ${league.teams[champ].city} ${league.teams[champ].name} win the Stanley Cup!`);
   league.news ||= [];
   league.news.unshift({ year: league.year, day: league.day, type: "cup", text: `${league.teams[champ].city} ${league.teams[champ].name} win the Stanley Cup. ${league.awards.connSmythe ? `${league.awards.connSmythe.name} takes the Conn Smythe as playoff MVP.` : ""}` });
+  seasonReviewPaper(league);
   if (league.awards.hart) league.news.unshift({ year: league.year, day: league.day, type: "award", pid: league.awards.hart.pid, text: `${league.awards.hart.name} is the Hart Trophy winner. ${league.awards.vezina ? `${league.awards.vezina.name} takes the Vezina` : ""}${league.awards.norris ? `, ${league.awards.norris.name} the Norris` : ""}${league.awards.calder ? ` and ${league.awards.calder.name} the Calder.` : "."}` });
   startDraft(league);
   league.phase = "draft";

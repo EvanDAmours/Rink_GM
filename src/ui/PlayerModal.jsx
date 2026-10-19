@@ -10,6 +10,7 @@ import ProspectProfile from "./ProspectProfile.jsx";
 import { DevChip } from "./scoutingBits.jsx";
 import { shownRatings } from "../engine/draft.js";
 import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } from "../engine/roster.js";
+import { careerTotals, careerMilestones } from "../engine/records.js";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
@@ -31,6 +32,8 @@ export default function PlayerModal({ pid }) {
       : [["GP", st.gp], ["G", st.g], ["A", st.a], ["P", st.pts], ["+/-", signed(st.pm)], ["PIM", st.pim], ["SOG", st.sog], ["PPG", st.ppg], ["HIT", st.hit], ["BLK", st.blk]];
 
   const career = [...p.career].reverse();
+  const totals = careerTotals(p);
+  const milestones = careerMilestones(p);
 
   if (p.tid === -2) {
     return (
@@ -112,6 +115,7 @@ export default function PlayerModal({ pid }) {
         {career.length > 0 && (
           <div className="panel">
             <h3>Career (Rink GM)</h3>
+            {milestones.length > 0 && <div className="gg-miles">{milestones.map((m) => <span key={m.key + m.mark} className="gg-mile">🏅 {m.label}</span>)}</div>}
             <div className="tablewrap">
               <table className="t">
                 <thead>
@@ -129,9 +133,15 @@ export default function PlayerModal({ pid }) {
                         : <><td className="num">{c.s.gp}</td><td className="num">{c.s.g}</td><td className="num">{c.s.a}</td><td className="num">{c.s.pts}</td><td className="num">{signed(c.s.pm)}</td><td className="num">{c.s.pim}</td></>}
                     </tr>
                   ))}
+                  <tr className="gg-totals">
+                    <td>Totals</td><td>{totals.seasons} season{totals.seasons === 1 ? "" : "s"}</td><td className="num"></td>
+                    {goalie ? <><td className="num">{totals.gp}</td><td className="num">{totals.w}</td><td className="num">{totals.l}</td><td className="num">{totals.otl}</td><td className="num">{totals.sa ? pct(totals.svpct) : "—"}</td><td className="num">{totals.gp ? ((totals.ga / Math.max(1, totals.gp)) ).toFixed(2) : "—"}</td><td className="num">{totals.so}</td></>
+                      : <><td className="num">{totals.gp}</td><td className="num">{totals.g}</td><td className="num">{totals.a}</td><td className="num">{totals.pts}</td><td className="num">{signed(totals.pm)}</td><td className="num">{totals.pim}</td></>}
+                  </tr>
                 </tbody>
               </table>
             </div>
+            {totals.priorGames > 0 && <div className="dim small" style={{ marginTop: 6 }}>Plus an estimated {totals.priorGames} NHL games before this franchise began{p.service?.estimated === false ? "" : " (estimate)"}. Milestones count games in this franchise.</div>}
           </div>
         )}
 

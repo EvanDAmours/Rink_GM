@@ -13,6 +13,7 @@ import StandingsPage from "./StandingsPage.jsx";
 import PlayoffsPage from "./PlayoffsPage.jsx";
 import LeaguePage from "./LeaguePage.jsx";
 import DevelopmentPage from "./DevelopmentPage.jsx";
+import PipelinePage from "./PipelinePage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
 // One header for a family of screens: title, a line of status, and the section chips.
@@ -54,10 +55,10 @@ export function CoachingHub({ sub, onSub }) {
 export function FrontOfficeHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["development", "Development"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"]];
+  const tabs = [["development", "Development"], ["pipeline", "Pipeline"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"]];
   return (
-    <Hub title="Front Office" status={`${t.city} ${t.name} · player development, contracts, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
-      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : cur === "development" ? <DevelopmentPage /> : <FrontOfficePage view={cur} />)}
+    <Hub title="Front Office" status={`${t.city} ${t.name} · development, the prospect pipeline, contracts, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
+      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : cur === "development" ? <DevelopmentPage /> : cur === "pipeline" ? <PipelinePage /> : <FrontOfficePage view={cur} />)}
     </Hub>
   );
 }
