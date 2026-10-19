@@ -14,6 +14,8 @@ import PlayoffsPage from "./PlayoffsPage.jsx";
 import LeaguePage from "./LeaguePage.jsx";
 import DevelopmentPage from "./DevelopmentPage.jsx";
 import PipelinePage from "./PipelinePage.jsx";
+import TrophyRoom from "./TrophyRoom.jsx";
+import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
 // One header for a family of screens: title, a line of status, and the section chips.
@@ -55,10 +57,23 @@ export function CoachingHub({ sub, onSub }) {
 export function FrontOfficeHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["development", "Development"], ["pipeline", "Pipeline"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"]];
+  const tabs = [["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"]];
   return (
-    <Hub title="Front Office" status={`${t.city} ${t.name} · development, the prospect pipeline, contracts, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
-      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : cur === "development" ? <DevelopmentPage /> : cur === "pipeline" ? <PipelinePage /> : <FrontOfficePage view={cur} />)}
+    <Hub title="Front Office" status={`${t.city} ${t.name} · contracts, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
+      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : <FrontOfficePage view={cur} />)}
+    </Hub>
+  );
+}
+
+// Player development gets its own front door: the plan, the prospect watch and the pipeline.
+export function DevelopmentHub({ sub, onSub }) {
+  const { league } = useGame();
+  const t = league.teams[league.userTid];
+  const rising = [...t.roster, ...t.prospects].map((id) => league.players[id]).filter((p) => p && (p.lastChange || 0) >= 2).length;
+  const tabs = [["development", "Development"], ["pipeline", "Pipeline"]];
+  return (
+    <Hub title="Player Development" status={`${t.prospects.length} on the farm · ${rising} players up 2+ since last season · focus slots, the prospect watch and the pipeline`} tabs={tabs} sub={sub} onSub={onSub}>
+      {(cur) => (cur === "pipeline" ? <PipelinePage /> : <DevelopmentPage />)}
     </Hub>
   );
 }
@@ -78,11 +93,11 @@ export function TradeHub({ sub, onSub, seed }) {
 
 export function LeagueHub({ sub, onSub, act }) {
   const { league } = useGame();
-  const tabs = [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]];
+  const tabs = [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["legacy", "Legacy Hall"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]];
   const badges = { playoffs: league.phase === "playoffs" ? "ON" : null };
   return (
     <Hub title="League" status={`${league.year}-${String(league.year + 1).slice(2)} · 32 clubs`} tabs={tabs} sub={sub} onSub={onSub} badges={badges}>
-      {(cur) => (cur === "standings" ? <StandingsPage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : <LeaguePage view={cur} />)}
+      {(cur) => (cur === "standings" ? <StandingsPage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : cur === "legacy" ? <TrophyRoom /> : cur === "records" ? <RecordBookPage /> : <LeaguePage view={cur} />)}
     </Hub>
   );
 }

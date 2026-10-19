@@ -665,7 +665,7 @@ body, .app { font-size: 14px; }
 .gg-season small { font-size: 10px; letter-spacing: 1.5px; color: #fde68a; font-weight: 800; }
 .gg-home-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .app .gg-home-actions button.big, .app .gg-deal-actions button.big { font-size: 14px; padding: 9px 18px; }
-.gg-status-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.gg-status-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .gg-stat { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; min-width: 0; }
 .gg-stat:hover { border-color: #334155; }
 .gg-stat small { font-size: 10px; letter-spacing: 1.2px; font-weight: 800; color: var(--gg-mt); }
@@ -1337,3 +1337,6 @@ body, .app { font-size: 14px; }
   .app .gg-rep { padding: 1px 8px; font-size: 9px; } .app .gg-repbar { width: 80px; height: 3px; }
   .app .gg-home-actions { display: none; }
 }
+
+/* Home carries its own big sim buttons, so the header's small ones stay out of the way there on desktop. */
+@media (min-width: 761px) { .app .gg-head.on-home .actions { display: none; } }

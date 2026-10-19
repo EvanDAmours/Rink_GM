@@ -32,3 +32,18 @@ test("the league does not bloat: unsigned leftovers leave, stars stay near the o
   const goalies = Object.values(l.players).filter((p) => p.pos === "G");
   assert.equal(goalies.reduce((s, p) => s + (p.stats.w || 0), 0), l.teams.reduce((s, t) => s + t.rec.w, 0));
 });
+
+test('retirements are announced when re-sign week opens, not on the first day of the new league year', async () => {
+  const { announceRetirements } = await import('../src/engine/offseason.js');
+  const lg = createLeague({ userAbbr: 'TOR', seed: 21 });
+  const before = Object.values(lg.players).filter((p) => p.tid >= 0 && !lg.teams[p.tid].prospects.includes(p.id));
+  for (const p of before) { p.age = 50; p.stats.gp = 40; p.stats.g = 5; }
+  announceRetirements(lg);
+  const left = before.filter((p) => lg.players[p.id]);
+  assert.ok(left.length < before.length * 0.2, `most 50-year-olds retire (${left.length} of ${before.length} stayed)`);
+  assert.ok(lg.retirementArchive.some((r) => r.player?.career?.at(-1)?.y === lg.year && r.player.career.at(-1).s.gp === 40), 'the final season is archived to the card');
+  const count = Object.keys(lg.players).length;
+  announceRetirements(lg);
+  assert.equal(Object.keys(lg.players).length, count, 'a second call in the same year is a no-op');
+  for (const t of lg.teams) for (const id of [...t.roster, ...t.prospects]) assert.ok(lg.players[id], 'rosters hold no retired ids');
+});
