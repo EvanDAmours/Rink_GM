@@ -30,8 +30,6 @@ import { deadlinePending, deadlineActive, startDeadline, userOffers } from "./en
 import GamePlanPage from "./ui/GamePlanPage.jsx";
 import HockeyOperationsPage from "./ui/HockeyOperationsPage.jsx";
 import FrontOfficePage from "./ui/FrontOfficePage.jsx";
-import TrophyRoom from "./ui/TrophyRoom.jsx";
-import RecordBookPage from "./ui/RecordBookPage.jsx";
 import ErrorBoundary from "./ui/ErrorBoundary.jsx";
 import LeaguePage from "./ui/LeaguePage.jsx";
 import SettingsPage from "./ui/SettingsPage.jsx";
@@ -50,17 +48,17 @@ import { atCombine, openDraftFloor } from "./engine/scouting.js";
 import { simFADay } from "./engine/offseason.js";
 import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
-import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub } from "./ui/hubs.jsx";
+import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},
-  {id:"stats",label:"Stats",short:"Stats"},{id:"draft",label:"Draft & Scouting",short:"Draft"},{id:"coaching",label:"Coaching",short:"Coaching"},
-  {id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
-  {id:"legacy",label:"Legacy Hall",short:"Legacy Hall"},{id:"records",label:"Record Book",short:"Records"},{id:"league",label:"League",short:"League"},
+  {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Player Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
+  {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
+  {id:"league",label:"League",short:"League"},
 ];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], trade:["trade","trade"], development:["frontoffice","development"], pipeline:["frontoffice","pipeline"] };
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["league","legacy"], legacy:["league","legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -496,13 +494,13 @@ export default function App({ resume = false }) {
   return (
     <GameCtx.Provider value={ctx}>
       <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
-        <header className="gg-head">
+        <header className={`gg-head${tab === "dashboard" && !live ? " on-home" : ""}`}>
           <div className="gg-id">
             <TeamBadge team={user} size={30} className="gg-badge"/>
             <div>
               <div className="gg-name">{user.city} {user.name}</div>
               <div className="gg-status">
-                {seasonLabel} • <span aria-label={`Record ${recordStr(user.rec)}, ${user.rec.pts} points`}>{recordStr(user.rec)}</span> • <b>{user.rec.pts}</b> PTS • Cap <span style={{color:space<0?"#ef4444":"#22c55e",fontWeight:700}}>{money(space)}</span>/{money(capCeiling)} • SP:<b className="gg-sp">{gm.sp}</b> • MOR:<span style={{color:tierColor(user.morale),fontWeight:700}}>{moraleLabel(user.morale)}</span> • CHEM:<span style={{color:tierColor(user.chemistry,80,65),fontWeight:700}}>{Math.round(user.chemistry)}</span> • REP:<span style={{color:rep.color,fontWeight:700}}>{rep.label}</span>{user.owner?.personality && <> • 👔 <span className="gg-owner">{user.owner.personality.toUpperCase()}</span></>}
+                {seasonLabel} • <span aria-label={`Record ${recordStr(user.rec)}, ${user.rec.pts} points`}>{recordStr(user.rec)}</span> • <b>{user.rec.pts}</b> PTS • Cap <span style={{color:space<0?"#ef4444":"#22c55e",fontWeight:700}}>{money(space)}</span>/{money(capCeiling)}
               </div>
             </div>
           </div>
@@ -516,12 +514,6 @@ export default function App({ resume = false }) {
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("settings")} aria-label="Settings" title="Settings">🔧</button>
           </div>
         </header>
-        <div className="gg-rep" aria-label={`GM reputation ${Math.round(gm.rep)} of 100`}>
-          <span style={{color:rep.color}}>{rep.label}</span>
-          <span className="gg-repbar"><i style={{width:`${Math.round(rep.pct*100)}%`,background:rep.color}}/></span>
-          <span className="gg-repnum">{Math.round(gm.rep)}/{rep.next}</span>
-          {rep.nextLabel && <span className="gg-repnext">{Math.round(rep.pct*100)}% → {rep.nextLabel}</span>}
-        </div>
         {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <nav className="gg-tabs nav" aria-label="Main navigation">
@@ -548,8 +540,7 @@ export default function App({ resume = false }) {
                 {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}
                 {tab === "frontoffice" && <FrontOfficeHub sub={sub.frontoffice} onSub={(k) => setSub("frontoffice", k)} />}
                 {tab === "trade" && <TradeHub sub={sub.trade} onSub={(k) => setSub("trade", k)} seed={tradeSeed} />}
-                {tab === "legacy" && <TrophyRoom />}
-                {tab === "records" && <RecordBookPage />}
+                {tab === "development" && <DevelopmentHub sub={sub.development} onSub={(k) => setSub("development", k)} />}
                 {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
               </>

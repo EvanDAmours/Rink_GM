@@ -57,6 +57,7 @@ export function startResign(league) {
   if (league.expiryAppliedYear===league.year) return;
   league.expiryAppliedYear=league.year;
   closeCapYear(league);
+  announceRetirements(league);
   for (const id in league.players) {
     const p = league.players[id];
     if (p.tid >= 0 && p.extension?.start === league.year + 1) {
@@ -309,7 +310,6 @@ export function startNewSeason(league) {
   archiveFarmSeasons(league);
   league.year++;
   league.phase = "preseason"; // budget against the new season, not a second future year
-  const retiredNow = [];
   for (const id of Object.keys(league.players)) {
     const p = league.players[id];
     if (p.tid === -2) continue;
@@ -328,10 +328,7 @@ export function startNewSeason(league) {
     p.pstats = blankStats(p.pos);
     const nhlGp = p.career.reduce((s, c) => s + (c.s?.gp || 0), 0);
     p.rookie = nhlGp < 25 && p.age <= 25;
-    const inMinors = p.tid >= 0 && league.teams[p.tid].prospects.includes(p.id);
-    if (!inMinors && chance(retirementChance(p))) retiredNow.push(p);
   }
-  for (const p of retiredNow) retire(league, p);
   pruneFreeAgents(league);
 
   for(const t of league.teams)for(const id of [...t.rfaRights]){
@@ -411,6 +408,30 @@ function pruneFreeAgents(league) {
   }
   if (gone) logTx(league, `${gone} unsigned players leave the league for Europe or retirement`);
 }
+// Retirements are announced when the season ends, before re-sign week and free agency, so
+// nobody re-signs or bids on a player who was about to hang them up. The decision uses the
+// age he will be next season; his final season is archived to his card first.
+export function announceRetirements(league) {
+  if (league.retirementsYear === league.year) return;
+  league.retirementsYear = league.year;
+  const retiring = [];
+  for (const id of Object.keys(league.players)) {
+    const p = league.players[id];
+    if (p.tid === -2 || p.signed === false) continue;
+    const inMinors = p.tid >= 0 && league.teams[p.tid].prospects.includes(p.id);
+    if (!inMinors && chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
+  }
+  for (const p of retiring) {
+    if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
+      const abbr = league.teams[p.tid]?.abbr || "FA";
+      (p.ratingHistory ||= []).push({ year: league.year, ovr: p.ovr });
+      p.career.push({ y: league.year, t: abbr, o: p.ovr, s: compactStats(p.pos, p.stats), ps: p.pstats.gp ? compactStats(p.pos, p.pstats) : null });
+    }
+    retire(league, p);
+  }
+  if (retiring.length) league.news?.unshift?.({ year: league.year, day: league.day, type: "retire", text: `${retiring.length} players announce their retirement as the offseason opens${retiring.filter((p) => p.ovr >= 85).length ? `, including ${retiring.filter((p) => p.ovr >= 85).map((p) => p.name).join(", ")}` : ""}.` });
+}
+
 function retire(league, p, quiet = false) {
   const t = league.teams[p.tid];
   if (t) {

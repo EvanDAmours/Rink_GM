@@ -138,12 +138,10 @@ export default function Dashboard({ act = {} }) {
     <div className="gg-home stack">
       <div className="gg-home-head">
         <div className="gg-season"><b>{lg.year}</b><span><small>SEASON</small>{PHASES[lg.phase] || lg.phase}{lg.phase === "regular" ? ` · ${dayToDate(lg.year, lg.day, lg.scheduleStart)}` : ""}</span></div>
-        <div className="gg-stages">{STAGES.map(([k, l], i) => <React.Fragment key={k}><span className={`gg-stagechip${i < stageIdx ? " done" : i === stageIdx ? " now" : ""}`}>{i < stageIdx ? "✓ " : ""}{k === "regular" ? `${lg.year} season${t.rec.gp ? ` · ${rec(t.rec)}` : ""}` : l}</span>{i < STAGES.length - 1 && <i>›</i>}</React.Fragment>)}</div>
         <div className="gg-home-actions">{primary}</div>
       </div>
 
       <div className="gg-status-row">
-        <section className={`gg-stat ${attention.length ? "alert" : "ok"}`} onClick={() => attention[0]?.[2] && go(attention[0][2])}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.[1].replace(/^\S+\s/, (m) => (/[a-zA-Z0-9]/.test(m) ? m : "")) || "No urgent issues"}</span></div></section>
         <section className="gg-stat" onClick={() => go("standings")}><small>RECORD</small><div className="gg-stat-line"><b>{rec(t.rec)}</b><span>{t.rec.gp ? `${ORD(divRank)} in the ${t.div}${odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}` : `${ORD(divRank)} in the ${t.div}`}</span></div></section>
         <section className="gg-stat" onClick={() => go("roster")}><small>CAP SPACE</small><div className="gg-stat-line"><b style={{ color: room < 0 ? "#ef4444" : "#22c55e" }}>{money(room)}</b><span>{expiring} expiring deals</span></div></section>
         <section className={`gg-stat ${starters.length ? "warn" : ""}`} onClick={() => go("lines")}><small>ROSTER HEALTH</small><div className="gg-stat-line"><b style={{ color: injured.length ? "#ef4444" : "#22c55e" }}>{injured.length ? `${injured.length} injured` : "Healthy"}</b><span>{starters.length ? `${starters.length} starter-level out` : `${counts(lg, t).active} on the roster`}</span></div></section>
