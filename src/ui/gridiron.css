@@ -1338,5 +1338,70 @@ body, .app { font-size: 14px; }
   .app .gg-home-actions { display: none; }
 }
 
-/* Home carries its own big sim buttons, so the header's small ones stay out of the way there on desktop. */
-@media (min-width: 761px) { .app .gg-head.on-home .actions { display: none; } }
+/* ===== Shell matched to the football game: one top bar with the tabs in it, a season rail, blue-edged tiles ===== */
+body, .app { background: #0f172a !important; font-size: 14px; }
+.gg-head { background: #0b1220; background-image: linear-gradient(90deg, color-mix(in srgb, var(--team) 40%, transparent) 0%, #0f172a 40%, #1e293b 100%); padding: 0 12px; min-height: 41px; gap: 6px; flex-wrap: nowrap; align-items: stretch; box-shadow: inset 0 -3px 0 var(--team); border-bottom: 1px solid #1e293b; position: sticky; top: 0; z-index: 40; }
+.gg-head .gg-badge { align-self: center; flex: 0 0 auto; }
+.app .gg-head .gg-tabs.nav { background: transparent; border: 0; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; height: 41px; align-items: stretch; }
+.app .gg-head .gg-tabs.nav::-webkit-scrollbar { display: none; }
+.app .gg-head .gg-tabs.nav button { font-size: 13.5px; font-weight: 700; text-transform: none; letter-spacing: 0; color: #94a3b8; padding: 0 9px; height: 41px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; }
+.app .gg-head .gg-tabs.nav button:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, 0.05); }
+.app .gg-head .gg-tabs.nav button.active { color: #fff; background: rgba(255, 255, 255, 0.08); border-bottom-color: var(--team); }
+.gg-head .gg-right { align-self: center; flex: 0 0 auto; flex-wrap: nowrap; }
+.gg-right .actions { flex-wrap: nowrap; }
+.app .gg-right .actions button { font-size: 13px; font-weight: 700; padding: 4px 10px; height: 23px; min-height: 0; border-radius: 4px; white-space: nowrap; }
+.app button.gg-ico { background: #1e293b; color: #cbd5e1; padding: 4px 10px; height: 23px; min-height: 0; border-radius: 4px; font-size: 13px; border-color: #1e293b; }
+.gg-cur-tab { display: none; }
+.app button.gg-menu-btn { display: none; }
+.gg-menu { position: absolute; right: 8px; top: 44px; background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 220px; z-index: 60; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+.app .gg-menu button { background: transparent; border: 0; color: #cbd5e1; text-align: left; font-size: 14px; font-weight: 700; padding: 8px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+.app .gg-menu button.active { background: rgba(59, 130, 246, 0.2); color: #fff; }
+.app .gg-menu button .badge { font-size: 9px; background: var(--gg-gn); color: #052e16; border-radius: 6px; padding: 0 5px; font-weight: 900; }
+.gg-srail { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid #1e293b; background: #0f172a; overflow-x: auto; scrollbar-width: none; }
+.gg-srail::-webkit-scrollbar { display: none; }
+.gg-srail-year { font-size: 26px; font-weight: 900; letter-spacing: 0.5px; color: #fff; line-height: 1; padding-right: 10px; flex: 0 0 auto; }
+.gg-srail-chips { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.gg-srail .gg-stagechip { font-size: 12px; font-weight: 800; letter-spacing: 0.4px; padding: 4px 10px; border-radius: 999px; border: 1px solid #1e293b; color: #64748b; background: transparent; }
+.gg-srail .gg-stagechip.done { color: #94a3b8; border-color: #334155; }
+.gg-srail .gg-stagechip.now { color: #22c55e; border-color: #22c55e; background: rgba(34, 197, 94, 0.133); }
+.gg-srail i { color: #334155; font-style: normal; font-size: 12px; }
+.gg-srail-weeks { display: inline-flex; gap: 3px; flex: 0 0 auto; }
+.app button.gg-wk { width: 22px; height: 22px; padding: 0; min-height: 0; border-radius: 5px; font-size: 11px; font-weight: 900; background: #1e293b; color: #94a3b8; border: 1px solid transparent; line-height: 1; }
+.app button.gg-wk.done { background: #141c2e; color: #64748b; }
+.app button.gg-wk.dl { background: #4c1d95; color: #fff; }
+.app button.gg-wk.on { background: var(--team); color: #fff; box-shadow: inset 0 0 0 1px #fff; }
+.gg-status-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.gg-stat, .gg-stat:not(.alert):not(.warn) { background: #111827; border: 1px solid #1e293b; border-top: 2px solid var(--team); border-radius: 8px; padding: 5px 10px; gap: 0; }
+.gg-stat small { font-size: 10px; letter-spacing: 1.1px; }
+.gg-stat-line b, .gg-stat b { font-size: 16px; }
+.gg-stat.alert { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.4); border-top: 2px solid #ef4444; } .gg-stat.alert b { color: #ef4444; }
+.gg-stat.warn { border-color: rgba(245, 158, 11, 0.4); border-top: 2px solid #f59e0b; }
+.gg-pagehead h2, .gg-pagelabel { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin: 0; align-self: center; }
+.gg-pagehead .gg-status { display: none; }
+.gg-pagehead, .gg-hub-head { align-items: center; gap: 8px; flex-wrap: wrap; }
+.app .gg-hub-chips button { font-size: 14px; font-weight: 700; padding: 6px 14px; border-radius: 6px; border: 1px solid #1e293b; color: #64748b; background: transparent; }
+.app .gg-hub-chips button.on { color: #fff; background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+.app .gg-chips button { color: #94a3b8; border: 1px solid #1e293b; border-radius: 6px; font-weight: 700; }
+.app .gg-chips button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.app .gg-hub-chips button.on { background: rgba(59, 130, 246, 0.2); }
+.gg-side-title { font-size: 16px; font-weight: 800; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.133); margin: 0 0 6px; }
+@media (max-width: 760px) {
+  .app .gg-head .gg-tabs.nav { display: none; }
+  .gg-cur-tab { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; color: #fff; font-weight: 700; font-size: 14px; padding: 0 9px; background: rgba(255, 255, 255, 0.08); border-bottom: 3px solid var(--team); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app button.gg-menu-btn { display: inline-flex; }
+  .app .gg-head .gg-right .gg-ico:not(.gg-menu-btn):nth-child(n+4) { display: none; }
+  .gg-status-row { grid-template-columns: repeat(2, 1fr); }
+  .gg-stat.alert { grid-column: 1 / -1; }
+  .gg-srail-year { font-size: 22px; }
+  .app .gg-head { display: flex; grid-template-columns: none; padding: 0 8px; gap: 4px; align-items: stretch; position: sticky; }
+  .app .gg-head .gg-right { grid-column: auto; flex-wrap: nowrap; gap: 4px; align-self: center; }
+  .app .gg-head .actions { order: 0; flex: 0 1 auto; overflow-x: auto; padding: 0; scrollbar-width: none; }
+  .app .gg-head .actions button, .app .gg-head button.gg-ico { min-height: 0; height: 26px; font-size: 12px; padding: 4px 8px; }
+  .app .gg-right button.gg-ico:last-of-type { margin-left: 0; }
+  .app .gg-right button.gg-ico { order: 0; }
+  .app .gg-head { overflow-x: clip; }
+  .gg-cur-tab { flex: 0 1 auto; max-width: 38%; }
+  .app .gg-head .gg-right { flex: 1 1 auto; min-width: 0; justify-content: flex-end; }
+  .app .gg-head .actions { flex: 0 1 auto; min-width: 0; }
+}
+.app .gg-home .gg-side-title, .app .gg-home-left h3 { font-size: 16px; font-weight: 800; text-transform: none; letter-spacing: 0; color: var(--gg-tx); }

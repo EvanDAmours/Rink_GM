@@ -60,6 +60,32 @@ const NAV = [
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
   operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["league","legacy"], legacy:["league","legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
 
+// The year and every stage of the season on one strip, with a chip per week: what the
+// football game shows under its top bar, in hockey order.
+function SeasonRail({ league, onWeek }) {
+  const weeks = Math.floor(lastDay(league.schedule) / 7) + 1, week = Math.floor(league.day / 7) + 1, dl = Math.floor((league.deadlineDay || 0) / 7) + 1;
+  const stage = league.phase === "draft" ? (atCombine(league) ? "combine" : "draft") : league.phase;
+  const stages = [["preseason", "Preseason"], ["regular", `${league.year} season`], ["playoffs", "Playoffs"], ["combine", "Combine"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];
+  const idx = stages.findIndex(([k]) => k === stage);
+  return (
+    <div className="gg-srail" aria-label="Season progress">
+      <b className="gg-srail-year">{league.year}</b>
+      <div className="gg-srail-chips">
+        {stages.map(([k, l], i) => (
+          <React.Fragment key={k}>
+            <span className={`gg-stagechip${i < idx ? " done" : i === idx ? " now" : ""}`}>{l}</span>
+            {k === "regular" && <span className="gg-srail-weeks">{Array.from({ length: weeks }, (_, w) => w + 1).map((w) => {
+              const past = idx > 1 || (league.phase === "regular" && w < week), on = league.phase === "regular" && w === week;
+              return <button key={w} type="button" className={`gg-wk${on ? " on" : ""}${w === dl ? " dl" : ""}${past && !on ? " done" : ""}`} title={w === dl ? `Week ${w} · trade deadline week` : `Week ${w}`} onClick={onWeek}>{w === dl ? "DL" : w}</button>;
+            })}</span>}
+            {i < stages.length - 1 && <i>›</i>}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const CLOUD_EVERY_MS = 60000;
 
 export default function App({ resume = false }) {
@@ -75,6 +101,7 @@ export default function App({ resume = false }) {
   // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
   const go = useCallback((id, k) => { const [t, kk] = ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
+  const [menuOpen,setMenuOpen]=useState(false);
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
   const [toast, setToast] = useState(null);
@@ -489,42 +516,39 @@ export default function App({ resume = false }) {
   const capCeiling = capForYear(capYear(league));
   const unread = Math.max(0, league.inbox.length - (league.settings.activityReadCount || 0));
   const seasonLabel = `${league.year}-${String(league.year + 1).slice(2)}`;
-  const phasePill = league.phase === "regular" ? `Wk ${Math.floor(league.day / 7) + 1}/${Math.floor(lastDay(league.schedule) / 7) + 1}` : league.phase === "playoffs" ? (league.playoffs?.champion != null ? "Cup awarded" : `Playoffs R${(league.playoffs?.round ?? 0) + 1}`) : league.phase === "draft" ? (atCombine(league) ? "Combine" : "Draft") : league.phase === "resign" ? "Re-sign" : league.phase === "freeagency" ? `FA Day ${league.fa?.day ?? 0}` : "Preseason";
 
   return (
     <GameCtx.Provider value={ctx}>
       <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
-        <header className={`gg-head${tab === "dashboard" && !live ? " on-home" : ""}`}>
-          <div className="gg-id">
-            <TeamBadge team={user} size={30} className="gg-badge"/>
-            <div>
-              <div className="gg-name">{user.city} {user.name}</div>
-              <div className="gg-status">
-                {seasonLabel} • <span aria-label={`Record ${recordStr(user.rec)}, ${user.rec.pts} points`}>{recordStr(user.rec)}</span> • <b>{user.rec.pts}</b> PTS • Cap <span style={{color:space<0?"#ef4444":"#22c55e",fontWeight:700}}>{money(space)}</span>/{money(capCeiling)}
-              </div>
-            </div>
-          </div>
+        <header className="gg-head">
+          <TeamBadge team={user} size={26} className="gg-badge"/>
+          <nav className="gg-tabs nav hdr-tabs" aria-label="Main navigation">
+            {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
+              <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => setTab(n.id)}>
+                <span className="gg-tab-label">{n.short}</span><span className="sr-only">{n.label}</span>
+                {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
+              </button>
+            ))}
+          </nav>
+          <span className="gg-cur-tab" aria-hidden="true">{live ? "Live Game" : (NAV.find((n) => n.id === tab)?.short || (tab === "activity" ? "News" : tab === "settings" ? "Settings" : "Home"))}</span>
           <div className="gg-right">
-            <span className="gg-phase">{phasePill}</span>
             {!live && <div className="actions">{actions}</div>}
             <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search (Ctrl/⌘ K)">🔍</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
-            <button className="gg-ico" disabled={!!live} onClick={()=>go("trophies")} aria-label="Trophy room" title="Trophy room">🏆</button>
             <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("settings")} aria-label="Settings" title="Settings">🔧</button>
+            <button className="gg-ico gg-menu-btn" disabled={!!live} aria-label="Game navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen((v)=>!v)}>☰</button>
           </div>
+          {menuOpen && !live && <div className="gg-menu" role="menu">
+            {NAV.filter((n) => !n.when || n.when(league)).map((n) => <button key={n.id} role="menuitem" data-id={n.id} className={tab === n.id ? "active" : ""} onClick={() => { setMenuOpen(false); go(n.id); }}>{n.label}{badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}</button>)}
+            <button role="menuitem" data-id="activity" className={tab === "activity" ? "active" : ""} onClick={() => { setMenuOpen(false); go("activity"); }}>News & Inbox{unread>0 && <span className="badge">{unread}</span>}</button>
+            <button role="menuitem" data-id="trophies" onClick={() => { setMenuOpen(false); go("trophies"); }}>Trophy room</button>
+            <button role="menuitem" data-id="settings" className={tab === "settings" ? "active" : ""} onClick={() => { setMenuOpen(false); go("settings"); }}>Settings</button>
+          </div>}
         </header>
         {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
+        {!live && <SeasonRail league={league} onWeek={() => go("schedule")} />}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
-        <nav className="gg-tabs nav" aria-label="Main navigation">
-          {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
-            <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => setTab(n.id)}>
-              <span className="gg-tab-label">{n.short}</span><span className="sr-only">{n.label}</span>
-              {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
-            </button>
-          ))}
-        </nav>
-        <label className="gg-jump">Go to <select aria-label="Game navigation" value={tab} disabled={!!live} onChange={e=>go(e.target.value)}>{NAV.filter(n=>!n.when || n.when(league)).map(n=><option key={n.id} value={n.id}>{n.label}</option>)}<option value="activity">News & Inbox</option><option value="settings">Settings</option></select></label>
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
