@@ -41,6 +41,7 @@ import SeasonPreview from "./ui/SeasonPreview.jsx";
 import OwnerReview from "./ui/OwnerReview.jsx";
 import StageConfirm from "./ui/StageConfirm.jsx";
 import Tour, { TourWelcome } from "./ui/Tour.jsx";
+import DraftPickCard from "./ui/DraftPickCard.jsx";
 import { expiringPlayers } from "./engine/offseason.js";
 import { counts } from "./engine/roster.js";
 import { myOffers } from "./engine/negotiations.js";
@@ -223,6 +224,7 @@ export default function App({ resume = false }) {
       openTeam: (tid) => setModal({ type: "team", tid }),
       openBox: (game) => setModal({ type: "box", game }),
       startTour: () => { setModal(null); setMenuOpen(false); setTour("run"); },
+      openPick: (pid, slot) => setModal({ type: "pick", pid, slot }),
       closeModal: () => setModal(null),
       proposeTradeFor: (pid, tid) => {
         setTradeSeed({ pid, tid, n: Date.now() });
@@ -606,6 +608,7 @@ export default function App({ resume = false }) {
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
         {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
         {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}
+        {modal?.type === "pick" && <DraftPickCard pid={modal.pid} slot={modal.slot} onClose={() => setModal(null)} />}
         {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {!modal && !live && !busy && league.ownerReviewPending != null && !unseenPaper(league) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}

@@ -12,6 +12,7 @@ import { Read, DevChip, CovTag, ScoutButton, statText } from "./scoutingBits.jsx
 
 import RegionalScouting from "./RegionalScouting.jsx";
 import ScoutingHQ from "./ScoutingHQ.jsx";
+import ScoutBoard from "./ScoutBoard.jsx";
 import DraftTools, { DraftRecap } from "./DraftTools.jsx";
 import { REGIONS, regionOf } from "../engine/regions.js";
 
@@ -509,7 +510,7 @@ function DraftFloor({ act, onDraft, canDraft }) {
 // ---------- Page ----------
 
 export default function DraftPage({ act }) {
-  const { league, commit, toast } = useGame();
+  const { league, commit, toast, openPick } = useGame();
   const user = league.teams[league.userTid];
   const inDraft = league.phase === "draft" && !!league.draft;
   const combine = atCombine(league);
@@ -524,6 +525,7 @@ export default function DraftPage({ act }) {
     inDraft && !combine && ["floor", "Draft floor"],
     ["board", "Big Board"],
     ["list", `Your list (${myList(league).ids.length})`],
+    ["myscouts", "Your scouts"],
     hasCombine && ["combine", "Combine"],
     ["scouts", "Scouts"],
     ["regions", "Regional scouting"],
@@ -540,8 +542,8 @@ export default function DraftPage({ act }) {
     if (!onClock) return;
     const sl = currentSlot(league);
     if (!makePick(league, p.id)) return;
-    toast(`You selected ${p.name}. Analysts: ${sl.grade}. ${pickTake(sl.grade, sl.overall, sl.csr)}`, 5000);
     commit();
+    openPick(p.id, { round: sl.round, overall: sl.overall, owner: sl.owner, grade: sl.grade, csr: sl.csr });
   };
 
   return (
@@ -559,6 +561,7 @@ export default function DraftPage({ act }) {
       </div>
 
       {view === "floor" && <DraftFloor act={act} onDraft={draft} canDraft={onClock} />}
+      {view === "myscouts" && <ScoutBoard />}
       {view === "board" && (
         <>
           {!inDraft && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} />}

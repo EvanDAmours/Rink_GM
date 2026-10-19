@@ -1478,3 +1478,22 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .gg-paper-lists { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; border-top: 1px solid #1b1a17; margin-top: 12px; padding-top: 10px; font-size: 12px; }
 .gg-paper-lists h4 { margin: 0 0 4px; font-size: 13px; border-bottom: 1px solid #1b1a17; } .gg-paper-lists p { margin: 0; line-height: 1.4; }
 @media (max-width: 760px) { .gg-paper-lists { grid-template-columns: 1fr 1fr; } }
+
+/* Re-sign window rows carry mood, term, ask and two buttons: one column each, nothing stacked */
+.gg-farow.resign { grid-template-columns: 40px minmax(0, 1fr) 44px 84px 96px 88px auto; }
+.gg-farow.resign .gg-faask { font-size: 15px; font-weight: 800; }
+@media (max-width: 900px) { .gg-farow.resign { grid-template-columns: 40px minmax(0, 1fr) 44px 88px auto; } .gg-farow.resign .gg-famood, .gg-farow.resign .gg-select { display: none; } }
+@media (max-width: 600px) { .gg-farow.resign { grid-template-columns: 30px minmax(0, 1fr) 36px auto; } .gg-farow.resign .gg-faask { display: none; } }
+
+/* Draft pick card and the scouts' board */
+.gg-pickcard .modal { max-width: 640px; }
+.gg-pick-head { display: flex; align-items: center; gap: 16px; } .gg-pick-who { flex: 1 1 auto; min-width: 0; } .gg-pick-who h2 { margin: 2px 0 4px; font-size: 26px; font-weight: 900; }
+.gg-pick-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; color: #94a3b8; }
+.gg-pick-nums { display: flex; gap: 18px; margin-top: 8px; align-items: flex-end; } .gg-pick-nums small { display: block; font-size: 10px; letter-spacing: 1px; color: #64748b; font-weight: 800; } .gg-pick-nums b { font-size: 26px; font-weight: 900; line-height: 1; }
+.gg-pick-attr { display: grid; grid-template-columns: 110px minmax(0, 1fr) 30px; align-items: center; gap: 8px; font-size: 13px; } .gg-pick-attr i { display: block; height: 6px; background: #22c55e; border-radius: 3px; } .gg-pick-attr em { font-style: normal; font-weight: 800; text-align: right; }
+.gg-sboard-rows { display: flex; flex-direction: column; }
+.gg-sboard-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) 44px 48px 50px 50px 52px 92px 150px auto; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 13px; }
+.gg-sboard-row.head { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #64748b; font-weight: 800; }
+.gg-sboard-who { display: flex; align-items: center; gap: 6px; min-width: 0; } .gg-sboard-who small { white-space: nowrap; }
+.gg-gap { font-weight: 800; color: #94a3b8; } .gg-gap.good { color: #22c55e; } .gg-gap.bad { color: #ef4444; }
+@media (max-width: 900px) { .gg-sboard-row { grid-template-columns: 40px minmax(0, 1fr) 40px 44px 44px 44px auto; } .gg-sboard-row > :nth-child(7), .gg-sboard-row > :nth-child(8), .gg-sboard-row > :nth-child(9) { display: none; } }
