@@ -18,6 +18,7 @@ import { autoLines, linesFromNames, coachLines, headCoachLines } from "./lines.j
 import { freezeExpectations, deadlinePaper, seasonReviewPaper } from "./papers.js";
 import { allStarDue, allStarWeekend } from "./allstar.js";
 import { checkMilestones } from "./records.js";
+import { inSeasonGrowth, prospectReportNote } from "./prospectWatch.js";
 import { aiCoachingChanges } from "./franchise.js";
 import { buildSeasonSchedule, lastDay } from "./schedule.js";
 import { createGame, simToEnd, applyResult, blankRecord } from "./sim.js";
@@ -284,6 +285,7 @@ export function finishDay(league, played) {
   if (league.day % 7 === 0) {
     checkMilestones(league);
     aiCoachingChanges(league);
+    prospectReportNote(league, inSeasonGrowth(league));
     for (const t of league.teams) {
       if (t.id === league.userTid) {
         if (league.settings?.coachLines && league.day >= 7) {

@@ -57,7 +57,7 @@ export default function PipelinePage() {
               <td>{draftLabel(lg, p)}</td>
               <td className="num">{first != null ? <span className={p.ovr - first > 0 ? "good" : p.ovr - first < 0 ? "bad" : "dim"}>{p.ovr - first > 0 ? "+" : ""}{p.ovr - first}</span> : <span className="dim">—</span>}</td>
               <td>{eta(p)}</td>
-              <td className="num">{p.stats.gp || 0}</td><td className="num">{isGoalie(p.pos) ? p.stats.w || 0 : p.stats.pts || 0}</td>
+              <td className="num">{lv === "nhl" ? p.stats.gp || 0 : p.farmStats?.gp || 0}</td><td className="num">{lv === "nhl" ? (isGoalie(p.pos) ? p.stats.w || 0 : p.stats.pts || 0) : (isGoalie(p.pos) ? p.farmStats?.w || 0 : (p.farmStats?.g || 0) + (p.farmStats?.a || 0))}</td>
               <td>{inSeason && (lv === "nhl" ? (canSendDown(p) ? <button className="small" onClick={() => doSendDown(p)}>Send down</button> : null) : lv === "ahl" && p.signed !== false ? <button className="small" onClick={() => doCallUp(p)}>Call up</button> : null)}</td>
             </tr>)}
             {!shown.length && <tr><td colSpan={12} className="dim">Nobody at this level.</td></tr>}

@@ -18,6 +18,8 @@ import { TRAINING, setTraining } from "../engine/franchise.js";
 import { composites } from "../engine/ratings.js";
 import { savePct } from "../engine/players.js";
 import { atCombine } from "../engine/scouting.js";
+import { prospectWatch } from "../engine/prospectWatch.js";
+import { Sparkline } from "./ProspectWatch.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import GamePlanPicker from "./GamePlanPicker.jsx";
 
@@ -225,6 +227,11 @@ export default function Dashboard({ act = {} }) {
                 {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => b.pot - b.ovr - (a.pot - a.ovr)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot}){p.age <= 24 ? " · ~fast" : p.age >= 31 ? " · slow" : ""}</option>)}</optgroup>)}
               </Select>
             )}
+          </section>
+          <section className="gg-lab gg-home-watch">
+            <div className="gg-k">PROSPECT WATCH <button className="tiny ghost" style={{ marginLeft: "auto" }} onClick={() => go("development")}>All →</button></div>
+            {prospectWatch(lg, t).filter((r) => r.farm || r.p.age <= 22).slice(0, 4).map((r) => <div key={r.p.id} className="gg-home-watch-row"><PosBadge pos={r.p.pos} /><div><b><PlayerName p={r.p} /></b><span className="dim small">{r.level} · {r.line.text}</span></div><Sparkline path={r.path} width={64} height={22} color={r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8"} /><b style={{ color: r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8" }}>{r.delta > 0 ? "+" : ""}{r.delta}</b></div>)}
+            {!prospectWatch(lg, t).length && <div className="dim small">No young players to follow yet.</div>}
           </section>
           {t.rec.gp > 0 && <><div className="gg-k" style={{ marginTop: 10 }}>CLUB LEADERS</div><div className="gg-stories">{leaders.map(([k, p, f]) => p ? <div key={k} className="gg-inj"><span className="gg-pill">{k}</span><b><PlayerName p={p} /></b><span>{f(p)}</span></div> : null)}</div></>}
         </aside>

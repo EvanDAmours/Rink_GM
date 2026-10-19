@@ -45,9 +45,15 @@ export function developmentWeek(lg) {
         logTx(lg,`${p.name} completes position training at ${to}`,[t.id]);
       }}
       if(!t.prospects.includes(id) || p.injury>0)continue;
-      const st=p.farmStats ||= {gp:0,g:0,a:0,w:0,sa:0,ga:0,year:lg.year};
+      if(p.farmStats && p.farmStats.year!==lg.year)p.farmStats=null;const st=p.farmStats ||= {gp:0,g:0,a:0,w:0,sa:0,ga:0,year:lg.year};
       const role=p.farmRole || "middle",usage=role==="top"?1.15:role==="depth"?.7:1;
-      const games=Math.max(1,Math.round(elapsed*(isGoalie(p.pos)?(role==="top"?.8:role==="depth"?.3:.5):1)*(p.assignment==="college"?1:2)));const r=stream(`${id}|farm|${lg.year}|${week}`);
+      const r=stream(`${id}|farm|${lg.year}|${week}`);
+      // Games this week at his level: AHL/junior clubs play about twice a week, college
+      // closer to once, Europe in between. Goalies share the crease by role.
+      const perWeek=p.assignment==="college"?1.2:p.assignment==="europe"?1.6:p.assignment==="junior"?2.3:2;
+      const share=isGoalie(p.pos)?(role==="top"?.75:role==="depth"?.25:.5):(role==="depth"?.85:1);
+      let games=0;for(let i=0;i<elapsed;i++){const n=perWeek*share*(.7+r.next()*.6);games+=Math.floor(n)+(r.next()<n-Math.floor(n)?1:0);}
+      if(games<=0){p.developmentHistory ||= [];p.developmentHistory.push({year:lg.year,week,assignment:p.assignment,role,games:0,minutes:0,ovr:p.ovr});if(p.developmentHistory.length>80)p.developmentHistory.shift();continue;}
       st.gp+=games;
       const minutes=isGoalie(p.pos)?60:role==='top'?(isDefense(p.pos)?24:21):role==='depth'?9:16;
       st.toi=(st.toi || 0)+games*minutes*60;
@@ -56,8 +62,24 @@ export function developmentWeek(lg) {
       p.developmentHistory ||= [];
       p.developmentHistory.push({year:lg.year,week,assignment:p.assignment,role,games,minutes,ovr:p.ovr});
       if(p.developmentHistory.length>80)p.developmentHistory.shift();
-      if(isGoalie(p.pos)){st.w+=Math.round(games*.55);st.sa+=games*28;st.ga+=Math.round(games*(3.5-(p.ovr-65)*.06));}
-      else {const pts=Math.round(games*Math.max(.15,(p.ovr-45)/30)*usage*(isDefense(p.pos)?.6:1)*(0.85+r.next()*.3));const goals=Math.round(pts*.4);st.g+=goals;st.a+=pts-goals;}
+      if(isGoalie(p.pos)){
+        // Save percentage tracks how far above the level he is; wins follow it.
+        const level=p.assignment==='ahl'?72:p.assignment==='europe'?70:p.assignment==='college'?66:62;
+        const sv=clamp(.893+(p.ovr-level)*.0022+(r.next()-.5)*.012,.86,.94);
+        const sa=games*(26+Math.round(r.next()*8));st.sa+=sa;st.ga+=Math.round(sa*(1-sv));
+        st.w+=Math.round(games*clamp(.3+(sv-.9)*6,.15,.8));
+      } else {
+        // Points per game against the level he is playing at, then a position/type goal share.
+        const level=p.assignment==='ahl'?70:p.assignment==='europe'?68:p.assignment==='college'?64:60;
+        const base=isDefense(p.pos)?.35:.75;
+        const ppg=clamp(base+(p.ovr-level)*.045*usage,.05,2.2);
+        // Fractional carry so a defenceman's goals and a depth forward's points add up
+        // over a season instead of rounding away each week.
+        st.px=(st.px || 0)+games*ppg*(.7+r.next()*.6);const pts=Math.floor(st.px);st.px-=pts;
+        const gShare=isDefense(p.pos)?.28:p.type==='SNP'?.56:p.type==='PWF'?.5:p.type==='PLY'?.36:.44;
+        st.gx=(st.gx || 0)+pts*gShare*(.8+r.next()*.4);const goals=Math.min(pts,Math.floor(st.gx));st.gx-=goals;
+        st.g+=goals;st.a+=pts-goals;
+      }
       p.farmWork=(p.farmWork || 0)+elapsed*usage*competition*challenge*(.6+(t.coach.development+t.staff[isGoalie(p.pos)?"goalie":"assistant"].development)/300+(t.arena?.training || 0)*.05);
     }
   }
