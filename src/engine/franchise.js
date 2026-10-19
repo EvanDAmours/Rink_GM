@@ -157,9 +157,10 @@ export function reviewOwner(league) {
     const wonSeries=league.playoffs?.rounds[0].some(s=>s.winner===t.id);
     const reached=league.playoffs?.rounds[0].some(s=>s.top===t.id || s.bot===t.id);
     const met=g.kind==="contend"?wonSeries:g.kind==="playoffs"?reached:developed>=3;
+    const before=t.owner.trust;
     t.owner.trust=clamp(t.owner.trust+(met?12:-10)+(league.playoffs?.champion===t.id?15:0),0,100);
-    t.owner.reviews.unshift({year:league.year,goal:g.label,met,trust:t.owner.trust,rec:{...t.rec}});
-    if(t.id===league.userTid)league.inbox.push({year:league.year,day:league.day,text:`Owner review: ${met?"goal achieved":"goal missed"} — ${g.label}. Job security ${t.owner.trust}/100.`});
+    t.owner.reviews.unshift({year:league.year,goal:g.label,kind:g.kind,met,trust:t.owner.trust,before,rec:{...t.rec},playoff:t.playoffResult || null,champion:league.playoffs?.champion===t.id,developed});
+    if(t.id===league.userTid){league.inbox.push({year:league.year,day:league.day,text:`Owner review: ${met?"goal achieved":"goal missed"} — ${g.label}. Job security ${t.owner.trust}/100.`});league.ownerReviewPending=league.year;}
   }
   const t=league.teams[league.userTid],yr=league.year;
   const award=(key,name)=>{if(!league.achievements.some(a=>a.key===key))league.achievements.push({key,name,year:yr});};

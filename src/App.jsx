@@ -38,6 +38,11 @@ import PlayerModal from "./ui/PlayerModal.jsx";
 import TeamModal from "./ui/TeamModal.jsx";
 import BoxScoreModal from "./ui/BoxScoreModal.jsx";
 import SeasonPreview from "./ui/SeasonPreview.jsx";
+import OwnerReview from "./ui/OwnerReview.jsx";
+import StageConfirm from "./ui/StageConfirm.jsx";
+import { expiringPlayers } from "./engine/offseason.js";
+import { counts } from "./engine/roster.js";
+import { myOffers } from "./engine/negotiations.js";
 import { weekResults } from "./engine/seasonPreview.js";
 import * as L from "./engine/league.js";
 import { PHASES, FA_DAYS } from "./engine/constants.js";
@@ -422,6 +427,16 @@ export default function App({ resume = false }) {
       commit();
     },
     startDraft: () => {
+      const pts = user.scoutPts || 0, iv = league.draft?.interviewsLeft ?? 0;
+      if (!pts && !iv) return act.startDraftNow();
+      setModal({ type: "stage", title: "Move on to the Draft?", yes: "Yes, go to the Draft", onYes: act.startDraftNow, lines: [
+        ...(iv ? [{ tone: "warn", head: `${iv} prospect interview${iv === 1 ? "" : "s"} not used yet`, text: "Interviews only happen at the Combine." }] : []),
+        ...(pts ? [{ tone: "warn", head: `${pts} scouting point${pts === 1 ? "" : "s"} unspent`, text: "Reports can still be filed from the draft floor, but the clock runs there." }] : []),
+        { tone: "info", head: "Combine results and your big board stay available until the draft ends" },
+      ] });
+    },
+    startDraftNow: () => {
+      setModal(null);
       openDraftFloor(league);
       setTab("draft");
       commit();
@@ -440,6 +455,14 @@ export default function App({ resume = false }) {
       commit();
     },
     toFA: () => {
+      const left = expiringPlayers(league, user).filter((p) => p.yrs === 0).sort((a, b) => b.ovr - a.ovr);
+      setModal({ type: "stage", title: "Move on to Free Agency?", yes: "Yes, go to Free Agency", onYes: act.toFANow, lines: [
+        left.length ? { tone: "warn", head: `${left.length} expiring player${left.length === 1 ? "" : "s"} not re-signed`, text: `${left.slice(0, 5).map((p) => `${p.name} (${p.pos} ${p.ovr})`).join(", ")}${left.length > 5 ? "…" : ""}. They hit the open market, where 31 clubs can bid.` } : { tone: "good", head: "Every expiring contract is settled", text: "Nothing of yours reaches the market." },
+        { tone: "info", head: `${money(capSpace(league, user))} of cap room for next season`, text: `${counts(league, user).active} players signed for the NHL roster.` },
+      ] });
+    },
+    toFANow: () => {
+      setModal(null);
       L.goToFreeAgency(league);
       go("freeagency");
       commit();
@@ -454,6 +477,16 @@ export default function App({ resume = false }) {
     },
     nextSeason: () => {
       if(league.career?.fired){showToast("Accept your next GM job under Front Office → Operations.",5000);go("operations");return;}
+      const open = Math.max(0, 23 - counts(league, user).active), pending = myOffers(league).filter((o) => o.standing.status === "pending").length;
+      const daysLeft = league.fa ? Math.max(0, FA_DAYS - league.fa.day) : 0;
+      setModal({ type: "stage", title: `Start the ${league.year + 1}-${String(league.year + 2).slice(2)} season?`, yes: "Yes, start the season", onYes: act.nextSeasonNow, lines: [
+        { tone: open >= 4 ? "warn" : "info", head: `${open} open roster spot${open === 1 ? "" : "s"}`, text: open >= 4 ? "Camp fills them from the farm, but depth signed now is depth you chose." : "The NHL roster is close to full." },
+        { tone: "info", head: `${money(capSpace(league, user))} of cap space left`, text: "Unspent room banks through the season for a deadline move." },
+        ...(pending ? [{ tone: "warn", head: `${pending} offer${pending === 1 ? "" : "s"} still waiting on an answer`, text: `Agents decide over the remaining ${daysLeft} free-agency day${daysLeft === 1 ? "" : "s"}; starting the season settles them now.` }] : []),
+      ] });
+    },
+    nextSeasonNow: () => {
+      setModal(null);
       runChunked(
         () => "Aging players and building the new season…",
         () => {
@@ -596,6 +629,8 @@ export default function App({ resume = false }) {
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
         {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
+        {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}
+        {!modal && !live && !busy && league.ownerReviewPending != null && !unseenPaper(league) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}
         {busy && (
           <div className="overlay">
             <div className="box">
