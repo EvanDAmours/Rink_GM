@@ -72,6 +72,18 @@ test('offer-sheet compensation uses contract total divided by at most five years
 test('agents preserve counteroffers, reserve budget, and resolve pending bids',()=>{
  const lg=league(),t=lg.teams[lg.userTid];room(lg,t);lg.phase='freeagency';lg.fa={day:0};const p=lg.players[lg.freeAgents.find(id=>lg.players[id].ovr<75)];assert.equal(negotiate(lg,p.id,.9,2).ok,false);assert.equal(lg.negotiations[p.id].status,'counter');assert.ok(negotiate(lg,p.id,5,2).ok);assert.equal(pendingSpend(lg,t.id),5);assert.equal(p.tid,-1);lg.fa.day=2;settleNegotiations(lg);assert.equal(p.tid,t.id);assert.equal(pendingSpend(lg,t.id),0);assert.ok(!p.negotiationPending);
 });
+test('on the open market you can talk to more agents than your cap room covers; the rest fall through at settlement',()=>{
+ const lg=league(),t=lg.teams[lg.userTid];room(lg,t);lg.phase='freeagency';lg.fa={day:0};
+ const space=capSpace(lg,t);const fas=lg.freeAgents.map(id=>lg.players[id]).filter(p=>p.ovr<75).slice(0,6);
+ const aav=Math.min(18,Math.round(space*0.4*100)/100);// a few such offers exceed the room; each fits on its own
+ for(const p of fas){const r=negotiate(lg,p.id,aav,2);assert.ok(r.ok,r.msg);}
+ assert.ok(pendingSpend(lg,t.id)>space);
+ assert.equal(negotiate(lg,fas[0].id,space+5,2).ok,false);// a single offer still has to fit
+ lg.fa.day=2;settleNegotiations(lg);
+ const mine=fas.filter(p=>p.tid===t.id);assert.ok(mine.length>=2 && mine.length<fas.length);
+ assert.ok(capSpace(lg,t)>=-1e-6);
+ assert.ok(lg.inbox.some(m=>/left no cap or roster room/.test(m.text)));
+});
 test('CHL and NCAA development assignments preserve eligibility rules',()=>{
  const lg=league(),t=lg.teams[lg.userTid],p=add(lg,t.id,{age:18,signed:false});p.bio={lg:'OHL'};assert.equal(assignProspect(lg,p.id,'ahl').ok,false);assert.ok(assignProspect(lg,p.id,'junior').ok);p.age=20;assert.ok(assignProspect(lg,p.id,'ahl').ok);assert.equal(p.yrs,3);assert.equal(assignProspect(lg,p.id,'college').ok,false);
 });

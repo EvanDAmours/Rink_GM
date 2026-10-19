@@ -27,7 +27,7 @@ export function accrueCap(lg,through=lg.day){
 }
 export function capSummary(lg,t){
  const cap=capForYear(lg.year),salary=rawPayroll(lg,t),relief=ltirRelief(lg,t),c=t.capLedger;
- if(!['regular','playoffs'].includes(lg.phase)||!c||c.year!==lg.year)return {cap,payroll:salary,bank:0,available:cap-salary+relief,remainingDays:null,spent:0,estimated:true};
+ if(!['regular','playoffs','draft'].includes(lg.phase)||!c||c.year!==lg.year)return {cap,payroll:salary,bank:0,available:cap-salary+relief,remainingDays:null,spent:0,estimated:true};
  const D=endDay(lg)+1,remaining=Math.max(0,D-c.lastDay-1),budget=cap*(D-c.startDay)/D;
  const bank=Math.max(0,cap*(c.lastDay-c.startDay+1)/D-c.spent);
  // Once every day has accrued (final day and the playoffs), compliance is the season total:

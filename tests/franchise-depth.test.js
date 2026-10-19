@@ -60,6 +60,7 @@ test('a club that spent banked cap room at the deadline stays compliant on the f
  accrueCap(lg,D-1);
  assert.equal(capSummary(lg,t).remainingDays,0);assert.ok(capSpace(lg,t)>=0,'final day: '+capSpace(lg,t));
  lg.phase='playoffs';assert.ok(capSpace(lg,t)>=0,'playoffs: '+capSpace(lg,t));
+ lg.phase='draft';assert.ok(capSpace(lg,t)>=0,'draft: '+capSpace(lg,t));
 });
 test('buyouts apply age rates, signing bonus protection, deferred charges and actual salary years',()=>{
  const p={name:'Test',age:25,cap:6,yrs:2};let rows=buyoutSchedule(p);assert.equal(rows.length,4);assert.equal(rows[0].amt,1);assert.equal(rows[3].offset,3);
