@@ -34,7 +34,7 @@ function ResignView() {
         {expiring.map((p) => {
           const ask = p.willing ? resignAsk(league, p, termFor(p)) : null;
           return (
-            <div key={p.id} className="gg-farow">
+            <div key={p.id} className="gg-farow resign">
               <MugPos p={p} team={user} />
               <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age + 1} next season · POT {p.pot} · was {money(p.prevCap)} · {isRFA(p) ? "RFA" : "UFA"}</small></span>
               <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
