@@ -50,16 +50,16 @@ export function TeamName({ tid, short = false }) {
 
 export const money = fmtMoney;
 
-export function Modal({ title, onClose, children, head }) {
+export function Modal({ title, onClose, children, head, bare = false, className = "" }) {
   const ref=useRef(null),id=useId();useDialogFocus(ref,onClose);
   return (
     <div className="modalbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}>
-        <div className="mhead">
+      <div ref={ref} className={`modal ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}>
+        {bare ? <><span id={id} className="sr-only">{title}</span><button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button></> : <div className="mhead">
           {head}
           <div id={id} className="modal-title">{title}</div>
           <button className="close ghost" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>
-        </div>
+        </div>}
         <div className="mbody">{children}</div>
       </div>
     </div>

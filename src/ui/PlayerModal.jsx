@@ -2,6 +2,7 @@ import {buyoutSummary} from '../engine/capAccounting.js';
 import ArchivedPlayerCard from './ArchivedPlayerCard.jsx';
 import React from "react";
 import Headshot from "./Headshot.jsx";
+import PlayerCard from "./PlayerCard.jsx";
 import { useGame, Modal, TeamBadge, Ovr, Bar, money, pct, signed } from "./common.jsx";
 import { SKATER_ATTRS, GOALIE_ATTRS } from "../engine/ratings.js";
 import { isGoalie, ARCHETYPES } from "../engine/constants.js";
@@ -45,6 +46,7 @@ export default function PlayerModal({ pid }) {
       </Modal>
     );
   }
+  if (!league.settings?.classicCard) return <PlayerCard p={p} />;
   // Development traits matter while a player is still growing. Other teams' prospects
   // show what your scouts found out (if anything).
   const devShown = p.age <= 25 && p.dev ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
