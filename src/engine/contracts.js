@@ -78,7 +78,9 @@ export function evaluateOffer(league, p, { aav, yrs, bonusPct = 0, kind }) {
   const bonusCash = round2(aav * yrs * (bonusPct / 100));
   const cash = round2(t.arena?.cash ?? 0);
   const capOk = kind === "extension" ? futurePayroll(league, t) + aav <= capForYear(league.year + 1) + 1e-6 : aav <= capSpace(league, t) + 1e-6;
-  const roomOk = kind !== "fa" || hasRoomFor(league, t);
+  // The 23-man limit is an in-season rule; over the summer the reserve list (90) and contract count (50) are the limits.
+  const inSeason = league.phase === "regular" || league.phase === "playoffs";
+  const roomOk = kind !== "fa" || !inSeason || hasRoomFor(league, t);
   const slotOk = contractCount(league, t) < 50 || (kind !== "fa" && p.tid === t.id);
   const cashOk = bonusCash <= cash + 1e-6;
   const n = league.negotiations?.[p.id];

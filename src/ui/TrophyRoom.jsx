@@ -1,9 +1,10 @@
 import { CUP_HISTORY, CUP_HISTORY_SOURCE } from "../data/cupHistory.js";
 import { TROPHY_HISTORY } from "../data/trophyHistory.js";
+import { HISTORICAL_RECORDS } from "../data/historicalRecords.js";
 import React, { useState } from "react";
 import { useGame, TeamName, TeamBadge, PlayerName } from "./common.jsx";
 import { AWARD_NAMES, AWARD_BLURB, computeAwards } from "../engine/awards.js";
-import { trophyUrl, TROPHY_ORDER } from "./trophies.js";
+import { trophyUrl, TROPHY_ORDER, TROPHY_NAMESAKE } from "./trophies.js";
 
 export function Trophy({ kind, size = 110, className = "" }) {
   const url = trophyUrl(kind);
@@ -62,7 +63,7 @@ export default function TrophyRoom() {
   return (
     <div className="stack gg-trophyroom">
       <div className="gg-pagehead">
-        <div><h2>{club.city} {club.name} Trophy Room</h2><div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
+        <div><h2>Legacy Hall · {club.name}</h2><div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
         <div className="gg-chips"><button className={view === "club" ? "on" : ""} onClick={() => setView("club")}>Our trophies</button><button className={view === "case" ? "on" : ""} onClick={() => setView("case")}>Trophy case</button><button className={view === "awards" ? "on" : ""} onClick={() => setView("awards")}>League awards</button></div>
       </div>
 
@@ -71,7 +72,7 @@ export default function TrophyRoom() {
           <div className="gg-legacy-hero" style={{ "--c1": club.colors[0] }}>
             <Trophy kind="stanley" size={190} className="hero" />
             <div className="gg-legacy-who">
-              <span className="gg-k">FRANCHISE LEGACY · SINCE {realCups[0]?.year ? "THE NHL'S EARLY DAYS" : "EXPANSION"}</span>
+              <span className="gg-k">FRANCHISE LEGACY{HISTORICAL_RECORDS.franchises?.[club.abbr]?.firstSeason ? ` · SINCE ${HISTORICAL_RECORDS.franchises[club.abbr].firstSeason}` : ""}</span>
               <h2><TeamName tid={team} /></h2>
               <div className="gg-tiles"><div><small>STANLEY CUPS</small><b>{realCups.length + cups.length}</b></div><div><small>WON IN YOUR LEAGUE</small><b>{cups.length}</b></div><div><small>CUP FINALS LOST</small><b>{finals.length}</b></div><div><small>CONFERENCE TITLES</small><b>{confs.length}</b></div><div><small>PRESIDENTS' TROPHIES</small><b>{pres.length}</b></div><div><small>INDIVIDUAL AWARDS</small><b>{mine.length + ["hart","tedLindsay","artRoss","rocket","norris","vezina","calder","selke","ladyByng","jennings","masterton","kingClancy","messier","connSmythe"].reduce((s, k) => s + (real(k)?.count || 0), 0)}</b></div></div>
               <div className="dim small" style={{ marginTop: 8 }}>{realCups.length ? `Last real Stanley Cup: ${realCups.at(-1).year}.` : "No Stanley Cup in franchise history yet."}{cups.length ? ` Last in your league: ${season(cups[0].year)}.` : ""}</div>
@@ -100,6 +101,7 @@ export default function TrophyRoom() {
             {TROPHY_ORDER.map((k) => { const n = won(k); const h = holder(k); return (
               <div key={k} className={`gg-case-item${n ? " won" : " unwon"}`}><Trophy kind={k} size={120} /><b>{AWARD_NAMES[k]}</b><small>{AWARD_BLURB[k]}</small>
                 {n ? <span className="gg-case-count">Won {n}× by the {club.name}{lastWin(k) ? ` · most recently ${lastWin(k).winner ? `by ${lastWin(k).winner}, ` : ""}${lastWin(k).season}` : ""}</span> : <span className="dim small">Never won by the {club.name}</span>}
+                {TROPHY_NAMESAKE[k] && <span className={"gg-case-namesake" + (TROPHY_NAMESAKE[k][1] === club.abbr ? " ours" : "")}>Named for {TROPHY_NAMESAKE[k][0]}{TROPHY_NAMESAKE[k][1] === club.abbr ? " \u00b7 part of this club's history" : ""}</span>}
                 {h && <span className="gg-case-holder">{projected && !ceremony ? "Leader: " : "Holder: "}{h}</span>}
               </div>
             ); })}

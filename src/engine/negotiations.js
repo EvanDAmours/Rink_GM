@@ -31,13 +31,13 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
   if(aav<counter){lg.negotiations[pid]={pid,year:lg.year,rounds,status:rounds>=4?"walked":"counter",counter,term:yrs,preferences:prefs};return {ok:false,msg:rounds>=4?`${p.name}'s agent ended this discussion.`:`Counteroffer: $${counter.toFixed(2)}M × ${yrs} years. Priority: ${prefs.priority}.`};}
   if(old?.status==="walked")return {ok:false,msg:"The agent will reopen talks next season."};
   if(p.tid===t.id || lg.phase!=="freeagency") {
-    if(counts(lg,t).active>=23 && !t.roster.includes(p.id))return {ok:false,msg:"Make an NHL roster spot before signing."};
+    if(lg.phase==="preseason" && counts(lg,t).active>=23 && !t.roster.includes(p.id))return {ok:false,msg:"Make an NHL roster spot before signing."};
     const ok=signPlayer(lg,t,p,aav,yrs);if(!ok)return {ok:false,msg:"No contract slot available."};
     promiseRole(lg,p,t.id,promised);
     if(clause && p.age>=27)p.clause={type:clause,blocked:clause==="NTC"?lg.teams.filter(q=>q.conf!==t.conf).map(q=>q.id):[]};
     lg.negotiations[pid]={pid,year:lg.year,rounds,status:"signed",aav,yrs,preferences:prefs};return {ok:true,msg:`${p.name} agreed to your terms.`};
   }
-  if(counts(lg,t).active>=23)return {ok:false,msg:"Make an NHL roster spot before bidding."};
+  if(reserveCount(lg,t)>=90)return {ok:false,msg:"Your reserve list is full (90)."};
   const bids=[{tid:t.id,aav,yrs,clause,role:promised,bonusCash}];
   for(const ai of lg.teams.filter(q=>q.id!==t.id && capSpace(lg,q)>ask.aav && counts(lg,q).active<23 && contractCount(lg,q)<50).sort((a,b)=>teamRatings(lg,b).ovr-teamRatings(lg,a).ovr).slice(0,3)){
     const r=stream(`${p.id}|bid|${ai.id}|${lg.year}`);if(r.next()<.65)bids.push({tid:ai.id,aav:Math.round(ask.aav*(.97+r.next()*.1)*100)/100,yrs:ask.yrs});
@@ -54,7 +54,7 @@ export function settleNegotiations(lg) {
   for(const n of Object.values(lg.negotiations || {}).filter(n=>n.status==="pending" && n.closes<=(lg.fa?.day || 0))){
     const p=lg.players[n.pid];if(!p || p.tid!==-1){n.status="unavailable";if(p)delete p.negotiationPending;continue;}
     const prefs=n.preferences,score=b=>b.aav+(prefs.priority==="role"?roleUtility(lg,lg.teams[b.tid],p,b.role || projectedRole(lg,lg.teams[b.tid],p))*.5:0)+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
-    const eligible=n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && counts(lg,lg.teams[b.tid]).active<23 && contractCount(lg,lg.teams[b.tid])<50).sort((a,b)=>score(b)-score(a) || a.tid-b.tid);
+    const eligible=n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && (b.tid===lg.userTid?reserveCount(lg,lg.teams[b.tid])<90:counts(lg,lg.teams[b.tid]).active<23) && contractCount(lg,lg.teams[b.tid])<50).sort((a,b)=>score(b)-score(a) || a.tid-b.tid);
     const b=eligible[0];delete p.negotiationPending;
     const mine=n.bids.find(x=>x.tid===lg.userTid);if(mine?.bonusCash && (!b || b.tid!==lg.userTid)){const ut=lg.teams[lg.userTid];ut.arena.cash=Math.round((ut.arena.cash+mine.bonusCash)*100)/100;}
     if(!b){n.status="failed";continue;}
@@ -113,7 +113,7 @@ export function aiOfferSheets(lg){
     const aav=Math.round(Math.max(p.qualified.aav,resignAsk(lg,p,3).aav)*1.05*100)/100;
     for(const t of lg.teams.filter(t=>t.id!==lg.userTid).sort((a,b)=>capSpace(lg,b)-capSpace(lg,a))){
       if(stream(`${lg.year}|sheet|${p.id}|${t.id}`).next()>.35)continue;
-      const r=submitOfferSheet(lg,p.id,aav,3,t.id);if(r.ok){lg.inbox.push({year:lg.year,day:lg.day,text:`${t.abbr} signed ${p.name} to an offer sheet. You have seven FA days to match in Hockey Operations.`});break;}
+      const r=submitOfferSheet(lg,p.id,aav,3,t.id);if(r.ok){lg.inbox.push({year:lg.year,day:lg.day,text:`${t.abbr} signed ${p.name} to an offer sheet. You have seven FA days to match under Front Office → Operations.`});break;}
     }
   }
 }

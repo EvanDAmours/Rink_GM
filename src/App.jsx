@@ -255,7 +255,7 @@ export default function App({ resume = false }) {
     commit();
   };
   const blockers = () => {
-    if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations before continuing.",5000);go("operations");return true;}
+    if(league.career?.fired){showToast("Accept your next GM job in Front Office → Operations before continuing.",5000);go("operations");return true;}
     if (deadlinePending(league)) {
       const first = !deadlineActive(league);
       openDeadline();
@@ -399,7 +399,7 @@ export default function App({ resume = false }) {
       commit();
     },
     nextSeason: () => {
-      if(league.career?.fired){showToast("Accept your next GM job in Hockey Operations.",5000);go("operations");return;}
+      if(league.career?.fired){showToast("Accept your next GM job under Front Office → Operations.",5000);go("operations");return;}
       runChunked(
         () => "Aging players and building the new season…",
         () => {

@@ -8,7 +8,7 @@ import { syncLines, lineupIds } from "./lines.js";
 import {ensureUniforms} from "./uniforms.js";
 import { contractCount, reserveCount, waiverStatus, rawPayroll, buriedCap, ltirRelief, elcTerm, elcSalary } from "./hockeyRules.js";
 
-export const IR_GAMES = 7; // players out this long don't count against the 23-man limit
+export const IR_GAMES = 4; // NHL injured reserve is a week minimum, about four games; players out this long don't count against the 23-man limit
 
 // During the re-sign and free-agency phases teams are budgeting for next season.
 export function capYear(league) {

@@ -335,6 +335,9 @@ export function finishPlayoffs(league) {
   reviewOwner(league);
   careerReview(league);
   logTx(league, `The ${league.teams[champ].city} ${league.teams[champ].name} win the Stanley Cup!`);
+  league.news ||= [];
+  league.news.unshift({ year: league.year, day: league.day, type: "cup", text: `${league.teams[champ].city} ${league.teams[champ].name} win the Stanley Cup. ${league.awards.connSmythe ? `${league.awards.connSmythe.name} takes the Conn Smythe as playoff MVP.` : ""}` });
+  if (league.awards.hart) league.news.unshift({ year: league.year, day: league.day, type: "award", pid: league.awards.hart.pid, text: `${league.awards.hart.name} is the Hart Trophy winner. ${league.awards.vezina ? `${league.awards.vezina.name} takes the Vezina` : ""}${league.awards.norris ? `, ${league.awards.norris.name} the Norris` : ""}${league.awards.calder ? ` and ${league.awards.calder.name} the Calder.` : "."}` });
   startDraft(league);
   league.phase = "draft";
   runCombine(league);
@@ -345,6 +348,8 @@ export function finishPlayoffs(league) {
 
 export function completeDraft(league) {
   if (!draftDone(league)) return false;
+  const first = Object.values(league.players).filter((p) => p.draft?.year === league.draft?.year && p.tid === league.userTid).sort((a, b) => a.draft.pick - b.draft.pick)[0];
+  if (first) (league.news ||= []).unshift({ year: league.year, day: league.day, type: "draft", pid: first.id, text: `${league.teams[league.userTid].name} take ${first.name} (${first.pos}) at #${first.draft.pick} overall. The class heads to the minors.` });
   archiveDraft(league);
   finishDraft(league);
   startResign(league);
