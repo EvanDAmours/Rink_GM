@@ -301,7 +301,8 @@ export function startNewSeason(league) {
     const p = league.players[id];
     if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
       const abbr = league.teams[p.tid]?.abbr || "FA";
-      (p.ratingHistory ||= []).push({year:league.year,ovr:p.ovr,attrs:{...p.attrs}});
+      (p.ratingHistory ||= []).push({year:league.year,ovr:p.ovr});
+      if (p.ratingHistory.length > 25) p.ratingHistory.shift();
       p.career.push({ y: league.year, t: abbr, o: p.ovr, s: compactStats(p.pos, p.stats), ps: p.pstats.gp ? compactStats(p.pos, p.pstats) : null });
     }
   }

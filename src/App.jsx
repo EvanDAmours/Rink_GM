@@ -126,7 +126,13 @@ export default function App({ resume = false }) {
   // delay and call save() when they stop; leaving the page still flushes a pending save.
   const commit = useCallback((ms = 400) => {
     setRev((r) => r + 1);
-    if (!saveTimer.current) saveTimer.current = setTimeout(flushSave, ms);
+    if (!saveTimer.current) saveTimer.current = setTimeout(() => {
+      // Compressing a multi-season league can take a second or two; let the screen paint first.
+      if (typeof requestIdleCallback === "function") {
+        saveTimer.current = "idle";
+        requestIdleCallback(() => { if (saveTimer.current === "idle") flushSave(); }, { timeout: 1500 });
+      } else flushSave();
+    }, ms);
   }, [flushSave]);
 
   useEffect(() => {

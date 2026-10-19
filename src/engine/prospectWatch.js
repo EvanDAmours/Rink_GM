@@ -176,5 +176,10 @@ export function archiveFarmSeasons(league) {
     (p.farmHistory ||= []).push({ ...p.farmStats, year: league.year, lg: leagueLabel(p), role: p.farmRole || "middle" });
     if (p.farmHistory.length > 12) p.farmHistory.shift();
   }
-  for (const p of Object.values(league.players)) if (p.farmStats) p.farmStats = { gp: 0, g: 0, a: 0, w: 0, sa: 0, ga: 0, year: league.year + 1 };
+  for (const p of Object.values(league.players)) {
+    if (p.farmStats) p.farmStats = { gp: 0, g: 0, a: 0, w: 0, sa: 0, ga: 0, year: league.year + 1 };
+    // Weekly development points only feed this season's prospect sparkline; the per-season
+    // line lives in farmHistory. Dropping older weeks keeps saves from growing every year.
+    if (p.developmentHistory?.length) p.developmentHistory = p.developmentHistory.filter((x) => x.year >= league.year);
+  }
 }

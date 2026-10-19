@@ -400,7 +400,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   if (!rebound && !isD) { depth = clamp((depth + depthOf(s, k)) / 2, 50, 86); y = (y + s.puck.y) / 2; }
   const x = zoneX(s, k, depth), geometry = shotGeometry(depth, y - 42.5);
   s.puck = {x, y}; s.attempts[k]++;
-  const attempt = {side:k,pid:shooter,goalie:def.pulled?null:def.goalie,period:s.period,clock:s.clock,x,y,strength:strengthType(s,k),unit:strengthType(s,k)==='EV'?`Line ${att.fIdx+1}`:strengthType(s,k),defendingUnit:strengthType(s,o)==='EV'?`Line ${def.fIdx+1}`:strengthType(s,o),result:'miss',chance:null};
+  const attempt = {side:k,pid:shooter,goalie:def.pulled?null:def.goalie,period:s.period,clock:s.clock,x:Math.round(x*10)/10,y:Math.round(y*10)/10,strength:strengthType(s,k),unit:strengthType(s,k)==='EV'?`Line ${att.fIdx+1}`:strengthType(s,k),defendingUnit:strengthType(s,o)==='EV'?`Line ${def.fIdx+1}`:strengthType(s,o),result:'miss',chance:null};
   (s.shotLog ||= []).push(attempt);
   const advantage = skaterCount(s, k) - skaterCount(s, o) + (att.pulled ? 1 : 0) - (def.pulled ? 1 : 0);
   const pBlock = rebound ? .06 : clamp(.23 * R[o].blk / 82 * (isD ? 1.35 : .86) - advantage * .02, .08, .42);
@@ -433,7 +433,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
   const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
-  s.xg[k] += xg; attempt.chance = xg; attempt.result = 'save';
+  s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
   if (chance(xg)) { attempt.result = 'goal'; creditGoal(s, k, shooter, ice, {shotType: type, x, y, xg}); return; }
   if (s.live) push(s, {t: 'save', side: o, text: `${lastName(att, shooter)} with a ${type} — save ${lastName(def, def.goalie)}.`, x: zoneX(s, k, 89), y: 42.5});
