@@ -6,7 +6,10 @@ import { teamRatings, gameLines } from "../engine/lines.js";
 import { capSpace, payroll, rosterIssues, counts, capYear } from "../engine/roster.js";
 import { capForYear, isGoalie, isDefense } from "../engine/constants.js";
 import { dayToDate } from "../engine/schedule.js";
-import { userGameOnDay } from "../engine/league.js";
+import { userGameOnDay, seasonOver } from "../engine/league.js";
+import { expiringPlayers, faAsk, resignAsk } from "../engine/offseason.js";
+import { ROUND_NAMES } from "../engine/playoffs.js";
+import { FA_DAYS } from "../engine/constants.js";
 import { userSeries } from "../engine/playoffs.js";
 import { currentSlot } from "../engine/draft.js";
 import { ensurePulse, repTier, playoffOdds } from "../engine/clubPulse.js";
@@ -70,7 +73,8 @@ export default function Dashboard({ act = {} }) {
 
   const attention = [];
   if (room < 0) attention.push(["bad", `Over the cap by ${money(-room)}`, "roster"]);
-  issues.forEach((i) => attention.push(["bad", i, "roster"]));
+  // Roster limits and depth only matter once camp opens; over the summer the list is noise.
+  if (["preseason", "regular", "playoffs"].includes(lg.phase)) issues.forEach((i) => attention.push(["bad", i, "roster"]));
   if (lg.phase === "preseason" && !campDone) attention.push(["bad", "🏕️ Training camp isn't finished", "roster"]);
   starters.forEach((p) => attention.push(["warn", `🚑 ${p.name} (${p.pos} ${p.ovr}) out ${p.injury} game${p.injury === 1 ? "" : "s"}`, "lines"]));
   if (!focused.length) attention.push(["warn", "🧪 No development focus players set", null]);
@@ -200,7 +204,7 @@ export default function Dashboard({ act = {} }) {
               )}
             </>
           ) : (
-            <div className="gg-card"><div className="gg-k">{lg.phase === "playoffs" ? "PLAYOFFS" : "OFF-SEASON"}</div><div>{lg.phase === "playoffs" ? (lg.playoffs?.champion != null ? `The ${lg.teams[lg.playoffs.champion].name} won the Stanley Cup.` : "Your season is over. Follow the bracket.") : "Build the roster for next season."}</div></div>
+            <OffseasonCard lg={lg} t={t} go={go} act={act} series={series} slot={slot} />
           )}
         </main>
 
@@ -227,4 +231,53 @@ export default function Dashboard({ act = {} }) {
       </div>
     </div>
   );
+}
+
+
+// What the main panel shows when there is no game to preview: the playoff run, the draft,
+// re-signing or free agency, each with the one or two numbers that matter and a way in.
+function OffseasonCard({ lg, t, go, act, series, slot }) {
+  const conf = lg.teams.filter((x) => x.conf === t.conf).sort((a, b) => b.rec.pts - a.rec.pts || b.rec.rw - a.rec.rw);
+  const rank = conf.findIndex((x) => x.id === t.id) + 1;
+  const ord = (n) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"}`;
+  const row = (k, v) => <div className="gg-off-row"><small>{k}</small><b>{v}</b></div>;
+  if (lg.phase === "regular" && seasonOver(lg)) return (
+    <div className="gg-card gg-off"><div className="gg-k">REGULAR SEASON COMPLETE</div>
+      <div className="gg-off-rows">{row("Record", `${t.rec.w}-${t.rec.l}-${t.rec.otl} · ${t.rec.pts} pts`)}{row("Finish", `${ord(rank)} in the ${t.conf}`)}{row("Playoffs", rank <= 8 ? "Qualified" : "Missed")}</div>
+      <div className="dim small">{rank <= 8 ? "The bracket is set. Start the playoffs from the top bar." : "Your season is over; follow the bracket from the League tab."}</div></div>);
+  if (lg.phase === "playoffs") {
+    const po = lg.playoffs; const champ = po?.champion != null ? lg.teams[po.champion] : null;
+    const mine = (po?.rounds || []).flatMap((r, i) => r.filter((x) => x.top === t.id || x.bot === t.id).map((x) => ({ ...x, round: i })));
+    const last = mine.at(-1);
+    const out = last && last.winner != null && last.winner !== t.id;
+    return (
+      <div className="gg-card gg-off"><div className="gg-k">STANLEY CUP PLAYOFFS · {champ ? "COMPLETE" : ROUND_NAMES[po.round]}</div>
+        {series && series.winner == null && <div className="gg-off-rows">{row("Your series", `${ROUND_NAMES[series.round]} vs ${lg.teams[series.top === t.id ? series.bot : series.top].abbr}`)}{row("Score", `${series.top === t.id ? series.wTop : series.wBot}-${series.top === t.id ? series.wBot : series.wTop}`)}</div>}
+        {out && <div className="gg-off-rows">{row("Your run", `Eliminated in the ${ROUND_NAMES[last.round]} by ${lg.teams[last.winner].abbr}`)}{row("Series", `${last.top === t.id ? last.wTop : last.wBot}-${last.top === t.id ? last.wBot : last.wTop}`)}</div>}
+        {!mine.length && <div className="dim small">Your club missed the playoffs.</div>}
+        {champ && <div className="gg-off-rows">{row("Champions", `${champ.city} ${champ.name}`)}{lg.awards?.connSmythe && row("Conn Smythe", lg.awards.connSmythe.name)}{lg.awards?.hart && row("Hart", lg.awards.hart.name)}</div>}
+        <div className="row" style={{ gap: 6 }}><button className="small" onClick={() => go("playoffs")}>Bracket</button>{champ && <button className="small" onClick={() => go("legacy")}>Awards</button>}</div></div>);
+  }
+  if (lg.phase === "draft") {
+    const myPicks = (lg.draftPicks || []).filter((p) => p.owner === t.id && p.year === lg.draft?.year).length;
+    return (
+      <div className="gg-card gg-off"><div className="gg-k">{lg.draft?.year} ENTRY DRAFT</div>
+        <div className="gg-off-rows">{row("Your next pick", slot ? `#${slot.overall} overall (round ${slot.round})` : lg.draft?.done ? "Draft complete" : "No picks left")}{row("Picks this year", myPicks)}{row("Scouting points", t.scoutPts ?? 0)}</div>
+        <div className="row" style={{ gap: 6 }}><button className="small primary" onClick={() => go("draft")}>Draft room</button></div></div>);
+  }
+  if (lg.phase === "resign") {
+    const exp = expiringPlayers(lg, t).sort((a, b) => b.ovr - a.ovr);
+    return (
+      <div className="gg-card gg-off"><div className="gg-k">RE-SIGN WINDOW · {exp.length} EXPIRING</div>
+        <div className="gg-off-rows">{row("Cap space next year", money(capSpace(lg, t)))}{exp.slice(0, 3).map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, p.willing === false ? "testing the market" : `asks ${money(resignAsk(lg, p).aav)}`))}</div>
+        <div className="row" style={{ gap: 6 }}><button className="small primary" onClick={() => go("freeagency")}>Negotiate</button></div></div>);
+  }
+  if (lg.phase === "freeagency") {
+    const best = (lg.freeAgents || []).map((id) => lg.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).slice(0, 3);
+    return (
+      <div className="gg-card gg-off"><div className="gg-k">FREE AGENCY · DAY {lg.fa?.day ?? 0} OF {FA_DAYS}</div>
+        <div className="gg-off-rows">{row("Cap space", money(capSpace(lg, t)))}{row("Roster", `${counts(lg, t).active} signed`)}{best.map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, `asks ${money(faAsk(lg, p).aav)}`))}</div>
+        <div className="row" style={{ gap: 6 }}><button className="small primary" onClick={() => go("freeagency")}>Open the market</button></div></div>);
+  }
+  return <div className="gg-card gg-off"><div className="gg-k">OFF-SEASON</div><div>Build the roster for next season.</div></div>;
 }

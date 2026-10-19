@@ -22,7 +22,7 @@ export default function RosterPage() {
   const fits=p=>(position==="all" || p.pos===position) && p.name.toLowerCase().includes(query.toLowerCase());
 
   const doSendDown = (p) => {
-    if (!sendDown(league, user, p.id)) return toast("This player requires waivers. Open Hockey Operations to manage waivers.");
+    if (!sendDown(league, user, p.id)) return toast("This player requires waivers. Open Front Office → Operations to manage waivers.");
     commit();
   };
   const doRelease = async (p) => {
@@ -114,7 +114,7 @@ export default function RosterPage() {
 
       {view === "minors" && (
         <>
-          <div className="muted small">AHL players use a buried-contract cap calculation. Entry-level term depends on age; rights expiry depends on the player's league. Hockey Operations manages assignments and waivers.</div>
+          <div className="muted small">AHL players use a buried-contract cap calculation. Entry-level term depends on age; rights expiry depends on the player's league. Front Office → Operations manages assignments and waivers.</div>
           <Table
             columns={[
               { key: "name", label: "Player", render: (p) => <PlayerCell p={p} team={user} />, sort: (p) => p.name },

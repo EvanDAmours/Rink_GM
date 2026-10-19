@@ -27,7 +27,7 @@ export function careerReview(lg){
     }
   }
   const t=lg.teams[lg.userTid];
-  if(lg.settings.firing && t.owner.trust<=25){lg.career.fired=true;lg.career.offers=lg.teams.filter(o=>o.id!==t.id).sort((a,b)=>a.owner.trust-b.owner.trust || a.rec.pts-b.rec.pts).slice(0,5).map(o=>({tid:o.id,year:lg.year+1,goal:o.owner.goal.label}));lg.inbox.push({year:lg.year,day:lg.day,text:`You were dismissed by ${t.abbr}. Select your next GM job in Hockey Operations.`});}
+  if(lg.settings.firing && t.owner.trust<=25){lg.career.fired=true;lg.career.offers=lg.teams.filter(o=>o.id!==t.id).sort((a,b)=>a.owner.trust-b.owner.trust || a.rec.pts-b.rec.pts).slice(0,5).map(o=>({tid:o.id,year:lg.year+1,goal:o.owner.goal.label}));lg.inbox.push({year:lg.year,day:lg.day,text:`You were dismissed by ${t.abbr}. Select your next GM job under Front Office → Operations.`});}
   const champ=lg.playoffs?.champion;if(champ!=null && !lg.celebrations.some(c=>c.year===lg.year)){
     const h=lg.history.find(h=>h.year===lg.year);lg.celebrations.unshift({year:lg.year,tid:champ,runnerUp:h?.runnerUp,headline:`${lg.teams[champ].name.toUpperCase()} LIFT THE STANLEY CUP`,mvp:lg.awards.connSmythe?.name,rec:{...lg.teams[champ].rec},roster:lg.teams[champ].roster.map(id=>({pid:id,name:lg.players[id]?.name,number:lg.players[id]?.number}))});
   }

@@ -22,12 +22,12 @@ function ResignView() {
   const [talk, setTalk] = useState(null);
   const termFor = (p) => terms[p.id] ?? resignAsk(league, p).prefYrs;
   const doSign = (p) => { const r = resignPlayer(league, p.id, termFor(p)); if (!r.ok) toast(r.msg, 4500); commit(); };
-  const walk = (p) => { if (p.offerSheetPending) { toast("Resolve the pending offer sheet in Hockey Operations."); return; } letWalk(league, p.id); commit(); };
+  const walk = (p) => { if (p.offerSheetPending) { toast("Resolve the pending offer sheet under Front Office → Operations."); return; } letWalk(league, p.id); commit(); };
   const signed = user.roster.map((id) => league.players[id]).filter((p) => p && p.yrs > 0);
   return (
     <section className="gg-card">
       <div className="gg-k">RE-SIGN WINDOW · {expiring.length} EXPIRING</div>
-      <div className="dim small" style={{ marginBottom: 8 }}>Re-sign expiring players, or use Hockey Operations to qualify RFAs, negotiate with agents or seek arbitration. {signed.length} players under contract for next season · cap {money(capForYear(capYear(league)))} · space {money(capSpace(league, user))}.</div>
+      <div className="dim small" style={{ marginBottom: 8 }}>Re-sign expiring players, or use Front Office → Operations to qualify RFAs, negotiate with agents or seek arbitration. {signed.length} players under contract for next season · cap {money(capForYear(capYear(league)))} · space {money(capSpace(league, user))}.</div>
       <div className="gg-falist">
         {expiring.map((p) => {
           const ask = p.willing ? resignAsk(league, p, termFor(p)) : null;
