@@ -25,7 +25,7 @@ export function Hub({ title, status, tabs, sub, onSub, badges = {}, right, child
   return (
     <div className="stack gg-hub">
       <div className="gg-pagehead gg-hub-head">
-        <div><h2>{title}</h2>{status && <div className="gg-status">{status}</div>}</div>
+        <b className="gg-pagelabel" title={status || undefined}>{title}</b>
         <div className="gg-chips gg-hub-chips">{tabs.map(([k, l]) => <button key={k} className={cur === k ? "on" : ""} onClick={() => onSub(k)}>{l}{badges[k] && <span className="badge">{badges[k]}</span>}</button>)}</div>
         {right}
       </div>
