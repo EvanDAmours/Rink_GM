@@ -38,30 +38,66 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
     lg.negotiations[pid]={pid,year:lg.year,rounds,status:"signed",aav,yrs,preferences:prefs};return {ok:true,msg:`${p.name} agreed to your terms.`};
   }
   if(reserveCount(lg,t)>=90)return {ok:false,msg:"Your reserve list is full (90)."};
-  const bids=[{tid:t.id,aav,yrs,clause,role:promised,bonusCash}];
-  for(const ai of lg.teams.filter(q=>q.id!==t.id && capSpace(lg,q)>ask.aav && counts(lg,q).active<23 && contractCount(lg,q)<50).sort((a,b)=>teamRatings(lg,b).ovr-teamRatings(lg,a).ovr).slice(0,3)){
+  const mine={tid:t.id,aav,yrs,clause,role:promised,bonusCash};
+  const raising=old?.status==="pending" && old.year===lg.year;
+  const bids=raising?[mine,...old.bids.filter(b=>b.tid!==t.id)]:[mine];
+  if(!raising)for(const ai of lg.teams.filter(q=>q.id!==t.id && capSpace(lg,q)>ask.aav && counts(lg,q).active<23 && contractCount(lg,q)<50).sort((a,b)=>teamRatings(lg,b).ovr-teamRatings(lg,a).ovr).slice(0,3)){
     const r=stream(`${p.id}|bid|${ai.id}|${lg.year}`);if(r.next()<.65)bids.push({tid:ai.id,aav:Math.round(ask.aav*(.97+r.next()*.1)*100)/100,yrs:ask.yrs});
   }
-  lg.negotiations[pid]={pid,year:lg.year,rounds,status:"pending",closes:(lg.fa?.day || 0)+2,bids,preferences:prefs};p.negotiationPending=true;
-  return {ok:true,msg:`Offer submitted. ${p.name}'s agent reviews competing bids in two free-agency days.`};
+  lg.negotiations[pid]={pid,year:lg.year,rounds,status:"pending",closes:raising?old.closes:(lg.fa?.day || 0)+2,bids,preferences:prefs,mineAav:aav,mineYrs:yrs};p.negotiationPending=true;
+  const st=bidStanding(lg,pid);
+  return {ok:true,msg:st?st.toast:`Offer submitted. ${p.name}'s agent reviews competing bids in two free-agency days.`,standing:st};
 }
 export function withdrawBid(lg,pid) {
   const n=lg.negotiations[pid];if(!n || n.status!=="pending")return {ok:false,msg:"No pending bid."};
   n.bids=n.bids.filter(b=>b.tid!==lg.userTid);if(!n.bids.length){n.status="withdrawn";delete lg.players[pid]?.negotiationPending;}
   return {ok:true,msg:"Your bid was withdrawn."};
 }
+// How an agent weighs a bid: money first, then whatever his client cares about most.
+export function bidScore(lg,n,p,b){
+  const prefs=n.preferences || agentPreferences(p);
+  return b.aav+(prefs.priority==="role"?roleUtility(lg,lg.teams[b.tid],p,b.role || projectedRole(lg,lg.teams[b.tid],p))*.5:0)+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
+}
+const eligibleBids=(lg,n)=>n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && (b.tid===lg.userTid?reserveCount(lg,lg.teams[b.tid])<90:counts(lg,lg.teams[b.tid]).active<23) && contractCount(lg,lg.teams[b.tid])<50);
+// Where your offer stands right now, in the agent's words. Rival bids are never shown in
+// full; you learn whether you lead, what he cares about, and roughly what it would take.
+export function bidStanding(lg,pid){
+  const n=lg.negotiations?.[pid];const p=lg.players[pid];if(!n || !p || n.year!==lg.year)return null;
+  const me=lg.userTid,mine=n.bids?.find(b=>b.tid===me);
+  const daysLeft=Math.max(0,(n.closes ?? 0)-(lg.fa?.day || 0));
+  const prefs=n.preferences || agentPreferences(p);
+  const cares={winning:"a contender",role:"a real role",security:"term and security",loyalty:"familiar faces"}[prefs.priority];
+  if(n.status==="signed"){const won=n.winner===me;return {status:won?"won":"lost",won,winner:n.winner,aav:n.aav ?? n.bids?.find(b=>b.tid===n.winner)?.aav,yrs:n.yrs ?? n.bids?.find(b=>b.tid===n.winner)?.yrs,label:won?"Signed":`Signed with ${lg.teams[n.winner]?.abbr || "another club"}`,says:won?`${p.name} is yours.`:`He took ${lg.teams[n.winner]?.abbr || "another"}'s offer${prefs.priority==="winning"?"; he wanted a contender":prefs.priority==="security"?"; they gave him more term":prefs.priority==="role"?"; they promised him a bigger role":""}.`,toast:won?`${p.name} signed with you.`:`${p.name} signed elsewhere.`};}
+  if(n.status==="failed")return {status:"failed",label:"Fell through",says:"No club could fit him; he stays on the market.",toast:"The deal fell through."};
+  if(n.status==="withdrawn")return {status:"withdrawn",label:"Withdrawn",says:"You pulled your offer.",toast:"Offer withdrawn."};
+  if(n.status==="counter")return {status:"counter",label:"Countered",counter:n.counter,term:n.term,says:`His agent wants $${Number(n.counter).toFixed(2)}M × ${n.term}.`,toast:`Counter: $${Number(n.counter).toFixed(2)}M × ${n.term}.`};
+  if(n.status==="walked")return {status:"walked",label:"Talks over",says:"His agent ended talks for this season.",toast:"His agent walked away."};
+  if(n.status!=="pending" || !mine)return null;
+  const ranked=eligibleBids(lg,n).sort((a,b)=>bidScore(lg,n,p,b)-bidScore(lg,n,p,a) || a.tid-b.tid);
+  const rank=ranked.findIndex(b=>b.tid===me)+1,leader=ranked[0],rivals=n.bids.filter(b=>b.tid!==me).length;
+  const myScore=bidScore(lg,n,p,mine),top=leader?bidScore(lg,n,p,leader):myScore;
+  const gap=rank===1?0:Math.max(.05,Math.round((top-myScore+.03)*100)/100);
+  const standing=rank===1?(rivals && ranked.length>1 && top-bidScore(lg,n,p,ranked[1])<.3?"edge":"lead"):rank===0?"blocked":rank===2?"close":"behind";
+  const label={lead:"Frontrunner",edge:"Slight edge",close:"Close behind",behind:"Behind",blocked:"Can't fit"}[standing];
+  const says=standing==="blocked"?"Your cap or reserve list can't take him right now.":rivals===0?`No other club is in. He signs with you in ${daysLeft} day${daysLeft===1?"":"s"} unless someone jumps in.`:standing==="lead"?`You're his first choice. ${rivals} other club${rivals===1?" is":"s are"} in; he cares most about ${cares}.`:standing==="edge"?`You lead by a hair over ${rivals} other club${rivals===1?"":"s"}. He cares most about ${cares}; a little more would lock it.`:`Another club is ahead. He cares most about ${cares}; about $${gap.toFixed(2)}M more per year${prefs.priority==="security"&&mine.yrs<prefs.preferredTerm?" or another year of term":""} would put you in front.`;
+  return {status:"pending",standing,label,rank,rivals,daysLeft,gap,mine,cares,says,toast:`Offer in: $${mine.aav.toFixed(2)}M × ${mine.yrs}. ${label}${rivals?` with ${rivals+1} clubs bidding`:", nobody else bidding"}; he decides in ${daysLeft} day${daysLeft===1?"":"s"}.`};
+}
+export function myOffers(lg){
+  return Object.values(lg.negotiations || {}).filter(n=>n.year===lg.year && lg.players[n.pid] && (n.bids?.some(b=>b.tid===lg.userTid) || n.status==="counter" || n.status==="walked")).map(n=>({n,p:lg.players[n.pid],standing:bidStanding(lg,n.pid)})).filter(x=>x.standing).sort((a,b)=>(a.standing.status==="pending"?0:1)-(b.standing.status==="pending"?0:1) || b.p.ovr-a.p.ovr);
+}
 export function settleNegotiations(lg) {
   for(const n of Object.values(lg.negotiations || {}).filter(n=>n.status==="pending" && n.closes<=(lg.fa?.day || 0))){
     const p=lg.players[n.pid];if(!p || p.tid!==-1){n.status="unavailable";if(p)delete p.negotiationPending;continue;}
-    const prefs=n.preferences,score=b=>b.aav+(prefs.priority==="role"?roleUtility(lg,lg.teams[b.tid],p,b.role || projectedRole(lg,lg.teams[b.tid],p))*.5:0)+(prefs.priority==="security"?b.yrs*.18:0)+(prefs.priority==="winning"?(teamRatings(lg,lg.teams[b.tid]).ovr-80)*.06:0);
-    const eligible=n.bids.filter(b=>capSpace(lg,lg.teams[b.tid])>=b.aav && (b.tid===lg.userTid?reserveCount(lg,lg.teams[b.tid])<90:counts(lg,lg.teams[b.tid]).active<23) && contractCount(lg,lg.teams[b.tid])<50).sort((a,b)=>score(b)-score(a) || a.tid-b.tid);
+    const eligible=eligibleBids(lg,n).sort((a,b)=>bidScore(lg,n,p,b)-bidScore(lg,n,p,a) || a.tid-b.tid);
     const b=eligible[0];delete p.negotiationPending;
     const mine=n.bids.find(x=>x.tid===lg.userTid);if(mine?.bonusCash && (!b || b.tid!==lg.userTid)){const ut=lg.teams[lg.userTid];ut.arena.cash=Math.round((ut.arena.cash+mine.bonusCash)*100)/100;}
     if(!b){n.status="failed";continue;}
     if(!signPlayer(lg,lg.teams[b.tid],p,b.aav,b.yrs)){n.status="failed";continue;}
     promiseRole(lg,p,b.tid,b.role || projectedRole(lg,lg.teams[b.tid],p));
-    if(b.clause && p.age>=27)p.clause={type:b.clause,blocked:[]};n.status="signed";n.winner=b.tid;
-    lg.inbox.push({year:lg.year,day:lg.day,text:`Agent update: ${p.name} chose ${lg.teams[b.tid].abbr} at $${b.aav.toFixed(2)}M × ${b.yrs}.`});
+    if(b.clause && p.age>=27)p.clause={type:b.clause,blocked:[]};n.status="signed";n.winner=b.tid;n.aav=b.aav;n.yrs=b.yrs;
+    if(mine){const won=b.tid===lg.userTid;(lg.faResults ||= []).unshift({year:lg.year,day:lg.fa?.day || 0,pid:p.id,name:p.name,won,winner:b.tid,aav:b.aav,yrs:b.yrs});
+      lg.inbox.push({year:lg.year,day:lg.day,text:won?`✅ ${p.name} signed with you: $${b.aav.toFixed(2)}M × ${b.yrs}.`:`❌ ${p.name} chose ${lg.teams[b.tid].abbr} ($${b.aav.toFixed(2)}M × ${b.yrs}) over your $${mine.aav.toFixed(2)}M × ${mine.yrs}.`});}
+    else lg.inbox.push({year:lg.year,day:lg.day,text:`Agent update: ${p.name} chose ${lg.teams[b.tid].abbr} at $${b.aav.toFixed(2)}M × ${b.yrs}.`});
   }
 }
 

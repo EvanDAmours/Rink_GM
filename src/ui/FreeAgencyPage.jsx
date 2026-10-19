@@ -1,4 +1,4 @@
-import { negotiate } from "../engine/negotiations.js";
+import { negotiate, myOffers, bidStanding, withdrawBid } from "../engine/negotiations.js";
 import React, { useMemo, useState } from "react";
 import { useGame, PlayerName, money, Modal, ovrColor } from "./common.jsx";
 import Select from "./Select.jsx";
@@ -76,6 +76,7 @@ export default function FreeAgencyPage() {
         {!open && <span className="gg-phase">Market opens after the draft and re-sign period</span>}
       </div>
       {league.phase === "resign" && <ResignView />}
+      <MyOffers onRaise={(id) => setOfferFor(id)} />
       <div className="gg-card">
         <div className="gg-fa-tools">
           <div className="gg-chips">{["all", ...POS].map((x) => <button key={x} className={pos === x ? "on" : ""} onClick={() => setPos(x)}>{x === "all" ? "All" : x}</button>)}</div>
@@ -92,8 +93,8 @@ export default function FreeAgencyPage() {
                 <PosBadge pos={p.pos} />
                 <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age} yrs · POT {p.pot} · {ARCHETYPES[p.type]?.name}{p.rookie ? " · Rookie" : ""}</small></span>
                 <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
-                <span className="gg-faask"><b>{money(ask.aav)}</b><small>× {ask.yrs} yr{ask.yrs > 1 ? "s" : ""}</small></span>
-                <button className="small primary" disabled={!open} onClick={() => setOfferFor(p.id)}>Offer</button>
+                <span className="gg-faask"><b>{money(ask.aav)}</b><small>× {ask.yrs} yr{ask.yrs > 1 ? "s" : ""}</small>{(() => { const st = bidStanding(league, p.id); return st && st.status === "pending" ? <span className={`gg-bid ${st.standing}`} title={st.says}>{st.label} · {st.daysLeft}d</span> : st && st.status === "counter" ? <span className="gg-bid counter" title={st.says}>Countered</span> : null; })()}</span>
+                <button className="small primary" disabled={!open} onClick={() => setOfferFor(p.id)}>{bidStanding(league, p.id)?.status === "pending" ? "Raise" : "Offer"}</button>
               </div>
             );
           })}
@@ -102,5 +103,32 @@ export default function FreeAgencyPage() {
       </div>
       {offerFor && league.players[offerFor] && <OfferModal p={league.players[offerFor]} onClose={() => setOfferFor(null)} />}
     </div>
+  );
+}
+
+// Every offer you have on the table this summer, and how it is going.
+function MyOffers({ onRaise }) {
+  const { league, commit, toast } = useGame();
+  const offers = myOffers(league);
+  if (!offers.length) return null;
+  const pending = offers.filter((o) => o.standing.status === "pending").length;
+  return (
+    <section className="gg-card gg-myoffers">
+      <div className="gg-k">YOUR OFFERS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · agents decide after two free-agency days</span></div>
+      <div className="gg-offers">
+        {offers.map(({ p, standing: st, n }) => (
+          <div key={p.id} className={`gg-offer ${st.status} ${st.standing || ""}`}>
+            <PosBadge pos={p.pos} />
+            <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age} yrs · <span style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span> OVR{st.mine ? ` · your offer ${money(st.mine.aav)} × ${st.mine.yrs}` : n.mineAav ? ` · your offer ${money(n.mineAav)} × ${n.mineYrs}` : ""}</small></span>
+            <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.daysLeft === 0 ? "decides today" : `${st.daysLeft}d`}` : ""}</span>
+            <span className="gg-offer-says">{st.says}</span>
+            <span className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+              {(st.status === "pending" || st.status === "counter") && <button className="small primary" onClick={() => onRaise(p.id)}>{st.status === "counter" ? "Reply" : "Raise"}</button>}
+              {st.status === "pending" && <button className="small ghost" onClick={() => { const r = withdrawBid(league, p.id); toast(r.msg); commit(); }}>Withdraw</button>}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

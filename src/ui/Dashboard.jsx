@@ -19,6 +19,7 @@ import { composites } from "../engine/ratings.js";
 import { savePct } from "../engine/players.js";
 import { atCombine } from "../engine/scouting.js";
 import { prospectWatch } from "../engine/prospectWatch.js";
+import { myOffers } from "../engine/negotiations.js";
 import { Sparkline } from "./ProspectWatch.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import GamePlanPicker from "./GamePlanPicker.jsx";
@@ -283,7 +284,7 @@ function OffseasonCard({ lg, t, go, act, series, slot }) {
     const best = (lg.freeAgents || []).map((id) => lg.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).slice(0, 3);
     return (
       <div className="gg-card gg-off"><div className="gg-k">FREE AGENCY · DAY {lg.fa?.day ?? 0} OF {FA_DAYS}</div>
-        <div className="gg-off-rows">{row("Cap space", money(capSpace(lg, t)))}{row("Roster", `${counts(lg, t).active} signed`)}{best.map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, `asks ${money(faAsk(lg, p).aav)}`))}</div>
+        <div className="gg-off-rows">{row("Cap space", money(capSpace(lg, t)))}{row("Roster", `${counts(lg, t).active} signed`)}{myOffers(lg).slice(0, 4).map(({ p, standing: st }) => row(`Your offer: ${p.name}`, <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.daysLeft}d` : ""}</span>))}{best.map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, `asks ${money(faAsk(lg, p).aav)}`))}</div>
         <div className="row" style={{ gap: 6 }}><button className="small primary" onClick={() => go("freeagency")}>Open the market</button></div></div>);
   }
   return <div className="gg-card gg-off"><div className="gg-k">OFF-SEASON</div><div>Build the roster for next season.</div></div>;

@@ -1,7 +1,7 @@
 import {rosterIssues} from './roster.js';
 import {automaticallyHandleRoster} from './autoRoster.js';
 import {headCoachLines} from './lines.js';
-export const INTERRUPT_DEFAULTS={injuries:true,offers:true,roster:true,promises:true};
+export const INTERRUPT_DEFAULTS={injuries:true,offers:true,roster:true};
 export function decisionInterrupt(lg){
  if(!lg || lg.phase!=='regular')return null;
  const settings={...INTERRUPT_DEFAULTS,...lg.settings?.simStops},t=lg.teams[lg.userTid],seen=lg.simStopSeen ||= {};
@@ -23,7 +23,6 @@ export function decisionInterrupt(lg){
   if(issues.length && lg.settings?.autoRoster!==false){const r=automaticallyHandleRoster(lg,t,{allowWaivers:true});if(r?.moved?.length)lg.inbox?.push({year:lg.year,day:lg.day,text:`🤖 ${r.msg}`});issues=rosterIssues(lg,t).filter(x=>!x.startsWith('Need'));}
   for(const issue of issues)candidates.push([`roster:${issue.replace(/\$[\d.]+M/g,'amount')}`,issue]);
  }
- if(settings.promises)for(const id of t.roster){const p=lg.players[id];if(p?.rolePromise?.status==='unhappy')candidates.push([`promise:${id}:${p.rolePromise.misses}`,`${p.name} is unhappy about his promised role.`]);}
  const next=candidates.find(([key])=>!Object.hasOwn(seen,key));if(!next)return null;
  seen[next[0]]=lg.day;return `Simulation paused: ${next[1]}`;
 }

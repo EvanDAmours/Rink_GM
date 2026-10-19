@@ -1291,3 +1291,29 @@ body, .app { font-size: 14px; }
 .app .rk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .app .rk-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; background: #0b1220; border: 1px solid #1e293b; border-radius: 999px; font-size: 12px; font-weight: 700; min-height: 0; } .app .rk-chip.out { border-color: #ef444455; }
 @media (max-width: 900px) { .app .rk { grid-template-columns: 1fr; } }
+
+/* ---------- Free agency offers ---------- */
+.app .gg-offers { display: flex; flex-direction: column; gap: 6px; }
+.app .gg-offer { display: grid; grid-template-columns: auto minmax(160px, 1fr) auto minmax(0, 1.4fr) auto; align-items: center; gap: 10px; padding: 8px 10px; background: #0b1220; border: 1px solid #1e293b; border-left-width: 4px; border-radius: 8px; }
+.app .gg-offer.lead, .app .gg-offer.edge, .app .gg-offer.won { border-left-color: #22c55e; } .app .gg-offer.close { border-left-color: #eab308; } .app .gg-offer.behind, .app .gg-offer.lost, .app .gg-offer.walked, .app .gg-offer.blocked { border-left-color: #ef4444; } .app .gg-offer.counter { border-left-color: #f59e0b; }
+.app .gg-offer-says { font-size: 12px; color: #cbd5e1; }
+.app .gg-bid { display: inline-block; font-size: 11px; font-weight: 900; letter-spacing: .4px; padding: 3px 8px; border-radius: 999px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; white-space: nowrap; }
+.app .gg-bid.lead, .app .gg-bid.won { background: #052e16; border-color: #16a34a; color: #86efac; } .app .gg-bid.edge { background: #14532d33; border-color: #22c55e; color: #bbf7d0; } .app .gg-bid.close { background: #3b2a06; border-color: #eab308; color: #fde68a; } .app .gg-bid.behind, .app .gg-bid.lost, .app .gg-bid.blocked, .app .gg-bid.walked { background: #450a0a; border-color: #ef4444; color: #fca5a5; } .app .gg-bid.counter { background: #431407; border-color: #f59e0b; color: #fed7aa; }
+@media (max-width: 760px) { .app .gg-offer { grid-template-columns: auto minmax(0, 1fr) auto; } .app .gg-offer-says { grid-column: 1 / span 3; } .app .gg-offer > .row { grid-column: 1 / span 3; } }
+/* ---------- Lines on phones ---------- */
+@media (max-width: 760px) {
+  .app .gg-lines-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 10px; }
+  .app .gg-lines-head .gg-status { display: none; }
+  .app .gg-lines-head .gg-tiles { grid-column: 1 / span 2; margin-left: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .app .gg-lines-head .gg-tiles > div { padding: 6px 4px; } .app .gg-lines-head .gg-tiles b { font-size: 20px; }
+  .app .gg-lines-head > .gg-select, .app .gg-lines-head > div:last-child { grid-column: 1 / span 2; }
+  .app .ln-tools { gap: 6px; } .app .ln-tools .ln-hint { display: none; } .app .ln-tools .row { width: 100%; }
+  .app .ln-tools .row button { padding: 6px 9px; font-size: 11px; }
+  .app .rk-units { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; } .app .rk-units button { flex: 0 0 auto; }
+  .app .rk-right { padding: 10px; }
+  .app .rk-row { grid-template-columns: 40px minmax(0, 1fr); gap: 6px 8px; padding: 8px 6px; } .app .rk-row small { grid-column: 2; }
+  .app .rk-names { font-size: 13px; gap: 2px 10px; }
+  .app .rk-cands { grid-template-columns: 1fr; max-height: 260px; }
+  .app .rk-hint { font-size: 11px; }
+}
+.app .gg-faask .gg-bid { display: block; margin-top: 3px; font-size: 10px; padding: 2px 6px; }
