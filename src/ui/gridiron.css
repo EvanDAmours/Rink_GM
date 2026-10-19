@@ -1451,3 +1451,17 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .gg-confirm-line { background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; }
 .gg-confirm-line b { font-size: 13.5px; } .gg-confirm-line span { font-size: 12px; color: #94a3b8; }
 .gg-confirm-line.warn { border-left-color: #f59e0b; } .gg-confirm-line.good { border-left-color: #22c55e; } .gg-confirm-line.bad { border-left-color: #ef4444; }
+
+/* ===== Guided tour ===== */
+.gg-tour { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+.gg-tour-dim { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.62); pointer-events: auto; }
+.gg-tour-spot { position: fixed; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.62), 0 0 0 3px #facc15, 0 0 24px rgba(250, 204, 21, 0.45); pointer-events: none; transition: left .25s, top .25s, width .25s, height .25s; }
+.gg-tour-card { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(480px, calc(100vw - 24px)); background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px 16px 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); pointer-events: auto; display: flex; flex-direction: column; gap: 6px; }
+.gg-tour-k { font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #fbbf24; display: flex; align-items: center; gap: 10px; }
+.gg-tour-bar { flex: 1; height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; } .gg-tour-bar i { display: block; height: 100%; background: #fbbf24; }
+.gg-tour-card h3 { margin: 2px 0 0; font-size: 19px; font-weight: 900; text-transform: none; letter-spacing: 0; }
+.gg-tour-card p { margin: 0; font-size: 14px; line-height: 1.5; color: #e2e8f0; }
+.gg-tour-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.app .gg-tour-actions button { font-size: 14px; padding: 8px 16px; } .app .gg-tour-actions button.ghost { padding-left: 4px; color: #94a3b8; }
+.gg-welcome .modal { max-width: 440px; }
+@media (max-width: 760px) { .gg-tour-card { bottom: 10px; } .gg-tour-card p { font-size: 13px; } }
