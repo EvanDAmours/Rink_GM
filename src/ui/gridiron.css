@@ -1132,7 +1132,6 @@ body, .app { font-size: 14px; }
 .app .ln-num { position: relative; overflow: visible; }
 .app .ln-num .gg-mug { width: 36px !important; height: 36px !important; border-width: 2px; border-color: inherit; box-shadow: none; }
 .app .ln-card { grid-template-columns: 36px minmax(0, 1fr) auto; }
-.app .ln-num em { position: absolute; right: -7px; bottom: -5px; font-style: normal; font-size: 8px; font-weight: 900; line-height: 1; padding: 2px 4px; border-radius: 6px; background: inherit; color: inherit; border: 1px solid; border-color: inherit; }
 .app .ln-unit .ln-num .gg-mug { width: 28px !important; height: 28px !important; }
 .app .gg-attn.info, .app .gg-attn-item.info { border-left-color: #60a5fa; }
 
@@ -1173,3 +1172,4 @@ body, .app { font-size: 14px; }
 .gg-paper.kind-allstar .gg-paper-kv b, .gg-paper.kind-deadline .gg-paper-kv b, .gg-paper.kind-review .gg-paper-kv b { white-space: normal; line-height: 1.3; }
 .gg-paper.kind-allstar .gg-paper-kv span, .gg-paper.kind-deadline .gg-paper-kv span, .gg-paper.kind-review .gg-paper-kv span { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: #555; }
 .gg-paper.kind-review .gg-paper-side { columns: 1; }
+@media (max-width: 760px) { .app .ln-card { grid-template-columns: 30px minmax(0, 1fr); } .app .ln-num .gg-mug, .app .ln-unit .ln-num .gg-mug { width: 28px !important; height: 28px !important; border-width: 1.5px; } .app .ln-num { width: 28px; height: 28px; } }
