@@ -37,6 +37,8 @@ import LiveGame from "./ui/LiveGame.jsx";
 import PlayerModal from "./ui/PlayerModal.jsx";
 import TeamModal from "./ui/TeamModal.jsx";
 import BoxScoreModal from "./ui/BoxScoreModal.jsx";
+import SeasonPreview from "./ui/SeasonPreview.jsx";
+import { weekResults } from "./engine/seasonPreview.js";
 import * as L from "./engine/league.js";
 import { PHASES, FA_DAYS } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
@@ -67,6 +69,9 @@ function SeasonRail({ league, onWeek }) {
   const stage = league.phase === "draft" ? (atCombine(league) ? "combine" : "draft") : league.phase;
   const stages = [["preseason", "Preseason"], ["regular", `${league.year} season`], ["playoffs", "Playoffs"], ["combine", "Combine"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];
   const idx = stages.findIndex(([k]) => k === stage);
+  const results = weekResults(league);
+  const tone = (w) => { const r = results[w]; if (!r) return ""; return r.w > r.l + r.otl ? " win" : r.l + r.otl > r.w ? " loss" : " even"; };
+  const tip = (w) => { const r = results[w]; return r ? `Week ${w}: ${r.w}-${r.l}-${r.otl} · ${r.games.join(", ")}` : `Week ${w}`; };
   return (
     <div className="gg-srail" aria-label="Season progress">
       <b className="gg-srail-year">{league.year}</b>
@@ -76,7 +81,7 @@ function SeasonRail({ league, onWeek }) {
             <span className={`gg-stagechip${i < idx ? " done" : i === idx ? " now" : ""}`}>{l}</span>
             {k === "regular" && <span className="gg-srail-weeks">{Array.from({ length: weeks }, (_, w) => w + 1).map((w) => {
               const past = idx > 1 || (league.phase === "regular" && w < week), on = league.phase === "regular" && w === week;
-              return <button key={w} type="button" className={`gg-wk${on ? " on" : ""}${w === dl ? " dl" : ""}${past && !on ? " done" : ""}`} title={w === dl ? `Week ${w} · trade deadline week` : `Week ${w}`} onClick={onWeek}>{w === dl ? "DL" : w}</button>;
+              return <button key={w} type="button" className={`gg-wk${on ? " on" : ""}${w === dl ? " dl" : ""}${past && !on ? " done" : ""}${tone(w)}`} title={`${tip(w)}${w === dl ? " · trade deadline week" : ""}`} onClick={onWeek}>{w === dl ? "DL" : w}</button>;
             })}</span>}
             {i < stages.length - 1 && <i>›</i>}
           </React.Fragment>
@@ -102,6 +107,7 @@ export default function App({ resume = false }) {
   const go = useCallback((id, k) => { const [t, kk] = ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
+  const [ffOpen,setFfOpen]=useState(false);
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
   const [toast, setToast] = useState(null);
@@ -313,15 +319,24 @@ export default function App({ resume = false }) {
   };
 
   const act = {
+    // Start Season opens the season preview first; the card's button actually drops the puck.
     startSeason: () => {
+      if (blockers()) return;
+      setModal({ type: "seasonpreview" });
+    },
+    startSeasonNow: () => {
+      setModal(null);
       if (blockers()) return;
       L.startRegularSeason(league);
       commit();
     },
     simDay: () => {
       if (blockers()) return;
+      const ug = L.userGameOnDay(league);
       L.simDay(league);
       commit();
+      // One game simmed: show its box score, as a sim of several days shows a summary.
+      if (ug && ug.played && league.settings?.postgame !== false) setModal({ type: "box", game: ug });
     },
     showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
@@ -471,9 +486,11 @@ export default function App({ resume = false }) {
         actions.push(<button key="live" className="primary" onClick={act.playLive}>▶ Play Live {ug.h === user.id ? "vs" : "@"} {opp.abbr}</button>);
         actions.push(<button key="sg" onClick={act.simDay}>Sim Game</button>);
       } else actions.push(<button key="sd" onClick={act.simDay}>Sim Day</button>);
-      actions.push(<button key="sw" onClick={() => act.simDays(7, "Simulating a week")}>Week</button>);
-      if (league.day < league.deadlineDay) actions.push(<button key="dl" onClick={act.simToDeadline} title="Sim to Trade Deadline Day">To Deadline</button>);
-      actions.push(<button key="se" onClick={act.simToEnd}>To End</button>);
+      actions.push(<div key="ff" className="gg-ff"><button className="gg-ff-btn" aria-haspopup="menu" aria-expanded={ffOpen} title="Fast forward" onClick={() => setFfOpen((v) => !v)}>⏩ ▾</button>{ffOpen && <div className="gg-ffmenu" role="menu">
+        <button role="menuitem" onClick={() => { setFfOpen(false); act.simDays(7, "Simulating a week"); }}>Sim Week</button>
+        {league.day < league.deadlineDay && <button role="menuitem" onClick={() => { setFfOpen(false); act.simToDeadline(); }}>Sim to Deadline</button>}
+        <button role="menuitem" onClick={() => { setFfOpen(false); act.simToEnd(); }}>Sim to End of Season</button>
+      </div>}</div>);
     }
   }
   if (league.phase === "playoffs") {
@@ -578,6 +595,7 @@ export default function App({ resume = false }) {
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
+        {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
         {busy && (
           <div className="overlay">
             <div className="box">

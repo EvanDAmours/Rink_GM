@@ -14,6 +14,7 @@ import PlayoffsPage from "./PlayoffsPage.jsx";
 import LeaguePage from "./LeaguePage.jsx";
 import DevelopmentPage from "./DevelopmentPage.jsx";
 import PipelinePage from "./PipelinePage.jsx";
+import CapOverview, { CapGuide } from "./CapOverview.jsx";
 import TrophyRoom from "./TrophyRoom.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
@@ -57,10 +58,10 @@ export function CoachingHub({ sub, onSub }) {
 export function FrontOfficeHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"]];
+  const tabs = [["overview", "Overview"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]];
   return (
-    <Hub title="Front Office" status={`${t.city} ${t.name} · contracts, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
-      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : <FrontOfficePage view={cur} />)}
+    <Hub title="Front Office" status={`${t.city} ${t.name} · your cap, every contract, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
+      {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : cur === "overview" ? <CapOverview /> : cur === "capguide" ? <CapGuide /> : <FrontOfficePage view={cur} />)}
     </Hub>
   );
 }

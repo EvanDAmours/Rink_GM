@@ -221,7 +221,7 @@ export default function TradePage({ seed }) {
             {["East", "West"].map((c) => <optgroup key={c} label={`${c}ern Conference`}>{others.filter((t) => t.conf === c).sort((a, b) => a.city.localeCompare(b.city)).map((t) => <option key={t.id} value={t.id}>{t.city} {t.name} ({t.abbr}) · {t.rec.w}-{t.rec.l}-{t.rec.otl}</option>)}</optgroup>)}
           </Select>
           <div className="gg-partner-logos" role="radiogroup" aria-label="Trade partner quick pick">
-            {others.map((t) => <button key={t.id} role="radio" aria-checked={t.id === partner} aria-label={`${t.city} ${t.name}`} className={t.id === partner ? "on" : ""} style={{ "--c1": t.colors[0] }} onClick={() => pickTeam(t.id)} title={`${t.city} ${t.name}`}><TeamBadge team={t} size={24} decorative /></button>)}
+            {others.map((t) => <button key={t.id} role="radio" aria-checked={t.id === partner} aria-label={`${t.city} ${t.name}`} className={t.id === partner ? "on" : ""} style={{ "--c1": t.colors[0] }} onClick={() => pickTeam(t.id)} title={`${t.city} ${t.name}`}><TeamBadge team={t} size={24} decorative /><small className="gg-pl-abbr">{t.abbr}</small><small className="gg-pl-rec">{t.rec.w}-{t.rec.l}-{t.rec.otl}</small><small className="gg-pl-cap" style={{ color: capSpace(league, t) < 0 ? "#ef4444" : "#22c55e" }}>{money(capSpace(league, t))}</small></button>)}
           </div>
         </div>
         <div className="gg-partner-card" style={{ "--c1": ai.colors[0], "--c2": ai.colors[1] }}>

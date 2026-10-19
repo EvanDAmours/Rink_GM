@@ -1405,3 +1405,43 @@ body, .app { background: #0f172a !important; font-size: 14px; }
   .app .gg-head .actions { flex: 0 1 auto; min-width: 0; }
 }
 .app .gg-home .gg-side-title, .app .gg-home-left h3 { font-size: 16px; font-weight: 800; text-transform: none; letter-spacing: 0; color: var(--gg-tx); }
+
+/* ===== Quality-of-life pieces from the football game ===== */
+.gg-preview .modal { max-width: 640px; }
+.gg-pv { display: flex; flex-direction: column; gap: 14px; padding: 6px 2px; }
+.gg-pv-head { display: flex; gap: 14px; align-items: center; } .gg-pv-head h2 { margin: 0; font-size: 24px; font-weight: 900; }
+.gg-pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gg-pv-grid > div { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gg-pv-grid b { font-size: 14px; } .gg-pv-grid span { font-size: 12px; color: #94a3b8; }
+.gg-pv-camp { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #fcd34d; }
+.gg-pv-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.app .gg-pv-actions button.big { font-size: 15px; padding: 10px 22px; letter-spacing: 0.5px; }
+.gg-ff { position: relative; display: inline-flex; }
+.app button.gg-ff-btn { font-size: 13px; padding: 4px 8px; height: 23px; min-height: 0; border-radius: 4px; background: #1e293b; }
+.gg-ffmenu { position: absolute; right: 0; top: 28px; background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 200px; z-index: 60; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+.app .gg-ffmenu button { background: transparent; border: 0; color: #cbd5e1; text-align: left; font-size: 13px; font-weight: 700; padding: 8px 10px; border-radius: 6px; height: auto; white-space: nowrap; }
+.app .gg-ffmenu button:hover { background: rgba(59, 130, 246, 0.2); color: #fff; }
+.app button.gg-wk.win { background: rgba(34, 197, 94, 0.25); color: #86efac; border-color: rgba(34, 197, 94, 0.5); }
+.app button.gg-wk.loss { background: rgba(239, 68, 68, 0.22); color: #fca5a5; border-color: rgba(239, 68, 68, 0.5); }
+.app button.gg-wk.even { background: rgba(148, 163, 184, 0.2); color: #e2e8f0; }
+.app .gg-partner-logos button { width: 82px; height: auto; padding: 6px 4px 5px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.app .gg-partner-logos button small { font-size: 10px; line-height: 1.2; color: #94a3b8; } .app .gg-partner-logos button .gg-pl-abbr { font-weight: 900; color: #e2e8f0; font-size: 11px; margin-top: 2px; } .app .gg-partner-logos button .gg-pl-cap { font-weight: 800; }
+.gg-capov-tiles .gg-stat { cursor: default; } .gg-capov-tiles .gg-stat-line { flex-wrap: wrap; } .gg-capov-tiles .gg-stat-line span { white-space: normal; }
+.gg-capov-years { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.gg-capov-year { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gg-capov-year.now { border-color: #334155; }
+.gg-capov-yh { display: flex; align-items: baseline; gap: 8px; } .gg-capov-yh b { font-size: 18px; } .gg-capov-yh small { color: #64748b; }
+.gg-capov-bar { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin: 4px 0; } .gg-capov-bar i { display: block; height: 100%; }
+.gg-capov-room { font-size: 22px; font-weight: 900; line-height: 1.1; }
+.gg-capov-row { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); } .gg-capov-row b { margin-left: auto; } .gg-capov-row small { min-width: 28px; text-align: right; }
+.gg-capov-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: start; }
+.gg-capov-split { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; margin: 4px 0 8px; } .gg-capov-split i { display: block; }
+.gg-capov-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.app button.gg-advice { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 9px 12px; white-space: normal; height: auto; margin-bottom: 6px; width: 100%; }
+.app button.gg-advice b { font-size: 13.5px; color: #fff; } .app button.gg-advice span { font-size: 12px; color: #94a3b8; font-weight: 500; line-height: 1.4; }
+.app button.gg-advice.bad { border-left-color: #ef4444; } .app button.gg-advice.warn { border-left-color: #f59e0b; } .app button.gg-advice.good { border-left-color: #22c55e; }
+.gg-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } .gg-guide > div { display: flex; flex-direction: column; gap: 4px; } .gg-guide b { font-size: 13.5px; color: #93c5fd; } .gg-guide span { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; }
+.gg-guide-3 { margin-top: 6px; padding-top: 10px; border-top: 1px solid #1e293b; }
+.gg-hq-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); } .gg-hq-row > div { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .gg-hq-row > div > span { font-size: 12px; color: #94a3b8; } .gg-hq-ico { font-size: 20px; }
+@media (max-width: 900px) { .gg-capov-years, .gg-capov-bottom, .gg-guide { grid-template-columns: 1fr 1fr; } .gg-pv-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .gg-capov-years, .gg-capov-bottom, .gg-guide { grid-template-columns: 1fr; } }

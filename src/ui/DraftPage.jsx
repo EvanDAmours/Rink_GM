@@ -11,6 +11,7 @@ import {
 import { Read, DevChip, CovTag, ScoutButton, statText } from "./scoutingBits.jsx";
 
 import RegionalScouting from "./RegionalScouting.jsx";
+import ScoutingHQ from "./ScoutingHQ.jsx";
 import DraftTools, { DraftRecap } from "./DraftTools.jsx";
 import { REGIONS, regionOf } from "../engine/regions.js";
 
@@ -560,6 +561,7 @@ export default function DraftPage({ act }) {
       {view === "floor" && <DraftFloor act={act} onDraft={draft} canDraft={onClock} />}
       {view === "board" && (
         <>
+          {!inDraft && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} />}
           <Legend />
           <div className="dgrid">
             <Board onDraft={slot ? draft : null} canDraft={onClock} />
