@@ -22,7 +22,7 @@ export function accrueCap(lg,through=lg.day){
    b.base+=base;b.signing+=signing;b.signingBooked=true;c.cash+=base+signing;
   }
   c.spent+=charge*n/D;c.ltirDays+=ltir?n:0;c.lastDay=stop;c.lastPayroll=salary;
-  c.days.push({through:stop,days:n,payroll:salary,ltir,spent:c.spent});if(c.days.length>220)c.days.shift();
+  c.days.push({through:stop,days:n,payroll:salary,ltir,spent:c.spent});if(c.days.length>30)c.days.shift();
  }
 }
 export function capSummary(lg,t){
