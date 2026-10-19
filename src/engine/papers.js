@@ -163,8 +163,8 @@ export function allStarPaper(league, ev) {
     side: [
       { h: "Skills Competition", rows: skills },
       { h: "Tournament", rows: ev.games.map((g) => [g.label, `${g.a} ${g.as} – ${g.hs} ${g.h}`]) },
-      ...ev.rosters.map((r) => ({ h: `${r.division} Division`, rows: [["", r.players.map((p) => `${p.name}${p.captain ? " (C)" : ""}`).join(", ")]] })),
     ],
+    lists: ev.rosters.map((r) => ({ h: `${r.division} Division`, text: r.players.map((p) => `${p.name}${p.captain ? " (C)" : ""}`).join(", ") })),
     foot: "INSIDE · Skills results in full, D2 · Second-half storylines, D4 · Deadline preview, D6",
     button: "Back to the season →",
   });

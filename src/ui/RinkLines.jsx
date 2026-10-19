@@ -18,7 +18,7 @@ const UNITS = (L) => [
   ...(L.PK || []).map((u, i) => ({ key: `PK${i + 1}`, label: `Penalty kill ${i + 1}`, slots: u.map((_, j) => ({ g: "PK", i, j, pos: "PK" })) })),
 ];
 // Where each spot sits on a 400 x 200 rink (attacking to the right).
-const SPOT = { LW: [268, 42], C: [222, 100], RW: [268, 158], LD: [136, 58], RD: [136, 142], G: [40, 100], G2: [78, 165] };
+const SPOT = { LW: [268, 42], C: [222, 100], RW: [268, 158], LD: [136, 58], RD: [136, 142], G: [66, 100], G2: [90, 165] };
 const stSpots = (n, pk) => (pk ? [[150, 70], [150, 130], [230, 60], [230, 140]] : [[300, 60], [300, 140], [230, 100], [170, 60], [170, 140]]).slice(0, n);
 
 export default function RinkLines({ team, mine, onOpen }) {
@@ -51,7 +51,9 @@ export default function RinkLines({ team, mine, onOpen }) {
     if (from) write(from, cur || null);
     syncLines(league, team); commit(); setPick(null); toast(`${p.name} takes the spot.`);
   };
-  const label = (a) => (a.g === "G" ? (a.i ? "BACKUP" : "STARTER") : a.g === "PP" || a.g === "PK" ? a.g : a.pos);
+  // The badge under a spot is the position; the goalie's role (starter or backup) goes in the name line.
+  const label = (a) => (a.g === "G" ? "G" : a.g === "PP" || a.g === "PK" ? a.g : a.pos);
+  const role = (a) => (a.g === "G" ? (a.i ? "Backup" : "Starter") : label(a));
   const chem = (ids) => { try { const v = lineChemistry(league, team, ids.filter(Boolean)); return Number.isFinite(v) ? v : null; } catch { return null; } };
   const dressedIds = new Set(lineupIds(L));
   const scratches = healthy(league, team).filter((p) => !dressedIds.has(p.id)).sort((a, b) => b.ovr - a.ovr);
@@ -62,12 +64,13 @@ export default function RinkLines({ team, mine, onOpen }) {
     const [x, y] = a.g === "PP" || a.g === "PK" ? stSpots(unit.slots.length, a.g === "PK")[a.j] : SPOT[a.pos];
     const picking = pick && pick.g === a.g && pick.i === a.i && pick.j === a.j;
     return (
-      <g key={k} className={`rk-spot${picking ? " on" : ""}${out ? " out" : ""}${mine ? "" : " ro"}`} transform={`translate(${x} ${y})`} onClick={() => mine && setPick(picking ? null : a)} role={mine ? "button" : undefined} tabIndex={mine ? 0 : undefined} aria-label={p ? `${label(a)}: ${p.name}, ${p.ovr}` : `${label(a)}: empty`}>
+      <g key={k} className={`rk-spot${picking ? " on" : ""}${out ? " out" : ""}${mine ? "" : " ro"}`} transform={`translate(${x} ${y})`} onClick={() => mine && setPick(picking ? null : a)} role={mine ? "button" : undefined} tabIndex={mine ? 0 : undefined} aria-label={p ? `${role(a)}: ${p.name}, ${p.ovr}` : `${role(a)}: empty`}>
         <circle r="19" fill="#0b1220" stroke={out ? "#ef4444" : p ? tone(p.ovr) : "#475569"} strokeWidth={picking ? 4 : 3} />
         <text y="5" textAnchor="middle" fill="#fff" fontSize="14" fontWeight="900">{p ? p.ovr : "—"}</text>
         <rect x="-16" y="21" width="32" height="12" rx="4" fill={a.g === "PP" || a.g === "PK" ? "#475569" : POS_COLOR[p?.pos || a.pos] || "#64748b"} />
         <text y="30" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="900">{a.g === "PP" || a.g === "PK" ? p?.pos || a.pos : label(a)}</text>
         <text y="45" textAnchor="middle" fill="#0b1220" stroke="#ffffff" strokeWidth="3" paintOrder="stroke" fontSize="11" fontWeight="900">{p ? last(p.name) : "Empty"}</text>
+        {a.g === "G" && !sub && <text y="56" textAnchor="middle" fill="#6b21a8" stroke="#fff" strokeWidth="2.5" paintOrder="stroke" fontSize="9" fontWeight="800">{role(a)}</text>}
         {sub && <text y="56" textAnchor="middle" fill="#b91c1c" stroke="#fff" strokeWidth="2.5" paintOrder="stroke" fontSize="9" fontWeight="800">{last(sub.name)} in</text>}
       </g>
     );

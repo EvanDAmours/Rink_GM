@@ -44,7 +44,6 @@ import Tour, { TourWelcome } from "./ui/Tour.jsx";
 import { expiringPlayers } from "./engine/offseason.js";
 import { counts } from "./engine/roster.js";
 import { myOffers } from "./engine/negotiations.js";
-import { weekResults } from "./engine/seasonPreview.js";
 import * as L from "./engine/league.js";
 import { PHASES, FA_DAYS } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
@@ -67,35 +66,6 @@ const NAV = [
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
   operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["league","legacy"], legacy:["league","legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
-
-// The year and every stage of the season on one strip, with a chip per week: what the
-// football game shows under its top bar, in hockey order.
-function SeasonRail({ league, onWeek }) {
-  const weeks = Math.floor(lastDay(league.schedule) / 7) + 1, week = Math.floor(league.day / 7) + 1, dl = Math.floor((league.deadlineDay || 0) / 7) + 1;
-  const stage = league.phase === "draft" ? (atCombine(league) ? "combine" : "draft") : league.phase;
-  const stages = [["preseason", "Preseason"], ["regular", `${league.year} season`], ["playoffs", "Playoffs"], ["combine", "Combine"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];
-  const idx = stages.findIndex(([k]) => k === stage);
-  const results = weekResults(league);
-  const tone = (w) => { const r = results[w]; if (!r) return ""; return r.w > r.l + r.otl ? " win" : r.l + r.otl > r.w ? " loss" : " even"; };
-  const tip = (w) => { const r = results[w]; return r ? `Week ${w}: ${r.w}-${r.l}-${r.otl} · ${r.games.join(", ")}` : `Week ${w}`; };
-  return (
-    <div className="gg-srail" aria-label="Season progress">
-      <b className="gg-srail-year">{league.year}</b>
-      <div className="gg-srail-chips">
-        {stages.map(([k, l], i) => (
-          <React.Fragment key={k}>
-            <span className={`gg-stagechip${i < idx ? " done" : i === idx ? " now" : ""}`}>{l}</span>
-            {k === "regular" && <span className="gg-srail-weeks">{Array.from({ length: weeks }, (_, w) => w + 1).map((w) => {
-              const past = idx > 1 || (league.phase === "regular" && w < week), on = league.phase === "regular" && w === week;
-              return <button key={w} type="button" className={`gg-wk${on ? " on" : ""}${w === dl ? " dl" : ""}${past && !on ? " done" : ""}${tone(w)}`} title={`${tip(w)}${w === dl ? " · trade deadline week" : ""}`} onClick={onWeek}>{w === dl ? "DL" : w}</button>;
-            })}</span>}
-            {i < stages.length - 1 && <i>›</i>}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -212,7 +182,7 @@ export default function App({ resume = false }) {
       const t0 = performance.now();
       let more = true;
       try {
-        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} }
+        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && (unseenPaper(leagueRef.current) || leagueRef.current.playoffs?.papers?.some((p) => !p.seen))) more = false; /* a newspaper is out: read it before the sim rolls on */ }
       } catch (e) {
         console.error("Simulation step failed", e);
         showToast("The simulation stopped because of an error. Your league is saved; try again or reload.", 7000);
@@ -604,7 +574,6 @@ export default function App({ resume = false }) {
           </div>}
         </header>
         {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
-        {!live && <SeasonRail league={league} onWeek={() => go("schedule")} />}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
