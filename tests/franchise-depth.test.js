@@ -6,6 +6,7 @@ import {rand,seed} from '../src/engine/rng.js';
 import {teamNeeds,needFit,prospectReport,projectedRole} from '../src/engine/teamPlanning.js';
 import {startCapLedger,accrueCap,capSummary,buyoutSchedule,setSalarySchedule} from '../src/engine/capAccounting.js';
 import {rawPayroll} from '../src/engine/hockeyRules.js';
+import {capSpace} from '../src/engine/roster.js';
 import {promiseRole,commitmentWeek} from '../src/engine/playerCommitments.js';
 import {matchReport} from '../src/engine/matchReports.js';
 import {decisionInterrupt} from '../src/engine/decisionInterrupts.js';
@@ -48,6 +49,17 @@ test('daily cap accrues once, preserves accrued spend across payroll changes, an
  const old=t.capLedger.spent;accrueCap(lg,9);assert.equal(t.capLedger.spent,old);
  const read=JSON.stringify(lg);capSummary(lg,t);assert.equal(JSON.stringify(lg),read);
  lg.players[t.roster[0]].cap+=2;accrueCap(lg,10);assert.ok(Math.abs(t.capLedger.spent-old-(payroll+2)/D)<1e-8);
+});
+test('a club that spent banked cap room at the deadline stays compliant on the final day and in the playoffs',()=>{
+ const lg=createLeague({userAbbr:'TOR',seed:3,injuries:false});const t=lg.teams[0],star=lg.players[t.roster[0]];star.cap=1;// cheap for most of the year
+ startRegularSeason(lg);const D=Math.max(...lg.schedule.map(g=>g.day))+1;
+ accrueCap(lg,Math.floor(D*0.6));
+ const cap=capSummary(lg,t).cap,room=capSummary(lg,t).available;assert.ok(room>0);
+ star.cap+=Math.min(room,cap-rawPayroll(lg,t)+4);// payroll now above the flat cap, within annualized room
+ assert.ok(rawPayroll(lg,t)>cap);assert.ok(capSpace(lg,t)>=0);
+ accrueCap(lg,D-1);
+ assert.equal(capSummary(lg,t).remainingDays,0);assert.ok(capSpace(lg,t)>=0,'final day: '+capSpace(lg,t));
+ lg.phase='playoffs';assert.ok(capSpace(lg,t)>=0,'playoffs: '+capSpace(lg,t));
 });
 test('buyouts apply age rates, signing bonus protection, deferred charges and actual salary years',()=>{
  const p={name:'Test',age:25,cap:6,yrs:2};let rows=buyoutSchedule(p);assert.equal(rows.length,4);assert.equal(rows[0].amt,1);assert.equal(rows[3].offset,3);
