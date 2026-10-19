@@ -20,7 +20,9 @@ export function payroll(league, team) {
 }
 
 export function capSpace(league, team) {
-  return round2((league.phase === 'regular' || league.phase === 'playoffs') && team.capLedger?.year === league.year ? capSummary(league,team).available : capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
+  // Through the playoffs and the draft the season's ledger still rules: a club that spent banked
+  // room at the deadline is compliant until next season's cap takes over at re-sign week.
+  return round2(['regular','playoffs','draft'].includes(league.phase) && team.capLedger?.year === league.year ? capSummary(league,team).available : capForYear(capYear(league)) - payroll(league, team) + ltirRelief(league,team));
 }
 
 // One game's worth of recovery for everyone on the given teams. A player back from injury

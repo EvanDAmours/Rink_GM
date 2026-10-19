@@ -21,7 +21,12 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
   if(!Number.isFinite(aav) || aav<minSalaryForYear(year) || aav>maxSalaryForYear(year) || !Number.isInteger(yrs) || yrs<1 || yrs>max)return {ok:false,msg:`Enter a legal AAV and 1–${max} year term.`};
   if(p.offerSheetPending)return {ok:false,msg:"Resolve the player's offer sheet first."};
   const old=lg.negotiations[pid],other=pendingSpend(lg,t.id)-(old?.status==="pending"?(old.bids.find(b=>b.tid===t.id)?.aav || 0):0);
-  if(aav+other>capSpace(lg,t) || contractCount(lg,t)>=50)return {ok:false,msg:"Existing offers consume projected cap room or contract slots."};
+  const bidding=p.tid!==t.id && lg.phase==="freeagency";
+  // An immediate signing must fit beside every offer already out. On the open market you
+  // may talk to as many agents as you like; each offer only needs to fit on its own, and
+  // any that no longer fit when the agents decide fall through (see settleNegotiations).
+  if(contractCount(lg,t)>=50)return {ok:false,msg:"You are at the 50-contract limit."};
+  if(bidding?aav>capSpace(lg,t):aav+other>capSpace(lg,t))return {ok:false,msg:bidding?"That offer alone would put you over the cap.":"Existing offers consume projected cap room or contract slots."};
   const prefs=agentPreferences(p),ask=p.tid===t.id?resignAsk(lg,p,yrs):faAsk(lg,p,yrs);
   const promised=role || projectedRole(lg,t,p);
   const continuity=Math.min(6,(p.career || []).filter(c=>c.t===t.abbr).length),trust=p.relationship?.trust??50;
@@ -90,13 +95,14 @@ export function settleNegotiations(lg) {
     const p=lg.players[n.pid];if(!p || p.tid!==-1){n.status="unavailable";if(p)delete p.negotiationPending;continue;}
     const eligible=eligibleBids(lg,n).sort((a,b)=>bidScore(lg,n,p,b)-bidScore(lg,n,p,a) || a.tid-b.tid);
     const b=eligible[0];delete p.negotiationPending;
-    const mine=n.bids.find(x=>x.tid===lg.userTid);if(mine?.bonusCash && (!b || b.tid!==lg.userTid)){const ut=lg.teams[lg.userTid];ut.arena.cash=Math.round((ut.arena.cash+mine.bonusCash)*100)/100;}
-    if(!b){n.status="failed";continue;}
+    const mine=n.bids.find(x=>x.tid===lg.userTid),mineOut=mine && !eligible.some(x=>x.tid===lg.userTid);
+    if(mine?.bonusCash && (!b || b.tid!==lg.userTid)){const ut=lg.teams[lg.userTid];ut.arena.cash=Math.round((ut.arena.cash+mine.bonusCash)*100)/100;}
+    if(!b){n.status="failed";if(mineOut)lg.inbox.push({year:lg.year,day:lg.day,text:`❌ ${p.name}: your earlier signings left no cap or roster room for your $${mine.aav.toFixed(2)}M × ${mine.yrs} offer. He stays on the market.`});continue;}
     if(!signPlayer(lg,lg.teams[b.tid],p,b.aav,b.yrs)){n.status="failed";continue;}
     promiseRole(lg,p,b.tid,b.role || projectedRole(lg,lg.teams[b.tid],p));
     if(b.clause && p.age>=27)p.clause={type:b.clause,blocked:[]};n.status="signed";n.winner=b.tid;n.aav=b.aav;n.yrs=b.yrs;
     if(mine){const won=b.tid===lg.userTid;(lg.faResults ||= []).unshift({year:lg.year,day:lg.fa?.day || 0,pid:p.id,name:p.name,won,winner:b.tid,aav:b.aav,yrs:b.yrs});
-      lg.inbox.push({year:lg.year,day:lg.day,text:won?`✅ ${p.name} signed with you: $${b.aav.toFixed(2)}M × ${b.yrs}.`:`❌ ${p.name} chose ${lg.teams[b.tid].abbr} ($${b.aav.toFixed(2)}M × ${b.yrs}) over your $${mine.aav.toFixed(2)}M × ${mine.yrs}.`});}
+      lg.inbox.push({year:lg.year,day:lg.day,text:won?`✅ ${p.name} signed with you: $${b.aav.toFixed(2)}M × ${b.yrs}.`:mineOut?`❌ ${p.name} signed with ${lg.teams[b.tid].abbr}: your earlier signings left no cap or roster room for your $${mine.aav.toFixed(2)}M × ${mine.yrs} offer.`:`❌ ${p.name} chose ${lg.teams[b.tid].abbr} ($${b.aav.toFixed(2)}M × ${b.yrs}) over your $${mine.aav.toFixed(2)}M × ${mine.yrs}.`});}
     else lg.inbox.push({year:lg.year,day:lg.day,text:`Agent update: ${p.name} chose ${lg.teams[b.tid].abbr} at $${b.aav.toFixed(2)}M × ${b.yrs}.`});
   }
 }

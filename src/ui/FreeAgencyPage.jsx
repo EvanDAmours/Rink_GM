@@ -1,4 +1,4 @@
-import { negotiate, myOffers, bidStanding, withdrawBid } from "../engine/negotiations.js";
+import { negotiate, myOffers, bidStanding, withdrawBid, pendingSpend } from "../engine/negotiations.js";
 import Headshot from "./Headshot.jsx";
 import React, { useMemo, useState } from "react";
 import { useGame, PlayerName, money, Modal, ovrColor } from "./common.jsx";
@@ -114,9 +114,12 @@ function MyOffers({ onRaise }) {
   const offers = myOffers(league);
   if (!offers.length) return null;
   const pending = offers.filter((o) => o.standing.status === "pending").length;
+  const user = league.teams[league.userTid];
+  const committed = pendingSpend(league, user.id), room = capSpace(league, user);
   return (
     <section className="gg-card gg-myoffers">
       <div className="gg-k">YOUR OFFERS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · agents decide after two free-agency days</span></div>
+      {committed > room + 1e-6 && <div className="gg-offer-warn">Offers out total {money(committed)} against {money(room)} of cap room. Talk to as many agents as you like; if more accept than you can fit, the earliest offers sign first and the rest fall through.</div>}
       <div className="gg-offers">
         {offers.map(({ p, standing: st, n }) => (
           <div key={p.id} className={`gg-offer ${st.status} ${st.standing || ""}`}>
