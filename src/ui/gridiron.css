@@ -1161,7 +1161,9 @@ body, .app { font-size: 14px; }
 .app .gg-pipe-sugg-row > div { flex:1; min-width:0; }
 .app .gg-pipe-lv { font-size:10px; font-weight:800; letter-spacing:.6px; padding:3px 7px; border-radius:6px; background:#1e293b; border:1px solid #ffffff22; }
 .app .gg-pipe-lv.nhl { background:#14532d; border-color:#16a34a; color:#bbf7d0; } .app .gg-pipe-lv.ahl { background:#1e3a8a; border-color:#3b82f6; color:#bfdbfe; } .app .gg-pipe-lv.junior, .app .gg-pipe-lv.college, .app .gg-pipe-lv.europe { background:#3b2a06; border-color:#eab308; color:#fde68a; }
-.app .gg-pipe-table tr.nhl td { background:#0f172a44; }
+.app .gg-pipe-table tr.nhl td { background:#111a2b; }
+.app .gg-pipe-table td:first-child, .app .gg-pipe-table th:first-child { z-index:2; }
+.app .gg-pipe-table tr.nhl td:first-child { background:#111a2b; }
 /* ---------- Coaching ---------- */
 .app .gg-fire { margin-left:12px; align-self:center; }
 .app .gg-interim-note { font-size:11px; color:#fbbf24; align-self:center; margin-left:10px; }

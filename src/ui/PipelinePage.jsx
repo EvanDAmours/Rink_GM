@@ -11,7 +11,7 @@ import Headshot from "./Headshot.jsx";
 // staff think he is ready for a call-up.
 const LEVELS = [["junior", "Junior"], ["college", "College"], ["europe", "Europe"], ["ahl", "AHL"], ["nhl", "NHL"]];
 const levelOf = (lg, t, p) => (t.prospects.includes(p.id) ? (p.assignment && p.assignment !== "nhl" ? p.assignment : "ahl") : "nhl");
-const draftLabel = (lg, p) => (p.draft ? `${p.draft.year} · Rd ${p.draft.round}, #${p.draft.pick}${p.draft.tid != null && p.draft.tid !== p.tid && lg.teams[p.draft.tid] ? ` (${lg.teams[p.draft.tid].abbr})` : ""}` : p.src === "gen" ? "Undrafted" : "Signed");
+const draftLabel = (lg, p) => (p.draft ? `${p.draft.year} · Rd ${p.draft.round}, #${p.draft.pick}${p.draft.tid != null && p.draft.tid !== p.tid && lg.teams[p.draft.tid] ? ` (${lg.teams[p.draft.tid].abbr})` : ""}` : p.src === "gen" ? "Undrafted" : "Pro");
 const eta = (p) => {
   if (p.ovr >= 76) return "Now";
   const gap = Math.max(0, 76 - p.ovr), pace = p.dev === "superstar" ? 4.5 : p.dev === "star" ? 3.2 : p.dev === "late" ? (p.age >= 21 ? 3 : 1.4) : 2.2;
