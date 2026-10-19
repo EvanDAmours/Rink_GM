@@ -77,7 +77,7 @@ export function franchiseWeek(league) {
   const lead=sk[0];
   if(lead)league.news.unshift({year:league.year,day:league.day,type:"scoring",pid:lead.id,text:`Art Ross watch: ${lead.name} leads with ${lead.stats.pts} points in ${lead.stats.gp} games.`});
   const hurt=league.teams[league.userTid].roster.map(id=>league.players[id]).find(p=>p?.injury>0 && p.ovr>=83);
-  if(hurt)league.news.unshift({year:league.year,day:league.day,type:"injury",pid:hurt.id,text:`${hurt.name} remains out for ${hurt.injury} games. Review your lines and call-up options.`});
+  if(hurt)league.news.unshift({year:league.year,day:league.day,type:"injury",pid:hurt.id,text:`${hurt.name} remains out for ${hurt.injury} game${hurt.injury===1?'':'s'}. ${league.settings?.coachLines?`${league.teams[league.userTid].coach?.name || 'The head coach'} has covered the slot.`:'Review your lines and call-up options.'}`});
   const user=league.teams[league.userTid];
   const rivalGame=league.schedule.filter(g=>g.played && g.day>=league.day-7 && (g.h===user.id && user.rivals?.includes(g.a) || g.a===user.id && user.rivals?.includes(g.h))).at(-1);
   if(rivalGame){const rival=league.teams[rivalGame.h===user.id?rivalGame.a:rivalGame.h],won=(rivalGame.h===user.id?rivalGame.hs:rivalGame.as)>(rivalGame.h===user.id?rivalGame.as:rivalGame.hs);league.news.unshift({year:league.year,day:league.day,type:"rivalry",text:`Rivalry report: ${user.abbr} ${won?"take bragging rights against":"fall to"} ${rival.abbr}, ${rivalGame.hs}–${rivalGame.as}.`});}

@@ -3,6 +3,7 @@ import {teamLogoUrl} from "./logos.js";
 import {useDialogFocus} from "./accessibility.js";
 import Icon from "./Icon.jsx";
 import Jersey from "./Jersey.jsx";
+import Headshot from "./Headshot.jsx";
 import { ratingTier } from "../engine/ratings.js";
 import { fmtMoney } from "../engine/players.js";
 
@@ -13,7 +14,7 @@ export function TeamBadge({team,size=28,className="",decorative=false}){
   const [failed,setFailed]=useState(false);if(!team)return null;const src=teamLogoUrl(team.abbr);
   return <span className={`teambadge ${className}`} title={`${team.city} ${team.name}`} style={{width:size,height:size}}>{src && !failed?<img src={src} width={size} height={size} alt={decorative?"":`${team.city} ${team.name} logo`} onError={()=>setFailed(true)} draggable="false"/>:<span className="logo-fallback" style={{background:team.colors?.[0] || '#263644',fontSize:Math.max(8,size*.25)}}>{team.abbr}</span>}</span>;
 }
-export function PlayerCell({p,team}){return <div className="player-cell"><span className="roster-sweater">{team?<Jersey team={team} player={p} size={38} decorative/>:<span className="player-number">{p.pos}</span>}</span><div><PlayerName p={p}/><span className="player-detail">{p.pos} · {p.age} years{p.rookie?' · Rookie':''}</span></div></div>;}
+export function PlayerCell({p,team}){return <div className="player-cell"><span className="roster-sweater">{team?<Headshot team={team} p={p} size={38} decorative/>:<span className="player-number">{p.pos}</span>}</span><div><PlayerName p={p}/><span className="player-detail">{p.pos} · {p.age} years{p.rookie?' · Rookie':''}</span></div></div>;}
 
 export function Ovr({ v, src, title }) {
   return (

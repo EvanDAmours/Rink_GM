@@ -14,7 +14,7 @@ import {snapshotRng,restoreRng} from './rng.js';
 import { seed as seedRng, randInt, pick, chance, gauss, clamp } from "./rng.js";
 import { createPlayer, generatePlayer, marketValue } from "./players.js";
 import { FIRST_SEASON, SCOUT_POINTS_START, SAVE_KEY, SAVE_VERSION, MAX_ROSTER, DRAFT_ROUNDS, isGoalie, isDefense, minSalaryForYear } from "./constants.js";
-import { autoLines, linesFromNames, coachLines } from "./lines.js";
+import { autoLines, linesFromNames, coachLines, headCoachLines } from "./lines.js";
 import { buildSeasonSchedule, lastDay } from "./schedule.js";
 import { createGame, simToEnd, applyResult, blankRecord } from "./sim.js";
 import { generateDraftClass, createDraftPicks, startDraft, finishDraft, draftDone, expandLegacyDraftClass } from "./draft.js";
@@ -51,7 +51,7 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
     startYear: year,
     phase: "preseason",
     day: 0,
-    settings: { difficulty, injuries },
+    settings: { difficulty, injuries, coachLines: true },
     teams: TEAMS.map((t, i) => ({
       id: i,
       ...t,
@@ -275,7 +275,13 @@ export function finishDay(league, played) {
   // AI rosters adjust to injuries periodically.
   if (league.day % 7 === 0) {
     for (const t of league.teams) {
-      if (t.id === league.userTid) continue;
+      if (t.id === league.userTid) {
+        if (league.settings?.coachLines && league.day >= 7) {
+          const moves = headCoachLines(league, t).filter((m) => m.out && m.in);
+          if (moves.length) league.inbox?.push({ year: league.year, day: league.day, text: `👔 ${t.coach?.name || "The head coach"} adjusted the lines: ${moves.map((m) => `${league.players[m.in]?.name} in for ${league.players[m.out]?.name}`).join("; ")}.` });
+        }
+        continue;
+      }
       aiManageRoster(league, t, { inSeason: true });
       if (league.day >= 7) coachLines(league, t);
     }
@@ -414,6 +420,7 @@ export function restoreLeague(l) {
 function migrateLeague(l) {
   l.settings ||= {};
   l.settings.injuries ??= true;
+  l.settings.coachLines ??= true;
   if (!l.settings.injuries) setInjuriesEnabled(l, false);
   ensureHockeyRules(l);
   // Preserve played fixtures and running drafts. Only future pick inventories expand.

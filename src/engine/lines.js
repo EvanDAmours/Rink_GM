@@ -232,6 +232,38 @@ export function coachLines(league, team) {
   return L;
 }
 
+// Head coach mode: the staff fills every hole left by an injury (or long-term
+// absence) in the saved lines with the best healthy scratch, then dresses any
+// clearly better spare, so the user's simulation never stops for a lineup.
+export function headCoachLines(league, team) {
+  const L = syncLines(league, team);
+  const ok = (id) => id && league.players[id] && league.players[id].injury <= 0 && !league.players[id].ltir;
+  const used = new Set(lineupIds(L).filter(ok));
+  const spare = spareFinder(league, team, used);
+  const moves = [];
+  const fix = (id, grp, j) => {
+    if (ok(id)) return id;
+    const sub = spare(grp, j);
+    if (sub) moves.push({ out: id, in: sub });
+    return sub;
+  };
+  L.F = L.F.map((line) => line.map((id, j) => fix(id, "F", j)));
+  L.D = L.D.map((pair) => pair.map((id, j) => fix(id, "D", j)));
+  L.G = L.G.map((id) => (ok(id) ? id : fix(id, "G", 0)));
+  if (!L.G[0] && L.G[1]) L.G = [L.G[1], null];
+  const inLineup = new Set(lineupIds(L));
+  const spares = healthy(league, team).filter((p) => !inLineup.has(p.id)).sort(recruitmentOrder(league, team));
+  let promoted = 0;
+  for (const p of spares) {
+    if (promoted >= 3) break;
+    if (slotIn(league, team, p, { margin: 4 })) { promoted++; moves.push({ out: null, in: p.id }); }
+  }
+  const gOvr = (id) => (ok(id) ? league.players[id].ovr : -1);
+  if (gOvr(L.G[1]) > gOvr(L.G[0]) + 1) { L.G = [L.G[1], L.G[0]]; promoted++; }
+  if (moves.length || promoted) Object.assign(L, specialTeams(dressedSkaters(league, L.F, L.D)));
+  return moves;
+}
+
 // The lineup actually dressed for a game: injured or departed players are covered by the
 // best healthy scratch, without changing the saved lines.
 export function gameLines(league, team) {

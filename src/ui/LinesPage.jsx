@@ -1,4 +1,5 @@
 import Select from "./Select.jsx";
+import Headshot, { headshotId } from "./Headshot.jsx";
 import React, { useState } from "react";
 import { useGame, TeamBadge, ovrColor } from "./common.jsx";
 import { autoLines, resetNhlLines, syncLines, gameLines, healthy, teamRatings, lineupIds } from "../engine/lines.js";
@@ -61,7 +62,7 @@ export default function LinesPage({ onRoster }) {
     const target = mine && sel && !isSel && kind(sel) === kind(a);
     return (
       <button type="button" key={`${a.g}${a.i}${a.j ?? ""}`} className={`ln-card${isSel ? " sel" : ""}${target ? " target" : ""}${p?.injury > 0 ? " out" : ""}${mine ? "" : " ro"}${!p ? " empty" : ""}`} onClick={() => act(a)} title={p ? `${p.name} · ${p.pos} · ${p.ovr} OVR` : "Empty slot"}>
-        <span className="ln-num" style={{ background: c1, color: c2, borderColor: c2 }}>{p?.number ?? "–"}</span>
+        <span className="ln-num" style={{ background: c1, color: c2, borderColor: c2 }}>{p && headshotId(p) ? <><Headshot p={p} team={team} size={34} decorative /><em>{p.number ?? ""}</em></> : (p?.number ?? "–")}</span>
         <span className="ln-name"><small>{first}</small><b>{last}</b></span>
         {p && <span className="ln-right"><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><i className={off ? "warn" : ""} style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i></span>}
         {p?.injury > 0 && <span className="ln-out">OUT {p.injury}g{sub ? ` · ${splitName(sub)[1]} in` : ""}</span>}

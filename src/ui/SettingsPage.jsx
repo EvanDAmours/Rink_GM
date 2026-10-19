@@ -1,6 +1,7 @@
 import {upgradeVerifiedData,verifiedDataSummary} from "../engine/verifiedData.js";
 import {ensureUniforms} from "../engine/uniforms.js";
 import {setInjuriesEnabled} from '../engine/injuries.js';
+import { headCoachLines } from "../engine/lines.js";
 import React, { useEffect, useState } from "react";
 import { useGame, Ovr } from "./common.jsx";
 import { DIFFICULTY } from "../engine/constants.js";
@@ -91,6 +92,7 @@ export default function SettingsPage() {
           <h3>League</h3>
           <label className="row"><input type="checkbox" checked={league.settings.injuries !== false} onChange={e=>{const enabled=e.target.checked;const healed=setInjuriesEnabled(league,enabled);commit();toast(enabled?"Injuries enabled.":`Injuries disabled. ${healed} players restored to full health.`);}}/> Injuries enabled</label><p className="muted small">Turning injuries off immediately heals every player and clears LTIR. Roster and cap limits still apply.</p>
           <label className="row"><input type="checkbox" checked={league.settings.autoRoster !== false} onChange={e=>{league.settings.autoRoster=e.target.checked;commit();}}/> Handle roster limits automatically</label><p className="muted small">When injured players return and the roster is over the limit, the lowest-rated spare is sent down (or waived) so the simulation never stops. Turn off to make every assignment yourself.</p>
+          <label className="row"><input type="checkbox" checked={Boolean(league.settings.coachLines)} onChange={e=>{league.settings.coachLines=e.target.checked;if(e.target.checked)headCoachLines(league,league.teams[league.userTid]);commit();}}/> Head coach runs the lines</label><p className="muted small">When a player is hurt, your head coach fills the hole with the best healthy scratch, rebuilds special teams and keeps simulating instead of pausing. He also dresses clearly better spares each week. Your line combinations stay yours; only injured slots change.</p>
           <label className="row">Difficulty
             <select value={league.settings.difficulty} onChange={(e) => { league.settings.difficulty = e.target.value; commit(); }}>
               {Object.entries(DIFFICULTY).map(([k, d]) => <option key={k} value={k}>{d.label}</option>)}

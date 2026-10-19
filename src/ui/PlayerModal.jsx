@@ -1,7 +1,7 @@
 import {buyoutSummary} from '../engine/capAccounting.js';
 import ArchivedPlayerCard from './ArchivedPlayerCard.jsx';
 import React from "react";
-import Jersey from "./Jersey.jsx";
+import Headshot from "./Headshot.jsx";
 import { useGame, Modal, TeamBadge, Ovr, Bar, money, pct, signed } from "./common.jsx";
 import { SKATER_ATTRS, GOALIE_ATTRS } from "../engine/ratings.js";
 import { isGoalie, ARCHETYPES } from "../engine/constants.js";
@@ -52,7 +52,7 @@ export default function PlayerModal({ pid }) {
       <div className="stack">
         <div className="row" style={{ gap: 18, alignItems: "flex-start" }}>
           <div className="stack" style={{ gap: 6, alignItems: "center" }}>
-            {team && <Jersey team={team} player={p} size={100}/>}
+            <Headshot team={team} p={p} size={112}/>
             <span style={{ transform: "scale(1.6)", margin: "8px 10px" }}><Ovr v={r.ovr} /></span>
             <span className="muted small">OVR{hidden && !r.exact ? " (est.)" : ""}</span>
           </div>

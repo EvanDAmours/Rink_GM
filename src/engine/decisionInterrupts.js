@@ -1,5 +1,6 @@
 import {rosterIssues} from './roster.js';
 import {automaticallyHandleRoster} from './autoRoster.js';
+import {headCoachLines} from './lines.js';
 export const INTERRUPT_DEFAULTS={injuries:true,offers:true,roster:true,promises:true};
 export function decisionInterrupt(lg){
  if(!lg || lg.phase!=='regular')return null;
@@ -8,7 +9,13 @@ export function decisionInterrupt(lg){
  if(settings.injuries){
   // Every notable injury since the last pause is one stop, not one per player.
   const hurt=[];for(const id of t.roster){const p=lg.players[id];if(p?.injury>1&&p.ovr>=80){const key=`injury:${id}:${lg.year}:${p.injuryEpisode || p.injuryNote}`;if(!Object.hasOwn(seen,key))hurt.push([key,p]);}}
-  if(hurt.length){for(const [key] of hurt)seen[key]=lg.day;const names=hurt.map(([,p])=>`${p.name} (${p.pos} ${p.ovr}, ${p.injury} games)`);return `Simulation paused: ${names.length===1?`${names[0]} is injured.`:`${names.slice(0,-1).join(', ')} and ${names.at(-1)} are injured.`} Review the lineup.`;}
+  if(hurt.length&&lg.settings?.coachLines){
+   for(const [key] of hurt)seen[key]=lg.day;
+   const moves=headCoachLines(lg,t),who=lg.players,coach=t.coach?.name || 'The head coach';
+   const subs=moves.filter(m=>m.out&&m.in).map(m=>`${who[m.in]?.name} in for ${who[m.out]?.name}`);
+   lg.inbox?.push({year:lg.year,day:lg.day,text:`👔 ${coach} reset the lines: ${hurt.map(([,p])=>`${p.name} (${p.injury} games)`).join(', ')} out.${subs.length?` ${subs.join('; ')}.`:''}`});
+  }
+  else if(hurt.length){for(const [key] of hurt)seen[key]=lg.day;const names=hurt.map(([,p])=>`${p.name} (${p.pos} ${p.ovr}, ${p.injury} games)`);return `Simulation paused: ${names.length===1?`${names[0]} is injured.`:`${names.slice(0,-1).join(', ')} and ${names.at(-1)} are injured.`} Review the lineup.`;}
  }
  if(settings.offers)for(const o of lg.offers || [])if(!o.done&&!o.rejected&&!o.accepted)candidates.push([`offer:${o.id}`,`A trade offer needs your review.`]);
  if(settings.roster){
