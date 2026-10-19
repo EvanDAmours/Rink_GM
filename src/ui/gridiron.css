@@ -530,7 +530,7 @@ body, .app { font-size: 14px; }
 .gg-fa-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
 .app .gg-fa-search { flex: 1; min-width: 180px; padding: 7px 10px; font-size: 13px; background: #0b1220; border: 1px solid #334155; border-radius: 6px; color: var(--gg-tx); }
 .gg-falist { display: flex; flex-direction: column; }
-.gg-farow { display: grid; grid-template-columns: 34px minmax(0, 1fr) 44px auto auto; align-items: center; gap: 12px; padding: 7px 8px; border-bottom: 1px solid #1e293b66; border-radius: 4px; }
+.gg-farow { display: grid; grid-template-columns: 40px minmax(0, 1fr) 44px auto auto; align-items: center; gap: 12px; padding: 7px 8px; border-bottom: 1px solid #1e293b66; border-radius: 4px; }
 .gg-fa .gg-farow:hover { background: #1e293b55; }
 .gg-farow.top { background: #22c55e0d; }
 .gg-faname { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
@@ -1317,3 +1317,5 @@ body, .app { font-size: 14px; }
   .app .rk-hint { font-size: 11px; }
 }
 .app .gg-faask .gg-bid { display: block; margin-top: 3px; font-size: 10px; padding: 2px 6px; }
+.app .gg-mugname { display: inline-flex; align-items: center; gap: 8px; } .app .gg-mugname .gg-mug { flex-shrink: 0; } .app .gg-mugname .player-number { width: 22px; height: 26px; font-size: 11px; }
+.app .gg-mugpos { position: relative; width: 38px; height: 38px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; } .app .gg-mugpos .gg-pos { position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); font-size: 8px; padding: 1px 4px; } .app .gg-mugpos:not(:has(.gg-mug)) .gg-pos { position: static; transform: none; font-size: 11px; padding: 3px 7px; } .app .gg-mugpos .player-number, .app .gg-mugpos .hockey-sweater { width: 34px !important; height: 36px !important; }

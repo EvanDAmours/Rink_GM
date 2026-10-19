@@ -19,10 +19,11 @@ function byName(name){
 }
 export function headshotUrl(id){return `https://assets.nhle.com/mugs/nhl/latest/${id}.png`;}
 
-export default function Headshot({p,team,size=100,decorative=false,className=''}){
+export default function Headshot({p,team,size=100,decorative=false,className='',fallback='plate'}){
   const id=headshotId(p);
   const [broken,setBroken]=useState(()=>id?failed.has(id):true);
   if(!id || broken){
+    if(fallback==='none')return null;
     return team?<Jersey team={team} player={p} size={size} decorative={decorative}/>:<span className="player-number" style={{width:size*.8,height:size}}>{p?.pos}</span>;
   }
   const bg=team?.colors?.[0] || '#1e293b';
