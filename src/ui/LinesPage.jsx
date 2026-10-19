@@ -7,6 +7,7 @@ import { isGoalie, isForward } from "../engine/constants.js";
 import { restShare, REST_OPTIONS } from "../engine/sim.js";
 import { lineChemistry } from "../engine/development.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import RinkLines from "./RinkLines.jsx";
 
 // The line chart: four forward lines, three pairs, two goalies, the special-teams units and
 // the scratches. Tap a player, then tap where he goes; a scratch can be tapped straight into
@@ -22,6 +23,8 @@ export default function LinesPage({ onRoster }) {
   const { league, commit, openPlayer, toast } = useGame();
   const [viewTid, setViewTid] = useState(league.userTid);
   const [sel, setSel] = useState(null);
+  const [view, setView] = useState(league.settings?.linesView || "rink");
+  const pickView = (v) => { setView(v); league.settings.linesView = v; setSel(null); };
   const team = league.teams[viewTid];
   const mine = viewTid === league.userTid;
   if (!team.lines) syncLines(league, team);
@@ -101,8 +104,9 @@ export default function LinesPage({ onRoster }) {
         </Select>
       </div>
       <div className="ln-tools">
-        <div className="ln-hint">{mine ? (selPlayer ? <><b>{selPlayer.name}</b> selected · tap another player or an empty slot to swap</> : "Tap a player, then tap another to swap. Scratches drop into a selected slot.") : `Viewing the ${team.name}' lines.`}</div>
+        <div className="ln-hint">{view === "rink" ? (mine ? "One unit on the ice at a time; every line listed on the right." : `Viewing the ${team.name}' lines.`) : mine ? (selPlayer ? <><b>{selPlayer.name}</b> selected · tap another player or an empty slot to swap</> : "Tap a player, then tap another to swap. Scratches drop into a selected slot.") : `Viewing the ${team.name}' lines.`}</div>
         <div className="row" style={{ gap: 6 }}>
+          <div className="gg-chips rk-toggle"><button className={view === "rink" ? "on" : ""} onClick={() => pickView("rink")}>🏒 Rink</button><button className={view === "list" ? "on" : ""} onClick={() => pickView("list")}>≡ List</button></div>
           {mine && selPlayer && <><button className="small ghost" onClick={() => openPlayer(selPlayer.id)}>Profile</button><button className="small ghost" onClick={() => setSel(null)}>Cancel</button></>}
           {mine && onRoster && <button className="small" onClick={onRoster}>Roster & call-ups →</button>}
           {mine && nhl && !matchesNhl && <button className="small" onClick={() => { resetNhlLines(league, team); setSel(null); commit(); toast("Back to the opening-night NHL lines."); }}>Reset to NHL lines</button>}
@@ -110,7 +114,8 @@ export default function LinesPage({ onRoster }) {
         </div>
       </div>
 
-      <div className="ln-grid">
+      {view === "rink" && <RinkLines team={team} mine={mine} onOpen={openPlayer} />}
+      {view === "list" && <div className="ln-grid">
         <section className="ln-panel ln-fwd">
           <div className="ln-h"><span>Forwards</span><small>{tr.fwd} · line rating and chemistry on the left</small></div>
           <div className="ln-cols f"><span /> {F_POS.map((x) => <span key={x}>{x}</span>)}</div>
@@ -146,7 +151,7 @@ export default function LinesPage({ onRoster }) {
             </div>)}
           </div>
         </section>
-      </div>
+      </div>}
     </div>
   );
 }
