@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal, TeamBadge, useGame } from "./common.jsx";
 import { seasonPreview } from "../engine/seasonPreview.js";
+import { staffGapText } from "../engine/franchise.js";
 
 // "Here's what's ahead": the card the football game shows before week one.
 export default function SeasonPreview({ onStart, onClose }) {
@@ -9,6 +10,8 @@ export default function SeasonPreview({ onStart, onClose }) {
   const pv = seasonPreview(league);
   const campDone = t.camp?.year === league.year && t.camp.games.length >= 4;
   const n = league.year - (league.startYear || league.year) + 1;
+  // An interim head coach (or an empty staff chair) on opening night: say so, with a way to hire.
+  const staff = staffGapText(t);
   if (!pv) return null;
   const vs = (g) => `${g.home ? "vs" : "@"} ${g.opp.city} ${g.opp.name}`;
   return (
@@ -22,7 +25,9 @@ export default function SeasonPreview({ onStart, onClose }) {
           <div><div className="gg-k">TOUGHEST STRETCH</div><b>Games {pv.stretch.from}-{pv.stretch.to} ({pv.stretch.start} to {pv.stretch.end})</b><span>{pv.stretch.opps.join(", ")} · average opponent {pv.stretch.avg} OVR</span></div>
         </div>
         {!campDone && <div className="gg-pv-camp">🏕️ Training camp isn't finished. Camp work, position battles and the dev camp only happen before game one.</div>}
+        {staff && <div className="gg-pv-camp gg-pv-staff"><b>🪑 {staff.head}.</b> {staff.text}</div>}
         <div className="gg-pv-actions">
+          {staff && <button className="ghost" onClick={() => { onClose(); go("coaching", "coaching"); }}>Hire a coach</button>}
           {!campDone && <button className="ghost" onClick={() => { onClose(); go("roster"); }}>Go to Training Camp</button>}
           <button className="primary big" onClick={onStart}>{campDone ? "LET'S GO →" : "Start the season anyway →"}</button>
         </div>
