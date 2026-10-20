@@ -1,20 +1,39 @@
 import React from "react";
 import { useGame, TeamBadge } from "./common.jsx";
+import Headshot from "./Headshot.jsx";
 import { ROUND_NAMES } from "../engine/playoffs.js";
+import { queueMoment } from "../engine/moments.js";
+import { awardsNightMoment } from "../engine/momentsCup.js";
+import { Confetti, momentColors } from "./MomentFrame.jsx";
 import { trophyUrl } from "./trophies.js";
+import "./moments/cup.css";
 
 // The morning paper after a playoff series: shown once per series the user
-// played (and after the Final for everyone).
+// played (and after the Final for everyone). The Final's paper is the Cup paper: it
+// leads with the Conn Smythe winner, waits while your Cup-winning moment plays, keeps
+// the confetti falling if the Cup is yours, and its button opens awards night.
 export default function SeriesPaper({ paper, onClose }) {
   const { league } = useGame();
   const w = league.teams[paper.winner], l = league.teams[paper.loser];
+  const final = paper.round === 3;
+  // Your club won it: the celebration plays first (the paper is the next thing you see).
+  if (final && league.moments?.some((m) => m.kind === "cupWin" && m.season === paper.year)) return null;
+  const close = () => {
+    if (final) { try { queueMoment(league, awardsNightMoment(league)); } catch (e) { console.error("Awards night failed", e); } }
+    onClose();
+  };
   const mvp = paper.mvp && league.players[paper.mvp.pid];
+  const cs = final ? paper.connSmythe || (league.awards?.connSmythe?.tid === w.id ? league.awards.connSmythe : null) : null;
+  const csP = cs && (league.players[cs.pid] || { name: cs.name, pos: cs.pos });
+  const ours = final && w.id === league.userTid;
+  const { clr, ac } = momentColors(w);
   const date = new Date(Date.UTC(paper.year + 1, 3, 20 + paper.round * 14));
   const dateStr = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   const road = (league.playoffs?.rounds || []).flatMap((r, i) => r.filter((s) => i <= paper.round && (s.top === w.id || s.bot === w.id) && s.winner != null).map((s) => ({ round: i, opp: league.teams[s.top === w.id ? s.bot : s.top], won: s.winner === w.id, score: s.winner === w.id ? `${Math.max(s.wTop, s.wBot)}-${Math.min(s.wTop, s.wBot)}` : `${Math.min(s.wTop, s.wBot)}-${Math.max(s.wTop, s.wBot)}` })));
-  const cups = (league.history || []).filter((h) => h.champion === w.id).length + (paper.round === 3 ? 1 : 0);
+  const cups = paper.titles ?? (league.history || []).filter((h) => h.champion === w.id).length + (paper.round === 3 ? 1 : 0);
   return (
-    <div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && close()}>
+      {ours && <div className="cup-paper-confetti" aria-hidden><Confetti colors={[clr, ac, "#e5e7eb", "#cbd5e1", "#ffffff"]} /></div>}
       <div className="gg-paper" role="dialog" aria-label="Series newspaper">
         <div className="gg-paper-mast">
           <div className="gg-paper-ear"><i>“All the Hockey That’s Fit to Print”</i></div>
@@ -30,7 +49,12 @@ export default function SeriesPaper({ paper, onClose }) {
             <div className="gg-paper-body">{paper.story.map((t, i) => <p key={i} className={i === 0 ? "drop" : ""}>{t}</p>)}<p className="dim">Continued on Page D4</p></div>
           </div>
           <div className="gg-paper-photo">
-            <div className="gg-paper-frame"><TeamBadge team={w} size={150} decorative /></div>{mvp && <div className="gg-paper-cap">{mvp.name} of the {w.name}, the most valuable player of the {ROUND_NAMES[paper.round]}.</div>}
+            {csP ? <>
+              <div className="gg-paper-frame portrait"><Headshot p={csP} team={w} size={200} decorative /></div>
+              <div className="gg-paper-cap">{cs.name} of the {w.name}, the Conn Smythe Trophy winner as playoff MVP, on the ice after the final horn. <i>Gazette Photo</i></div>
+            </> : <>
+              <div className="gg-paper-frame"><TeamBadge team={w} size={150} decorative /></div>{mvp && <div className="gg-paper-cap">{mvp.name} of the {w.name}, the most valuable player of the {ROUND_NAMES[paper.round]}.</div>}
+            </>}
             <div className="gg-paper-frame small">{paper.round === 3 && trophyUrl("stanley") ? <img src={trophyUrl("stanley")} alt="Stanley Cup" /> : <TeamBadge team={l} size={90} decorative />}</div>
             <div className="gg-paper-cap">{paper.round === 3 ? `The Stanley Cup heads home to ${w.city} today.` : `${w.city} moves on; ${l.city} goes home.`}</div>
           </div>
@@ -42,12 +66,12 @@ export default function SeriesPaper({ paper, onClose }) {
             <div className="gg-paper-kv"><span>Series</span><b>{paper.wins}-{paper.losses}</b></div>
             {paper.games.map((g, i) => <div key={i} className="gg-paper-kv"><span>Game {i + 1}</span><b>{league.teams[g.a].abbr} {g.as} – {g.hs} {league.teams[g.h].abbr}{g.ot ? ` ${g.ot}` : ""}</b></div>)}
             {paper.round === 3 && <><div className="gg-paper-kv"><span>Titles, all time</span><b>{cups}</b></div><h4>Parade Set for Tuesday</h4><p>The city will hold a victory parade Tuesday at 11 a.m. Officials expect more than a million people along the route.</p></>}
-            {league.awards?.hart && paper.round === 3 && <><h4>League Honors</h4><p>{league.awards.hart.name} was named the league’s most valuable player. Full list of winners in the Trophy Room.</p></>}
+            {league.awards?.hart && paper.round === 3 && <><h4>League Honors</h4><p>{league.awards.hart.name} was named the league’s most valuable player. The rest of the envelopes open tonight at the NHL Awards.</p></>}
           </aside>
         </div>
         <div className="gg-paper-foot">INSIDE · {paper.round === 3 ? "Awards and the All-Star team, D2 · How the champions were built, D6" : "Series grades, D2 · What comes next, D6"} · Letters, A22 · Weather, A24</div>
       </div>
-      <button className="gg-paper-btn" onClick={onClose}>{paper.round === 3 ? "Continue to the awards →" : "Continue →"}</button>
+      <button className="gg-paper-btn" onClick={close}>{paper.round === 3 ? "Continue to the awards →" : "Continue →"}</button>
     </div>
   );
 }
