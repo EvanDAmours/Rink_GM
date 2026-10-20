@@ -156,3 +156,18 @@ test("a save with one broken player record still loads, repaired, instead of bei
   assert.equal(loadRepaired("not a save").league, null);
   assert.equal(loadRepaired(null).league, null);
 });
+
+test("the title screen's Continue path repairs a save with a broken player record", async () => {
+  const { loadRepaired } = await import("../src/engine/repair.js");
+  const { createLeague: mk, serializeLeague } = await import("../src/engine/league.js");
+  const lg = mk({ userAbbr: "EDM", seed: 4242 });
+  const t = lg.teams[lg.userTid];
+  const victim = lg.players[t.roster[5]];
+  victim.ovr = NaN;
+  t.roster.push("ghost-player-id");
+  const { league, fixes } = loadRepaired(serializeLeague(lg));
+  assert.ok(league, "the save still loads");
+  assert.ok(fixes.length >= 1, "fixes are listed");
+  assert.ok(!league.teams[league.userTid].roster.includes("ghost-player-id"));
+  assert.ok(Number.isFinite(league.players[victim.id].ovr));
+});

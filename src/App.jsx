@@ -504,6 +504,7 @@ export default function App({ resume = false }) {
     faDay: () => {
       simFADay(league);
       commit();
+      if (league.fa?.summary?.text) showToast(league.fa.summary.text);
     },
     faToEnd: () => {
       while (league.fa && league.fa.day < FA_DAYS) simFADay(league);
