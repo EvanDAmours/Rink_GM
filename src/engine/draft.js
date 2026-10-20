@@ -75,19 +75,52 @@ export function createDraftPicks(league, year) {
   }
 }
 
+// "2027 R2 (#55)": the year and round, plus the overall slot where it's known. Picks in a
+// running draft use the real slot; picks in the coming draft use the projected order from
+// the standings; later years have no slot yet. Another club's pick names the club:
+// "2027 R1 (BOS #3)".
 export function pickLabel(league, pk) {
+  if (!pk) return "";
   const orig = league.teams[pk.orig];
-  return `${pk.year} R${pk.round}${pk.owner !== pk.orig ? ` (${orig.abbr})` : ""}`;
+  const via = pk.owner !== pk.orig && orig ? orig.abbr : "";
+  const slot = pickSlot(league, pk);
+  const tag = [via, slot ? `#${slot.overall}` : ""].filter(Boolean).join(" ");
+  return `${pk.year} R${pk.round}${tag ? ` (${tag})` : ""}`;
 }
 
-// Non-playoff teams by fewest points, lottery-adjusted; then playoff teams by
-// how far they went (Cup winner picks last).
-export function draftOrder(league) {
+// Where a pick falls overall: { overall, projected } or null when it can't be known yet.
+export function pickSlot(league, pk) {
+  if (!pk) return null;
+  const d = league.draft;
+  if (d?.year === pk.year && Array.isArray(d.slots)) {
+    const s = d.slots.find((x) => x.round === pk.round && x.orig === pk.orig);
+    return s ? { overall: s.overall, projected: false } : null;
+  }
+  if (pk.year !== league.year + 1) return null;
+  const order = projectedDraftOrder(league);
+  const i = order ? order.indexOf(pk.orig) : -1;
+  return i < 0 ? null : { overall: (pk.round - 1) * order.length + i + 1, projected: true };
+}
+
+// The coming draft's order as the standings stand (no lottery): clubs out of the playoffs
+// by points percentage, lowest first (clubs have played different numbers of games during
+// the season), then playoff clubs by the round they went out in, the champion last. Once
+// the draft order is set, its first round. Null before anyone has played.
+export function projectedDraftOrder(league) {
+  if (league.draft?.year === league.year + 1) return league.draft.slots.filter((s) => s.round === 1).map((s) => s.orig);
+  if (!league.teams.some((t) => (t.rec?.gp || 0) > 0)) return null;
+  const { nonPlayoff, playoff } = standingsGroups(league);
+  const pct = (t) => t.rec.pts / Math.max(1, t.rec.gp) || 0;
+  const worstFirst = nonPlayoff.map((id) => league.teams[id]).sort((a, b) => pct(a) - pct(b) || -compareTeams(a, b)).map((t) => t.id);
+  return [...worstFirst, ...playoff];
+}
+
+// Clubs out of the playoffs, fewest points first; playoff clubs by how far they went.
+function standingsGroups(league) {
   const po = league.playoffs;
   const playoffIds = new Set();
   if (po) for (const s of po.rounds[0]) { playoffIds.add(s.top); playoffIds.add(s.bot); }
   const nonPlayoff = league.teams.filter((t) => !playoffIds.has(t.id)).sort((a, b) => -compareTeams(a, b));
-  const lottery = runLottery(nonPlayoff.map((t) => t.id));
   const exitRound = (tid) => {
     if (po.champion === tid) return 5;
     for (let r = po.rounds.length - 1; r >= 0; r--) {
@@ -98,7 +131,15 @@ export function draftOrder(league) {
   const playoff = league.teams
     .filter((t) => playoffIds.has(t.id))
     .sort((a, b) => exitRound(a.id) - exitRound(b.id) || -compareTeams(a, b));
-  return { order: [...lottery.order, ...playoff.map((t) => t.id)], lottery };
+  return { nonPlayoff: nonPlayoff.map((t) => t.id), playoff: playoff.map((t) => t.id) };
+}
+
+// Non-playoff teams by fewest points, lottery-adjusted; then playoff teams by
+// how far they went (Cup winner picks last).
+export function draftOrder(league) {
+  const { nonPlayoff, playoff } = standingsGroups(league);
+  const lottery = runLottery(nonPlayoff);
+  return { order: [...lottery.order, ...playoff], lottery };
 }
 
 function runLottery(ids) {
