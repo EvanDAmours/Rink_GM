@@ -6,11 +6,12 @@ import "./ui/fonts.css";
 import "./ui/premium.css";
 import "./ui/clubhouse.css";
 import "./ui/gridiron.css";
+import { backupInfo, restoreBackupRaw } from "./engine/saveSlots.js";
 
 class ErrorBoundary extends React.Component {
   constructor(p) {
     super(p);
-    this.state = { err: null };
+    this.state = { err: null, ask: false };
   }
   static getDerivedStateFromError(err) {
     return { err };
@@ -20,13 +21,26 @@ class ErrorBoundary extends React.Component {
   }
   render() {
     if (this.state.err) {
+      // As in the football game: if the save itself is the trouble, go back to the last
+      // phase backup (confirmed here, since the game's own dialogs are gone).
+      const backup = backupInfo();
+      const restore = () => { if (restoreBackupRaw()) window.location.reload(); };
       return (
         <div className="title">
           <div className="panel" style={{ maxWidth: 460, textAlign: "center" }}>
             <h2 style={{ marginTop: 0 }}>Something went wrong</h2>
             <p className="muted">Your league is auto-saved in this browser. Reloading usually recovers it.</p>
             <pre className="small" style={{ whiteSpace: "pre-wrap", textAlign: "left", color: "#fca5a5" }}>{String(this.state.err?.message || this.state.err)}</pre>
-            <button className="primary" onClick={() => window.location.reload()}>Reload</button>
+            <div className="row" style={{ justifyContent: "center", gap: 8 }}>
+              <button className="primary" onClick={() => window.location.reload()}>Reload</button>
+              {backup && !this.state.ask && <button onClick={() => this.setState({ ask: true })}>Restore backup</button>}
+            </div>
+            {backup && this.state.ask && (
+              <div className="rk-crash-ask">
+                <p>Go back to your backup from {backup.label}? Everything since then is lost.</p>
+                <div className="row" style={{ justifyContent: "center", gap: 8 }}><button className="danger" onClick={restore}>Restore backup</button><button onClick={() => this.setState({ ask: false })}>Cancel</button></div>
+              </div>
+            )}
           </div>
         </div>
       );
