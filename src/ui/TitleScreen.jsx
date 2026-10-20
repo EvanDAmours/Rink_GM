@@ -1,3 +1,9 @@
+// The main menu and the team picker, laid out like the football game's (Gridiron 1.94): a dark
+// radial background, the Stanley Cup in the corner, a RINK kicker over a silver GM, big Continue,
+// New Game and Import buttons, the new-game options as pills, and the D'Amours Unlimited byline.
+// New Game opens "Choose Your Team": team-colour tiles with the logo, city, name and division;
+// tapping one starts the franchise. Saves are repaired as they load (loadRepaired), and the cloud
+// backup and file import work as before.
 import React, { useEffect, useMemo, useState } from "react";
 import { TEAMS } from "../engine/teams.js";
 import { TeamBadge } from "./common.jsx";
@@ -5,14 +11,17 @@ import { createLeague, deleteSave, rosterFile, restoreLeague, saveLeague } from 
 import { DIFFICULTY, SAVE_KEY } from "../engine/constants.js";
 import { loadRepaired, loadRepairedKey, repairLeague } from "../engine/repair.js";
 import { cloudMeta, cloudLoad } from "../platform.js";
-
-import {verifiedDataSummary,verifiedRating} from "../engine/verifiedData.js";
-import {setInjuriesEnabled} from "../engine/injuries.js";
-import Icon from "./Icon.jsx";
-import { HockeyTrophy } from "./TrophyRoom.jsx";
+import { verifiedDataSummary, verifiedRating } from "../engine/verifiedData.js";
+import { setInjuriesEnabled } from "../engine/injuries.js";
+import { applyNewGameOptions } from "../engine/newGameOptions.js";
+import { Trophy } from "./TrophyRoom.jsx";
+import "./title.css";
 
 const SEASON = (y) => `${y}-${String(y + 1).slice(2)}`;
 const when = (t) => (t ? new Date(t).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");
+// Remembered menu choices (per browser), like the football game's: firing, draft classes, difficulty.
+const pref = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } };
+const keep = (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 
 function teamStrength(abbr) {
   const ps = (rosterFile.teams[abbr] || []).map((p) => verifiedRating(p)?.ovr ?? p.ovr).sort((a, b) => b - a);
@@ -20,6 +29,9 @@ function teamStrength(abbr) {
   const g = (rosterFile.teams[abbr] || []).filter((p) => p.pos === "G").map((p) => verifiedRating(p)?.ovr ?? p.ovr).sort((a, b) => b - a)[0] || 75;
   return Math.round((top.reduce((a, b) => a + b, 0) / Math.max(1, top.length)) * 0.8 + g * 0.2);
 }
+// A tile in the club's colour; a light primary (Boston's gold) gives way to the darker one.
+const lum = (hex) => { const h = String(hex || "").replace("#", ""); if (h.length < 6) return 0; const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const tileColour = (t) => (lum(t.colors[0]) > 0.55 && t.colors[1] && lum(t.colors[1]) < lum(t.colors[0]) ? t.colors[1] : t.colors[0]);
 
 export default function TitleScreen({ onStart, ask }) {
   // Saves are repaired as they load, so one broken record doesn't lock you out of your league.
@@ -27,34 +39,24 @@ export default function TitleScreen({ onStart, ask }) {
   const local = boot.league;
   const [cloud, setCloud] = useState(null);
   const [loadingCloud, setLoadingCloud] = useState(false);
-  const [step, setStep] = useState(local ? "menu" : "new");
+  const [step, setStep] = useState("menu");
   useEffect(() => {
     let live = true;
-    cloudMeta().then((m) => {
-      if (!live || !m) return;
-      setCloud(m);
-      setStep((s) => (s === "new" && !local ? "menu" : s));
-    });
+    cloudMeta().then((m) => { if (live && m) setCloud(m); });
     return () => { live = false; };
-  }, [local]);
-  const [abbr, setAbbr] = useState("EDM");
-  const [conference,setConference]=useState("all");
+  }, []);
   const [mode, setMode] = useState("real");
-  const [difficulty, setDifficulty] = useState("normal");
+  const [difficulty, setDifficulty] = useState(() => (DIFFICULTY[pref("rinkgm_difficulty", "normal")] ? pref("rinkgm_difficulty", "normal") : "normal"));
+  const [firing, setFiring] = useState(() => pref("rinkgm_firing", "0") === "1");
+  const [realDraft, setRealDraft] = useState(() => pref("rinkgm_realdraft", "1") !== "0");
   const [injuries, setInjuries] = useState(local?.settings.injuries !== false);
-  const [savedInjuries,setSavedInjuries]=useState(local?.settings.injuries !== false);
-  const [injuryPreferenceChanged,setInjuryPreferenceChanged]=useState(false);
+  const [injuryPreferenceChanged, setInjuryPreferenceChanged] = useState(false);
   const [err, setErr] = useState(null);
   const strengths = useMemo(() => Object.fromEntries(TEAMS.map((t) => [t.abbr, teamStrength(t.abbr)])), []);
-  const ranked = useMemo(() => [...TEAMS].sort((a, b) => strengths[b.abbr] - strengths[a.abbr]).map((t) => t.abbr), [strengths]);
-  const eaCount = useMemo(() => Object.values(rosterFile.teams).flat().filter((p) => p.src === "ea27").length, []);
   const total = useMemo(() => Object.values(rosterFile.teams).flat().length, []);
 
   const cont = () => {
-    if (!local) {
-      setErr("Couldn't read the saved league. It may be from an older version.");
-      return;
-    }
+    if (!local) return setErr("Couldn't read the saved league. It may be from an older version.");
     onStart(local, boot.fixes);
   };
   const contCloud = async () => {
@@ -64,7 +66,7 @@ export default function TitleScreen({ onStart, ask }) {
     try { if (raw?.game === "rink-gm") fixes = repairLeague(raw); lg = restoreLeague(raw); } catch { lg = null; }
     setLoadingCloud(false);
     if (!lg) return setErr("Couldn't load the cloud backup. Try again in a moment.");
-    if(injuryPreferenceChanged)setInjuriesEnabled(lg,savedInjuries);
+    if (injuryPreferenceChanged) setInjuriesEnabled(lg, injuries);
     onStart(lg, fixes);
   };
   const cloudNewer = cloud && (!local || (cloud.savedAt || 0) > (local.savedAt || 0) + 5000);
@@ -81,93 +83,97 @@ export default function TitleScreen({ onStart, ask }) {
         setErr("That file isn't a Rink GM league export.");
       }
     });
+    e.target.value = "";
   };
 
-  const start = async () => {
+  // Injuries: the choice for a new league, and (as before) applied to your saved league at once;
+  // turning them off heals everyone in it.
+  const toggleInjuries = () => {
+    const on = !injuries;
+    setInjuries(on);
+    setInjuryPreferenceChanged(true);
+    if (local) { setInjuriesEnabled(local, on); saveLeague(local); }
+  };
+  const start = async (abbr) => {
     if ((local || cloud) && !(await ask({ title: "Start a new league?", body: "Your current saved league will be replaced. Export it from Settings first if you want to keep it.", yes: "Start new league", danger: true }))) return;
     deleteSave();
     const lg = createLeague({ userAbbr: abbr, mode, difficulty, injuries });
+    applyNewGameOptions(lg, { firing, realDraft: mode === "real" && realDraft });
     onStart(lg);
   };
 
-  const sel = TEAMS.find((t) => t.abbr === abbr);
-
-  return (
-    <div className="title">
-      <div className="titlecard stack" style={{"--selected-team":sel.colors[0]}}>
-        <header className="title-brandbar"><div className="logo">RINK <span>GM</span><small>THE FRANCHISE EXPERIENCE</small></div><span className="edition">{rosterFile.season} EDITION</span>{step==="new" && (local || cloud) && <button onClick={()=>setStep("menu")}>Back to saved league</button>}</header>
-        <section className={`title-hero${step === "new" ? " compact" : ""}`}><div><span className="eyebrow">YOUR CLUB. YOUR CALL.</span><h1>Build a contender.<br/><em>Leave a legacy.</em></h1><p>From opening night to the final buzzer. Own every decision on the road to the Stanley Cup.</p><div className="title-featureline"><span>32 NHL CLUBS</span><i/><span>DEEP FRANCHISE SIMULATION</span><i/><span>LIVE HOCKEY</span></div></div><div className="title-trophy"><HockeyTrophy size={230}/></div></section>
-
-        {err && <div className="notice bad">{err}</div>}
-
-        {step === "menu" && (
-          <div className="panel stack" style={{ maxWidth: 520 }}>
-            {local && (
-              <button className={cloudNewer ? "" : "primary"} style={{ padding: 14, fontSize: 15 }} onClick={cont}>
-                Continue League <span className="small" style={{ opacity: 0.8, fontWeight: 500 }}>· {local.teams[local.userTid].abbr} {SEASON(local.year)}</span>
-              </button>
-            )}
-            {cloud && (cloudNewer || !local) && (
-              <button className="primary" style={{ padding: 14, fontSize: 15 }} onClick={contCloud} disabled={loadingCloud}>
-                {loadingCloud ? "Loading cloud backup…" : <>Continue from cloud backup <span className="small" style={{ opacity: 0.85, fontWeight: 500 }}>· {cloud.team} {SEASON(cloud.year)} · saved {when(cloud.savedAt)}</span></>}
-              </button>
-            )}
-            <label className="row"><input type="checkbox" checked={savedInjuries} onChange={e=>{const enabled=e.target.checked;setSavedInjuries(enabled);setInjuries(enabled);setInjuryPreferenceChanged(true);if(local){setInjuriesEnabled(local,enabled);saveLeague(local);}}}/> Injuries enabled</label><p className="muted small">Turning this off restores all players in your saved franchise to full health.</p>
-            <button onClick={() => setStep("new")}>New League</button>
-            <label className="row" style={{ cursor: "pointer" }}>
-              <span className="pill">Import league file…</span>
-              <input type="file" accept=".rinkgm,.json,.txt" onChange={importFile} style={{ display: "none" }} />
-            </label>
-          </div>
-        )}
-
-        {step === "new" && (
-          <div className="title-new">
-            <div className="panel title-new-clubs">
-              <div className="section-heading"><div><span className="eyebrow">01 / CHOOSE YOUR FRANCHISE</span><h2>A league of possibilities.</h2></div><div className="tabs"><button className={conference==="all"?"on":""} onClick={()=>setConference("all")}>All clubs</button><button className={conference==="East"?"on":""} onClick={()=>setConference("East")}>East</button><button className={conference==="West"?"on":""} onClick={()=>setConference("West")}>West</button></div></div>
-              <div className="teamgrid">
-                {ranked.filter(ab=>conference==="all" || TEAMS.find(t=>t.abbr===ab).conf===conference).map((ab) => {
-                  const t = TEAMS.find((x) => x.abbr === ab);
-                  return (
-                    <button key={ab} aria-pressed={abbr===ab} className={`teamcard ${abbr === ab ? "sel" : ""}`} style={{ "--c1": t.colors[0], "--c2": t.colors[1] }} onClick={() => setAbbr(ab)}>
-                      <TeamBadge team={t} size={44} />
-                      <div>
-                        <div className="tn">{t.city} {t.name}</div>
-                        <div className="tr">{t.div}</div>
-                      </div>
-                      <span className="team-strength">{strengths[ab]}<small>OVR</small></span>{abbr===ab && <span className="team-selected"><Icon name="check" size={12}/></span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <aside className="title-new-rail stack">
-              <div className="panel stack title-new-pick">
-                <div className="row"><TeamBadge team={sel} size={64} /><div><span className="eyebrow">YOUR FRANCHISE</span><div style={{ fontWeight: 800, fontSize: 18 }}>{sel.city} {sel.name}</div><div className="muted small">{sel.conf}ern Conference · {sel.div} · {strengths[abbr]} OVR</div></div></div>
-                <button className="primary" style={{ padding: 12, fontSize: 15 }} onClick={start}>Start {rosterFile.season} Season</button>
-              </div>
-              <div className="panel">
-                <h3>02 / Your league</h3>
-                <div className="stack" style={{ gap: 6 }}>
-                  <label className="row"><input type="radio" checked={mode === "real"} onChange={() => setMode("real")} /> NHL 27 rosters (real players)</label>
-                  <label className="row"><input type="radio" checked={mode === "random"} onChange={() => setMode("random")} /> Random fictional players</label>
-                  <div className="small muted">{total} real players · {verifiedDataSummary.ratings} detailed EA ratings profiles. Published attributes and verified numbers are used where available; other ratings are estimates.</div>
-                </div>
-              </div>
-              <div className="panel">
-                <h3>03 / The challenge</h3>
-                <div className="stack" style={{ gap: 6 }}>
-                  {Object.entries(DIFFICULTY).map(([k, d]) => (
-                    <label key={k} className="row"><input type="radio" checked={difficulty === k} onChange={() => setDifficulty(k)} /> {d.label}</label>
-                  ))}
-                  <label className="row"><input type="checkbox" checked={injuries} onChange={e=>setInjuries(e.target.checked)}/> Injuries enabled</label><div className="small muted">Harder settings make AI GMs tougher in trades and free agents pricier.</div>
-                </div>
-              </div>
-              <div className="small dim">Fan-made game, not affiliated with or endorsed by the NHL, NHLPA or Electronic Arts. NHL and team logos belong to their respective owners.</div>
-            </aside>
-          </div>
-        )}
+  if (step === "teams") {
+    return (
+      <div className="rkt rkt-pick">
+        <div className="rkt-pick-bar"><button className="rkt-back" onClick={() => setStep("menu")}>← Back</button></div>
+        <h2>Choose Your Team</h2>
+        <div className="rkt-modes" role="radiogroup" aria-label="Players">
+          {[["real", "NHL 27 rosters", `${total} real players · ${verifiedDataSummary.ratings} EA SPORTS ratings profiles`], ["random", "Random fictional players", "Every club filled with generated players"]].map(([v, l, sub]) => (
+            <button key={v} role="radio" aria-checked={mode === v} className={mode === v ? "on" : ""} onClick={() => setMode(v)}><b>{l}</b><small>{sub}</small></button>
+          ))}
+        </div>
+        {err && <div className="rkt-err">{err}</div>}
+        <div className="rkt-grid">
+          {TEAMS.map((t) => (
+            <button key={t.abbr} className="rkt-team" style={{ "--c": tileColour(t), "--a": t.colors[1] || "#ffffff" }} title={`${t.city} ${t.name} · team rating ${strengths[t.abbr]}`} onClick={() => start(t.abbr)}>
+              <span className="rkt-team-logo"><TeamBadge team={t} size={46} decorative /></span>
+              <span className="rkt-team-text">
+                <span className="rkt-team-city">{t.city}</span>
+                <span className="rkt-team-name">{t.name}</span>
+                <span className="rkt-team-div">{t.abbr} • {t.div === "Metropolitan" ? "Metro" : t.div}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="rkt-legal">Published EA SPORTS attributes and verified sweater numbers are used where they exist; other ratings are estimates. Fan-made game, not affiliated with or endorsed by the NHL, NHLPA or Electronic Arts. NHL and team logos belong to their respective owners.</p>
       </div>
+    );
+  }
+
+  const ut = local?.teams?.[local.userTid];
+  return (
+    <div className="rkt rkt-menu">
+      <div className="rkt-cup" aria-hidden="true"><Trophy kind="stanley" size={230} className="rkt-cup-img" /></div>
+      <main className="rkt-main">
+        <div className="rkt-kicker">Rink</div>
+        <h1 className="rkt-gm">GM</h1>
+        <div className="rkt-tagline">LIVE HOCKEY • 32 NHL CLUBS • FULL DRAFT</div>
+        {err && <div className="rkt-err">{err}</div>}
+        {local && ut && (
+          <button className="rkt-btn rkt-continue" aria-label={`Continue League: ${ut.city} ${ut.name}, ${SEASON(local.year)}, ${ut.rec?.w || 0}-${ut.rec?.l || 0}-${ut.rec?.otl || 0}`} onClick={cont}>
+            ▶ Continue <span>— {ut.abbr} · {SEASON(local.year)} · {ut.rec?.w || 0}-{ut.rec?.l || 0}-{ut.rec?.otl || 0}</span>
+          </button>
+        )}
+        {cloud && (cloudNewer || !local) && (
+          <button className="rkt-btn rkt-continue cloud" onClick={contCloud} disabled={loadingCloud}>
+            {loadingCloud ? "Loading cloud backup…" : <>☁ Continue from cloud backup <span>— {cloud.team} · {SEASON(cloud.year)} · saved {when(cloud.savedAt)}</span></>}
+          </button>
+        )}
+        <button className="rkt-btn rkt-new" onClick={() => { setErr(null); setStep("teams"); }}>NEW GAME</button>
+        <label className="rkt-btn rkt-import">
+          <span>📂 IMPORT SAVE FILE</span>
+          <input type="file" accept=".rinkgm,.json,.txt" onChange={importFile} />
+        </label>
+        <div className="rkt-opts">
+          <button className={`rkt-pill ${firing ? "on" : "off"}`} aria-pressed={firing} title="For new franchises: when off, the owner still judges your seasons but can never fire you" onClick={() => { const v = !firing; setFiring(v); keep("rinkgm_firing", v ? "1" : "0"); }}>👔 Owner can fire you: {firing ? "ON" : "OFF"}</button>
+          <div className="rkt-seg" role="group" aria-label="Draft classes" title="Your first draft classes">
+            {[[true, "🎓 Real 2027 & 28 classes", "The real top prospects for the 2027 and 2028 drafts lead the first two classes (NHL 27 rosters only)"], [false, "Generated", "Every class is generated"]].map(([v, l, tt]) => (
+              <button key={l} title={tt} aria-pressed={realDraft === v} className={realDraft === v ? "on" : ""} onClick={() => { setRealDraft(v); keep("rinkgm_realdraft", v ? "1" : "0"); }}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div className="rkt-opts">
+          <button className={`rkt-pill ${injuries ? "on" : "off"}`} aria-pressed={injuries} title={local ? "Applies to new franchises and to your saved league; turning injuries off heals everyone in it" : "Turn off to play without injuries"} onClick={toggleInjuries}>🚑 Injuries: {injuries ? "ON" : "OFF"}</button>
+          <div className="rkt-seg" role="group" aria-label="Difficulty" title="Harder settings make AI GMs tougher in trades and free agents pricier">
+            <span className="rkt-seg-k">Difficulty</span>
+            {Object.entries(DIFFICULTY).map(([k, d]) => (
+              <button key={k} aria-pressed={difficulty === k} className={difficulty === k ? "on" : ""} onClick={() => { setDifficulty(k); keep("rinkgm_difficulty", k); }}>{d.label}</button>
+            ))}
+          </div>
+        </div>
+        {local && injuryPreferenceChanged && <div className="rkt-note">{injuries ? "Injuries are on for your saved league too." : "Injuries are off: everyone in your saved league is healthy again."}</div>}
+        <div className="rkt-byline">D'AMOURS UNLIMITED</div>
+      </main>
     </div>
   );
 }
