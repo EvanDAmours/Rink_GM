@@ -1,20 +1,25 @@
 import { CUP_HISTORY, CUP_HISTORY_SOURCE } from "../data/cupHistory.js";
 import { TROPHY_HISTORY } from "../data/trophyHistory.js";
 import { HISTORICAL_RECORDS } from "../data/historicalRecords.js";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useGame, TeamName, TeamBadge, PlayerName } from "./common.jsx";
-import { AWARD_NAMES, AWARD_BLURB, computeAwards } from "../engine/awards.js";
+import { AWARD_NAMES, AWARD_BLURB, ALL_STAR_LABEL, computeAwards, conferenceTrophies } from "../engine/awards.js";
+import { titleMeaning } from "../engine/momentsCup.js";
 import { trophyUrl, TROPHY_ORDER, TROPHY_NAMESAKE } from "./trophies.js";
+import Ring from "./Ring.jsx";
+import "./moments/cup.css";
 
 export function Trophy({ kind, size = 110, className = "" }) {
   const url = trophyUrl(kind);
   return url ? <img className={`gg-trophy ${className}`} src={url} alt={AWARD_NAMES[kind] || kind} style={{ height: size }} draggable={false} /> : <span className="gg-trophy-fallback" style={{ fontSize: size * 0.6 }}>🏆</span>;
 }
 
-// A trophy on the shelf with its plaque.
-function Piece({ kind, year, title, line, small, size = 120 }) {
+// A trophy on the shelf with its plaque. The newest one won in your league stands in a spotlight
+// with a NEW tag until you've seen it (or the next season starts).
+function Piece({ kind, year, title, line, small, size = 120, isNew = false }) {
   return (
-    <div className="gg-piece">
+    <div className={`gg-piece${isNew ? " tr-spot" : ""}`}>
+      {isNew && <><div className="tr-beam" aria-hidden /><div className="tr-new">NEW</div></>}
       <div className="gg-piece-light" />
       <Trophy kind={kind} size={size} />
       <div className="gg-plaque"><b>{year}</b><span>{title}</span>{line && <em>{line}</em>}{small && <small>{small}</small>}</div>
@@ -29,17 +34,22 @@ const season = (y) => `${y}–${String(y + 1).slice(2)}`;
 // The user's own trophy room: the club's Stanley Cups (real history and this league), its banners,
 // every individual award its players have won, and a case showing which trophies it still chases.
 export default function TrophyRoom() {
-  const { league } = useGame();
+  const { league, commit } = useGame();
   const [view, setView] = useState("club");
   const team = league.userTid;
   const club = league.teams[team];
   const seasons = [...league.history];
   const realCups = CUP_HISTORY.filter((c) => c.abbr === club.abbr);
   const yearsWith = (f) => seasons.filter(f);
-  const cups = yearsWith((h) => h.champion === team);
+  // This season's Cup and conference title count from the moment the Final ends (the season is archived later).
+  const archived = seasons.some((h) => h.year === league.year);
+  const po = league.playoffs, final = po?.rounds?.[3]?.[0];
+  const cupNow = !archived && po?.champion != null && po.champion === team ? [{ year: league.year, champion: team, runnerUp: final ? (final.top === team ? final.bot : final.top) : null, cupFinal: final ? { wins: Math.max(final.wTop, final.wBot), losses: Math.min(final.wTop, final.wBot) } : null }] : [];
+  const confNow = !archived && final ? Object.entries(conferenceTrophies(league)).filter(([, a]) => a?.tid === team).map(([k]) => ({ kind: k, year: league.year })) : [];
+  const cups = [...cupNow, ...yearsWith((h) => h.champion === team)];
   const finals = yearsWith((h) => h.runnerUp === team);
   const pres = yearsWith((h) => h.presidents === team);
-  const confs = seasons.flatMap((h) => [["princeOfWales", h.awards?.princeOfWales], ["campbellBowl", h.awards?.campbellBowl]].filter(([, a]) => a?.tid === team).map(([k]) => ({ kind: k, year: h.year })));
+  const confs = [...confNow, ...seasons.flatMap((h) => [["princeOfWales", h.awards?.princeOfWales], ["campbellBowl", h.awards?.campbellBowl]].filter(([, a]) => a?.tid === team).map(([k]) => ({ kind: k, year: h.year })))];
   const individual = seasons.flatMap((h) => Object.entries(h.awards || {}).filter(([k, a]) => a?.tid === team && !a.team && k !== "presidents").map(([kind, a]) => ({ kind, year: h.year, ...a })));
   const thisYear = league.awards && !seasons.some((h) => h.year === league.year) ? Object.entries(league.awards).filter(([k, a]) => a?.tid === team && !a.team).map(([kind, a]) => ({ kind, year: league.year, ...a })) : [];
   const mine = [...thisYear, ...individual];
@@ -59,6 +69,18 @@ export default function TrophyRoom() {
   const wonYears = (k) => (k === "stanley" ? [...realCups.map((c) => String(c.year)), ...cups.map((h) => season(h.year))] : k === "presidents" ? pres.map((h) => season(h.year)) : k === "princeOfWales" || k === "campbellBowl" ? confs.filter((c) => c.kind === k).map((c) => season(c.year)) : mine.filter((a) => a.kind === k).map((a) => season(a.year)));
   const holder = (k) => { const a = shown?.[k]; const p = a?.pid && league.players[a.pid]; return a ? `${p ? p.name : a.name}${a.tid != null ? ` · ${league.teams[a.tid].abbr}` : ""}` : null; };
   const caseWon = TROPHY_ORDER.filter((k) => won(k) > 0).length;
+  // NEW: what your club won this season (the Cup, a banner, an award), until it has been seen once.
+  // league.year moves on at the rollover, so the tags also clear when the next season starts.
+  const newKeys = [...cups.filter((h) => h.year === league.year).map(() => "stanley"), ...pres.filter((h) => h.year === league.year).map(() => "presidents"), ...confs.filter((c) => c.year === league.year).map((c) => c.kind), ...mine.filter((a) => a.year === league.year).map((a) => `${a.kind}:${a.pid ?? ""}`)];
+  const seen = league.trophySeen?.year === league.year ? league.trophySeen.keys || [] : [];
+  const [fresh] = useState(() => new Set(newKeys.filter((k) => !seen.includes(k))));
+  useEffect(() => {
+    if (!newKeys.some((k) => !seen.includes(k))) return;
+    league.trophySeen = { year: league.year, keys: [...new Set([...seen, ...newKeys])] };
+    commit?.();
+  }, [newKeys.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const isNew = (key, year) => year === league.year && fresh.has(key);
+  const allNHL = (ceremony === league.awards && league.allNHL?.year === ceremonyYear ? league.allNHL : null) || (seasons.find((h) => h.year === ceremonyYear)?.allNHL) || null;
 
   return (
     <div className="stack gg-trophyroom">
@@ -80,15 +102,24 @@ export default function TrophyRoom() {
             <TeamBadge team={club} size={120} decorative />
           </div>
           <Shelf title="Stanley Cup banners" count={realCups.length + cups.length} empty={`No Stanley Cups yet for the ${club.name}. Win one and it hangs here.`}>
-            {cups.map((h) => <Piece key={`s${h.year}`} kind="stanley" year={season(h.year)} title="Stanley Cup" line={`Defeated ${league.teams[h.runnerUp]?.abbr}`} small="your league" size={110} />)}
+            {cups.map((h) => <Piece key={`s${h.year}`} kind="stanley" year={season(h.year)} title="Stanley Cup" line={`Defeated ${league.teams[h.runnerUp]?.abbr}`} small="your league" size={110} isNew={isNew("stanley", h.year)} />)}
             {[...realCups].reverse().map((c) => <Piece key={`r${c.year}`} kind="stanley" year={c.year} title="Stanley Cup" small="NHL history" size={110} />)}
           </Shelf>
           <Shelf title="Conference and regular-season banners" count={confs.length + pres.length} empty="Win the conference or the Presidents' Trophy to fill this shelf.">
-            {pres.map((h) => <Piece key={`p${h.year}`} kind="presidents" year={season(h.year)} title="Presidents' Trophy" line="Best regular-season record" size={100} />)}
-            {confs.map((c) => <Piece key={`${c.kind}${c.year}`} kind={c.kind} year={season(c.year)} title={AWARD_NAMES[c.kind]} line={AWARD_BLURB[c.kind]} size={100} />)}
+            {pres.map((h) => <Piece key={`p${h.year}`} kind="presidents" year={season(h.year)} title="Presidents' Trophy" line="Best regular-season record" size={100} isNew={isNew("presidents", h.year)} />)}
+            {confs.map((c) => <Piece key={`${c.kind}${c.year}`} kind={c.kind} year={season(c.year)} title={AWARD_NAMES[c.kind]} line={AWARD_BLURB[c.kind]} size={100} isNew={isNew(c.kind, c.year)} />)}
+          </Shelf>
+          <Shelf title="Championship rings" count={cups.length} empty={`Win the Stanley Cup in your league and the ${club.name}' ring is displayed here.`}>
+            {cups.map((h) => (
+              <div key={`ring${h.year}`} className={`gg-piece tr-ringpiece${isNew("stanley", h.year) ? " tr-spot" : ""}`}>
+                <div className="gg-piece-light" />
+                <Ring team={club} season={h.year} opp={league.teams[h.runnerUp]} score={h.cupFinal ? `${h.cupFinal.wins}-${h.cupFinal.losses}` : ""} titles={titleMeaning(league, team, h.year).titles} size={130} />
+                <div className="gg-plaque"><b>{season(h.year)}</b><span>Stanley Cup ring</span>{h.runnerUp != null && <em>{h.cupFinal ? `${h.cupFinal.wins}-${h.cupFinal.losses} over` : "Over"} {league.teams[h.runnerUp]?.abbr}</em>}</div>
+              </div>
+            ))}
           </Shelf>
           <Shelf title={`${club.name} award winners`} count={mine.length} empty="Your players' trophies will be displayed here.">
-            {mine.map((a, i) => <Piece key={`${a.kind}${a.year}${i}`} kind={a.kind} year={season(a.year)} title={AWARD_NAMES[a.kind]} line={a.pid && league.players[a.pid] ? league.players[a.pid].name : a.name} small={a.why} size={96} />)}
+            {mine.map((a, i) => <Piece key={`${a.kind}${a.year}${i}`} kind={a.kind} year={season(a.year)} title={AWARD_NAMES[a.kind]} line={a.pid && league.players[a.pid] ? league.players[a.pid].name : a.name} small={a.why} size={96} isNew={isNew(`${a.kind}:${a.pid ?? ""}`, a.year)} />)}
           </Shelf>
           <p className="muted small">Championship history checked through 2026 (<a href={CUP_HISTORY_SOURCE} target="_blank" rel="noreferrer">NHL source</a>); pre-1927 titles are credited as the NHL credits them. Original Ottawa Senators titles belong to that earlier franchise.</p>
         </>
@@ -122,6 +153,16 @@ export default function TrophyRoom() {
               ); })}
             </div>
           ) : <div className="gg-card"><div className="dim">Play ten games and the awards race appears here; the winners are announced after the Final.</div></div>}
+          {allNHL && <div className="tr-allnhl">
+            {["first", "second", "rookie"].filter((k) => allNHL[k]?.length).map((k) => (
+              <div key={k} className="tr-allnhl-team">
+                <div className="tr-allnhl-h">{ALL_STAR_LABEL[k]}</div>
+                {allNHL[k].map((e, i) => { const p = league.players[e.pid]; return (
+                  <div key={`${e.pid}${i}`} className={`tr-allnhl-row${e.tid === team ? " mine" : ""}`}><span className="tr-allnhl-slot">{e.slot}</span><span className="tr-allnhl-name">{p ? <PlayerName p={p} /> : e.name}</span><span className="dim small">{e.abbr} · {e.line}</span></div>
+                ); })}
+              </div>
+            ))}
+          </div>}
         </section>
       )}
     </div>

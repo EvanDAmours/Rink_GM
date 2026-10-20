@@ -1,0 +1,55 @@
+/* The big moments: shared frame (Gridiron 3.0 look). Family styles live in ui/moments/*.css. */
+@keyframes mmFall { 0% { transform: translateY(-40px) rotate(0deg); opacity: 0 } 8% { opacity: 1 } 100% { transform: translateY(105vh) rotate(540deg); opacity: .9 } }
+@keyframes mmIn { from { transform: translateY(18px) scale(.97); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes mmShine { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes mmPulse { 0%, 100% { box-shadow: 0 0 0 0 var(--mm-glow), 0 30px 80px #000c } 50% { box-shadow: 0 0 40px 6px var(--mm-glow), 0 30px 80px #000c } }
+@keyframes mmBurst { 0% { transform: scale(.1); opacity: 0 } 12% { opacity: 1 } 70% { opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
+
+.mm-overlay { position: fixed; inset: 0; z-index: 2600; display: flex; align-items: center; justify-content: center; padding: 16px; padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); background: radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--mm-clr) 80%, transparent), #030712f2 70%); }
+.mm-confetti, .mm-fireworks { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mm-confetti span { position: absolute; top: 0; border-radius: 2px; animation-name: mmFall; animation-timing-function: linear; animation-iteration-count: infinite; }
+.mm-burst { position: absolute; width: 140px; height: 140px; margin: -70px 0 0 -70px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, transparent 38%, var(--fw) 40%, transparent 44%), repeating-conic-gradient(var(--fw) 0 4deg, transparent 4deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0 30%, transparent 70%); mask-image: radial-gradient(circle, #000 0 30%, transparent 70%);
+  animation: mmBurst 2.4s ease-out infinite; }
+
+.mm-card { --mm-glow: color-mix(in srgb, var(--mm-ac) 35%, transparent); position: relative; width: min(660px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; color: #fff;
+  background: linear-gradient(160deg, var(--mm-clr), #0b1220 62%); border: 2px solid var(--mm-ac); border-radius: 18px; padding: 26px 30px;
+  animation: mmIn .45s ease-out, mmPulse 2.8s .5s ease-in-out infinite; box-shadow: 0 30px 80px #000c; }
+.mm-card.wide { width: min(860px, 100%); }
+.mm-head { display: flex; align-items: center; gap: 14px; }
+.mm-head .teambadge, .mm-head .team-badge, .mm-head img { flex: 0 0 auto; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--mm-ac) 50%, transparent)); }
+.mm-head-text { min-width: 0; }
+.mm-kicker { font-size: 12.5px; font-weight: 900; letter-spacing: 3px; color: var(--mm-ac); text-transform: uppercase; }
+.mm-title { font-size: 38px; font-weight: 900; font-style: italic; line-height: 1.02; letter-spacing: .5px; text-transform: uppercase; overflow-wrap: anywhere;
+  background: linear-gradient(100deg, #fff 30%, #fde68a 50%, #fff 70%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: mmShine 3.2s linear infinite; }
+.mm-sub { font-size: 16px; color: #e2e8f0; margin-top: 12px; line-height: 1.45; }
+.mm-lines { margin-top: 14px; }
+.mm-line { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px solid #ffffff14; }
+.mm-line-k { font-size: 12px; font-weight: 900; letter-spacing: 1.3px; color: #cbd5e1; min-width: 128px; text-transform: uppercase; }
+.mm-line-v { font-size: 15.5px; font-weight: 700; color: #fff; min-width: 0; }
+.mm-note { font-size: 13px; color: #cbd5e1; margin-top: 12px; font-style: italic; }
+.mm-player { display: flex; align-items: center; gap: 16px; margin-top: 16px; background: #00000040; border-radius: 12px; padding: 14px 16px; }
+.mm-player-text { flex: 1; min-width: 0; }
+.mm-player-name { font-size: 26px; font-weight: 900; line-height: 1.1; }
+.mm-player-meta { display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 14px; color: #cbd5e1; flex-wrap: wrap; }
+.mm-pos { font-size: 11px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: #ffffff1f; color: #fff; letter-spacing: .5px; }
+.mm-big { font-size: 56px; font-weight: 900; line-height: 1; color: #fde68a; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.app .mm-cta, .mm-cta { margin-top: 18px; width: 100%; background: var(--mm-ac); color: #0b1220; border: 0; border-radius: 10px; padding: 12px 0; font-size: 16px; font-weight: 900; letter-spacing: 1px; cursor: pointer; min-height: 46px; }
+.app .mm-cta:hover:not(:disabled), .mm-cta:hover { background: var(--mm-ac); color: #0b1220; filter: brightness(1.08); }
+.mm-cta:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .mm-card { padding: 18px 16px; border-radius: 14px; }
+  .mm-head .teambadge, .mm-head .team-badge, .mm-head img { width: 56px; height: 56px; }
+  .mm-title { font-size: 26px; }
+  .mm-sub { font-size: 14px; }
+  .mm-line-k { min-width: 92px; }
+  .mm-line-v { font-size: 14px; }
+  .mm-player-name { font-size: 20px; }
+  .mm-big { font-size: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-card, .mm-title, .mm-confetti span, .mm-burst { animation: none !important; }
+  .mm-confetti, .mm-fireworks { display: none; }
+}

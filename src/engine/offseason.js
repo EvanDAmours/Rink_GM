@@ -21,6 +21,9 @@ import { holdQualifiedRFA } from "./operations.js";
 import {usageGrowth} from "./development.js";
 import { archiveFarmSeasons } from "./prospectWatch.js";
 import { applyTrainingYear } from "./franchise.js";
+import { queueMoment } from "./moments.js";
+import { signingMoment, legendMoment } from "./momentsSeason.js";
+import { applyAllStarGains } from "./awards.js";
 
 const diff = (league) => DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal;
 
@@ -111,6 +114,8 @@ export function letWalk(league, pid) {
   team.prospects = team.prospects.filter((x) => x !== pid);
   team.rfaRights=team.rfaRights.filter(id=>id!==pid);delete p.qualified;delete p.offerSheetPending;
   syncLines(league, team);
+  // The club he leaves, so a later signing can say "leaving the …" or "comes back to".
+  (p.moveHistory ||= []).push({ year: league.year, day: league.day, from: team.id, to: -1, kind: "free agent" });
   p.tid = -1;
   p.yrs = 0;
   p.cap = 0;
@@ -197,6 +202,8 @@ export function offerContract(league, pid, aav, yrs) {
   const needed = round2(ask.aav * (1.04 - 0.08 * appeal));
   if (aav + 1e-6 < needed) return { ok: false, msg: `${p.name} wants at least $${needed.toFixed(2)}M per year on a ${yrs}-year deal.` };
   if (!signPlayer(league, team, p, aav, yrs)) return {ok:false,msg:"No available contract or reserve-list slot."};
+  // Signing Day for an 80+ free agent from another club (Gridiron 3.0).
+  try { queueMoment(league, signingMoment(league, p, team, { aav, yrs })); } catch (e) { console.error("Signing moment failed", e); }
   return { ok: true, msg: `${p.name} signs with the ${team.name}!` };
 }
 
@@ -349,6 +356,8 @@ export function startNewSeason(league) {
     p.pstats = blankStats(p.pos);
     p.rookie = calderEligible(p);
   }
+  // Last season's All-Star honourees grow in the off-season, as Gridiron's All-Pros do (once only).
+  for (const g of applyAllStarGains(league) || []) { const p = league.players[g.pid]; if (p && g.gain) p.lastChange = (p.lastChange || 0) + g.gain; }
   pruneFreeAgents(league);
 
   for(const t of league.teams)for(const id of [...t.rfaRights]){
@@ -462,6 +471,8 @@ export function announceRetirements(league) {
       (p.ratingHistory ||= []).push({ year: league.year, ovr: p.ovr });
       p.career.push({ y: league.year, t: abbr, o: p.ovr, s: compactStats(p.pos, p.stats), ps: p.pstats.gp ? compactStats(p.pos, p.pstats) : null });
     }
+    // One of your veterans: the farewell card (Gridiron 3.0), before he leaves the league.
+    try { queueMoment(league, legendMoment(league, p)); } catch (e) { console.error("Legend moment failed", e); }
     retire(league, p);
   }
   if (retiring.length) league.news?.unshift?.({ year: league.year, day: league.day, type: "retire", text: `${retiring.length} players announce their retirement as the offseason opens${retiring.filter((p) => p.ovr >= 85).length ? `, including ${retiring.filter((p) => p.ovr >= 85).map((p) => p.name).join(", ")}` : ""}.` });

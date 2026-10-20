@@ -1,6 +1,8 @@
 import {stream,clamp} from "./rng.js";
 import {createAssistant} from "./development.js";
 import {logTx} from "./roster.js";
+import {queueMoment} from "./moments.js";
+import {hallMoments} from "./momentsSeason.js";
 
 export const ARENA_UPGRADES={training:{name:"Training complex",cost:8,effect:"Improves prospect development"},fan:{name:"Fan experience",cost:6,effect:"Improves attendance and fan support"},medical:{name:"Medical facilities",cost:7,effect:"Reduces simulated injury risk"}};
 export function ensureDynasty(lg){
@@ -46,10 +48,14 @@ export function archiveRetirement(lg,p,tot){
 }
 export function inductHall(lg){
   ensureDynasty(lg);
+  const inducted=[];
   for(const r of lg.retirementArchive || [])if(lg.year-r.year>=3 && !lg.hallOfFame.some(h=>h.pid===r.pid)){
     const eligible=r.pos==="G"?r.w>=250 || r.w>=100 && r.awards.length>=2:r.g+r.a>=700 || r.gp>=400 && r.awards.length>=2;
-    if(eligible)lg.hallOfFame.push({...r,inducted:lg.year});
+    if(eligible){const h={...r,inducted:lg.year};lg.hallOfFame.push(h);inducted.push(h);}
   }
+  // One of yours in the Class: the induction ceremony (Gridiron 3.2's Canton, in Toronto).
+  try{for(const m of hallMoments(lg,inducted))queueMoment(lg,m);}catch(e){console.error("Hall of Fame moment failed",e);}
+  return inducted;
 }
 export function retireNumber(lg,pid){
   const r=(lg.retirementArchive || []).find(r=>r.pid===pid),t=lg.teams[lg.userTid];

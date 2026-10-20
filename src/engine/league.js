@@ -43,6 +43,8 @@ import {ensureDynasty,arenaWeek,careerReview,stampHonours,inductHall} from "./dy
 import {ensureUniforms} from "./uniforms.js";
 import { ensureFranchise, franchiseWeek, reviewOwner, resetFranchiseYear } from "./franchise.js";
 import { ensureRecords, updateRecords, archiveSeason } from "./records.js";
+import { afterGameDay, queueMoment, ensureMoments } from "./moments.js";
+import { cupMoments } from "./momentsCup.js";
 import { archiveDraft } from "./draftTools.js";
 import { ensureAreaScouting } from "./regions.js";
 
@@ -83,6 +85,8 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
     retired: [],
     transactions: [],
     inbox: [],
+    moments: [],
+    momentsSeen: [],
     userTid: 0,
     calderVersion: 1,
   };
@@ -314,6 +318,8 @@ export function finishDay(league, played) {
   developmentWeek(league);
   updateRecords(league);
   pulseAfterDay(league);
+  // The big moments (clinches, result card, records) for the day just finished.
+  afterGameDay(league, ids, gamesOnDay(league, league.day).filter((g) => g.played));
   // The deadline recap prints the morning after deadline day.
   if (league.deadline?.done && !league.deadline.synthetic && league.deadline.year === league.year && !league.deadline.papered) { league.deadline.papered = true; deadlinePaper(league); }
   if (allStarDue(league)) allStarWeekend(league);
@@ -392,6 +398,8 @@ export function finishPlayoffs(league) {
   league.news ||= [];
   league.news.unshift({ year: league.year, day: league.day, type: "cup", text: `${league.teams[champ].city} ${league.teams[champ].name} win the Stanley Cup. ${league.awards.connSmythe ? `${league.awards.connSmythe.name} takes the Conn Smythe as playoff MVP.` : ""}` });
   seasonReviewPaper(league);
+  // The Cup-winning moment, awards night and the rest, queued before the league moves to the draft.
+  try { for (const m of cupMoments(league, champ) || []) queueMoment(league, m); } catch (e) { console.error("Cup moments failed", e); }
   if (league.awards.hart) league.news.unshift({ year: league.year, day: league.day, type: "award", pid: league.awards.hart.pid, text: `${league.awards.hart.name} is the Hart Trophy winner. ${league.awards.vezina ? `${league.awards.vezina.name} takes the Vezina` : ""}${league.awards.norris ? `, ${league.awards.norris.name} the Norris` : ""}${league.awards.calder ? ` and ${league.awards.calder.name} the Calder.` : "."}` });
   startDraft(league);
   league.phase = "draft";
@@ -467,6 +475,7 @@ export function restoreLeague(l) {
 
 // Bring older saves up to date with features added since they were made.
 function migrateLeague(l) {
+  ensureMoments(l);
   l.settings ||= {};
   l.settings.injuries ??= true;
   l.settings.coachLines ??= true;

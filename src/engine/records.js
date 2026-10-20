@@ -1,9 +1,99 @@
 import { isGoalie } from "./constants.js";
+import { HISTORICAL_RECORDS as H } from "../data/historicalRecords.js";
 
 export const RECORD_LABELS={g:"Goals",a:"Assists",pts:"Points",w:"Goalie wins",so:"Shutouts",sa:"Goalie saves"};
 export function ensureRecords(league) {
   league.recordBook ||= {game:{},season:{},career:{}};
   league.seasonArchive ||= [];
+  // The real single-season marks your league can take (Gridiron 2.10). Only marks beaten in this
+  // league are stored; everything else reads straight from the real NHL data.
+  if(!league.recordBook.marks){league.recordBook.marks={nhl:{},franchise:{},history:[]};backfillMarks(league);}
+  league.recordBook.marks.nhl ||= {};league.recordBook.marks.franchise ||= {};league.recordBook.marks.history ||= [];
+}
+
+// ---------- Single-season record marks: the NHL's and every club's ----------
+// key: the mark; stat: player stat (or team: the club's record field); goalie: whose stat it is.
+// The NHL's top single season; a shared record names everyone on it (Holtby and Brodeur, 48 wins).
+const topRow=(rows=[])=>{const best=rows.filter((r)=>r.value===rows[0]?.value);return best.length<2?rows[0]:{...best[0],name:best.map((r)=>r.name).join(" & "),season:best.map((r)=>r.season).join(", "),team:best.map((r)=>r.team).join("/")};};
+export const SEASON_MARKS=[
+  {key:"g",label:"Goals",stat:"g",goalie:false,nhl:()=>topRow(H.league.seasonSkater.goals),club:(F)=>F.seasonSkater.goals},
+  {key:"a",label:"Assists",stat:"a",goalie:false,nhl:()=>topRow(H.league.seasonSkater.assists),club:(F)=>F.seasonSkater.assists},
+  {key:"pts",label:"Points",stat:"pts",goalie:false,nhl:()=>topRow(H.league.seasonSkater.points),club:(F)=>F.seasonSkater.points},
+  {key:"w",label:"Goalie wins",stat:"w",goalie:true,nhl:()=>topRow(H.league.seasonGoalie.wins),club:(F)=>F.seasonGoalie.wins},
+  {key:"so",label:"Shutouts",stat:"so",goalie:true,nhl:()=>topRow(H.league.seasonGoalie.shutouts),club:(F)=>F.seasonGoalie.shutouts},
+  {key:"tw",label:"Team wins",team:"w",nhl:()=>H.league.teamSeason.wins,club:(F)=>({...F.team.wins,name:F.name})},
+  {key:"tpts",label:"Team points",team:"pts",nhl:()=>H.league.teamSeason.points,club:(F)=>({...F.team.points,name:F.name})},
+  {key:"tgf",label:"Team goals",team:"gf",nhl:()=>H.league.teamSeason.goalsFor,club:(F)=>({...F.team.goalsFor,name:F.name})},
+];
+const MARK=Object.fromEntries(SEASON_MARKS.map((d)=>[d.key,d]));
+// "Wayne Gretzky's", "Edmonton Oilers'".
+export const poss=(name)=>(/s$/i.test(String(name || ""))?`${name}'`:`${name}'s`);
+export const seasonText=(y)=>(typeof y==="string"?y:y==null?"":`${y}-${String(y+1).slice(2)}`);
+const realMark=(scope,key,abbr)=>{
+  const d=MARK[key];if(!d)return null;
+  const r=scope==="nhl"?d.nhl():H.franchises[abbr]?d.club(H.franchises[abbr]):null;
+  return r && r.value>0?{value:r.value,name:r.name,season:r.season,team:r.team || (scope==="nhl"?null:abbr),real:true}:null;
+};
+// The mark that stands now: one set in your league, else the real one. scope: "nhl" | "franchise".
+export function seasonMark(league,scope,key,abbr){
+  const m=league.recordBook?.marks;
+  const set=scope==="nhl"?m?.nhl?.[key]:m?.franchise?.[abbr]?.[key];
+  return set || realMark(scope,key,abbr);
+}
+// What the book shows for a beaten mark: no nested history, just who held it and when.
+const asPrev=(r)=>r && {value:r.value,name:r.name,season:r.season || seasonText(r.year),team:r.team || null,...(r.real?{real:true}:{}),...(r.pid!=null?{pid:r.pid}:{})};
+// Leaders this season: the top player (or club) for a mark, among `players` / `teams`.
+function leader(d,players,teams,statsOf){
+  let top=null;
+  if(d.team){for(const t of teams){const v=t.rec?.[d.team] || 0;if(v>0 && (!top || v>top.v))top={t,v};}}
+  else for(const p of players){if(isGoalie(p.pos)!==d.goalie)continue;const v=statsOf(p)?.[d.stat] || 0;if(v>0 && (!top || v>top.v))top={p,v};}
+  return top;
+}
+// Write a new holder into the book. Returns the history entry when a mark changes hands
+// (a player adding to his own record this season just raises it).
+function takeMark(league,scope,d,top,abbr,{year=league.year,day=league.day,quiet=false}={}){
+  const cur=seasonMark(league,scope,d.key,abbr);
+  if(!top || (cur && top.v<=cur.value))return null;
+  const t=top.t || league.teams[top.p.tid] || null;
+  const holder=top.t?{tid:t.id,name:`${t.city} ${t.name}`}:{pid:top.p.id ?? top.p.pid,name:top.p.name,pos:top.p.pos,tid:top.p.tid};
+  const same=cur && !cur.real && cur.year===year && (top.t?cur.tid===holder.tid:String(cur.pid)===String(holder.pid));
+  const entry={value:top.v,...holder,team:t?.abbr || null,year,day,prev:same?cur.prev:asPrev(cur)};
+  const m=league.recordBook.marks;
+  if(scope==="nhl")m.nhl[d.key]=entry;else (m.franchise[abbr] ||= {})[d.key]=entry;
+  if(same)return null;
+  const e={scope,key:d.key,label:d.label,club:scope==="franchise"?abbr:null,...entry};
+  if(!quiet){m.history.push(e);if(m.history.length>200)m.history.splice(0,m.history.length-200);}
+  return e;
+}
+// After each regular-season day: who now holds the NHL's and each club's single-season marks.
+// Regular-season stats only. Returns the marks that changed hands today, NHL first.
+export function updateSeasonMarks(league){
+  ensureRecords(league);
+  if(league.phase!=="regular")return [];
+  const players=Object.values(league.players).filter((p)=>p.tid>=0 && p.stats?.gp);
+  const broken=[];
+  for(const d of SEASON_MARKS){const e=takeMark(league,"nhl",d,leader(d,players,league.teams,(p)=>p.stats),null);if(e)broken.push(e);}
+  for(const t of league.teams){
+    if(!H.franchises[t.abbr])continue;
+    const mine=players.filter((p)=>p.tid===t.id);
+    for(const d of SEASON_MARKS){const e=takeMark(league,"franchise",d,leader(d,mine,[t],(p)=>p.stats),t.abbr);if(e)broken.push(e);}
+  }
+  return broken;
+}
+// Saves from before the book kept marks: seasons already finished in this league are written in
+// quietly, so a record broken last year still stands with its new holder.
+function backfillMarks(league){
+  for(const s of [...(league.seasonArchive || [])].reverse()){
+    const players=(s.leaders || []).map((x)=>({id:x.pid,name:x.name,pos:x.pos,tid:x.tid,stats:x.stats}));
+    const teams=(s.teams || []).map((x)=>{const t=league.teams[x.tid];return t && {id:t.id,city:t.city,name:t.name,abbr:t.abbr,rec:x.rec};}).filter(Boolean);
+    const opts={year:s.year,day:null,quiet:true};
+    for(const d of SEASON_MARKS)takeMark(league,"nhl",d,leader(d,players,teams,(p)=>p.stats),null,opts);
+    for(const t of teams){
+      if(!H.franchises[t.abbr])continue;
+      const mine=players.filter((p)=>p.tid===t.id);
+      for(const d of SEASON_MARKS)takeMark(league,"franchise",d,leader(d,mine,[t],(p)=>p.stats),t.abbr,opts);
+    }
+  }
 }
 function consider(book,key,value,p,league,extra={}) {
   if(!Number.isFinite(value) || value<=0 || value<=(book[key]?.value || 0))return;

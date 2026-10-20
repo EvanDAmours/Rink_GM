@@ -4,6 +4,9 @@ import {recordReport} from './matchReports.js';
 import { playoffPicture, compareTeams } from "./standings.js";
 import { createGame, simToEnd, applyResult } from "./sim.js";
 import { healInjuries } from "./roster.js";
+import { allStarTeams, connSmythe } from "./awards.js";
+import { queueMoment } from "./moments.js";
+import { cupWinMoment, titleMeaning } from "./momentsCup.js";
 
 const HOME_PATTERN = [true, true, false, false, true, false, true]; // 2-2-1-1-1 from the top seed's view
 
@@ -31,6 +34,8 @@ export function startPlayoffs(league) {
     r1.push(series(league, 0, pic.divs[d2][1].id, pic.divs[d2][2].id, conf));
   }
   league.playoffs = { rounds: [r1], round: 0, champion: null, seeds: seedMap(league, r1) };
+  // The regular season is over: the First and Second All-Star Teams and the All-Rookie Team are picked now.
+  try { league.allNHL = allStarTeams(league); } catch (e) { console.error("All-Star teams failed", e); }
   for (const t of league.teams) t.playoffResult = null;
   for (const s of r1) {
     league.teams[s.top].playoffResult = "R1";
@@ -83,6 +88,10 @@ export function recordSeriesGame(league, s, state, result) {
     const next = ["R2", "R3", "Final", "Champion"][s.round];
     league.teams[s.winner].playoffResult = next;
     seriesPaper(league, s);
+    // Your club just won the Cup: the celebration plays before the paper (the paper waits for it).
+    if (s.round === 3 && s.winner === league.userTid) {
+      try { queueMoment(league, cupWinMoment(league, s)); } catch (e) { console.error("Cup moment failed", e); }
+    }
   }
 }
 
@@ -103,17 +112,34 @@ export function seriesPaper(league, s) {
   const ot = last?.ot ? " in overtime" : "";
   const sweep = losses === 0, seven = losses === 3;
   const round = ROUND_NAMES[s.round];
-  const headline = s.round === 3 ? `${w.name.toUpperCase()} WIN THE STANLEY CUP` : sweep ? `${w.name.toUpperCase()} SWEEP ${l.name.toUpperCase()}` : seven ? `${w.name.toUpperCase()} SURVIVE GAME SEVEN` : `${w.name.toUpperCase()} OUST ${l.name.toUpperCase()}`;
+  // The Final: the Conn Smythe winner leads the front page, and the headline is written from the result.
+  const cup = s.round === 3 ? titleMeaning(league, w.id, league.year) : null;
+  const cs = s.round === 3 ? connSmythe(league, w.id) : null;
+  const csP = cs && league.players[cs.pid];
+  const headline = cup ? cupHeadline(w, cup, { sweep, seven, ot: !!last?.ot }) : sweep ? `${w.name.toUpperCase()} SWEEP ${l.name.toUpperCase()}` : seven ? `${w.name.toUpperCase()} SURVIVE GAME SEVEN` : `${w.name.toUpperCase()} OUST ${l.name.toUpperCase()}`;
   const sub = `${w.city} takes the ${round} ${wins}-${losses}${ot}${mvp ? `, as ${mvp.name} is named series MVP` : ""}`;
   const story = [
     `${w.city.toUpperCase()} — The ${w.name} ${s.round === 3 ? "are Stanley Cup champions" : `are moving on`}. In front of a ${last && last.h === w.id ? "roaring home crowd" : "silenced building on the road"}, ${w.city} closed out the ${l.city} ${l.name} ${last ? `${Math.max(last.hs, last.as)}-${Math.min(last.hs, last.as)}` : ""}${ot} to take the series ${wins} games to ${losses}.`,
     mvp ? `${mvp.name}, the ${({C:'centre',LW:'left winger',RW:'right winger',LD:'defenceman',RD:'defenceman',G:'goaltender'})[mvp.pos] || mvp.pos}, ${isGoalieLike(mvp) ? `was the wall in goal, ${mvp.pstats?.w || wins} wins this spring` : `finished the series as the club's engine with ${mvp.pstats?.g || 0} goals and ${mvp.pstats?.a || 0} assists in the playoffs so far`}.` : "",
-    s.round === 3 ? `It is the franchise's ${ordinal((league.history || []).filter((h) => h.champion === w.id).length + 1)} championship. The parade is set for Tuesday.` : `Next up: the ${["Second Round", "Conference Final", "Stanley Cup Final"][s.round]}.`,
+    cs ? `${String(cs.pid) === String(mvp?.id) ? "He" : cs.name} was voted the Conn Smythe Trophy winner as the most valuable player of the playoffs (${cs.why.replace(/ in the playoffs$/, "")}).` : "",
+    cup ? `${cup.what} The parade is set for Tuesday.` : `Next up: the ${["Second Round", "Conference Final", "Stanley Cup Final"][s.round]}.`,
   ].filter(Boolean);
-  (league.playoffs.papers ||= []).push({ id: `${league.year}:${s.round}:${s.top}:${s.bot}`, year: league.year, round: s.round, winner: w.id, loser: l.id, wins, losses, headline, sub, story, mvp: mvp ? { pid: mvp.id, name: mvp.name, pos: mvp.pos } : null, games: s.games.map((g) => ({ h: g.h, a: g.a, hs: g.hs, as: g.as, ot: g.ot })), seen: false });
+  (league.playoffs.papers ||= []).push({ id: `${league.year}:${s.round}:${s.top}:${s.bot}`, year: league.year, round: s.round, winner: w.id, loser: l.id, wins, losses, headline, sub, story, mvp: mvp ? { pid: mvp.id, name: mvp.name, pos: mvp.pos } : null, ...(cs ? { connSmythe: { pid: cs.pid, name: cs.name, pos: csP?.pos || null, why: cs.why } } : {}), ...(cup ? { titles: cup.titles } : {}), games: s.games.map((g) => ({ h: g.h, a: g.a, hs: g.hs, as: g.as, ot: g.ot })), seen: false });
 }
 const isGoalieLike = (p) => p.pos === "G";
-const ordinal = (n) => n + (["st", "nd", "rd"][((n + 90) % 100 - 10) % 10 - 1] || "th");
+
+// The Cup headline, from what the title means and how the Final went.
+function cupHeadline(w, cup, { sweep, seven, ot }) {
+  const N = w.name.toUpperCase();
+  if (cup.titles === 1) return `${N} WIN THEIR FIRST STANLEY CUP`;
+  if (cup.gap >= 25) return `${N} END ${cup.gap}-YEAR WAIT`;
+  if (cup.streak >= 3) return `${["", "", "", "THREE", "FOUR", "FIVE"][cup.streak] || cup.streak} STRAIGHT FOR THE ${N}`;
+  if (cup.streak === 2) return `${N} DO IT AGAIN`;
+  if (seven) return `${N} WIN GAME 7 FOR THE CUP`;
+  if (ot) return `${N} WIN THE CUP IN OVERTIME`;
+  if (sweep) return `${N} SWEEP TO THE STANLEY CUP`;
+  return `${N} WIN THE STANLEY CUP`;
+}
 
 // Play one game in every live series of the current round. `skip` lets the UI
 // hold back the user's game for live play.

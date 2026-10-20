@@ -6,6 +6,11 @@ import { contractCount, reserveCount } from "./hockeyRules.js";
 import { minSalaryForYear, maxSalaryForYear, capForYear } from "./constants.js";
 import { stream } from "./rng.js";
 import { teamRatings, syncLines } from "./lines.js";
+import { queueMoment } from "./moments.js";
+import { signingMoment } from "./momentsSeason.js";
+
+// Signing Day (Gridiron 3.0 / 3.49): a moment must never stop a signing.
+const signingDay = (lg, p, t, deal) => { try { queueMoment(lg, signingMoment(lg, p, t, deal)); } catch (e) { console.error("Signing moment failed", e); } };
 
 export function agentPreferences(p) {
   const r=stream(`${p.id}|preferences`);
@@ -43,7 +48,9 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
   if(old?.status==="walked")return {ok:false,msg:"The agent will reopen talks next season."};
   if(p.tid===t.id || lg.phase!=="freeagency") {
     if(lg.phase==="preseason" && counts(lg,t).active>=23 && !t.roster.includes(p.id))return {ok:false,msg:"Make an NHL roster spot before signing."};
+    const wasFA=p.tid===-1;
     const ok=signPlayer(lg,t,p,aav,yrs);if(!ok)return {ok:false,msg:"No contract slot available."};
+    if(wasFA)signingDay(lg,p,t,{aav,yrs});
     promiseRole(lg,p,t.id,promised);
     if(clause && p.age>=27)p.clause={type:clause,blocked:clause==="NTC"?lg.teams.filter(q=>q.conf!==t.conf).map(q=>q.id):[]};
     lg.negotiations[pid]={pid,year:lg.year,rounds,status:"signed",aav,yrs,preferences:prefs};return {ok:true,msg:`${p.name} agreed to your terms.`};
@@ -118,6 +125,7 @@ export function settleNegotiations(lg) {
     promiseRole(lg,p,b.tid,b.role || projectedRole(lg,lg.teams[b.tid],p));
     if(b.clause && p.age>=27)p.clause={type:b.clause,blocked:[]};n.status="signed";n.winner=b.tid;n.aav=b.aav;n.yrs=b.yrs;
     if(mine){const won=b.tid===lg.userTid;(lg.faResults ||= []).unshift({year:lg.year,day:lg.fa?.day || 0,pid:p.id,name:p.name,won,winner:b.tid,aav:b.aav,yrs:b.yrs});
+      if(won)signingDay(lg,p,lg.teams[b.tid],{aav:b.aav,yrs:b.yrs,market:true,rivals:n.bids.filter(x=>x.tid!==b.tid).length});
       lg.inbox.push({year:lg.year,day:lg.day,text:won?`✅ ${p.name} signed with you: $${b.aav.toFixed(2)}M × ${b.yrs}.`:mineOut?`❌ ${p.name} signed with ${lg.teams[b.tid].abbr}: your earlier signings left no cap or roster room for your $${mine.aav.toFixed(2)}M × ${mine.yrs} offer.`:`❌ ${p.name} chose ${lg.teams[b.tid].abbr} ($${b.aav.toFixed(2)}M × ${b.yrs}) over your $${mine.aav.toFixed(2)}M × ${mine.yrs}.`});}
     else lg.inbox.push({year:lg.year,day:lg.day,text:`Agent update: ${p.name} chose ${lg.teams[b.tid].abbr} at $${b.aav.toFixed(2)}M × ${b.yrs}.`});
   }
@@ -152,6 +160,7 @@ export function resolveOfferSheet(lg,id,match) {
   if(!signPlayer(lg,t,p,s.aav,s.yrs))return {ok:false,msg:"Signing failed."};
   if(!match)s.picks.forEach(id=>{lg.draftPicks.find(p=>p.id===id).owner=s.from;});
   s.done=true;s.matched=match;delete p.offerSheetPending;syncLines(lg,old);
+  if(!match)signingDay(lg,p,t,{aav:s.aav,yrs:s.yrs,sheetFrom:old.id});
   logTx(lg,`${old.abbr} ${match?"match":"decline"} offer sheet on ${p.name}${match?"":`; player joins ${t.abbr}`}`,[old.id,t.id]);return {ok:true,msg:match?"Offer sheet matched.":"Player acquired and compensation picks transferred."};
 }
 export function processOfferSheets(lg) {

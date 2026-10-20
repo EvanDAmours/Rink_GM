@@ -89,6 +89,8 @@ export default function PlayoffsPage({ act }) {
   const pad = (list, n) => [...list, ...Array(Math.max(0, n - list.length)).fill(null)];
   const champ = po.champion != null ? league.teams[po.champion] : null;
   const final = r(3)[0] || null;
+  // The Conn Smythe is named as the Final ends (the Cup paper prints it); the awards record follows at the draft.
+  const smythe = league.awards?.connSmythe || (po.papers || []).find((p) => p.round === 3 && p.year === league.year)?.connSmythe || null;
   return (
     <div className="stack gg-playoffs">
       <div className="gg-pagehead">
@@ -101,7 +103,7 @@ export default function PlayoffsPage({ act }) {
           <TeamBadge team={champ} size={64} decorative />
           <div>
             <div className="gg-champ-name">{champ.city} {champ.name}</div>
-            <div className="muted">{league.year}-{String(league.year + 1).slice(2)} Stanley Cup Champions{league.awards?.connSmythe ? ` · Conn Smythe: ${league.awards.connSmythe.name} (${league.awards.connSmythe.why})` : ""}</div>
+            <div className="muted">{league.year}-{String(league.year + 1).slice(2)} Stanley Cup Champions{smythe ? ` · Conn Smythe: ${smythe.name} (${smythe.why})` : ""}</div>
           </div>
           <div style={{ flex: 1 }} />
           {act && league.phase === "playoffs" && <button className="primary" onClick={act.toDraft}>Go to the Draft →</button>}

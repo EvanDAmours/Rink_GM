@@ -56,6 +56,8 @@ import { simFADay } from "./engine/offseason.js";
 import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
 import FeedbackToast from "./ui/FeedbackToast.jsx";
+import Moment from "./ui/Moment.jsx";
+import { closeMoment, momentStopsSim } from "./engine/moments.js";
 import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
 import { staffGapText } from "./engine/franchise.js";
 import { backupSave, dropBackup } from "./engine/saveSlots.js";
@@ -228,7 +230,7 @@ export default function App({ resume = false }) {
       const t0 = performance.now();
       let more = true;
       try {
-        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && leagueRef.current.playoffs?.papers?.some((p) => !p.seen)) more = false; /* a series paper is out: read it before the sim rolls on (other papers wait in Needs Attention) */ }
+        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && leagueRef.current.playoffs?.papers?.some((p) => !p.seen)) more = false; if (more && momentStopsSim(leagueRef.current)) more = false; /* a big moment that asks to be seen now (a clinch, the Cup) */ /* a series paper is out: read it before the sim rolls on (other papers wait in Needs Attention) */ }
       } catch (e) {
         console.error("Simulation step failed", e);
         showToast("The simulation stopped because of an error. Your league is saved; try again or reload.", 7000);
@@ -257,6 +259,11 @@ export default function App({ resume = false }) {
 
   useEffect(() => {
     document.documentElement.style.setProperty("--team", league ? league.teams[league.userTid].colors[0] : "#4ea1ff");
+  });
+
+  // Test hook for browser checks: open the game with ?debug to reach the live league from the console.
+  useEffect(() => {
+    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab }; } catch { /* no window */ }
   });
 
   const ctx = useMemo(
@@ -367,11 +374,11 @@ export default function App({ resume = false }) {
     },
     simDay: () => {
       if (blockers()) return;
-      const ug = L.userGameOnDay(league);
       L.simDay(league);
       commit();
-      // One game simmed: show its box score, as a sim of several days shows a summary.
-      if (ug && ug.played && league.settings?.postgame !== false) setModal({ type: "box", game: ug });
+      // Your game's result card (compact, full or off in Settings) is queued by the engine
+      // (engine/momentsResults.js) and shows as a moment; its Box score button opens the box.
+      // A sim of several days keeps only the latest card, after its summary.
     },
     showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
@@ -666,6 +673,8 @@ export default function App({ resume = false }) {
         {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
         {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}
         {modal?.type === "pick" && <DraftPickCard pid={modal.pid} slot={modal.slot} onClose={() => setModal(null)} />}
+        {/* The big moments wait until the sim has stopped, no live game is on and no other popup is open. */}
+        {league.moments?.length > 0 && !busy && !live && !modal && <Moment key={league.moments[0].key || league.moments.length} m={league.moments[0]} onClose={() => { const done = closeMoment(league); commit(); if (done?.then) setModal(done.then); }} />}
         {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {!modal && !live && !busy && league.ownerReviewPending != null && !league.playoffs?.papers?.some((p) => !p.seen) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}

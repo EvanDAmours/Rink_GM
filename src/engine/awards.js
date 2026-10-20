@@ -4,6 +4,7 @@
 // clubs that earned them. Nothing here changes a player's ratings.
 import { isGoalie, isDefense } from "./constants.js";
 import { savePct, gaa } from "./players.js";
+import { progressAttributes } from "./ratings.js";
 
 function rostered(league) {
   return Object.values(league.players).filter((p) => p.tid >= 0 && league.teams[p.tid]?.roster.includes(p.id));
@@ -130,3 +131,93 @@ export const AWARD_BLURB = {
   messier: "Leadership on and off the ice", jackAdams: "Coach of the year", jimGregory: "General manager of the year", willieORee: "Community hero",
   connSmythe: "Playoff MVP", presidents: "Best regular-season record", princeOfWales: "Eastern Conference champions", campbellBowl: "Western Conference champions", stanley: "Champions",
 };
+
+// ---------- NHL All-Star Teams (First, Second) and the All-Rookie Team ----------
+// Picked when the regular season ends, position by position like the real ballots: a centre, a left
+// wing, a right wing, two defencemen and a goalie on each team. What a player did (season stats)
+// counts most, how good he is (rating) the rest. Making the First Team is worth +2 OVR the next
+// season and the Second Team +1, tapering for players already near the top (Gridiron's All-Pro).
+export const ALL_STAR_SLOTS = [
+  { slot: "C", n: 1, of: (p) => p.pos === "C" },
+  { slot: "LW", n: 1, of: (p) => p.pos === "LW" },
+  { slot: "RW", n: 1, of: (p) => p.pos === "RW" },
+  { slot: "D", n: 2, of: (p) => isDefense(p.pos) },
+  { slot: "G", n: 1, of: (p) => isGoalie(p.pos) },
+];
+export const ALL_STAR_LABEL = { first: "First All-Star Team", second: "Second All-Star Team", rookie: "All-Rookie Team" };
+const ALL_STAR_BOOST = { first: 2, second: 1, rookie: 0 };
+// OVR gained next season for a team: nothing at 95+, at most +1 from 92 to 94.
+export const allStarGain = (team, ovr) => { const g = ALL_STAR_BOOST[team] || 0; return ovr >= 95 ? 0 : ovr >= 92 ? Math.min(1, g) : g; };
+
+const clampPm = (pm) => Math.max(-15, Math.min(20, pm || 0));
+// What a player did this season, on a scale where a big season is around 100.
+function production(p) {
+  const s = p.stats || {};
+  if (isGoalie(p.pos)) return (savePct(s) - 0.9) * 1500 - gaa(s) * 6 + (s.w || 0) * 0.5 + (s.so || 0) * 1.5 + Math.min(s.gp || 0, 65) * 0.15;
+  if (isDefense(p.pos)) return (s.pts || 0) + clampPm(s.pm) * 0.6 + (s.blk || 0) * 0.06 + (s.toi || 0) / 3600 * 0.4;
+  return (s.pts || 0) + (s.g || 0) * 0.35 + clampPm(s.pm) * 0.25 + (p.pos === "C" ? ((s.fow || 0) - (s.fol || 0)) * 0.01 : 0);
+}
+const statLine = (p) => (isGoalie(p.pos) ? `${p.stats.w} W, ${savePct(p.stats).toFixed(3).slice(1)} SV%` : `${p.stats.g}G ${p.stats.a}A ${p.stats.pts}P`);
+// Ballot score: production and rating, each as a spread above or below the field at the position.
+function ballot(field, bonus) {
+  const z = (xs) => { const m = xs.reduce((a, b) => a + b, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length) || 1; return (x) => (x - m) / sd; };
+  const zp = z(field.map(production)), zo = z(field.map((p) => p.ovr || 0));
+  return field.map((p) => ({ p, score: zp(production(p)) * 0.65 + zo(p.ovr || 0) * 0.35 + (bonus[p.id] || 0) }));
+}
+
+// Returns { year, first, second, rookie }: each a list of { slot, pid, name, pos, tid, abbr, line }.
+export function allStarTeams(league, awards = league.awards) {
+  const ps = rostered(league).filter((p) => p.stats);
+  const gp = Math.max(1, ...league.teams.map((t) => t.rec.gp));
+  const enough = (p, f) => (p.stats.gp || 0) >= gp * f;
+  // The trophy winners lead their position, as the voters' ballots do.
+  const bonus = {};
+  for (const [k, b] of [["hart", 0.6], ["norris", 0.9], ["vezina", 0.9], ["artRoss", 0.3], ["rocket", 0.3], ["tedLindsay", 0.3]]) if (awards?.[k]?.pid) bonus[awards[k].pid] = Math.max(bonus[awards[k].pid] || 0, b);
+  const rookieBonus = awards?.calder?.pid ? { [awards.calder.pid]: 0.9 } : {};
+  const entry = (p, slot) => ({ slot, pid: p.id, name: p.name, pos: p.pos, tid: p.tid, abbr: league.teams[p.tid]?.abbr || "", line: statLine(p) });
+  const out = { year: league.year, first: [], second: [], rookie: [] };
+  for (const sl of ALL_STAR_SLOTS) {
+    const field = ps.filter((p) => sl.of(p) && enough(p, isGoalie(p.pos) ? 0.4 : 0.5));
+    const ranked = field.length ? ballot(field, bonus).sort((a, b) => b.score - a.score) : [];
+    ranked.slice(0, sl.n).forEach((x) => out.first.push(entry(x.p, sl.slot)));
+    ranked.slice(sl.n, sl.n * 2).forEach((x) => out.second.push(entry(x.p, sl.slot)));
+    // Rookies: the bar drops if a position has too few regulars, never below a quarter of the season.
+    let rookies = [];
+    for (const f of sl.slot === "G" ? [0.35, 0.2] : [0.4, 0.25]) { rookies = ps.filter((p) => p.rookie && sl.of(p) && enough(p, f)); if (rookies.length >= sl.n) break; }
+    if (rookies.length) ballot(rookies, rookieBonus).sort((a, b) => b.score - a.score).slice(0, sl.n).forEach((x) => out.rookie.push(entry(x.p, sl.slot)));
+  }
+  return out;
+}
+
+// The best team each player made: pid -> "first" | "second" | "rookie" (the rookie team counts least).
+export function allStarById(rec) {
+  const out = {};
+  if (!rec) return out;
+  for (const e of rec.rookie || []) out[e.pid] = "rookie";
+  for (const e of rec.second || []) out[e.pid] = "second";
+  for (const e of rec.first || []) out[e.pid] = "first";
+  return out;
+}
+
+// Next season's gain for the All-Star Teams, applied once per record. Returns [{ pid, name, tid, team, gain }].
+export function applyAllStarGains(league, rec = league.allNHL) {
+  if (!rec || rec.applied) return [];
+  rec.applied = true;
+  const out = [];
+  for (const [pid, team] of Object.entries(allStarById(rec))) {
+    const p = league.players[pid];
+    if (!p) continue;
+    const gain = Math.min(allStarGain(team, p.ovr), 99 - p.ovr);
+    const before = p.ovr;
+    if (gain > 0) {
+      progressAttributes(p, gain);
+      // Attribute noise can drift OVR; pull it back to the intended gain (as development does).
+      const drift = p.ovr - (before + gain);
+      if (Math.abs(drift) >= 1) progressAttributes(p, -drift);
+      if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
+      p.peak = Math.max(p.peak || 0, p.ovr);
+    }
+    out.push({ pid: p.id, name: p.name, tid: p.tid, team, gain: p.ovr - before });
+  }
+  return out;
+}

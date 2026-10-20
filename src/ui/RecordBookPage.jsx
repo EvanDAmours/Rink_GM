@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Select from "./Select.jsx";
 import { useGame, PlayerName, TeamName, TeamBadge } from "./common.jsx";
 import { HISTORICAL_RECORDS as H } from "../data/historicalRecords.js";
-import { franchiseRecords, careerLeaders } from "../engine/records.js";
+import { careerLeaders, seasonMark, SEASON_MARKS, poss } from "../engine/records.js";
 import { isGoalie } from "../engine/constants.js";
 
 // Record Book: the real NHL marks for every franchise and the league, with your
@@ -10,14 +10,27 @@ import { isGoalie } from "../engine/constants.js";
 const fmt = (n) => (n == null ? "—" : n.toLocaleString("en-US"));
 const seasonLabel = (y) => (typeof y === "string" ? y : `${y}–${String(y + 1).slice(2)}`);
 
-function RecordCard({ label, value, holder, when, thisSeason, tone = "light", beaten }) {
-  const p = value ? Math.min(100, Math.round(((thisSeason?.value || 0) / value) * 100)) : 0;
+// One single-season mark. `mark` is the standing record from the book (engine/records.js): the
+// real one, or one set in your league, which goes gold as Gridiron's do ("★ YOURS", whose mark it broke).
+// showTeam: name the holder's club (the NHL view). thisSeason: { name, value } of this season's leader.
+function RecordCard({ label, value, holder, when, thisSeason, tone = "light", mark, showTeam = false }) {
+  const { league } = useGame();
+  const set = !!mark && !mark.real;
+  const v = mark ? mark.value : value;
+  // Set this season: the leader is the holder (NEW RECORD) unless someone has passed him since.
+  const fresh = set && mark.year === league.year && league.phase === "regular";
+  const pct = v ? Math.min(100, Math.round(((thisSeason?.value || 0) / v) * 100)) : 0;
+  const pl = set && mark.pid != null ? league.players[mark.pid] : null;
+  const who = mark ? (pl ? <PlayerName p={pl} showInj={false} /> : mark.name) : holder;
+  const club = showTeam && mark?.team ? ` (${mark.team})` : "";
+  const whenText = mark ? mark.season || seasonLabel(mark.year) : when;
   return (
-    <div className={`gg-rec ${tone}${beaten ? " beaten" : ""}`}>
-      <small>{label}</small>
-      <b>{fmt(value)}</b>
-      <span className="gg-rec-holder">{holder}{when ? ` · ${when}` : ""}</span>
-      {thisSeason && <><div className="gg-rec-bar"><i style={{ width: `${p}%` }} /></div><span className="gg-rec-now">This season: {thisSeason.name}, {fmt(thisSeason.value)}{beaten ? " · NEW RECORD" : ""}</span></>}
+    <div className={`gg-rec ${tone}${fresh ? " beaten" : ""}${set ? " yours" : ""}`}>
+      <div className="gg-rec-top"><small>{label}</small>{set && <span className="gg-rec-tag" title="Set in your league">★ YOURS</span>}</div>
+      <b>{fmt(v)}</b>
+      <span className="gg-rec-holder">{who}{club}{whenText ? ` · ${whenText}` : ""}</span>
+      {set && mark.prev && <span className="gg-rec-broke">Broke {poss(mark.prev.name)} {fmt(mark.prev.value)}{mark.prev.season ? ` (${mark.prev.season})` : ""}</span>}
+      {thisSeason && <><div className="gg-rec-bar"><i style={{ width: `${pct}%` }} /></div><span className="gg-rec-now">This season: {thisSeason.name}, {fmt(thisSeason.value)}{fresh && thisSeason.value >= v ? " · NEW RECORD" : ""}</span></>}
     </div>
   );
 }
@@ -40,7 +53,9 @@ export default function RecordBookPage() {
   const [tid, setTid] = useState(String(league.userTid));
   const team = league.teams[Number(tid)];
   const F = H.franchises[team.abbr], L = H.league;
-  const club = franchiseRecords(league, team.id);
+  // The standing marks: real history, or the new holder once one falls in your league.
+  const fm = (key) => seasonMark(league, "franchise", key, team.abbr);
+  const nm = (key) => seasonMark(league, "nhl", key);
   const rb = league.recordBook || { season: {}, career: {}, game: {} };
   const players = useMemo(() => Object.values(league.players).filter((p) => p.tid === team.id && p.stats.gp), [league, team.id, league.day]); // eslint-disable-line react-hooks/exhaustive-deps
   const best = (key) => players.filter((p) => !isGoalie(p.pos)).sort((a, b) => b.stats[key] - a.stats[key])[0];
@@ -58,7 +73,8 @@ export default function RecordBookPage() {
     return { rows: rows.slice(0, 5), active: activeBest && !rows.slice(0, 5).some((r) => r.name === activeBest.name) ? activeBest : null };
   };
   const simSeasons = (league.seasonArchive || []).map((s) => ({ year: s.year, ...(s.teams.find((t) => t.tid === team.id)?.rec || {}) }));
-  const teamBest = (k) => simSeasons.reduce((m, s) => Math.max(m, s[k] || 0), team.rec?.[k] || 0);
+  const inSeason = league.phase === "regular" || league.phase === "playoffs";
+  const clubNow = (k) => (inSeason && team.rec?.gp ? { name: team.name, value: team.rec[k] || 0 } : null);
 
   return (
     <div className="stack gg-records">
@@ -76,14 +92,14 @@ export default function RecordBookPage() {
           </div>
           <div className="gg-rec-sec"><h3>SINGLE-SEASON RECORDS</h3><span className="dim small">The club's best single seasons, real history plus your league. Beat one and it's yours.</span></div>
           <div className="gg-rec-grid">
-            <RecordCard label="GOALS" value={F.seasonSkater.goals.value} holder={F.seasonSkater.goals.name} when={F.seasonSkater.goals.season} thisSeason={now(best("g"), "g")} beaten={best("g")?.stats.g > F.seasonSkater.goals.value} />
-            <RecordCard label="ASSISTS" value={F.seasonSkater.assists.value} holder={F.seasonSkater.assists.name} when={F.seasonSkater.assists.season} thisSeason={now(best("a"), "a")} beaten={best("a")?.stats.a > F.seasonSkater.assists.value} />
-            <RecordCard label="POINTS" value={F.seasonSkater.points.value} holder={F.seasonSkater.points.name} when={F.seasonSkater.points.season} thisSeason={now(best("pts"), "pts")} beaten={best("pts")?.stats.pts > F.seasonSkater.points.value} />
-            <RecordCard label="GOALIE WINS" value={F.seasonGoalie.wins.value} holder={F.seasonGoalie.wins.name} when={F.seasonGoalie.wins.season} thisSeason={now(bestG("w"), "w")} beaten={bestG("w")?.stats.w > F.seasonGoalie.wins.value} />
-            <RecordCard label="SHUTOUTS" value={F.seasonGoalie.shutouts.value} holder={F.seasonGoalie.shutouts.name} when={F.seasonGoalie.shutouts.season} thisSeason={now(bestG("so"), "so")} beaten={bestG("so")?.stats.so > F.seasonGoalie.shutouts.value} />
-            <RecordCard label="TEAM WINS" value={F.team.wins.value} holder={F.name} when={F.team.wins.season} thisSeason={{ name: "so far", value: team.rec.w }} beaten={teamBest("w") > F.team.wins.value} />
-            <RecordCard label="TEAM POINTS" value={F.team.points.value} holder={F.name} when={F.team.points.season} thisSeason={{ name: "so far", value: team.rec.pts }} beaten={teamBest("pts") > F.team.points.value} />
-            <RecordCard label="GOALS FOR" value={F.team.goalsFor.value} holder={F.name} when={F.team.goalsFor.season} thisSeason={{ name: "so far", value: team.rec.gf }} beaten={teamBest("gf") > F.team.goalsFor.value} />
+            <RecordCard label="GOALS" mark={fm("g")} thisSeason={now(best("g"), "g")} />
+            <RecordCard label="ASSISTS" mark={fm("a")} thisSeason={now(best("a"), "a")} />
+            <RecordCard label="POINTS" mark={fm("pts")} thisSeason={now(best("pts"), "pts")} />
+            <RecordCard label="GOALIE WINS" mark={fm("w")} thisSeason={now(bestG("w"), "w")} />
+            <RecordCard label="SHUTOUTS" mark={fm("so")} thisSeason={now(bestG("so"), "so")} />
+            <RecordCard label="TEAM WINS" mark={fm("tw")} thisSeason={clubNow("w")} />
+            <RecordCard label="TEAM POINTS" mark={fm("tpts")} thisSeason={clubNow("pts")} />
+            <RecordCard label="GOALS FOR" mark={fm("tgf")} thisSeason={clubNow("gf")} />
             <RecordCard label="FEWEST GOALS AGAINST" value={F.team.fewestGoalsAgainst.value} holder={F.name} when={F.team.fewestGoalsAgainst.season} />
           </div>
           <div className="gg-rec-sec"><h3>FRANCHISE CAREER LEADERS</h3><span className="dim small">All-time leaders with the club: its real history, plus everything done in your league. ● marks a current player.</span></div>
@@ -104,8 +120,9 @@ export default function RecordBookPage() {
         <>
           <div className="gg-rec-sec"><h3>NHL SINGLE-SEASON RECORDS</h3><span className="dim small">The league's marks. Your league's best this season is shown underneath.</span></div>
           <div className="gg-rec-grid">
-            {[["GOALS", L.seasonSkater.goals, "g", false], ["ASSISTS", L.seasonSkater.assists, "a", false], ["POINTS", L.seasonSkater.points, "pts", false], ["GOALIE WINS", L.seasonGoalie.wins, "w", true], ["SHUTOUTS", L.seasonGoalie.shutouts, "so", true]].map(([label, rows, key, goalie]) => { const top = rows[0]; const p = Object.values(league.players).filter((x) => x.tid >= 0 && isGoalie(x.pos) === goalie && x.stats.gp).sort((a, b) => b.stats[key] - a.stats[key])[0]; return <RecordCard key={label} label={label} value={top.value} holder={`${top.name} (${top.team})`} when={top.season} thisSeason={p ? { name: p.name, value: p.stats[key] } : null} beaten={p && p.stats[key] > top.value} />; })}
-            {[["TEAM WINS", L.teamSeason.wins], ["TEAM POINTS", L.teamSeason.points], ["TEAM GOALS FOR", L.teamSeason.goalsFor], ["FEWEST GOALS AGAINST", L.teamSeason.fewestGoalsAgainst]].map(([label, r]) => <RecordCard key={label} label={label} value={r.value} holder={r.name} when={r.season} />)}
+            {[["GOALS", "g", false], ["ASSISTS", "a", false], ["POINTS", "pts", false], ["GOALIE WINS", "w", true], ["SHUTOUTS", "so", true]].map(([label, key, goalie]) => { const p = Object.values(league.players).filter((x) => x.tid >= 0 && isGoalie(x.pos) === goalie && x.stats.gp).sort((a, b) => b.stats[key] - a.stats[key])[0]; return <RecordCard key={label} label={label} mark={nm(key)} showTeam thisSeason={p ? { name: p.name, value: p.stats[key] } : null} />; })}
+            {[["TEAM WINS", "tw", "w"], ["TEAM POINTS", "tpts", "pts"], ["TEAM GOALS FOR", "tgf", "gf"]].map(([label, key, k]) => { const t = inSeason ? [...league.teams].sort((a, b) => (b.rec?.[k] || 0) - (a.rec?.[k] || 0))[0] : null; return <RecordCard key={label} label={label} mark={nm(key)} thisSeason={t?.rec?.gp ? { name: t.name, value: t.rec[k] || 0 } : null} />; })}
+            <RecordCard label="FEWEST GOALS AGAINST" value={L.teamSeason.fewestGoalsAgainst.value} holder={L.teamSeason.fewestGoalsAgainst.name} when={L.teamSeason.fewestGoalsAgainst.season} />
           </div>
           <div className="gg-rec-sec"><h3>NHL CAREER LEADERS</h3></div>
           <div className="gg-rec-grid">
@@ -126,11 +143,20 @@ export default function RecordBookPage() {
               </div>
             </div>
           ))}
-          <div className="gg-rec-sec"><h3>RECORDS BROKEN OR TIED IN YOUR LEAGUE</h3></div>
-          <div className="gg-card">{(() => {
-            const broken = [];
-            for (const t of league.teams) { const f = H.franchises[t.abbr]; if (!f) continue; const ps = Object.values(league.players).filter((p) => p.tid === t.id && p.stats.gp); for (const [label, rec, key, goalie] of [["goals", f.seasonSkater.goals, "g", false], ["assists", f.seasonSkater.assists, "a", false], ["points", f.seasonSkater.points, "pts", false], ["goalie wins", f.seasonGoalie.wins, "w", true], ["shutouts", f.seasonGoalie.shutouts, "so", true]]) { const p = ps.filter((x) => isGoalie(x.pos) === goalie).sort((a, b) => b.stats[key] - a.stats[key])[0]; if (p && p.stats[key] >= rec.value && rec.value > 0) broken.push(`${p.name} ${p.stats[key] > rec.value ? "broke" : "tied"} the ${t.name} single-season ${label} record (${rec.name}, ${rec.value}) with ${p.stats[key]}.`); } }
-            return broken.length ? broken.map((b, i) => <div key={i} className="small">🏅 {b}</div>) : <div className="dim">No records have fallen yet. When one does, it's written here.</div>;
+          <div className="gg-rec-sec"><h3>RECORDS BROKEN OR TIED IN YOUR LEAGUE</h3><span className="dim small">NHL and club single-season marks taken in your league, newest first. They stay in the book with the new holder.</span></div>
+          <div className="gg-card gg-rec-log">{(() => {
+            const rows = [];
+            // Ties this season (a share of the mark, not the record itself).
+            if (inSeason) for (const t of league.teams) { const ps = Object.values(league.players).filter((p) => p.tid === t.id && p.stats.gp); for (const d of SEASON_MARKS.filter((x) => !x.team)) { const rec = seasonMark(league, "franchise", d.key, t.abbr); const p = ps.filter((x) => isGoalie(x.pos) === d.goalie).sort((a, b) => b.stats[d.stat] - a.stats[d.stat])[0]; if (rec && p && p.stats[d.stat] === rec.value && String(rec.pid) !== String(p.id)) rows.push({ k: `tie-${t.abbr}-${d.key}`, mine: t.id === league.userTid, text: `🤝 ${p.name} tied the ${t.name} single-season ${d.label.toLowerCase()} record (${rec.name}, ${fmt(rec.value)}).` }); } }
+            for (const e of [...(league.recordBook?.marks?.history || [])].reverse()) {
+              const club = e.club ? league.teams.find((t) => t.abbr === e.club) : null;
+              const where = e.scope === "nhl" ? "NHL" : `${club?.name || e.club}`;
+              const cur = seasonMark(league, e.scope, e.key, e.club);
+              const holds = cur && !cur.real && cur.year === e.year && String(cur.pid ?? cur.tid) === String(e.pid ?? e.tid) && cur.value > e.value ? ` (now ${fmt(cur.value)})` : "";
+              const mine = e.pid != null ? league.players[e.pid]?.tid === league.userTid : e.tid === league.userTid;
+              rows.push({ k: `${e.scope}-${e.club}-${e.key}-${e.year}-${e.day}-${e.pid ?? e.tid}`, mine, text: `${e.scope === "nhl" ? "🏆" : "🏅"} ${seasonLabel(e.year)}: ${e.name} set the ${where} single-season ${e.label.toLowerCase()} record with ${fmt(e.value)}${holds}${e.prev ? `, passing ${poss(e.prev.name)} ${fmt(e.prev.value)}${e.prev.season ? ` (${e.prev.season})` : ""}` : ""}.` });
+            }
+            return rows.length ? rows.slice(0, 60).map((r) => <div key={r.k} className={`small${r.mine ? " mine" : ""}`}>{r.text}</div>) : <div className="dim">No records have fallen yet. When one does, it's written here.</div>;
           })()}</div>
         </>
       )}

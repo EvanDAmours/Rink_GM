@@ -1,8 +1,10 @@
 // The Rink Gazette beyond the playoffs: a trade-deadline recap, a season-in-review
 // issue and the All-Star weekend edition. Papers queue on league.papers and are
-// shown once; nothing here changes standings, ratings or contracts.
+// shown once; nothing here changes standings, ratings or contracts (opening night, called
+// from freezeExpectations, hands out last season's All-Star gains: see momentsCup.js).
 import { place } from "./market.js";
 import { isGoalie } from "./constants.js";
+import { openingNight } from "./momentsCup.js";
 
 export function pushPaper(league, paper) {
   league.papers ||= [];
@@ -18,6 +20,9 @@ const playoffStep = (r) => (!r ? 0 : /First/.test(r) ? 0.5 : /Second/.test(r) ? 
 // Preseason expectations are frozen when the regular season starts so a grade
 // compares what a club was supposed to be with what it became.
 export function freezeExpectations(league) {
+  // Opening night (this is the first thing the regular season runs): last season's All-Star
+  // honourees get their gain before expectations are set, and the defending champions get ring night.
+  openingNight(league);
   // Roster talent regardless of who is hurt on opening night: the best twenty on the roster.
   const strength = (t) => { const o = t.roster.map((id) => league.players[id]?.ovr || 0).sort((a, b) => b - a).slice(0, 20); return o.reduce((s, v) => s + v, 0) / Math.max(1, o.length); };
   const ranked = [...league.teams].map((t) => ({ id: t.id, ovr: strength(t) })).sort((a, b) => b.ovr - a.ovr);
@@ -135,6 +140,7 @@ export function seasonReviewPaper(league) {
     photo2: { tid: user.id, caption: `${user.city}: grade ${mineG.grade}.` },
     side: [
       { h: "League Honors", rows: awardRows },
+      ...(league.allNHL?.year === league.year && league.allNHL.first?.length ? [{ h: "First All-Star Team", rows: league.allNHL.first.map((e) => [e.slot, `${e.name} (${e.abbr})`]) }] : []),
       { h: "Report Card", rows: grades.map((g) => [league.teams[g.tid].abbr, `${g.grade} · ${league.playoffs.champion === g.tid ? "Champions" : g.playoff ? g.playoff.replace("Lost ", "Out: ") : "Missed"}`]) },
       { h: `${user.city} Business`, rows: moves.count ? [["Best", moves.best.text], ...(moves.worst ? [["Worst", moves.worst.text]] : [])] : [["", "No notable moves."]] },
     ],
