@@ -326,8 +326,7 @@ export function startNewSeason(league) {
     delete p.ltir; delete p.waiverPending;
     p.stats = blankStats(p.pos);
     p.pstats = blankStats(p.pos);
-    const nhlGp = p.career.reduce((s, c) => s + (c.s?.gp || 0), 0);
-    p.rookie = nhlGp < 25 && p.age <= 25;
+    p.rookie = calderEligible(p);
   }
   pruneFreeAgents(league);
 
@@ -407,6 +406,15 @@ function pruneFreeAgents(league) {
     if (leave) { retire(league, p, true); gone++; }
   }
   if (gone) logTx(league, `${gone} unsigned players leave the league for Europe or retirement`);
+}
+
+// The Calder Trophy rule: under 26 when the season starts, never more than 25 NHL games in one
+// season and not six or more in each of two seasons. Real players who were already established
+// when the league began carry calderIneligible (their earlier NHL seasons aren't in the game).
+export function calderEligible(p) {
+  if (!p || p.calderIneligible || p.age > 25) return false;
+  const seasons = (p.career || []).map((c) => c.s?.gp || 0);
+  return !seasons.some((gp) => gp > 25) && seasons.filter((gp) => gp >= 6).length < 2;
 }
 
 // Players in a club's minors can retire from this age (the age he'd be next season).

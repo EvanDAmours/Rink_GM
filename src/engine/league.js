@@ -8,6 +8,8 @@ import {recordReport} from './matchReports.js';
 import {upgradeVerifiedData} from './verifiedData.js';
 import {setInjuriesEnabled} from './injuries.js';
 import rosterFile from "../data/nhl27-rosters.json" with { type: "json" };
+import { CALDER_SEASON, CALDER_ROOKIES_2026, CALDER_GRADUATES_2026 } from "../data/calderRookies2026.js";
+import { identity } from "./verifiedData.js";
 import LZString from "lz-string";
 import { TEAMS } from "./teams.js";
 import {snapshotRng,restoreRng} from './rng.js';
@@ -82,6 +84,7 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
     transactions: [],
     inbox: [],
     userTid: 0,
+    calderVersion: 1,
   };
   const user = league.teams.find((t) => t.abbr === userAbbr) || league.teams[0];
   league.userTid = user.id;
@@ -123,7 +126,7 @@ function loadRealRosters(league) {
     for (const e of entries) {
       const p = createPlayer({ ...e, age: league.year - e.born, tid: t.id }, league.year);
       p.signed = true;
-      p.rookie = p.age <= 20;
+      markRealRookie(league, p);
       league.players[p.id] = p;
       t.roster.push(p.id);
     }
@@ -140,6 +143,39 @@ function loadRealRosters(league) {
       p.injuryNote = o.note;
     }
   }
+}
+
+// First-season rookies are the real 2026-27 Calder-eligible players (src/data/calderRookies2026.js).
+// Anyone else on the bundled rosters is an established player, unless he is a teenager the
+// list doesn't know (a roster refreshed after it was checked). Established players stay
+// ineligible in later seasons too, since their earlier NHL games aren't in the game.
+const CALDER_ROOKIES = new Set(CALDER_ROOKIES_2026.map(identity));
+const CALDER_GRADUATES = new Set(CALDER_GRADUATES_2026.map(identity));
+export function isRealRookie(name, age) {
+  const key = identity(name);
+  if (CALDER_ROOKIES.has(key)) return true;
+  return !CALDER_GRADUATES.has(key) && age <= 19;
+}
+function markRealRookie(league, p) {
+  if (league.year !== CALDER_SEASON) { p.rookie = p.age <= 19; return; }
+  p.rookie = isRealRookie(p.name, p.age);
+  if (p.rookie) delete p.calderIneligible;
+  else if (p.age <= 25) p.calderIneligible = true;
+}
+// Saves made before the Calder list flagged everyone 20 or younger as a rookie. Repair real
+// players in a league that is still in its first season; later seasons are left alone.
+export function repairFirstSeasonRookies(l) {
+  if ((l.calderVersion || 0) >= 1) return 0;
+  l.calderVersion = 1;
+  if (l.mode !== "real" || l.year !== (l.startYear ?? FIRST_SEASON) || l.year !== CALDER_SEASON) return 0;
+  let changed = 0;
+  for (const p of Object.values(l.players || {})) {
+    if (!p || !["ea27", "est"].includes(p.src) || p.tid === -2) continue;
+    const was = !!p.rookie;
+    markRealRookie(l, p);
+    if (was !== !!p.rookie) changed++;
+  }
+  return changed;
 }
 
 // Everyone named in a team's real lines or injury list (protected from roster trimming).
@@ -465,6 +501,7 @@ function migrateLeague(l) {
   expandLegacyDraftClass(l);
   sanitizeLegacyNews(l);
   migratePulse(l);
+  repairFirstSeasonRookies(l);
   return l;
 }
 
