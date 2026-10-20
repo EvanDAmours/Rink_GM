@@ -246,3 +246,16 @@ test("each free-agency day leaves a summary: how many signed and the biggest nam
   assert.ok(s.top && lg.players[s.top.pid].tid === s.top.tid);
   assert.match(s.text, new RegExp(`Day ${s.day} of free agency: ${s.signed} signed, led by`));
 });
+
+test("free agency: the contract screen's short offer also keeps your pending bid", async () => {
+  const { submitOffer } = await import("../src/engine/contracts.js");
+  const { lg, t } = faLeague();
+  const p = lg.players[lg.freeAgents.find((id) => lg.players[id].ovr < 76)];
+  assert.ok(negotiate(lg, p.id, 6, 2).ok);
+  assert.equal(lg.negotiations[p.id].status, "pending");
+  const r = submitOffer(lg, p.id, { aav: 0.9, yrs: 2 });
+  assert.equal(r.ok, false);
+  assert.equal(r.keptBid, true);
+  assert.equal(lg.negotiations[p.id].status, "pending");
+  assert.equal(lg.negotiations[p.id].bids.find((b) => b.tid === t.id).aav, 6);
+});

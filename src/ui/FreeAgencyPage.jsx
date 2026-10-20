@@ -1,5 +1,6 @@
 import { negotiate, myOffers, bidStanding, withdrawBid, pendingSpend } from "../engine/negotiations.js";
 import Headshot from "./Headshot.jsx";
+import AbilityChip from "./AbilityChip.jsx";
 import React, { useMemo, useState } from "react";
 import { useGame, PlayerName, money, Modal, ovrColor } from "./common.jsx";
 import Select from "./Select.jsx";
@@ -148,7 +149,7 @@ export default function FreeAgencyPage() {
             return (
               <div key={p.id} className={`gg-farow${p === best ? " top" : ""}`}>
                 <MugPos p={p} team={null} />
-                <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age} yrs · POT {p.pot} · {ARCHETYPES[p.type]?.name}{p.rookie ? " · Rookie" : ""}</small></span>
+                <span className="gg-faname"><b><PlayerName p={p} /><AbilityChip p={p} /></b><small>{p.age} yrs · POT {p.pot} · {ARCHETYPES[p.type]?.name}{p.rookie ? " · Rookie" : ""}</small></span>
                 <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
                 <span className="gg-faask"><b>{money(ask.aav)}</b><small>× {ask.yrs} yr{ask.yrs > 1 ? "s" : ""}</small><MarketTag p={p} /></span>
                 <button className="small primary" disabled={!open} onClick={() => setOfferFor(p.id)}>{bidStanding(league, p.id)?.status === "pending" ? "Raise" : "Offer"}</button>

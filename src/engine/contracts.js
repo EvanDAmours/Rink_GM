@@ -5,7 +5,7 @@
 // season end the talks. A signing bonus is cash from the club's arena account paid up front:
 // players like it (interest up, floor a little lower), the club has to have the cash.
 import { faAsk, resignAsk } from "./offseason.js";
-import { agentPreferences, negotiate } from "./negotiations.js";
+import { agentPreferences, negotiate, keepPendingOnShortOffer } from "./negotiations.js";
 import { capSpace, signPlayer, counts, logTx, hasRoomFor } from "./roster.js";
 import { contractCount } from "./hockeyRules.js";
 import { capForYear, minSalaryForYear, maxSalaryForYear, MAX_ROSTER } from "./constants.js";
@@ -134,6 +134,9 @@ export function submitOffer(league, pid, { aav, yrs, bonusPct = 0, kind }) {
   const ev = evaluateOffer(league, p, { aav, yrs, bonusPct, kind });
   if (ev.walked) return { ok: false, msg: `${p.name}'s agent has ended talks for this season.`, ev };
   if (!ev.agree) {
+    // A short offer while your bid is pending leaves the bid on the table (Gridiron 3.66).
+    const kept = keepPendingOnShortOffer(league, pid, ev.counter);
+    if (kept) return { ...kept, ev };
     const rounds = ev.rounds + 1;
     const walked = rounds >= 4 || (ev.lowball && rounds >= 3);
     league.negotiations ||= {};
