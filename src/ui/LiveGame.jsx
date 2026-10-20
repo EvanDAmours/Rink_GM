@@ -212,7 +212,8 @@ export default function LiveGame({ spec, onDone }) {
   const [paused, setPaused] = useState(!!league.activeGame);
   const [banner, setBanner] = useState(null);
   const isFinal = spec.kind === 'playoff' && spec.series?.round === 3;
-  const [curtain, setCurtain] = useState(isFinal && !league.activeGame?.state?.elapsed);
+  // Every playoff game you play live opens with a walkout (the Final's has the Cup).
+  const [curtain, setCurtain] = useState(spec.kind === 'playoff' && !league.activeGame?.state?.elapsed);
   const [committed, setCommitted] = useState(false);
   const stepInfo = useRef({ at: performance.now(), dur: 1200, shot: null, periodEnd: false, paused: true });
   const clockRef = useRef(null);
@@ -346,7 +347,7 @@ export default function LiveGame({ spec, onDone }) {
       <div className="grid livegrid">
         <div className="stack">
           <Rink s={s} home={home} away={away} stepInfo={stepInfo} clockRef={clockRef} banner={banner} final={isFinal} />
-          {curtain && <CupFinalSplash home={home} away={away} game={(spec.series?.games?.length || 0) + 1} onStart={() => setCurtain(false)} />}
+          {curtain && <CupFinalSplash home={home} away={away} game={(spec.series?.games?.length || 0) + 1} round={spec.series?.round ?? 3} series={spec.series} userTid={league.userTid} year={league.year} onStart={() => setCurtain(false)} />}
           {lastPlay && (
             <div className={`lastplay ${lastPlay.t}`} key={s.events.length}>
               <span className="when">{lastPlay.phase === "so" ? "SO" : `${lastPlay.period > 3 ? (s.playoff ? `${lastPlay.period - 3}OT` : "OT") : ["1st", "2nd", "3rd"][lastPlay.period - 1]} ${clockLabel(lastPlay.clock)}`}</span>
