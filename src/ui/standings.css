@@ -1,0 +1,14 @@
+/* Standings: the NHL clinch letters (Gridiron 3.2's z/y/x/e marks, with hockey's p) and points back. */
+.app .gg-clinch { display: inline-block; font-size: 10.5px; font-weight: 900; line-height: 1.45; padding: 0 5px; border-radius: 4px; border: 1px solid; text-transform: lowercase; }
+.app .gg-clinch.p { color: #1c1206; background: #eab308; border-color: #fde68a; }
+.app .gg-clinch.z { color: #fde047; border-color: #eab30899; }
+.app .gg-clinch.y { color: #38bdf8; border-color: #38bdf888; }
+.app .gg-clinch.x { color: #4ade80; border-color: #22c55e88; }
+.app .gg-clinch.e { color: #f87171; border-color: #ef444488; }
+.app .gg-stand-t tr.elim td { opacity: .55; }
+.app .gg-stand-t tr.elim td:first-child, .app .gg-stand-t tr.elim.me td { opacity: .7; }
+.app .gg-stand-t .pb { color: var(--gg-mt, #64748b); font-weight: 800; font-variant-numeric: tabular-nums; }
+.app .gg-clinch-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12px; color: var(--gg-sl, #94a3b8); }
+.app .gg-clinch-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.app .gg-stand-t td { vertical-align: middle; }
+.app .gg-stand-t .gg-rank { width: 26px; color: var(--gg-mt, #64748b); font-weight: 700; text-align: center; }

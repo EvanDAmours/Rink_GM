@@ -1,15 +1,31 @@
 import React, { useState } from "react";
 import { useGame, TeamBadge, TeamName, ovrColor } from "./common.jsx";
-import { divisionTable, conferenceTable, leagueTable, playoffPicture, clinchStatus } from "../engine/standings.js";
+import { divisionTable, conferenceTable, leagueTable, playoffPicture, clinchStatus, CLINCH_MARKS } from "../engine/standings.js";
 import { DIVISIONS } from "../engine/teams.js";
 import { teamRatings } from "../engine/lines.js";
+import "./standings.css";
 
 const pct = (r) => (r.gp ? (r.pts / (2 * r.gp)).toFixed(3).replace(/^0/, "") : "—");
 const rec = (x) => `${x.w}-${x.l}-${x.otl}`;
+const MARK_TITLE = Object.fromEntries(CLINCH_MARKS);
 
-function StandTable({ teams, cutAfter, title, accent = "#3b82f6", startRank = 1 }) {
+// The NHL's clinch letters (Gridiron 3.2): p Presidents' Trophy, z conference, y division, x playoff spot, e eliminated.
+export function ClinchMark({ mark }) {
+  if (!mark) return null;
+  return <span className={`gg-clinch ${mark}`} title={MARK_TITLE[mark]} aria-label={MARK_TITLE[mark]}>{mark}</span>;
+}
+export function ClinchLegend() {
+  return (
+    <div className="gg-clinch-legend" aria-label="Clinch marks">
+      {CLINCH_MARKS.map(([k, label]) => <span key={k}><ClinchMark mark={k} />{label}</span>)}
+    </div>
+  );
+}
+
+// `marks`: clinchStatus for the league; `back`: show points back of `back` (the last wild card).
+function StandTable({ teams, cutAfter, title, accent = "#3b82f6", startRank = 1, marks, back = null }) {
   const { league } = useGame();
-  const status = clinchStatus(league);
+  const status = marks || clinchStatus(league);
   return (
     <section className="gg-stand" style={{ "--acc": accent }}>
       {title && <div className="gg-stand-h"><span>{title}</span>{cutAfter != null && <small>top {cutAfter} qualify</small>}</div>}
@@ -17,8 +33,8 @@ function StandTable({ teams, cutAfter, title, accent = "#3b82f6", startRank = 1 
         <table className="t gg-stand-t">
           <thead>
             <tr>
-              <th className="rk">#</th><th>Team</th><th className="num">GP</th><th className="num">W</th><th className="num">L</th><th className="num">OTL</th>
-              <th className="num pts">PTS</th><th className="num opt">P%</th><th className="num opt">RW</th><th className="num opt">ROW</th><th className="num">GF</th>
+              <th className="gg-rank">#</th><th>Team</th><th className="num">GP</th><th className="num">W</th><th className="num">L</th><th className="num">OTL</th>
+              <th className="num pts">PTS</th>{back && <th className="num pb" title="Points back of the last wild card">PB</th>}<th className="num opt">P%</th><th className="num opt">RW</th><th className="num opt">ROW</th><th className="num">GF</th>
               <th className="num">GA</th><th className="num">DIFF</th><th className="opt">Home</th><th className="opt">Away</th><th className="l10">L10</th><th>Strk</th><th className="num">OVR</th>
             </tr>
           </thead>
@@ -31,15 +47,19 @@ function StandTable({ teams, cutAfter, title, accent = "#3b82f6", startRank = 1 
               const ovr = teamRatings(league, t).ovr;
               const streak = r.streak && r.gp ? `${r.streak[0]}${r.streak[1]}` : "—";
               return (
-                <tr key={t.id} className={`${t.id === league.userTid ? "me" : ""} ${cutAfter != null && i === cutAfter - 1 ? "cut" : ""}`}>
-                  <td className="rk">{startRank + i}</td>
-                  <td className="gg-stand-team">
-                    <TeamBadge team={t} size={26} />
-                    <b><TeamName tid={t.id} /></b>
-                    {st && <span className={`gg-clinch ${st === "x" ? "x" : "e"}`} title={st === "x" ? "Clinched playoff spot" : "Eliminated"}>{st}</span>}
+                <tr key={t.id} className={`${t.id === league.userTid ? "me" : ""} ${cutAfter != null && i === cutAfter - 1 ? "cut" : ""} ${st === "e" ? "elim" : ""}`}>
+                  <td className="gg-rank">{startRank + i}</td>
+                  <td className="gg-stand-tc">
+                    {/* The flex row lives inside the cell: a flex <td> drops out of the table layout. */}
+                    <div className="gg-stand-team">
+                      <TeamBadge team={t} size={26} />
+                      <b><TeamName tid={t.id} /></b>
+                      <ClinchMark mark={st} />
+                    </div>
                   </td>
                   <td className="num">{r.gp}</td><td className="num">{r.w}</td><td className="num">{r.l}</td><td className="num">{r.otl}</td>
                   <td className="num pts"><b>{r.pts}</b></td>
+                  {back && <td className="num pb">{cutAfter != null && i >= cutAfter && r.gp ? back.rec.pts - r.pts : "—"}</td>}
                   <td className="num opt">{pct(r)}</td>
                   <td className="num opt">{r.rw}</td><td className="num opt">{r.row}</td><td className="num">{r.gf}</td><td className="num">{r.ga}</td>
                   <td className={`num ${diff > 0 ? "good" : diff < 0 ? "bad" : "dim"}`}>{diff > 0 ? "+" : ""}{diff}</td>
@@ -64,6 +84,7 @@ const DIV_ACC = { Atlantic: "#3b82f6", Metropolitan: "#8b5cf6", Central: "#ef444
 export default function StandingsPage() {
   const { league } = useGame();
   const [view, setView] = useState("wild");
+  const marks = clinchStatus(league);
   const me = league.teams[league.userTid];
   const conf = league.teams.filter((t) => t.conf === me.conf).sort((a, b) => b.rec.pts - a.rec.pts || b.rec.rw - a.rec.rw);
   const myConfRank = conf.findIndex((t) => t.id === me.id) + 1;
@@ -78,9 +99,9 @@ export default function StandingsPage() {
           ))}
         </div>
       </div>
-      {view === "div" && Object.entries(DIVISIONS).flatMap(([, divs]) => divs.map((d) => <StandTable key={d} title={`${d} Division`} accent={DIV_ACC[d]} teams={divisionTable(league, d)} cutAfter={3} />))}
-      {view === "conf" && ["East", "West"].map((c) => <StandTable key={c} title={`${c}ern Conference`} accent={CONF_ACC[c]} teams={conferenceTable(league, c)} cutAfter={8} />)}
-      {view === "league" && <StandTable title="League" accent="#22c55e" teams={leagueTable(league)} cutAfter={16} />}
+      {view === "div" && Object.entries(DIVISIONS).flatMap(([, divs]) => divs.map((d) => <StandTable key={d} title={`${d} Division`} accent={DIV_ACC[d]} teams={divisionTable(league, d)} cutAfter={3} marks={marks} />))}
+      {view === "conf" && ["East", "West"].map((c) => <StandTable key={c} title={`${c}ern Conference`} accent={CONF_ACC[c]} teams={conferenceTable(league, c)} cutAfter={8} marks={marks} />)}
+      {view === "league" && <StandTable title="League" accent="#22c55e" teams={leagueTable(league)} cutAfter={16} marks={marks} />}
       {view === "wild" &&
         ["East", "West"].map((c) => {
           const pic = playoffPicture(league, c);
@@ -88,13 +109,14 @@ export default function StandingsPage() {
             <div key={c} className="stack gg-conf" style={{ "--acc": CONF_ACC[c] }}>
               <div className="gg-conf-h">{c}ern Conference</div>
               <div className="gg-stand-grid">
-                {pic.order.map((d) => <StandTable key={d} title={`${d} — top 3`} accent={DIV_ACC[d]} teams={pic.divs[d]} />)}
+                {pic.order.map((d) => <StandTable key={d} title={`${d} — top 3`} accent={DIV_ACC[d]} teams={pic.divs[d]} marks={marks} />)}
               </div>
-              <StandTable title="Wild Card race" accent={CONF_ACC[c]} teams={[...pic.wildcards, ...pic.out]} cutAfter={2} />
+              <StandTable title="Wild Card race" accent={CONF_ACC[c]} teams={[...pic.wildcards, ...pic.out]} cutAfter={2} marks={marks} back={pic.wildcards[1] || pic.wildcards[0] || null} />
             </div>
           );
         })}
-      <div className="muted small">Tiebreakers: points, points %, regulation wins, regulation + OT wins, wins, goal differential. x = clinched, e = eliminated. Dashed line marks the playoff cut.</div>
+      <ClinchLegend />
+      <div className="muted small">Tiebreakers: points, points %, regulation wins, regulation + OT wins, wins, goal differential. Dashed line marks the playoff cut{view === "wild" ? "; PB is points back of the last wild card" : ""}.</div>
     </div>
   );
 }
