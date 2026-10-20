@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useGame, TeamBadge, PlayerName, TeamName, money, ovrColor } from "./common.jsx";
 import Select from "./Select.jsx";
 import { divisionTable, conferenceTable } from "../engine/standings.js";
@@ -15,7 +15,12 @@ import { currentSlot, draftDone } from "../engine/draft.js";
 import { teamDraftGrade } from "../engine/scouting.js";
 import { ensurePulse, repTier, playoffOdds } from "../engine/clubPulse.js";
 import { winProbability, teamStrength } from "../engine/matchup.js";
-import { TRAINING, setTraining } from "../engine/franchise.js";
+import { TRAINING, setTraining, staffGapText } from "../engine/franchise.js";
+import { focusCandidates, autoFocus, FOCUS_SLOTS } from "../engine/developmentPlan.js";
+import { tradeRequests, talkDown, shopPlayer, shoppedOffers, TALK_COST } from "../engine/tradeRequests.js";
+import { tradeLabels } from "../engine/market.js";
+import { useDialogFocus } from "./accessibility.js";
+import Icon from "./Icon.jsx";
 import { composites } from "../engine/ratings.js";
 import { savePct } from "../engine/players.js";
 import { atCombine } from "../engine/scouting.js";
@@ -42,8 +47,12 @@ function lastResults(league, t, n = 5) {
   });
 }
 
+// Needs Attention, as in the football game: urgent first, then decisions, then news.
+const TONE_RANK = { urgent: 0, action: 1, info: 2 };
+const titleCase = (s) => String(s || "").toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
 export default function Dashboard({ act = {} }) {
-  const { league: lg, go, openBox, commit, toast } = useGame();
+  const { league: lg, go, openBox, commit, toast, openPlayer, openPaper } = useGame();
   const t = lg.teams[lg.userTid];
   const gm = ensurePulse(lg);
   const rep = repTier(gm.rep);
@@ -70,25 +79,53 @@ export default function Dashboard({ act = {} }) {
   const focused = Object.keys(t.training?.assignments || {}).filter((id) => lg.players[id]?.tid === t.id);
   const campDone = t.camp?.year === lg.year && t.camp.games.length >= 4;
   const [pick, setPick] = useState(0);
-  const [allAttention, setAllAttention] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [rightTab, setRightTab] = useState("stories");
   const [labPick, setLabPick] = useState("");
+  const [labSort, setLabSort] = useState("pos"); // "pos": grouped by position; "growth": one list, fastest growers first
+  const [labFlash, setLabFlash] = useState(false);
+  const labRef = useRef(null);
+  const inSeason = lg.phase === "preseason" || (lg.phase === "regular" && !seasonOver(lg));
 
+  // Each item: { key, icon, title, sub, tone: "urgent" | "action" | "info", cta, onOpen, actions, onDismiss }.
   const attention = [];
-  if (room < 0) attention.push(["bad", `Over the cap by ${money(-room)}`, "roster"]);
-  // Roster limits and depth only matter once camp opens; over the summer the list is noise.
+  const add = (it) => attention.push(it);
+  if (room < 0) add({ key: "cap", icon: "💸", tone: "urgent", title: `Over the cap by ${money(-room)}`, sub: "Trade, release or send down players to get under the cap.", cta: "Roster", onOpen: () => go("roster") });
   // Roster limits matter while games are still being played; once the Cup is awarded they wait for the summer.
-  if (["preseason", "regular"].includes(lg.phase) || (lg.phase === "playoffs" && lg.playoffs?.champion == null)) issues.forEach((i) => attention.push(["bad", i, "roster"]));
-  if (lg.phase === "preseason" && !campDone) attention.push(["bad", "🏕️ Training camp isn't finished", "roster"]);
-  starters.forEach((p) => attention.push([lg.settings?.coachLines ? "info" : "warn", `🚑 ${p.name} (${p.pos} ${p.ovr}) out ${p.injury} game${p.injury === 1 ? "" : "s"}${lg.settings?.coachLines ? " · coach covered" : ""}`, "lines"]));
-  if (!focused.length && ["preseason", "regular"].includes(lg.phase)) attention.push(["warn", "🧪 No development focus players set", null]);
-  if (t.autoPlan !== false && lg.phase === "preseason") attention.push(["warn", "📋 Set your systems and game plan", "analysis"]);
-  roster.filter((p) => p.yrs === 1 && p.ovr >= 80 && !p.extension).slice(0, 3).forEach((p) => attention.push(["warn", `✍️ Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`, "frontoffice"]));
-  if (pending) attention.push(["warn", `${pending} offer sheet${pending > 1 ? "s" : ""} awaiting a decision`, "operations"]);
-  if (["resign", "freeagency"].includes(lg.phase) && expiring) attention.push(["warn", `${expiring} expiring contracts: re-sign window open`, "freeagency"]);
-  if (expiring >= 6) attention.push(["warn", `⌛ ${expiring} players in the last year of their deals`, "frontoffice"]);
-  if (trust < 35) attention.push(["bad", `Owner trust ${trust}/100: hot seat`, "frontoffice"]);
+  if (["preseason", "regular"].includes(lg.phase) || (lg.phase === "playoffs" && lg.playoffs?.champion == null)) issues.forEach((i, n) => add({ key: `issue${n}`, icon: "⚠️", tone: "urgent", title: i, sub: "Fix it on the Roster screen before the next game.", cta: "Roster", onOpen: () => go("roster") }));
+  if (lg.phase === "preseason" && !campDone) add({ key: "camp", icon: "🏕️", tone: "urgent", title: "Training camp isn't finished", sub: "Camp work, position battles and the dev camp only happen before opening night.", cta: "Training camp", onOpen: () => go("roster") });
+  // An interim head coach (or an empty staff chair) stays on the list until the job is filled.
+  const staff = staffGapText(t);
+  if (staff) add({ key: "coach", icon: "🪑", tone: inSeason ? "urgent" : "action", title: staff.head, sub: staff.text, cta: "Hire a coach", onOpen: () => go("coaching", "coaching") });
+  // Development focus: every one of the three slots in use, by players still with the club.
+  const labGone = Object.keys(t.training?.assignments || {}).filter((id) => lg.players[id]?.tid !== t.id).map((id) => lg.players[id]).filter(Boolean);
+  const labOpen = FOCUS_SLOTS - focused.length;
+  // After the list closes (and gives focus back), so the scroll isn't undone.
+  const toLab = () => { setInboxOpen(false); setTimeout(() => { labRef.current?.scrollIntoView?.({ block: "center", behavior: "smooth" }); setLabFlash(true); setTimeout(() => setLabFlash(false), 1600); }, 80); };
+  const fillLab = () => { const r = autoFocus(lg); toast(r.msg); commit(); };
+  if (inSeason && labOpen > 0) add({ key: "devfocus", icon: "🧪", tone: "urgent",
+    title: labGone.length ? `${labGone[0].name} left the club: a development focus slot is open` : labOpen === FOCUS_SLOTS ? "No development focus players set" : `${labOpen} development focus slot${labOpen === 1 ? "" : "s"} open`,
+    sub: "Each week a focus player banks training work in his weakest skill group. An empty slot wastes those weeks.", cta: "Set focus", onOpen: toLab,
+    actions: [{ label: "Pick the fastest growers", onClick: fillLab }] });
+  // Trade requests: one item each, with the two ways to settle it right there.
+  tradeRequests(lg).forEach(({ p, trust }) => add({ key: `tr${p.id}`, icon: "📨", tone: "action", title: `${p.name} (${p.pos} ${p.ovr}) wants a trade · trust ${trust}`,
+    sub: `His trust in you is down to ${trust}/100. Talk him down (${TALK_COST} scouting point, +20 trust, he stays) or shop him and see what offer comes back.`, cta: "Player card", onOpen: () => openPlayer?.(p.id),
+    actions: [{ label: `💬 Talk him down · ${TALK_COST} pt`, onClick: () => { const r = talkDown(lg, p.id); toast(r.msg); commit(); } }, { label: "📞 Shop him", onClick: () => { const r = shopPlayer(lg, p.id); toast(r.msg, 5000); commit(); } }] }));
+  shoppedOffers(lg).forEach((o) => { const club = lg.teams[o.tid], who = lg.players[o.give[0]]; add({ key: `offer${o.id}`, icon: "💰", tone: "urgent", title: `Trade offer from the ${club.city} ${club.name}`, sub: `${tradeLabels(lg, o).bGets.join(" + ")} for your ${who?.name || "player"}.`, cta: "Review", onOpen: () => go("block") }); });
+  starters.forEach((p) => add({ key: `inj${p.id}`, icon: "🚑", tone: lg.settings?.coachLines ? "info" : "action", title: `${p.name} (${p.pos} ${p.ovr}) out ${p.injury} game${p.injury === 1 ? "" : "s"}${lg.settings?.coachLines ? " · coach covered" : ""}`, sub: lg.settings?.coachLines ? "Your head coach filled the hole with the best healthy scratch." : "Set your lines around him.", cta: "Lines", onOpen: () => go("lines") }));
+  if (t.autoPlan !== false && lg.phase === "preseason") add({ key: "plan", icon: "📋", tone: "action", title: "Set your systems and game plan", sub: "Check that your systems and lines fit the roster before opening night.", cta: "Game plan", onOpen: () => go("analysis") });
+  roster.filter((p) => p.yrs === 1 && p.ovr >= 80 && !p.extension).slice(0, 3).forEach((p) => add({ key: `cy${p.id}`, icon: "✍️", tone: "action", title: `Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`, sub: "Extend him now at today's price, or let him play it out and pay the market rate.", cta: "Contracts", onOpen: () => go("frontoffice") }));
+  if (pending) add({ key: "sheets", icon: "📝", tone: "action", title: `${pending} offer sheet${pending > 1 ? "s" : ""} awaiting a decision`, sub: "Match it or take the compensation.", cta: "Review", onOpen: () => go("operations") });
+  if (["resign", "freeagency"].includes(lg.phase) && expiring) add({ key: "resign", icon: "✍️", tone: "action", title: `${expiring} expiring contracts: re-sign window open`, sub: "Talk to your expiring players before they reach the market.", cta: "Re-sign", onOpen: () => go("freeagency") });
+  if (expiring >= 6) add({ key: "expiring", icon: "⌛", tone: "action", title: `${expiring} players in the last year of their deals`, sub: "Extend the ones you want to keep, or plan for the re-sign window.", cta: "Contracts", onOpen: () => go("frontoffice") });
+  if (trust < 35) add({ key: "owner", icon: "👔", tone: "urgent", title: `Owner trust ${trust}/100: hot seat`, sub: "The owner wants results. See what he expects this season.", cta: "Owner", onOpen: () => go("frontoffice") });
+  // News that needs no answer waits here instead of popping up over the game.
+  const papers = (lg.papers || []).filter((x) => !x.seen);
+  const paper = papers.at(-1);
+  if (paper) add({ key: `paper${paper.id}`, icon: "📰", tone: "info", title: `The Rink Gazette: ${titleCase(paper.edition)}`, sub: `${paper.sub || paper.headline}${papers.length > 1 ? ` · ${papers.length - 1} more edition${papers.length > 2 ? "s" : ""} waiting` : ""}`, cta: "Read", onOpen: () => openPaper?.(paper.id), onDismiss: () => { paper.seen = true; commit(); } });
+  attention.sort((a, b) => TONE_RANK[a.tone] - TONE_RANK[b.tone]);
+  const urgentN = attention.filter((x) => x.tone === "urgent").length;
 
   // ---- Matchup card for the selected upcoming game (or the live series) ----
   const sel = series ? null : upcoming[Math.min(pick, upcoming.length - 1)];
@@ -130,15 +167,18 @@ export default function Dashboard({ act = {} }) {
   const stageIdx = STAGES.findIndex(([k]) => k === stage);
   const stories = (() => { const seen = new Set(); return (lg.news?.length ? lg.news : lg.inbox.slice().reverse()).filter((n) => { const k = (n.title || n.text || "").replace(/\d+/g, "#").slice(0, 60); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 7); })();
   const leaders = [["PTS", (p) => p.stats.pts], ["G", (p) => p.stats.g], ["A", (p) => p.stats.a]].map(([k, f]) => [k, roster.filter((x) => !isGoalie(x.pos)).sort((a, b) => f(b) - f(a) || b.ovr - a.ovr)[0], f]);
-  const labAdd = (pid) => { const p = lg.players[pid]; if (!p) return; const groups = Object.entries(TRAINING).filter(([k]) => isGoalie(p.pos) === (k === "goaltending")); const [k] = groups.sort((a, b) => a[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / a[1].keys.length - b[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / b[1].keys.length)[0]; const r = setTraining(lg, pid, k); toast(r.msg); commit(); setLabPick(""); };
+  const labAdd = (pid) => { const p = lg.players[pid]; if (!p) return; for (const id of Object.keys(t.training?.assignments || {})) if (lg.players[id]?.tid !== t.id) delete t.training.assignments[id]; const groups = Object.entries(TRAINING).filter(([k]) => isGoalie(p.pos) === (k === "goaltending")); const [k] = groups.sort((a, b) => a[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / a[1].keys.length - b[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / b[1].keys.length)[0]; const r = setTraining(lg, pid, k); toast(r.msg); commit(); setLabPick(""); };
   const labRemove = (pid) => { const r = setTraining(lg, pid, ""); toast(r.msg); commit(); };
+  // Growth ranking for the focus picker: the development desk's own score (young, room to grow, trait).
+  const growth = new Map(focusCandidates(lg, t).map(({ p, score }) => [p.id, score]));
+  const labOption = (p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot}){p.injury > 0 ? " · injured" : p.age <= 24 ? " · ~fast" : p.age >= 31 ? " · slow" : ""}</option>;
   const RatingTiles = ({ r }) => r ? <div className="gg-rtiles"><div style={{ "--c": ratingColor(r.ovr) }}><b>{r.ovr}</b><small>OVR</small></div><div style={{ "--c": ratingColor(r.fwd) }}><b>{r.fwd}</b><small>OFF</small></div><div style={{ "--c": ratingColor(r.def) }}><b>{r.def}</b><small>DEF</small></div><div style={{ "--c": ratingColor(r.g) }}><b>{r.g}</b><small>G</small></div></div> : null;
 
   return (
     <div className="gg-home stack">
 
       <div className="gg-status-row">
-        <section className={`gg-stat ${attention.length ? "alert" : "ok"}`} onClick={() => attention[0]?.[2] && go(attention[0][2])}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.[1].replace(/^\S+\s/, (m) => (/[a-zA-Z0-9]/.test(m) ? m : "")) || "No urgent issues"}</span></div></section>
+        <section className={`gg-stat rk-attn ${urgentN ? "alert" : attention.length ? "warn" : "ok"}`} onClick={() => setInboxOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setInboxOpen(true))} aria-label={`Needs attention: ${attention.length} items`}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.title || "No urgent issues"}</span></div></section>
         <section className="gg-stat" onClick={() => go("standings")}><small>RECORD</small><div className="gg-stat-line"><b>{rec(t.rec)}</b><span>{t.rec.gp ? `${ORD(divRank)} in the ${t.div}${odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}` : `${ORD(divRank)} in the ${t.div}`}</span></div></section>
         <section className="gg-stat" onClick={() => go("roster")}><small>CAP SPACE</small><div className="gg-stat-line"><b style={{ color: room < 0 ? "#ef4444" : "#22c55e" }}>{money(room)}</b><span>{expiring} expiring deals</span></div></section>
         <section className={`gg-stat ${starters.length ? "warn" : ""}`} onClick={() => go("lines")}><small>ROSTER HEALTH</small><div className="gg-stat-line"><b style={{ color: injured.length ? "#ef4444" : "#22c55e" }}>{injured.length ? `${injured.length} injured` : "Healthy"}</b><span>{starters.length ? `${starters.length} starter-level out` : `${counts(lg, t).active} on the roster`}</span></div></section>
@@ -150,8 +190,13 @@ export default function Dashboard({ act = {} }) {
           <h3 className="gg-side-title">This week</h3>
           <div className="gg-rail">
             {lg.phase === "preseason" ? <div className="gg-rail-card primary" onClick={() => go("roster")}><b>Training Camp</b><span>Camp work and mini games to improve your roster before the season</span></div> : <div className="gg-rail-card primary" onClick={() => go("schedule")}><b>Schedule</b><span>Your games, this week's game plan and the playoff picture</span></div>}
-            {attention.slice(0, allAttention ? attention.length : 5).map(([kind, text, tab], i) => <div key={i} className={`gg-rail-item ${kind}`} onClick={() => tab && go(tab)}>{text}</div>)}
-            {attention.length > 5 && <button className="gg-rail-item info" onClick={() => setAllAttention((v) => !v)}>{allAttention ? "Show fewer" : `See all ${attention.length} items`}</button>}
+            {attention.slice(0, 7).map((it) => (
+              <div key={it.key} className={`rk-todo t-${it.tone}`}>
+                <button className="rk-todo-main" onClick={() => (it.onOpen ? it.onOpen() : setInboxOpen(true))}>{it.icon} {it.title}</button>
+                {it.actions?.length > 0 && <div className="rk-acts">{it.actions.map((a) => <button key={a.label} onClick={a.onClick}>{a.label}</button>)}</div>}
+              </div>
+            ))}
+            {attention.length > 7 && <div className="rk-todo t-info"><button className="rk-todo-main" onClick={() => setInboxOpen(true)}>+{attention.length - 7} more in Needs Attention</button></div>}
             {recent.length > 0 && <div className="gg-k" style={{ marginTop: 8 }}>LAST RESULTS</div>}
             {recent.map((g) => { const o = lg.teams[g.h === t.id ? g.a : g.h], h = g.h === t.id, us = h ? g.hs : g.as, them = h ? g.as : g.hs; return <div key={g.id} className="gg-rail-game click" onClick={() => openBox(g)}><span className="dim">{dayToDate(lg.year, g.day, lg.scheduleStart)}</span><b style={{ color: us > them ? "#22c55e" : g.ot ? "#eab308" : "#ef4444" }}>{us > them ? "W" : g.ot ? "OTL" : "L"} {us}-{them}</b><TeamBadge team={o} size={20} decorative /><span className="gg-rail-name">{o.abbr}</span></div>; })}
           </div>
@@ -215,16 +260,19 @@ export default function Dashboard({ act = {} }) {
           ) : (
             <div className="gg-stories">{injured.map((p) => <div key={p.id} className="gg-inj"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="bad">{p.injury} g</span></div>)}{!injured.length && <div className="dim small">Everyone is healthy.</div>}</div>
           )}
-          <section className="gg-lab">
+          <section className={`gg-lab${labFlash ? " rk-flash" : ""}`} id="dev-focus" data-tour="devfocus" ref={labRef}>
             <div className="gg-k">DEVELOPMENT FOCUS</div>
             <div className="dim small">Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.</div>
             {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in the lab. Pick a player below.</div>}
-            {focused.length < 3 && (
+            {focused.length < 3 && (<>
+              <div className="rk-lab-pick"><span>{FOCUS_SLOTS - focused.length} SLOT{FOCUS_SLOTS - focused.length === 1 ? "" : "S"} OPEN</span><span className="rk-sort"><small>Sort</small>{[["pos", "Position"], ["growth", "Growth"]].map(([k, l]) => <button key={k} className={labSort === k ? "on" : ""} aria-pressed={labSort === k} onClick={() => setLabSort(k)}>{l}</button>)}</span></div>
               <Select value={labPick} onChange={(e) => labAdd(e.target.value)} aria-label="Add a development focus player" placeholder="— choose a player —" style={{ width: "100%" }}>
                 <option value="">— choose a player —</option>
-                {["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => b.pot - b.ovr - (a.pot - a.ovr)).map((p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot}){p.age <= 24 ? " · ~fast" : p.age >= 31 ? " · slow" : ""}</option>)}</optgroup>)}
+                {labSort === "growth"
+                  ? roster.filter((p) => !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)
+                  : ["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)}</optgroup>)}
               </Select>
-            )}
+            </>)}
           </section>
           <section className="gg-lab gg-home-watch">
             <div className="gg-k">PROSPECT WATCH <button className="tiny ghost" style={{ marginLeft: "auto" }} onClick={() => go("development")}>All →</button></div>
@@ -233,6 +281,43 @@ export default function Dashboard({ act = {} }) {
           </section>
           {t.rec.gp > 0 && <><div className="gg-k" style={{ marginTop: 10 }}>CLUB LEADERS</div><div className="gg-stories">{leaders.map(([k, p, f]) => p ? <div key={k} className="gg-inj"><span className="gg-pill">{k}</span><b><PlayerName p={p} /></b><span>{f(p)}</span></div> : null)}</div></>}
         </aside>
+      </div>
+      {inboxOpen && <NeedsAttention items={attention} onClose={() => setInboxOpen(false)} />}
+    </div>
+  );
+}
+
+// The full Needs Attention list (the football game's inbox): every item with its way in,
+// and the decisions you can make right there.
+function NeedsAttention({ items, onClose }) {
+  const ref = useRef(null);
+  useDialogFocus(ref, onClose);
+  const urgent = items.filter((i) => i.tone === "urgent").length;
+  return (
+    <div className="rk-inbox-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={ref} className="rk-inbox" role="dialog" aria-modal="true" aria-label="Needs attention" tabIndex={-1}>
+        <div className="rk-inbox-head">
+          <b>📥 Needs Attention</b>
+          <span>{items.length ? `${items.length} item${items.length === 1 ? "" : "s"}${urgent ? ` · ${urgent} urgent` : ""}` : "All caught up"}</span>
+          <button className="ghost rk-inbox-x" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
+        </div>
+        {!items.length && <div className="rk-inbox-empty">Nothing needs your attention right now.</div>}
+        <div className="rk-inbox-list">
+          {items.map((it) => (
+            <div key={it.key} className={`rk-inbox-item t-${it.tone}`}>
+              <span className="rk-inbox-icon" aria-hidden="true">{it.icon}</span>
+              <div className="rk-inbox-body">
+                <b>{it.title}</b>
+                {it.sub && <span title={it.sub}>{it.sub}</span>}
+                {it.actions?.length > 0 && <div className="rk-acts">{it.actions.map((a) => <button key={a.label} onClick={a.onClick}>{a.label}</button>)}</div>}
+              </div>
+              <div className="rk-inbox-side">
+                {it.onOpen && <button className={`rk-cta t-${it.tone}`} onClick={() => { onClose(); it.onOpen(); }}>{it.cta || "Open"}</button>}
+                {it.onDismiss && <button className="rk-dismiss" onClick={it.onDismiss}>Dismiss</button>}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
