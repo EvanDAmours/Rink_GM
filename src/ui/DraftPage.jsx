@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Select from "./Select.jsx";
 import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
-import { makePick, currentSlot, draftDone, pickLabel, aiChoose } from "../engine/draft.js";
+import { makePick, currentSlot, draftDone, aiChoose, pickSlot } from "../engine/draft.js";
+import { teamNeeds } from "../engine/teamPlanning.js";
+import { POS_COLOR } from "./TradePage.jsx";
 import { DRAFT_ROUNDS, SCOUT_POINTS_START, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBINE, COMBINE_INVITES } from "../engine/constants.js";
 import {
-  projection, prospectRead, classPool, csRank, fmtHeight, gradeClass, COMBINE_TESTS, interviewProspect, atCombine, openDraftFloor,
+  prospectRead, classPool, csRank, fmtHeight, gradeClass, COMBINE_TESTS, interviewProspect, atCombine, openDraftFloor,
   myList, onMyList, toggleMyList, moveOnMyList, pickTake, teamDraftGrade, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_TRAITS,
   staffWindowOpen, hireScout, releaseScout, swapScoutRoles, scoutGroup, SCOUT_SLOTS,
 } from "../engine/scouting.js";
@@ -362,6 +364,107 @@ function CombineView() {
   );
 }
 
+// ---------- Your picks ----------
+
+// One chip per round for each draft, as in the football game: R1 #12 … R7 #204. A pick you've
+// used is struck through with the player you took; a round you traded away is faded.
+// Numbers come from the running draft, or the standings for the coming one.
+function trackerRow(league, year) {
+  const user = league.teams[league.userTid];
+  const d = league.draft;
+  const live = d?.year === year && Array.isArray(d.slots);
+  const owned = live
+    ? d.slots.filter((s) => s.owner === user.id).map((s) => ({ key: `s${s.overall}`, round: s.round, orig: s.orig, overall: s.overall, pid: s.pid }))
+    : league.draftPicks.filter((pk) => pk.year === year && pk.owner === user.id).map((pk) => ({ key: pk.id, round: pk.round, orig: pk.orig, overall: pickSlot(league, pk)?.overall ?? null }));
+  const away = (round) => (live ? d.slots.find((s) => s.round === round && s.orig === user.id && s.owner !== user.id) : league.draftPicks.find((pk) => pk.year === year && pk.round === round && pk.orig === user.id && pk.owner !== user.id));
+  const chips = [];
+  for (let r = 1; r <= DRAFT_ROUNDS; r++) {
+    const mine = owned.filter((x) => x.round === r).sort((a, b) => (a.overall ?? 999) - (b.overall ?? 999));
+    if (mine.length) mine.forEach((x) => chips.push({ r, x }));
+    else { const gone = away(r); chips.push({ r, to: gone ? gone.owner : null }); }
+  }
+  return { year, live, chips, left: owned.filter((x) => !x.pid).length, total: owned.length };
+}
+
+function PickTracker({ years }) {
+  const { league } = useGame();
+  const [more, setMore] = useState(false);
+  const user = league.teams[league.userTid];
+  const rows = years.map((y) => trackerRow(league, y));
+  if (!rows.length) return <div className="panel gg-picks"><div className="gg-picks-h"><b>Your picks</b><span className="dim small">You don't own any picks.</span></div></div>;
+  const shown = more ? rows : rows.slice(0, 1);
+  const chip = ({ r, x, to }, row) => {
+    if (!x) {
+      const t = to != null ? league.teams[to] : null;
+      return <span key={`r${r}`} className="gg-pk none" title={t ? `Round ${r}: traded to the ${t.city} ${t.name}` : `No round ${r} pick`}><b>R{r}</b>{t ? `→ ${t.abbr}` : "—"}</span>;
+    }
+    const via = x.orig !== user.id ? league.teams[x.orig]?.abbr : "";
+    const p = x.pid ? league.players[x.pid] : null;
+    const num = <span className="gg-pk-n">{x.overall ? `#${x.overall}` : ""}{via ? `${x.overall ? " " : ""}${via}` : ""}</span>;
+    if (p) return <span key={x.key} className="gg-pk used" title={`Round ${r}, pick ${x.overall}: ${p.name}`}><b>R{r}</b>{num}<span className="gg-pk-who">✓ <PlayerName p={p} showInj={false} /> <i>{p.pos}</i></span></span>;
+    const title = row.live ? `Round ${r}, pick ${x.overall}${via ? ` (from ${via})` : ""}` : x.overall ? `Round ${r}: projected #${x.overall} from the standings, before the lottery${via ? ` (from ${via})` : ""}` : `Round ${r}${via ? ` (from ${via})` : ""}: the order is set after the season`;
+    return <span key={x.key} className="gg-pk" title={title}><b>R{r}</b>{num}</span>;
+  };
+  return (
+    <div className="panel gg-picks">
+      {shown.map((row, i) => (
+        <div key={row.year} className="gg-picks-row">
+          {i === 0 ? <span className="gg-picks-h"><b>Your picks</b><small>{row.year}</small><em className={row.left ? "good" : ""}>{row.left} of {row.total} left</em></span> : <span className="gg-picks-h later"><small>{row.year}</small><em>{row.total} pick{row.total === 1 ? "" : "s"}</em></span>}
+          <span className="gg-picks-chips">{row.chips.map((c) => chip(c, row))}</span>
+        </div>
+      ))}
+      {rows.length > 1 && <button className="link gg-picks-more" onClick={() => setMore((v) => !v)}>{more ? "Fewer ▴" : `Later drafts (${rows.length - 1}) ▾`}</button>}
+    </div>
+  );
+}
+
+// What your roster is short of, by position, most urgent first (teamPlanning.teamNeeds).
+const URGENCY = [[50, "High", "#ef4444"], [25, "Medium", "#f97316"], [8, "Low", "#eab308"], [-1, "Set", "#22c55e"]];
+function NeedsPanel() {
+  const { league } = useGame();
+  const needs = teamNeeds(league, league.teams[league.userTid]);
+  return (
+    <div className="panel gg-needs">
+      <h3>Your needs <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>NHL roster today</span></h3>
+      <div className="gg-needs-list">
+        {needs.map((n) => { const [, word, col] = URGENCY.find(([min]) => n.score > min); return (
+          <div key={n.pos} className="gg-needs-row" title={`${n.have} healthy of ${n.target} wanted · ${n.role}`}>
+            <span className="gg-pos" style={{ background: POS_COLOR[n.pos] }}>{n.pos}</span>
+            <b style={{ color: col }}>{word}</b>
+            <i className="gg-needs-bar"><i style={{ width: `${Math.max(4, n.score)}%`, background: col }} /></i>
+            <small>{n.reasons.length ? n.reasons.join(" · ") : `${n.have}/${n.target} healthy · set`}</small>
+          </div>
+        ); })}
+      </div>
+    </div>
+  );
+}
+
+// The latest selections, newest first; yours stand out.
+function RecentPicks({ n = 8 }) {
+  const { league } = useGame();
+  const d = league.draft;
+  const made = (d?.slots || []).slice(0, d?.idx || 0).filter((s) => s.pid).slice(-n).reverse();
+  return (
+    <div className="panel gg-recent">
+      <h3>Recent picks <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>{d?.idx || 0} made</span></h3>
+      {!made.length && <div className="dim small">No picks yet.</div>}
+      <div className="gg-recent-list">
+        {made.map((s) => { const p = league.players[s.pid]; const t = league.teams[s.owner]; return p ? (
+          <div key={s.overall} className={`gg-recent-row${s.owner === league.userTid ? " mine" : ""}`}>
+            <span className="gg-recent-n">#{s.overall}</span>
+            <TeamBadge team={t} size={18} decorative />
+            <b className="gg-recent-t">{t.abbr}</b>
+            <span className="gg-recent-p"><PlayerName p={p} /></span>
+            <span className="gg-pos" style={{ background: POS_COLOR[p.pos] }}>{p.pos}</span>
+            {s.grade && <span className={`grade sm ${gradeClass(s.grade)}`} title={pickTake(s.grade, s.overall, s.csr)}>{s.grade}</span>}
+          </div>
+        ) : null; })}
+      </div>
+    </div>
+  );
+}
+
 // ---------- Draft floor ----------
 
 function DraftFloor({ act, onDraft, canDraft }) {
@@ -376,7 +479,6 @@ function DraftFloor({ act, onDraft, canDraft }) {
   const upcoming = !done ? d.slots.slice(d.idx + 1, d.idx + 9) : [];
   const listTop = myList(league).ids.map((id) => league.players[id]).find((p) => p && p.tid === -2);
   const bpa = classPool(league).sort((a, b) => csRank(a) - csRank(b))[0];
-  const mine = d.slots.filter((s) => s.owner === user.id && s.pid);
   const nextPick = () => {
     if (!slot || onClock) return;
     makePick(league, aiChoose(league, slot.owner));
@@ -439,6 +541,7 @@ function DraftFloor({ act, onDraft, canDraft }) {
           <button className="primary" onClick={act.toResign}>Continue to re-signing →</button>
         </div>
       )}
+      <PickTracker years={[d.year]} />
       {!done && <DraftTools onDraft={onDraft} canDraft={onClock} />}
       {upcoming.length > 0 && (
         <div className="row small" style={{ gap: 6 }}>
@@ -472,7 +575,9 @@ function DraftFloor({ act, onDraft, canDraft }) {
           </div>
         )}
         <div className="stack">
+          <RecentPicks />
           {!done && <MyListPanel onDraft={onDraft} canDraft={onClock} compact />}
+          <NeedsPanel />
           <div className="panel">
             <h3>Draft order</h3>
             <div className="row" style={{ gap: 4, marginBottom: 8 }}>
@@ -481,25 +586,6 @@ function DraftFloor({ act, onDraft, canDraft }) {
               ))}
             </div>
             <div className="dorder">{d.slots.filter((s) => s.round === round).map(slotLine)}</div>
-          </div>
-          <div className="panel">
-            <h3>Your picks</h3>
-            <div className="list">
-              {d.slots.filter((s) => s.owner === user.id && !s.pid).map((s) => (
-                <div className="item small" key={s.overall}><b>#{s.overall}</b> round {s.round}{s.orig !== user.id ? ` (from ${league.teams[s.orig].abbr})` : ""}</div>
-              ))}
-              {mine.map((s) => {
-                const p = league.players[s.pid];
-                return p ? (
-                  <div className="item small" key={s.overall}>
-                    <b>#{s.overall}</b> <PlayerName p={p} /> <span className="dim">{p.pos}</span>
-                    <span className="muted" style={{ marginLeft: "auto" }}>{projection(p.pos, p.pot)}</span>
-                    {s.grade && <span className={`grade sm ${gradeClass(s.grade)}`} title={pickTake(s.grade, s.overall, s.csr)}>{s.grade}</span>}
-                  </div>
-                ) : null;
-              })}
-              {!d.slots.some((s) => s.owner === user.id) && <div className="dim small">You don't have a pick in this draft.</div>}
-            </div>
           </div>
         </div>
       </div>
@@ -536,7 +622,8 @@ export default function DraftPage({ act }) {
   const done = inDraft && draftDone(league);
   const slot = inDraft && !combine && !done ? currentSlot(league) : null;
   const onClock = !!slot && slot.owner === user.id;
-  const futurePicks = league.draftPicks.filter((p) => p.owner === user.id && (!inDraft || p.year !== league.draft.year)).sort((a, b) => a.year - b.year || a.round - b.round);
+  // The tracker: this draft while it runs (or at the combine), otherwise every year you hold picks in.
+  const trackerYears = inDraft ? [league.draft.year] : [...new Set(league.draftPicks.filter((p) => p.owner === user.id).map((p) => p.year))].sort((a, b) => a - b);
 
   const draft = (p) => {
     if (!onClock) return;
@@ -565,21 +652,13 @@ export default function DraftPage({ act }) {
       {view === "board" && (
         <>
           {!inDraft && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} />}
+          <PickTracker years={trackerYears} />
           <Legend />
           <div className="dgrid">
             <Board onDraft={slot ? draft : null} canDraft={onClock} />
             <div className="stack">
               <MyListPanel compact />
               <ScoutSummary go={() => setView("scouts")} />
-              {!inDraft && (
-                <div className="panel">
-                  <h3>Your picks</h3>
-                  <div className="list">
-                    {futurePicks.map((pk) => <div className="item small" key={pk.id}>{pickLabel(league, pk)}</div>)}
-                    {!futurePicks.length && <div className="dim small">You don't own any picks.</div>}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </>
