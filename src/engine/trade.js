@@ -81,11 +81,23 @@ export function assetValue(league, id, viewer) {
   return v * needFit(league,viewer,p);
 }
 
+// A club's young starting goalie (26 or younger, rated 80+, its best goalie) is built around
+// like a franchise player: AI clubs don't shop him, keep him when his deal is up if they can
+// afford him, and want a premium to part with him.
+export function isFranchiseGoalie(league, team, p) {
+  if (!team || !p || !isGoalie(p.pos) || p.age > 26 || p.ovr < 80) return false;
+  const ids = [...new Set([...team.roster, ...(team.rfaRights || [])])];
+  const best = ids.map((id) => league.players[id]).filter((q) => q && isGoalie(q.pos)).sort((a, b) => b.ovr - a.ovr || a.age - b.age)[0];
+  return best?.id === p.id;
+}
+
 // Franchise cornerstones cost extra to pry loose.
 function cornerstonePremium(league, team, id) {
   const top = team.roster.map((x) => league.players[x]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).slice(0, 2).map((p) => p.id);
   // A player who has asked out comes at a discount.
   if (league.players[id]?.wantsTrade) return 0.85;
+  // Their young starting goalie: they'd need to be blown away.
+  if (isFranchiseGoalie(league, team, league.players[id])) return 1.35;
   return top.includes(id) ? 1.3 : 1;
 }
 

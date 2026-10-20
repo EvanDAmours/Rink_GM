@@ -3,7 +3,7 @@ import {teamNeeds as positionalNeeds} from './teamPlanning.js';
 // trades built around it, offers for players the user lists, and Trade Deadline Day,
 // a live, clock-driven frenzy of deals (talks reported first, then done) that ends at
 // 3:00 PM ET with a recap.
-import { isContending, assetValue, pickValue, evaluateTrade, executeTrade, tradingClosed } from "./trade.js";
+import { isContending, assetValue, pickValue, evaluateTrade, executeTrade, tradingClosed, isFranchiseGoalie } from "./trade.js";
 import { lineupIds } from "./lines.js";
 import { capSpace, counts, logTx, ensureMinimums, canSendDown, sendDown, releasePlayer } from "./roster.js";
 import { chance, pick, shuffle, rand, randFloat, randInt, weighted } from "./rng.js";
@@ -72,7 +72,7 @@ function isBlockbuster(league, starOvr, picks) {
 
 // ---------- Trade block ----------
 
-function blockCandidates(league, t, deadline) {
+export function blockCandidates(league, t, deadline) {
   const roster = players(league, t.roster);
   const contending = isContending(league, t);
   const lineup = new Set(t.lines ? lineupIds(t.lines) : []);
@@ -86,19 +86,20 @@ function blockCandidates(league, t, deadline) {
   const cornerstones = new Set([...roster].sort((a, b) => b.ovr - a.ovr).slice(0, 2).map((p) => p.id));
   for (const p of roster) {
     if (p.wantsTrade) add(p, "Requested a trade", 200 + p.ovr);
-    else if (cornerstones.has(p.id) || p.ovr >= 90) continue;
+    // Nor is a young starting goalie: clubs build around him.
+    else if (cornerstones.has(p.id) || p.ovr >= 90 || isFranchiseGoalie(league, t, p)) continue;
     else if (inSeason && selling && p.age >= 27 && p.ovr >= 77 && p.yrs <= 1) add(p, "Pending UFA", 100 + p.ovr);
     else if (selling && p.age >= 29 && p.ovr >= 79 && p.yrs <= 3 && (inSeason || p.yrs >= 2)) add(p, "Rebuilding", 90 + p.ovr);
     else if (inSeason && (deadline || t.rec.gp >= 10) && !lineup.has(p.id) && p.injury <= 0 && p.ovr >= 76 && p.age >= 24 && !isGoalie(p.pos)) add(p, "Wants a bigger role", 60 + p.ovr);
   }
   const goalies = roster.filter((p) => isGoalie(p.pos)).sort((a, b) => a.ovr - b.ovr);
   if (goalies.length >= 3) {
-    const g = goalies.find((x) => !lineup.has(x.id) && !x.wantsTrade);
+    const g = goalies.find((x) => !lineup.has(x.id) && !x.wantsTrade && !isFranchiseGoalie(league, t, x));
     if (g) add(g, "Surplus in goal", 70 + g.ovr);
   }
   if (capSpace(league, t) < 1) {
     const top = new Set([...roster].sort((a, b) => b.ovr - a.ovr).slice(0, 4).map((p) => p.id));
-    const p = roster.filter((x) => !top.has(x.id) && x.cap >= 2.5 && x.ovr < 85).sort((a, b) => b.cap - a.cap)[0];
+    const p = roster.filter((x) => !top.has(x.id) && x.cap >= 2.5 && x.ovr < 85 && !isFranchiseGoalie(league, t, x)).sort((a, b) => b.cap - a.cap)[0];
     if (p) add(p, "Cap crunch", 80 + p.ovr);
   }
   return out.sort((a, b) => b.w - a.w);
@@ -330,6 +331,7 @@ function findDeal(league, entry, { onlyBuyer = null } = {}) {
   if (!seller || !p || p.tid !== seller.id || seller.id === league.userTid) return null;
   if (tooBusy(league, seller)) return null;
   if (SELLER_REASONS.has(entry.reason) && isContending(league, seller)) return null;
+  if (!p.wantsTrade && isFranchiseGoalie(league, seller, p)) return null;
   const pool = onlyBuyer != null ? [onlyBuyer] : shuffle([...(entry.interest?.length ? entry.interest : interestedTeams(league, p.id))]);
   for (const bid of pool) {
     const buyer = league.teams[bid];

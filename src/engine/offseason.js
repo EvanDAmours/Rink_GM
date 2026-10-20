@@ -11,6 +11,7 @@ import { teamRatings, autoLines, syncLines } from "./lines.js";
 import { buildSeasonSchedule } from "./schedule.js";
 import { generateDraftClass, createDraftPicks, releaseProspect } from "./draft.js";
 import { marketOffseasonDay } from "./market.js";
+import { isFranchiseGoalie } from "./trade.js";
 import { blankRecord } from "./sim.js";
 
 import { ensureHockeyRules, contractCount, qualifyingAmount, ownedIds } from "./hockeyRules.js";
@@ -119,6 +120,9 @@ export function letWalk(league, pid) {
 export function endResign(league) {
   for (const t of league.teams) {
     const expiring = expiringPlayers(league, t);
+    // A young starting goalie is the club's first call, before anyone else uses up the room.
+    const franchise = new Set(t.id === league.userTid ? [] : expiring.filter((p) => isFranchiseGoalie(league, t, p)).map((p) => p.id));
+    if (franchise.size) expiring.sort((a, b) => franchise.has(b.id) - franchise.has(a.id));
     for (const p of expiring) {
       if (t.id === league.userTid) {
         if (p.qualified) {holdQualifiedRFA(league,p);continue;}
@@ -131,7 +135,11 @@ export function endResign(league) {
       if (payroll(league, t) < capFloorForYear(league.year + 1)) keep += 0.25;
       if (p.age >= 35) keep *= 0.5;
       const ask = resignAsk(league, p);
-      if (chance(keep) && ask.aav <= capSpace(league, t) - 1 && contractCount(league,t)<50) {
+      // He is kept whenever the club can fit him, without the usual cushion.
+      if (franchise.has(p.id) && ask.aav <= capSpace(league, t) && contractCount(league,t)<50) {
+        p.cap = ask.aav;
+        p.yrs = ask.yrs;
+      } else if (chance(keep) && ask.aav <= capSpace(league, t) - 1 && contractCount(league,t)<50) {
         p.cap = ask.aav;
         p.yrs = ask.yrs;
       } else {
@@ -505,7 +513,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
     const c = counts(league, t, {healthyOnly: true});
     if (c.G >= 2 && c.D >= 6 && c.F >= 12) break;
     const core = new Set(rosterOf().sort((a,b) => b.ovr-a.ovr).slice(0,6).map(p => p.id));
-    const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending
+    const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending && !isFranchiseGoalie(league, t, p)
       && (grp(p) === 'G' ? c.G > 2 : grp(p) === 'D' ? c.D > 6 : c.F > 12)).sort((a,b) => a.ovr-b.ovr)[0];
     if (!surplus) break;
     releasePlayer(league, t, surplus.id);
@@ -535,7 +543,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
       continue;
     }
     const overpaid = rosterOf()
-      .filter((p) => !core.has(p.id) && p.cap > 1)
+      .filter((p) => !core.has(p.id) && p.cap > 1 && !isFranchiseGoalie(league, t, p))
       .sort((a, b) => b.cap - marketValue(b, league.year) - (a.cap - marketValue(a, league.year)))[0];
     if (!overpaid) break;
     releasePlayer(league, t, overpaid.id);
