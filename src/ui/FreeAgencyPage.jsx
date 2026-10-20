@@ -5,6 +5,7 @@ import { useGame, PlayerName, money, Modal, ovrColor } from "./common.jsx";
 import Select from "./Select.jsx";
 import ContractModal from "./ContractModal.jsx";
 import { faAsk, offerContract, expiringPlayers, resignAsk, resignPlayer, letWalk, simFADay } from "../engine/offseason.js";
+import { teamNeeds } from "../engine/teamPlanning.js";
 import { capSpace, counts, capYear } from "../engine/roster.js";
 import { MAX_ROSTER, FA_DAYS, ARCHETYPES, capForYear } from "../engine/constants.js";
 import { isRFA } from "../engine/players.js";
@@ -15,6 +16,15 @@ const MugPos = ({ p, team }) => <span className="gg-mugpos"><Headshot p={p} team
 const POS = ["C", "LW", "RW", "LD", "RD", "G"];
 
 function OfferModal({ p, onClose }) { return <ContractModal p={p} kind="fa" onClose={onClose} />; }
+
+// The positions your club needs most right now (Front Office → team needs): the urgent ones,
+// up to four, or the top two when nothing is urgent.
+const URGENT_NEED = 25;
+function urgentNeeds(league, team) {
+  const list = teamNeeds(league, team);
+  const urgent = list.filter((n) => n.score >= URGENT_NEED).slice(0, 4);
+  return urgent.length ? urgent : list.slice(0, 2);
+}
 
 // Where a free agent's market stands, as Gridiron's market tags it: your bid and how it is
 // going, other clubs' offers, or nobody in yet.
@@ -101,13 +111,16 @@ export default function FreeAgencyPage() {
   const [pos, setPos] = useState("all");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("ovr");
+  const [needOnly, setNeedOnly] = useState(false);
   const user = league.teams[league.userTid];
   const open = league.phase !== "draft" && league.phase !== "resign" && league.phase !== "playoffs";
+  const needs = urgentNeeds(league, user);
+  const needPos = needs.map((n) => n.pos);
   const fas = useMemo(() => {
-    const list = league.freeAgents.map((id) => league.players[id]).filter((p) => p && (pos === "all" || p.pos === pos) && (!q || p.name.toLowerCase().includes(q.toLowerCase())));
+    const list = league.freeAgents.map((id) => league.players[id]).filter((p) => p && (pos === "all" || p.pos === pos) && (!needOnly || needPos.includes(p.pos)) && (!q || p.name.toLowerCase().includes(q.toLowerCase())));
     const key = sort === "age" ? (p) => -p.age : sort === "pot" ? (p) => p.pot : sort === "ask" ? (p) => -faAsk(league, p).aav : (p) => p.ovr;
     return list.sort((a, b) => key(b) - key(a) || b.ovr - a.ovr);
-  }, [league, pos, q, sort, league.freeAgents.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [league, pos, q, sort, needOnly, needPos.join(), league.freeAgents.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const best = fas[0];
   return (
     <div className="stack gg-fa">
@@ -121,6 +134,9 @@ export default function FreeAgencyPage() {
       <div className="gg-card">
         <div className="gg-fa-tools">
           <div className="gg-chips">{["all", ...POS].map((x) => <button key={x} className={pos === x ? "on" : ""} onClick={() => setPos(x)}>{x === "all" ? "All" : x}</button>)}</div>
+          <button className={`gg-needs${needOnly ? " on" : ""}`} aria-pressed={needOnly} onClick={() => setNeedOnly((v) => !v)} title={needs.length ? `Your needs: ${needs.map((n) => `${n.pos}${n.reasons.length ? ` (${n.reasons.join(", ")})` : ""}`).join("; ")}` : "No pressing needs"}>
+            <span className="gg-needs-long">Your needs: {needPos.join(", ") || "none"}</span><span className="gg-needs-short">Needs</span>
+          </button>
           <input className="gg-fa-search" placeholder="Search free agents…" aria-label="Search free agents" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort free agents" style={{ minWidth: 150 }}>
             <option value="ovr">Sort: overall</option><option value="pot">Sort: potential</option><option value="age">Sort: youngest</option><option value="ask">Sort: cheapest</option>
@@ -139,7 +155,7 @@ export default function FreeAgencyPage() {
               </div>
             );
           })}
-          {!fas.length && <div className="dim small">No free agents match.</div>}
+          {!fas.length && <div className="dim small">{needOnly ? `No free agents at ${needPos.join(", ")} match. Turn off Your needs to see everyone.` : "No free agents match."}</div>}
         </div>
       </div>
       {offerFor && league.players[offerFor] && <OfferModal p={league.players[offerFor]} onClose={() => setOfferFor(null)} />}

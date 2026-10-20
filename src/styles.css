@@ -587,3 +587,12 @@ table.combine td.top { color: var(--good); font-weight: 700; }
   .app .gg-farow.resign > .gg-faact { grid-area: act; justify-self: end; }
   .app .main .gg-farow.resign > .gg-faact button:not(.link):not(.player-link) { min-height: 34px; padding: 4px 10px; font-size: 12px; }
 }
+
+/* The free-agent list's needs filter (Gridiron's "Your needs" toggle). */
+.app .main button.gg-needs:not(.link) { background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-size: 12px; font-weight: 700; padding: 5px 10px; white-space: nowrap; }
+.app .main button.gg-needs.on:not(.link) { background: #3b82f633; border-color: #3b82f6; color: #fff; }
+.app .gg-needs-short { display: none; }
+@media (max-width: 640px) {
+  .app .gg-needs-long { display: none; }
+  .app .gg-needs-short { display: inline; }
+}
