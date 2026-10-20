@@ -408,6 +408,9 @@ function pruneFreeAgents(league) {
   }
   if (gone) logTx(league, `${gone} unsigned players leave the league for Europe or retirement`);
 }
+
+// Players in a club's minors can retire from this age (the age he'd be next season).
+export const MINORS_RETIRE_AGE = 30;
 // Retirements are announced when the season ends, before re-sign week and free agency, so
 // nobody re-signs or bids on a player who was about to hang them up. The decision uses the
 // age he will be next season; his final season is archived to his card first.
@@ -418,8 +421,11 @@ export function announceRetirements(league) {
   for (const id of Object.keys(league.players)) {
     const p = league.players[id];
     if (p.tid === -2 || p.signed === false) continue;
-    const inMinors = p.tid >= 0 && league.teams[p.tid].prospects.includes(p.id);
-    if (!inMinors && chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
+    // Veterans in a club's minors age out too (from about 30), on the same age-based odds;
+    // younger players in the system are still developing and never retire here.
+    const inMinors = p.tid >= 0 && !!league.teams[p.tid]?.prospects.includes(p.id);
+    if (inMinors && p.age + 1 < MINORS_RETIRE_AGE) continue;
+    if (chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
   }
   for (const p of retiring) {
     if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
