@@ -18,7 +18,7 @@
   animation: mmIn .45s ease-out, mmPulse 2.8s .5s ease-in-out infinite; box-shadow: 0 30px 80px #000c; }
 .mm-card.wide { width: min(860px, 100%); }
 .mm-head { display: flex; align-items: center; gap: 14px; }
-.mm-head .team-badge, .mm-head img { flex: 0 0 auto; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--mm-ac) 50%, transparent)); }
+.mm-head .teambadge, .mm-head .team-badge, .mm-head img { flex: 0 0 auto; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--mm-ac) 50%, transparent)); }
 .mm-head-text { min-width: 0; }
 .mm-kicker { font-size: 12.5px; font-weight: 900; letter-spacing: 3px; color: var(--mm-ac); text-transform: uppercase; }
 .mm-title { font-size: 38px; font-weight: 900; font-style: italic; line-height: 1.02; letter-spacing: .5px; text-transform: uppercase; overflow-wrap: anywhere;
@@ -41,7 +41,7 @@
 
 @media (max-width: 640px) {
   .mm-card { padding: 18px 16px; border-radius: 14px; }
-  .mm-head .team-badge, .mm-head img { width: 56px; height: 56px; }
+  .mm-head .teambadge, .mm-head .team-badge, .mm-head img { width: 56px; height: 56px; }
   .mm-title { font-size: 26px; }
   .mm-sub { font-size: 14px; }
   .mm-line-k { min-width: 92px; }
