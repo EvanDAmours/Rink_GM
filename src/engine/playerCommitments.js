@@ -23,6 +23,6 @@ export function commitmentWeek(lg){
   a.status=fulfilled?'fulfilled':'unhappy';a.actual=actual;a.nextReview=lg.day+28;a.gp=isGoalie(p.pos)?p.stats.gs:p.stats.gp;a.toi=p.stats.toi;a.teamGp=t.rec.gp;a.unavailable=0;
   p.relationship={trust:a.trust,reason:fulfilled?'Agreed role delivered':'Playing time below the agreed role'};
   if(a.misses>=3&&a.trust<40)p.wantsTrade=true;
-  if(t.id===lg.userTid&&!fulfilled)lg.inbox.push({year:lg.year,day:lg.day,text:`${p.name}: promised ${ROLE_LABELS[a.role]}, receiving ${isGoalie(p.pos)?(actual*100).toFixed(0)+'% of available starts':actual.toFixed(1)+' minutes per available game'}. Trust ${a.trust}/100.${p.wantsTrade?' Requests a trade.':''}`});
+  if(t.id===lg.userTid&&!fulfilled)lg.inbox.push({year:lg.year,day:lg.day,pid:p.id,text:`${p.name}: promised ${ROLE_LABELS[a.role]}, receiving ${isGoalie(p.pos)?(actual*100).toFixed(0)+'% of available starts':actual.toFixed(1)+' minutes per available game'}. Trust ${a.trust}/100.${p.wantsTrade?' Requests a trade.':''}`});
  }
 }
