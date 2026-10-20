@@ -15,6 +15,7 @@ import { assetValue } from "../engine/trade.js";
 import { agentPreferences } from "../engine/negotiations.js";
 import { SKATER_SKILLS, GOALIE_SKILLS, fmtHeight, COMBINE_TESTS } from "../engine/scouting.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import AbilityChip from "./AbilityChip.jsx";
 
 // The player card, laid out like the football game's: hero with the face, number and an
 // OVR ring; tags; three quick tiles; attribute bars on the left, the season, scouting
@@ -88,6 +89,7 @@ export default function PlayerCard({ p }) {
         <div className="gg-pc-tags">
           {devShown !== undefined && (devShown ? <span className={`gg-pc-tag dev-${devShown}`}>{DEV_TRAITS[devShown].name}</span> : <span className="gg-pc-tag"><DevChip dev={null} /></span>)}
           <span className="gg-pc-tag">{ARCHETYPES[p.type]?.name || p.type}</span>
+          <AbilityChip p={p} full />
           {p.rookie && <span className="gg-pc-tag rookie">Rookie</span>}
           {p.ratingData && <span className="gg-pc-tag ea">EA {String(p.ratingData.edition).replace(/^NHL\s*/, "NHL ")}</span>}
           {p.injury > 0 && <span className="gg-pc-tag inj">🚑 {p.injuryNote || "Injured"} · {p.injury}g</span>}

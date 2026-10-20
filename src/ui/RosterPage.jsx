@@ -2,24 +2,49 @@ import {buyoutSummary} from '../engine/capAccounting.js';
 import Select from "./Select.jsx";
 import {automaticallyHandleRoster,automaticRosterPlan} from "../engine/autoRoster.js";
 import React, { useState } from "react";
-import { useGame, Table, PlayerName, PlayerCell, TeamBadge, Ovr, money, pct, signed, POS_ORDER } from "./common.jsx";
+import { useGame, Table, PlayerName, TeamBadge, Ovr, money, pct, signed, POS_ORDER } from "./common.jsx";
 import { isGoalie, isDefense, capForYear, capFloorForYear, MAX_ROSTER, ARCHETYPES } from "../engine/constants.js";
-import { capSpace, payroll, counts, sendDown, callUp, releasePlayer, canSendDown, rosterIssues, hasRoomFor, ensureMinimums, capYear, capFloorGap } from "../engine/roster.js";
+import { capSpace, payroll, counts, sendDown, callUp, releasePlayer, canSendDown, rosterIssues, hasRoomFor, ensureMinimums, capYear, capFloorGap, onIR, IR_GAMES } from "../engine/roster.js";
+import { designateLTIR, activateLTIR } from "../engine/operations.js";
+import { ltirRelief } from "../engine/hockeyRules.js";
+import Headshot from "./Headshot.jsx";
+import AbilityChip from "./AbilityChip.jsx";
 import { savePct, gaa } from "../engine/players.js";
 import Icon from "./Icon.jsx";
 import { shownRatings } from "../engine/draft.js";
 import TrainingCamp from "./TrainingCamp.jsx";
+
+// Where each player sits on the line chart, so the roster reads in line order like the
+// football depth chart: L1 LW, L1 C, L1 RW … P1 LD … the starter, then scratches by OVR.
+const F_SLOTS = ["LW", "C", "RW"], D_SLOTS = ["LD", "RD"];
+function lineSlots(team) {
+  const m = {}, L = team?.lines;
+  if (!L) return m;
+  (L.F || []).forEach((line, i) => line.forEach((id, j) => { if (id && !m[id]) m[id] = { rank: i * 3 + j, label: `L${i + 1} ${F_SLOTS[j]}`, top: i < 2 }; }));
+  (L.D || []).forEach((pair, i) => pair.forEach((id, j) => { if (id && !m[id]) m[id] = { rank: 20 + i * 2 + j, label: `P${i + 1} ${D_SLOTS[j]}`, top: i < 2 }; }));
+  (L.G || []).forEach((id, i) => { if (id && !m[id]) m[id] = { rank: 40 + i, label: i === 0 ? "Starter" : "Backup", top: i === 0 }; });
+  return m;
+}
+const lineRank = (slots, p) => slots[p.id]?.rank ?? 100 + (p.injury > 0 || p.ltir ? 50 : 0) + (99 - p.ovr) / 100;
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
   const [view, setView] = useState(league.phase === "preseason" && !(user.camp?.year === league.year && user.camp.games.length >= 4) ? "camp" : "roster");
+  const shown = view === "camp" && league.phase !== "preseason" ? "roster" : view;
   const roster = user.roster.map((id) => league.players[id]).filter(Boolean);
   const minors = user.prospects.map((id) => league.players[id]).filter(Boolean);
   const c = counts(league, user);
   const issues = rosterIssues(league, user);
   const fits=p=>(position==="all" || p.pos===position) && p.name.toLowerCase().includes(query.toLowerCase());
+  const slots = lineSlots(user);
+  const injured = [...roster, ...minors].filter((p) => p.injury > 0 || p.ltir).sort((a, b) => b.injury - a.injury || b.ovr - a.ovr);
+  const relief = ltirRelief(league, user);
+  const ltirPool = roster.filter((p) => p.ltir).reduce((n, p) => n + p.cap, 0);
+  const injuriesOff = league.settings?.injuries === false;
+  const ltirOpen = league.phase === "regular" || league.phase === "preseason";
+  const runOp = (r) => { toast(r.msg); if (r.ok) commit(); };
 
   const doSendDown = (p) => {
     if (!sendDown(league, user, p.id)) return toast("This player requires waivers. Open Front Office → Operations to manage waivers.");
@@ -37,10 +62,23 @@ export default function RosterPage() {
     commit();
   };
 
-  const statusCol = { key: "st", label: "", render: (p) => (p.injury > 0 ? <span className="inj">INJ {p.injury}</span> : p.rookie ? <span className="pill">R</span> : null) };
+  // Name, X-Factor tag and a trade-request badge, so the whole roster reads at a glance.
+  const nameCell = (p) => (
+    <div className="player-cell">
+      <span className="roster-sweater"><Headshot team={user} p={p} size={38} decorative /></span>
+      <div>
+        <PlayerName p={p} /><AbilityChip p={p} />
+        {p.wantsTrade && <span className="gg-ro-badge" title="Has asked for a trade">🔁</span>}
+        <span className="player-detail">{p.pos} · {p.age} years{p.rookie ? " · Rookie" : ""}</span>
+      </div>
+    </div>
+  );
+  const statusCol = { key: "st", label: "", render: (p) => (p.ltir ? <span className="inj">LTIR</span> : p.injury > 0 ? <span className="inj">INJ {p.injury}</span> : p.rookie ? <span className="pill">R</span> : null) };
+  const lineCol = { key: "line", label: "Line", title: "Where he plays on your line chart", render: (p) => { const s = slots[p.id]; const hurt = p.injury > 0 || p.ltir; return <span className={`gg-ro-line${hurt ? " out" : s?.top ? " top" : !s ? " off" : ""}`} title={hurt && s ? "Injured: someone else dresses in his spot" : undefined}>{s?.label || (hurt ? "Out" : "Scratch")}</span>; }, sort: (p) => lineRank(slots, p) };
   const base = [
-    { key: "name", label: "Player", render: (p) => <PlayerCell p={p} team={user} />, sort: (p) => p.name },
+    { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
     { key: "pos", label: "Pos", render: (p) => <span className="posbadge">{p.pos}</span>, sort: (p) => POS_ORDER[p.pos] },
+    lineCol,
     { key: "age", label: "Age", num: true, sort: (p) => p.age },
     { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} src={p.src} />, sort: (p) => p.ovr },
     { key: "pot", label: "POT", num: true, sort: (p) => p.pot },
@@ -96,28 +134,26 @@ export default function RosterPage() {
           You're {money(capFloorGap(league, user))} under the {money(capFloorForYear(capYear(league)))} cap floor. NHL teams have to spend at least that much; sign free agents or trade for salary to get there.
         </div>
       )}
-      <div className="gg-chips">
-        <button className={view === "roster" ? "on" : ""} onClick={() => setView("roster")}>NHL Roster</button>
-        <button className={view === "minors" ? "on" : ""} onClick={() => setView("minors")}>Minors & Prospects ({minors.length})</button>
-        {league.phase === "preseason" && <button className={view === "camp" ? "on" : ""} onClick={() => setView("camp")}>🏕️ Training Camp</button>}
+      <div className="gg-chips gg-ro-tabs" role="tablist" aria-label="Roster views">
+        {[["roster", `NHL Roster (${c.active}/${MAX_ROSTER})`], ["minors", `Minors & Prospects (${minors.length})`], ["injured", `Injured & LTIR (${injured.length})`], ["contracts", "Contracts"], ...(league.phase === "preseason" ? [["camp", "🏕️ Training Camp"]] : [])].map(([k, l]) => <button key={k} role="tab" aria-selected={shown === k} className={shown === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
       </div>
 
-      {view !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open their profile.</span></div>}
-      {view === "camp" && <TrainingCamp />}
-      {view === "roster" &&
+      {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor ability · 🔁 asked for a trade</span></div>}
+      {shown === "camp" && <TrainingCamp />}
+      {shown === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
-            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>OVR · CONTRACT · SEASON</em></div>
-            <Table columns={[...base, statusCol, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "ovr", dir: "desc" }} />
+            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>LINE ORDER · CONTRACT · SEASON</em></div>
+            <Table columns={[...base, statusCol, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} />
           </div>
         ))}
 
-      {view === "minors" && (
+      {shown === "minors" && (
         <>
           <div className="muted small">AHL players use a buried-contract cap calculation. Entry-level term depends on age; rights expiry depends on the player's league. Front Office → Operations manages assignments and waivers.</div>
           <Table
             columns={[
-              { key: "name", label: "Player", render: (p) => <PlayerCell p={p} team={user} />, sort: (p) => p.name },
+              { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
               { key: "pos", label: "Pos", render: (p) => <span className="posbadge">{p.pos}</span>, sort: (p) => POS_ORDER[p.pos] },
               { key: "age", label: "Age", num: true, sort: (p) => p.age },
               { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} />, sort: (p) => p.ovr },
@@ -142,11 +178,49 @@ export default function RosterPage() {
         </>
       )}
 
-      {view === "contracts" && (
+      {shown === "injured" && (
+        <>
+          <div className="gg-tiles gg-ro-inj-tiles">
+            <div><small>OUT</small><b style={{ color: injured.length ? "#ef4444" : "#22c55e" }}>{injured.length}</b></div>
+            <div><small>ON LTIR</small><b>{injured.filter((p) => p.ltir).length}</b></div>
+            <div><small>LTIR RELIEF</small><b style={{ color: relief > 0 ? "#22c55e" : undefined }}>{relief > 0 ? money(relief) : "None"}</b></div>
+            <div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div>
+          </div>
+          <div className="muted small">Players out {IR_GAMES} or more games go on injured reserve and don't count against the {MAX_ROSTER}-man limit. Out 10 games or more, a player can go on long-term injured reserve: his cap hit comes off the cap while he's out, less whatever cap room you had when he went on. He stays at least 24 days and 10 games.</div>
+          {ltirPool > 0 && <div className="small">LTIR: {money(ltirPool)} in cap hits, less the {money(user.ltirUnused || 0)} of cap room you had when the first player went on, leaves <b className={relief > 0 ? "good" : ""}>{relief > 0 ? `${money(relief)} of relief` : "no relief"}</b>{league.phase === "playoffs" ? " (none in the playoffs)" : ""}.</div>}
+          {injuriesOff && <div className="notice">Injuries are turned off in Settings, so nobody is hurt.</div>}
+          <Table
+            columns={[
+              { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
+              { key: "pos", label: "Pos", render: (p) => <span className="posbadge">{p.pos}</span>, sort: (p) => POS_ORDER[p.pos] },
+              { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} src={p.src} />, sort: (p) => p.ovr },
+              { key: "inj", label: "Injury", render: (p) => <span className="gg-ro-injury">🚑 {p.injuryNote ? p.injuryNote[0].toUpperCase() + p.injuryNote.slice(1) : p.injury > 0 ? "Undisclosed" : "Recovered"}</span>, sort: (p) => p.injuryNote || "" },
+              { key: "out", label: "Games left", num: true, render: (p) => (p.injury > 0 ? <b className="bad">{p.injury}</b> : <span className="good">Ready</span>), sort: (p) => p.injury },
+              { key: "status", label: "Status", render: (p) => <span className={`gg-ro-ir ${p.ltir ? "ltir" : onIR(p) ? "ir" : "dtd"}`}>{p.ltir ? "LTIR" : user.prospects.includes(p.id) ? "Minors" : onIR(p) ? "IR" : "Day to day"}</span>, sort: (p) => (p.ltir ? 2 : onIR(p) ? 1 : 0) },
+              { key: "cap", label: "Cap Hit", num: true, render: (p) => money(p.cap), sort: (p) => p.cap },
+              { key: "relief", label: "On LTIR", num: true, title: "His cap hit in the LTIR pool. The team's relief is the pool less the cap room you had when the first player went on.", render: (p) => (p.ltir ? money(p.cap) : <span className="dim">—</span>), sort: (p) => (p.ltir ? p.cap : 0) },
+              {
+                key: "act",
+                label: "",
+                render: (p) => !user.roster.includes(p.id) ? null : p.ltir ? (
+                  <button className="tiny" disabled={p.injury > 0} title={p.injury > 0 ? "Still injured" : "Return him to the active roster"} onClick={() => runOp(activateLTIR(league, p.id))}>Activate</button>
+                ) : (
+                  <button className="tiny" disabled={p.injury < 10 || !ltirOpen} title={p.injury < 10 ? "LTIR needs an injury of 10 games or more" : !ltirOpen ? "LTIR is used in the preseason and regular season" : "Place on long-term injured reserve"} onClick={() => runOp(designateLTIR(league, p.id))}>Place on LTIR</button>
+                ),
+              },
+            ]}
+            rows={injured.filter(fits)}
+            initialSort={{ key: "out", dir: "desc" }}
+            empty="Nobody is hurt."
+          />
+        </>
+      )}
+
+      {shown === "contracts" && (
         <div className="grid g2">
           <Table
             columns={[
-              { key: "name", label: "Player", render: (p) => <PlayerCell p={p} team={user} />, sort: (p) => p.name },
+              { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
               { key: "pos", label: "Pos", sort: (p) => POS_ORDER[p.pos] },
               { key: "age", label: "Age", num: true, sort: (p) => p.age },
               { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} src={p.src} />, sort: (p) => p.ovr },
