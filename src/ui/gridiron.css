@@ -1533,3 +1533,13 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .gg-ro-ir.ltir { background: #7f1d1d; color: #fca5a5; } .gg-ro-ir.ir { background: #78350f; color: #fbbf24; } .gg-ro-ir.dtd { background: #1e3a5f; color: #7dd3fc; }
 .gg-ro-inj-tiles { display: flex; gap: 8px; flex-wrap: wrap; } .gg-ro-inj-tiles > div { min-width: 110px; padding: 8px 14px; }
 @media (max-width: 640px) { .app .main .gg-ro-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; } .app .main .gg-ro-tabs button { flex: 0 0 auto; font-size: 13px; padding: 7px 12px; } .gg-ro-inj-tiles > div { min-width: 0; flex: 1 1 40%; } }
+
+/* Training focus by position */
+.gg-focus-grp { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-bottom: 4px; border-bottom: 1px solid #1e293b; }
+.gg-focus-grp b { font-size: 13px; font-weight: 900; letter-spacing: .6px; text-transform: uppercase; }
+.gg-focus-grp em { font-style: normal; font-size: 11px; font-weight: 800; background: #1e293b; border-radius: 8px; padding: 0 7px; color: #94a3b8; }
+.app button.gg-focus-row b { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.app button.gg-focus-row b > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.gg-focus-tag { flex-shrink: 0; font-style: normal; font-size: 9.5px; font-weight: 900; letter-spacing: .4px; text-transform: uppercase; padding: 0 6px; border-radius: 999px; line-height: 15px; }
+.gg-focus-tag.young { color: #22d3ee; border: 1px solid #22d3ee66; background: #22d3ee14; }
+.gg-focus-tag.prospect { color: #c4b5fd; border: 1px solid #6d5bd0; background: #c4b5fd14; }
