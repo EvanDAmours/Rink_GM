@@ -7,6 +7,7 @@ import { pickLabel, shownRatings } from "../engine/draft.js";
 import { capSpace } from "../engine/roster.js";
 import { dayToDate } from "../engine/schedule.js";
 import { isGoalie } from "../engine/constants.js";
+import AbilityChip from "./AbilityChip.jsx";
 
 // Trade Center in the Gridiron GM layout: positional needs, Trade Finder, a logo team picker,
 // two columns (YOU SEND / YOU GET) with trade values, draft picks and a trade analyzer.
@@ -68,9 +69,9 @@ function TradeFinder({ league, user, onLoad }) {
         return (
           <div key={`${p.id}-${q.id}`} className="gg-idea">
             <TeamBadge team={t} size={22} />
-            <span className="dim small">YOU GET</span><PosBadge pos={q.pos} /><b>{q.name}</b><b style={{ color: ovrColor(q.ovr) }}>{q.ovr}</b>
+            <span className="dim small">YOU GET</span><PosBadge pos={q.pos} /><b>{q.name}<AbilityChip p={q} /></b><b style={{ color: ovrColor(q.ovr) }}>{q.ovr}</b>
             <span className="dim">⇄</span>
-            <span className="dim small">YOU SEND</span><PosBadge pos={p.pos} /><b>{p.name}</b><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+            <span className="dim small">YOU SEND</span><PosBadge pos={p.pos} /><b>{p.name}<AbilityChip p={p} /></b><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
             <span className="gg-tag" style={{ color: col, borderColor: col }}>{lab}</span>
             <button className="small" onClick={() => onLoad(t.id, p.id, q.id)}>Load →</button>
           </div>
@@ -98,7 +99,7 @@ function Side({ title, color, team, viewer, mine, sel, setSel, selPicks, setSelP
       <div key={p.id} role="checkbox" aria-checked={on} tabIndex={0} className={`gg-trow${on ? " on" : ""}`} onClick={() => toggle(sel, setSel, p.id)} onKeyDown={(e) => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle(sel, setSel, p.id))}>
         <span className="gg-tcheck">{on ? "✓" : ""}</span>
         <PosBadge pos={p.pos} />
-        <span className="gg-tname"><b>{p.name}</b>{p.injury > 0 && <span className="inj"> +{p.injury}</span>}{onBlock(league, p.id) && <span className="gg-tag">BLOCK</span>}<small>{p.age}y · {minor && !p.signed ? "unsigned" : `${money(p.cap)} × ${p.yrs}`}{minor ? ` · POT ${r.pot}` : ""}</small></span>
+        <span className="gg-tname"><b>{p.name}<AbilityChip p={p} /></b>{p.injury > 0 && <span className="inj"> +{p.injury}</span>}{onBlock(league, p.id) && <span className="gg-tag">BLOCK</span>}<small>{p.age}y · {minor && !p.signed ? "unsigned" : `${money(p.cap)} × ${p.yrs}`}{minor ? ` · POT ${r.pot}` : ""}</small></span>
         <b className="gg-tovr" style={{ color: ovrColor(r.ovr) }}>{r.ovr}</b>
         <span className="gg-tv">{tvOf(assetValue(league, p.id, viewer))}</span>
       </div>
