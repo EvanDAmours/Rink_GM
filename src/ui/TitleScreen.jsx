@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { TEAMS } from "../engine/teams.js";
 import { TeamBadge } from "./common.jsx";
-import { createLeague, loadLeague, deleteSave, rosterFile, deserializeLeague, restoreLeague, saveLeague } from "../engine/league.js";
-import { DIFFICULTY } from "../engine/constants.js";
+import { createLeague, deleteSave, rosterFile, restoreLeague, saveLeague } from "../engine/league.js";
+import { DIFFICULTY, SAVE_KEY } from "../engine/constants.js";
+import { loadRepaired, loadRepairedKey, repairLeague } from "../engine/repair.js";
 import { cloudMeta, cloudLoad } from "../platform.js";
 
 import {verifiedDataSummary,verifiedRating} from "../engine/verifiedData.js";
@@ -21,7 +22,9 @@ function teamStrength(abbr) {
 }
 
 export default function TitleScreen({ onStart, ask }) {
-  const [local] = useState(() => loadLeague());
+  // Saves are repaired as they load, so one broken record doesn't lock you out of your league.
+  const [boot] = useState(() => loadRepairedKey(SAVE_KEY));
+  const local = boot.league;
   const [cloud, setCloud] = useState(null);
   const [loadingCloud, setLoadingCloud] = useState(false);
   const [step, setStep] = useState(local ? "menu" : "new");
@@ -52,15 +55,17 @@ export default function TitleScreen({ onStart, ask }) {
       setErr("Couldn't read the saved league. It may be from an older version.");
       return;
     }
-    onStart(local);
+    onStart(local, boot.fixes);
   };
   const contCloud = async () => {
     setLoadingCloud(true);
-    const lg = restoreLeague(await cloudLoad().catch(() => null));
+    const raw = await cloudLoad().catch(() => null);
+    let fixes = [], lg = null;
+    try { if (raw?.game === "rink-gm") fixes = repairLeague(raw); lg = restoreLeague(raw); } catch { lg = null; }
     setLoadingCloud(false);
     if (!lg) return setErr("Couldn't load the cloud backup. Try again in a moment.");
     if(injuryPreferenceChanged)setInjuriesEnabled(lg,savedInjuries);
-    onStart(lg);
+    onStart(lg, fixes);
   };
   const cloudNewer = cloud && (!local || (cloud.savedAt || 0) > (local.savedAt || 0) + 5000);
 
@@ -69,9 +74,9 @@ export default function TitleScreen({ onStart, ask }) {
     if (!f) return;
     f.text().then((txt) => {
       try {
-        const lg = deserializeLeague(txt.trim());
+        const { league: lg, fixes } = loadRepaired(txt.trim());
         if (!lg) throw new Error("bad file");
-        onStart(lg);
+        onStart(lg, fixes);
       } catch {
         setErr("That file isn't a Rink GM league export.");
       }

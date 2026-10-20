@@ -3,7 +3,6 @@ import SeriesPaper from "./ui/SeriesPaper.jsx";
 import NewsPaper from "./ui/NewsPaper.jsx";
 import SimSummary from "./ui/SimSummary.jsx";
 import { snapshotForSummary, buildSummary } from "./engine/simSummary.js";
-import { unseenPaper } from "./engine/papers.js";
 import { ensurePulse, repTier, moraleLabel, tierColor } from "./engine/clubPulse.js";
 import { capForYear } from "./engine/constants.js";
 import { capYear } from "./engine/roster.js";
@@ -46,7 +45,7 @@ import { expiringPlayers } from "./engine/offseason.js";
 import { counts } from "./engine/roster.js";
 import { myOffers } from "./engine/negotiations.js";
 import * as L from "./engine/league.js";
-import { PHASES, FA_DAYS } from "./engine/constants.js";
+import { PHASES, FA_DAYS, SAVE_KEY } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
 import { capSpace, rosterIssues } from "./engine/roster.js";
 import { automaticallyHandleRoster } from "./engine/autoRoster.js";
@@ -56,6 +55,10 @@ import { atCombine, openDraftFloor } from "./engine/scouting.js";
 import { simFADay } from "./engine/offseason.js";
 import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
+import FeedbackToast from "./ui/FeedbackToast.jsx";
+import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
+import { staffGapText } from "./engine/franchise.js";
+import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
 
 const NAV = [
@@ -72,7 +75,13 @@ const CLOUD_EVERY_MS = 60000;
 
 export default function App({ resume = false }) {
   const leagueRef = useRef(null);
-  if (resume && !leagueRef.current) leagueRef.current = L.loadLeague();
+  // A save is repaired as it loads (repair.js), so one bad entry can't break every screen.
+  const bootFixes = useRef(null);
+  if (resume && !leagueRef.current) {
+    const r = loadRepairedKey(SAVE_KEY);
+    leagueRef.current = r.league;
+    bootFixes.current = r.fixes;
+  }
   const [, setRev] = useState(0);
   const [screen, setScreen] = useState(leagueRef.current ? "game" : "title");
   const [confirmReq, setConfirmReq] = useState(null);
@@ -88,18 +97,33 @@ export default function App({ resume = false }) {
   const [tour,setTour]=useState(null); // null | "welcome" | "run"
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const toastSeq = useRef(0);
+  const saveOk = useRef(true);
   const [live, setLive] = useState(leagueRef.current?.activeGame?.spec || null);
   const [tradeSeed, setTradeSeed] = useState(null);
   const saveTimer = useRef(null);
   const cancelRef = useRef(false);
   const league = leagueRef.current;
 
-  const showToast = useCallback((msg, ms = 3200) => {
-    setToast(msg);
-    clearTimeout(showToast.t);
-    showToast.t = setTimeout(() => setToast(null), ms);
+  // Messages queue: each one gets its full time on screen, one after another. A backlog
+  // never grows past the toast on screen and three waiting, and a repeat isn't queued twice.
+  const showToast = useCallback((msg, ms = 3500) => {
+    if (msg == null || msg === "") return;
+    const text = String(msg), id = ++toastSeq.current;
+    setToasts((q) => {
+      if (q.some((t) => t.msg === text)) return q;
+      const next = [...q, { id, msg: text, ms: Math.max(1500, ms) }];
+      return next.length > 4 ? [next[0], ...next.slice(-3)] : next;
+    });
   }, []);
+  const toastHead = toasts[0];
+  useEffect(() => {
+    if (!toastHead) return undefined;
+    const timer = setTimeout(() => setToasts((q) => (q[0]?.id === toastHead.id ? q.slice(1) : q)), toastHead.ms);
+    return () => clearTimeout(timer);
+  }, [toastHead?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nextToast = useCallback(() => setToasts((q) => q.slice(1)), []);
 
   // Cloud backup (claude.ai only): at most once a minute, plus at every phase change.
   const syncCloud = useCallback((force = false) => {
@@ -125,7 +149,10 @@ export default function App({ resume = false }) {
     clearTimeout(saveTimer.current);
     saveTimer.current = null;
     if (!leagueRef.current) return;
-    const ok = L.saveLeague(leagueRef.current);
+    let ok = L.saveLeague(leagueRef.current);
+    // The phase backup never costs you the autosave: if storage is full, it goes first.
+    if (!ok && dropBackup()) ok = L.saveLeague(leagueRef.current);
+    saveOk.current = ok;
     if (!ok && !cloudRef.current.last) showToast("⚠️ This browser didn't keep your save. Use Settings → Export league to keep a copy.", 6000);
     syncCloud();
   }, [showToast, syncCloud]);
@@ -144,6 +171,21 @@ export default function App({ resume = false }) {
     }, ms);
   }, [flushSave]);
 
+  // Before each phase change, the save as it stands is kept as a labelled backup
+  // (Settings → Restore backup). Skipped quietly when storage is full or unavailable.
+  const backup = useCallback((label) => {
+    if (saveTimer.current) flushSave();
+    if (saveOk.current && leagueRef.current) backupSave(leagueRef.current, label);
+  }, [flushSave]);
+
+  // Fixes made to a save resumed at start-up are listed once the game is on screen.
+  useEffect(() => {
+    if (!bootFixes.current?.length) return;
+    showToast(repairSummary(bootFixes.current), 9000);
+    bootFixes.current = null;
+    commit();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     window.__rinkgm = { flush: () => (saveTimer.current ? flushSave() : null), inGame: () => !!leagueRef.current };
     const flush = () => {
@@ -159,7 +201,9 @@ export default function App({ resume = false }) {
     };
   }, [flushSave, syncCloud]);
 
-  const startLeague = (lg) => {
+  // `fixes`: repairs already made while the save was read (loadRepaired), to list with any made here.
+  const startLeague = (lg, earlier = []) => {
+    const fixes = [...earlier, ...repairLeague(lg)];
     leagueRef.current = lg;
     setLive(lg.activeGame?.spec || null);
     cloudRef.current.phase = lg.phase;
@@ -167,6 +211,7 @@ export default function App({ resume = false }) {
     setTab("dashboard");
     commit();
     syncCloud(true);
+    if (fixes.length) showToast(repairSummary(fixes), 9000);
     // A brand-new franchise is offered the tour once, unless the player opted out for good.
     let optOut = false; try { optOut = localStorage.getItem("rinkgm_tour_optout") === "1"; } catch {}
     if (!lg.settings?.tourSeen && lg.year === lg.startYear && lg.phase === "preseason" && !optOut) setTour("welcome");
@@ -183,7 +228,7 @@ export default function App({ resume = false }) {
       const t0 = performance.now();
       let more = true;
       try {
-        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && (unseenPaper(leagueRef.current) || leagueRef.current.playoffs?.papers?.some((p) => !p.seen))) more = false; /* a newspaper is out: read it before the sim rolls on */ }
+        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && leagueRef.current.playoffs?.papers?.some((p) => !p.seen)) more = false; /* a series paper is out: read it before the sim rolls on (other papers wait in Needs Attention) */ }
       } catch (e) {
         console.error("Simulation step failed", e);
         showToast("The simulation stopped because of an error. Your league is saved; try again or reload.", 7000);
@@ -225,6 +270,8 @@ export default function App({ resume = false }) {
       openBox: (game) => setModal({ type: "box", game }),
       startTour: () => { setModal(null); setMenuOpen(false); setTour("run"); },
       openPick: (pid, slot) => setModal({ type: "pick", pid, slot }),
+      // A Gazette edition waiting in Needs Attention.
+      openPaper: (id) => setModal({ type: "paper", id }),
       closeModal: () => setModal(null),
       proposeTradeFor: (pid, tid) => {
         setTradeSeed({ pid, tid, n: Date.now() });
@@ -240,7 +287,7 @@ export default function App({ resume = false }) {
       clearTradeSeed: () => setTradeSeed(null),
       save: () => saveTimer.current && flushSave(),
       ask,
-      replaceLeague: (lg) => startLeague(lg),
+      replaceLeague: (lg, fixes) => startLeague(lg, fixes),
       newGame: () => {
         if (saveTimer.current) flushSave();
         leagueRef.current = null;
@@ -271,6 +318,7 @@ export default function App({ resume = false }) {
   }
 
   const user = league.teams[league.userTid];
+  const seasonLabel = `${league.year}-${String(league.year + 1).slice(2)}`;
 
   // ---------- Phase actions ----------
   const openDeadline = () => {
@@ -310,8 +358,12 @@ export default function App({ resume = false }) {
     startSeasonNow: () => {
       setModal(null);
       if (blockers()) return;
+      backup(`the ${seasonLabel} preseason`);
       L.startRegularSeason(league);
+      // Opening night lands on Home: the first game and the to-do list.
+      setTab("dashboard");
       commit();
+      showToast("The season is under way.");
     },
     simDay: () => {
       if (blockers()) return;
@@ -372,6 +424,7 @@ export default function App({ resume = false }) {
       commit();
     },
     startPlayoffs: () => {
+      backup(`the end of the ${seasonLabel} regular season`);
       L.endRegularSeason(league);
       go("playoffs");
       commit();
@@ -400,6 +453,7 @@ export default function App({ resume = false }) {
       setLive({ kind: "playoff", series: s, home: g.home, away: g.away });
     },
     toDraft: () => {
+      backup(`the ${seasonLabel} playoffs`);
       L.finishPlayoffs(league);
       setTab("draft");
       commit();
@@ -428,6 +482,7 @@ export default function App({ resume = false }) {
       commit();
     },
     toResign: () => {
+      backup(`the ${league.draft?.year ?? league.year + 1} draft`);
       L.completeDraft(league);
       go("freeagency");
       commit();
@@ -441,6 +496,7 @@ export default function App({ resume = false }) {
     },
     toFANow: () => {
       setModal(null);
+      backup(`the ${league.year + 1} re-sign window`);
       L.goToFreeAgency(league);
       go("freeagency");
       commit();
@@ -448,6 +504,7 @@ export default function App({ resume = false }) {
     faDay: () => {
       simFADay(league);
       commit();
+      if (league.fa?.summary?.text) showToast(league.fa.summary.text);
     },
     faToEnd: () => {
       while (league.fa && league.fa.day < FA_DAYS) simFADay(league);
@@ -461,10 +518,12 @@ export default function App({ resume = false }) {
         { tone: open >= 4 ? "warn" : "info", head: `${open} open roster spot${open === 1 ? "" : "s"}`, text: open >= 4 ? "Camp fills them from the farm, but depth signed now is depth you chose." : "The NHL roster is close to full." },
         { tone: "info", head: `${money(capSpace(league, user))} of cap space left`, text: "Unspent room banks through the season for a deadline move." },
         ...(pending ? [{ tone: "warn", head: `${pending} offer${pending === 1 ? "" : "s"} still waiting on an answer`, text: `Agents decide over the remaining ${daysLeft} free-agency day${daysLeft === 1 ? "" : "s"}; starting the season settles them now.` }] : []),
+        ...(staffGapText(user) ? [{ tone: "warn", ...staffGapText(user), action: { label: "Hire a coach", onClick: () => { setModal(null); go("coaching", "coaching"); } } }] : []),
       ] });
     },
     nextSeasonNow: () => {
       setModal(null);
+      backup(`${league.year + 1} free agency`);
       runChunked(
         () => "Aging players and building the new season…",
         () => {
@@ -543,7 +602,6 @@ export default function App({ resume = false }) {
   const rep = repTier(gm.rep);
   const capCeiling = capForYear(capYear(league));
   const unread = Math.max(0, league.inbox.length - (league.settings.activityReadCount || 0));
-  const seasonLabel = `${league.year}-${String(league.year + 1).slice(2)}`;
 
   return (
     <GameCtx.Provider value={ctx}>
@@ -575,7 +633,6 @@ export default function App({ resume = false }) {
             <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}>Take the tour</button>
           </div>}
         </header>
-        {toast && <div className={`gg-flash${/failed|blocked|invalid|rejected|not enough|cannot|declined|paused|stopped|injur|unhappy|over the|max \d|need/i.test(String(toast))?" warn":""}`} role="status" aria-live="polite">{String(toast)}</div>}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
@@ -601,7 +658,7 @@ export default function App({ resume = false }) {
         </div>
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
         {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
-        {!live && !busy && modal?.type !== "simsummary" && !league.playoffs?.papers?.some((p) => !p.seen) && unseenPaper(league) && <NewsPaper paper={unseenPaper(league)} onClose={() => { unseenPaper(league).seen = true; commit(); }} />}
+        {modal?.type === "paper" && (league.papers || []).some((p) => p.id === modal.id) && <NewsPaper paper={league.papers.find((p) => p.id === modal.id)} onClose={() => { league.papers.find((p) => p.id === modal.id).seen = true; setModal(null); commit(); }} />}
         {modal?.type === "simsummary" && <SimSummary data={modal.data} onClose={() => setModal(null)} />}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
@@ -611,7 +668,7 @@ export default function App({ resume = false }) {
         {modal?.type === "pick" && <DraftPickCard pid={modal.pid} slot={modal.slot} onClose={() => setModal(null)} />}
         {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
-        {!modal && !live && !busy && league.ownerReviewPending != null && !unseenPaper(league) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}
+        {!modal && !live && !busy && league.ownerReviewPending != null && !league.playoffs?.papers?.some((p) => !p.seen) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}
         {busy && (
           <div className="overlay">
             <div className="box">
@@ -626,6 +683,7 @@ export default function App({ resume = false }) {
           </div>
         )}
         {confirmEl}
+        <FeedbackToast toast={toastHead} waiting={toasts.length - 1} onDismiss={nextToast} />
       </div>
     </GameCtx.Provider>
   );

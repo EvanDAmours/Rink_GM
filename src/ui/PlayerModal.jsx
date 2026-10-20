@@ -14,6 +14,7 @@ import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } fro
 import { careerTotals, careerMilestones } from "../engine/records.js";
 import { prospectReport, isProspectWatch } from "../engine/prospectWatch.js";
 import { Sparkline } from "./ProspectWatch.jsx";
+import AbilityChip, { abilitiesOf } from "./AbilityChip.jsx";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
@@ -67,6 +68,7 @@ export default function PlayerModal({ pid }) {
           <div className="kv" style={{ flex: 1 }}>
             <span className="k">Position</span><span>{fullPosName(p.pos)} · shoots {p.shoots}{goalie ? "/catches" : ""}</span>
             <span className="k">Type</span><span>{ARCHETYPES[p.type]?.name}</span>
+            {abilitiesOf(p).length > 0 && (<><span className="k">X-Factors</span><span className="gg-xf-row"><AbilityChip p={p} full /></span></>)}
             <span className="k">Jersey number</span><span>{p.number || "—"}{p.numberData?" · verified":p.numberEdited?" · your assignment":p.number?" · game assigned":""}</span>
             <span className="k">Age</span><span>{p.age}{p.nat ? ` · ${p.nat}` : ""}</span>
             <span className="k">Potential</span><span>{r.pot}{hidden && !r.exact ? " (scout estimate)" : ""}</span>

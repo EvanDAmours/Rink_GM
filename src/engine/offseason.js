@@ -11,6 +11,7 @@ import { teamRatings, autoLines, syncLines } from "./lines.js";
 import { buildSeasonSchedule } from "./schedule.js";
 import { generateDraftClass, createDraftPicks, releaseProspect } from "./draft.js";
 import { marketOffseasonDay } from "./market.js";
+import { isFranchiseGoalie } from "./trade.js";
 import { blankRecord } from "./sim.js";
 
 import { ensureHockeyRules, contractCount, qualifyingAmount, ownedIds } from "./hockeyRules.js";
@@ -119,6 +120,9 @@ export function letWalk(league, pid) {
 export function endResign(league) {
   for (const t of league.teams) {
     const expiring = expiringPlayers(league, t);
+    // A young starting goalie is the club's first call, before anyone else uses up the room.
+    const franchise = new Set(t.id === league.userTid ? [] : expiring.filter((p) => isFranchiseGoalie(league, t, p)).map((p) => p.id));
+    if (franchise.size) expiring.sort((a, b) => franchise.has(b.id) - franchise.has(a.id));
     for (const p of expiring) {
       if (t.id === league.userTid) {
         if (p.qualified) {holdQualifiedRFA(league,p);continue;}
@@ -131,7 +135,11 @@ export function endResign(league) {
       if (payroll(league, t) < capFloorForYear(league.year + 1)) keep += 0.25;
       if (p.age >= 35) keep *= 0.5;
       const ask = resignAsk(league, p);
-      if (chance(keep) && ask.aav <= capSpace(league, t) - 1 && contractCount(league,t)<50) {
+      // He is kept whenever the club can fit him, without the usual cushion.
+      if (franchise.has(p.id) && ask.aav <= capSpace(league, t) && contractCount(league,t)<50) {
+        p.cap = ask.aav;
+        p.yrs = ask.yrs;
+      } else if (chance(keep) && ask.aav <= capSpace(league, t) - 1 && contractCount(league,t)<50) {
         p.cap = ask.aav;
         p.yrs = ask.yrs;
       } else {
@@ -194,7 +202,19 @@ export function offerContract(league, pid, aav, yrs) {
 
 const TARGET = { F: 13, D: 7, G: 2 };
 
+// One line on the day just played, as Gridiron's market reports it: how many signed and the
+// biggest name. Kept on league.fa.summary for the Free Agency screen and the Next Day toast.
+export function faDaySummary(league, before) {
+  const signed = before.map((id) => league.players[id]).filter((p) => p && p.tid >= 0);
+  const top = [...signed].sort((a, b) => b.ovr - a.ovr)[0];
+  const day = league.fa?.day ?? 0;
+  const abbr = top ? league.teams[top.tid]?.abbr : null;
+  const text = `Day ${day} of free agency: ${signed.length ? `${signed.length} signed${top ? `, led by ${top.name} (${abbr})` : ""}.` : "nobody signed."}`;
+  return { day, signed: signed.length, top: top ? { pid: top.id, name: top.name, pos: top.pos, ovr: top.ovr, tid: top.tid, abbr, cap: top.cap, yrs: top.yrs } : null, mine: signed.filter((p) => p.tid === league.userTid).map((p) => p.name), text };
+}
+
 export function simFADay(league) {
+  const before = [...league.freeAgents];
   league.fa.day++;
   settleNegotiations(league); processOfferSheets(league);aiOfferSheets(league); processWaivers(league);
   marketOffseasonDay(league);
@@ -245,6 +265,7 @@ export function simFADay(league) {
       if (!flush && payroll(league, t) >= capFloorForYear(league.year + 1)) break;
     }
   }
+  league.fa.summary = faDaySummary(league, before);
   return league.fa.day >= FA_DAYS;
 }
 
@@ -326,8 +347,7 @@ export function startNewSeason(league) {
     delete p.ltir; delete p.waiverPending;
     p.stats = blankStats(p.pos);
     p.pstats = blankStats(p.pos);
-    const nhlGp = p.career.reduce((s, c) => s + (c.s?.gp || 0), 0);
-    p.rookie = nhlGp < 25 && p.age <= 25;
+    p.rookie = calderEligible(p);
   }
   pruneFreeAgents(league);
 
@@ -408,6 +428,18 @@ function pruneFreeAgents(league) {
   }
   if (gone) logTx(league, `${gone} unsigned players leave the league for Europe or retirement`);
 }
+
+// The Calder Trophy rule: under 26 when the season starts, never more than 25 NHL games in one
+// season and not six or more in each of two seasons. Real players who were already established
+// when the league began carry calderIneligible (their earlier NHL seasons aren't in the game).
+export function calderEligible(p) {
+  if (!p || p.calderIneligible || p.age > 25) return false;
+  const seasons = (p.career || []).map((c) => c.s?.gp || 0);
+  return !seasons.some((gp) => gp > 25) && seasons.filter((gp) => gp >= 6).length < 2;
+}
+
+// Players in a club's minors can retire from this age (the age he'd be next season).
+export const MINORS_RETIRE_AGE = 30;
 // Retirements are announced when the season ends, before re-sign week and free agency, so
 // nobody re-signs or bids on a player who was about to hang them up. The decision uses the
 // age he will be next season; his final season is archived to his card first.
@@ -418,8 +450,11 @@ export function announceRetirements(league) {
   for (const id of Object.keys(league.players)) {
     const p = league.players[id];
     if (p.tid === -2 || p.signed === false) continue;
-    const inMinors = p.tid >= 0 && league.teams[p.tid].prospects.includes(p.id);
-    if (!inMinors && chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
+    // Veterans in a club's minors age out too (from about 30), on the same age-based odds;
+    // younger players in the system are still developing and never retire here.
+    const inMinors = p.tid >= 0 && !!league.teams[p.tid]?.prospects.includes(p.id);
+    if (inMinors && p.age + 1 < MINORS_RETIRE_AGE) continue;
+    if (chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
   }
   for (const p of retiring) {
     if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
@@ -491,7 +526,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
     const c = counts(league, t, {healthyOnly: true});
     if (c.G >= 2 && c.D >= 6 && c.F >= 12) break;
     const core = new Set(rosterOf().sort((a,b) => b.ovr-a.ovr).slice(0,6).map(p => p.id));
-    const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending
+    const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending && !isFranchiseGoalie(league, t, p)
       && (grp(p) === 'G' ? c.G > 2 : grp(p) === 'D' ? c.D > 6 : c.F > 12)).sort((a,b) => a.ovr-b.ovr)[0];
     if (!surplus) break;
     releasePlayer(league, t, surplus.id);
@@ -521,7 +556,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
       continue;
     }
     const overpaid = rosterOf()
-      .filter((p) => !core.has(p.id) && p.cap > 1)
+      .filter((p) => !core.has(p.id) && p.cap > 1 && !isFranchiseGoalie(league, t, p))
       .sort((a, b) => b.cap - marketValue(b, league.year) - (a.cap - marketValue(a, league.year)))[0];
     if (!overpaid) break;
     releasePlayer(league, t, overpaid.id);

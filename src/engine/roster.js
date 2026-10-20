@@ -8,6 +8,7 @@ import { syncLines, lineupIds } from "./lines.js";
 import {ensureUniforms} from "./uniforms.js";
 import { contractCount, reserveCount, waiverStatus, rawPayroll, buriedCap, ltirRelief, elcTerm, elcSalary } from "./hockeyRules.js";
 
+const GROUP_NAME = { G: "goalies", D: "defensemen", F: "forwards" };
 export const IR_GAMES = 4; // NHL injured reserve is a week minimum, about four games; players out this long don't count against the 23-man limit
 
 // During the re-sign and free-agency phases teams are budgeting for next season.
@@ -185,7 +186,11 @@ export function logTx(league, text, tids = []) {
 }
 
 // Keep a team dressable: promote, sign or generate depth when injuries pile up.
+// Your own club is never handed a free agent: the farm comes first, and if nobody there can
+// play, the club signs a depth player for one year at the league minimum and tells you, as an
+// emergency call-up would. AI clubs may still sign the best affordable free agent.
 export function ensureMinimums(league, team, { notify = false } = {}) {
+  const mine = team.id === league.userTid;
   const need = () => {
     const h = counts(league, team, { healthyOnly: true });
     if (h.G < MIN_GOALIES) return "G";
@@ -207,21 +212,33 @@ export function ensureMinimums(league, team, { notify = false } = {}) {
       if (notify) league.inbox.push({ year: league.year, day: league.day, text: `Emergency call-up: ${prospect.name} (${prospect.pos}, ${prospect.ovr}) joins the roster.` });
       continue;
     }
-    const fa = league.freeAgents.map((id) => league.players[id]).filter((p) => p && fits(p) && p.injury <= 0).sort((a, b) => b.ovr - a.ovr).find((p) => marketValue(p, league.year) <= Math.max(1.0, capSpace(league, team)));
+    const fa = !mine && league.freeAgents.map((id) => league.players[id]).filter((p) => p && fits(p) && p.injury <= 0).sort((a, b) => b.ovr - a.ovr).find((p) => marketValue(p, league.year) <= Math.max(1.0, capSpace(league, team)));
     if (fa && contractCount(league,team)<50) {
       signPlayer(league, team, fa, Math.min(marketValue(fa, league.year), Math.max(minSalaryForYear(league.year), capSpace(league, team))), 1);
       if (notify) league.inbox.push({ year: league.year, day: league.day, text: `Emergency signing: ${fa.name} (${fa.pos}, ${fa.ovr}).` });
       continue;
     }
-    if(contractCount(league,team)>=50 || reserveCount(league,team)>=90)break;
+    if(contractCount(league,team)>=50 || reserveCount(league,team)>=90){
+      if (mine) league.inbox.push({ year: league.year, day: league.day, text: `⚠️ Not enough healthy ${GROUP_NAME[grp]} to dress a lineup, and no contract slot for an emergency signing. Call someone up, sign a free agent or make a trade.` });
+      break;
+    }
     const pos = grp === "G" ? "G" : grp === "D" ? pick(["LD", "RD"]) : pick(["C", "LW", "RW"]);
     const p = generatePlayer(pos, randInt(69, 74), randInt(22, 29), league.year);
     league.players[p.id] = p;
     p.cap = minSalaryForYear(league.year);
     p.yrs = 1;
     p.signed = true;
+    if (mine) {
+      // A minor-league journeyman on his first NHL deal: no NHL service yet, so he can go
+      // back down without waivers when the injured return (see returnCallUps).
+      p.service = { firstAge: p.age, years: 0, priorGames: 0, estimated: false };
+      p.emergencyCallUp = league.year;
+    }
     addToRoster(league, team, p);
-    logTx(league, `${team.abbr} call up ${p.name} (${p.pos}) from the AHL`, [team.id]);
+    if (mine) {
+      logTx(league, `${team.abbr} sign ${p.name} (${p.pos}, ${p.ovr}) — 1 yr, $${p.cap.toFixed(2)}M (emergency depth)`, [team.id]);
+      league.inbox.push({ year: league.year, day: league.day, text: `Emergency depth signing: nobody healthy on the farm could fill in, so ${p.name} (${p.pos}, ${p.ovr}) signs for one year at the league minimum ($${p.cap.toFixed(2)}M). He goes to the farm once your injured are back.` });
+    } else logTx(league, `${team.abbr} call up ${p.name} (${p.pos}) from the AHL`, [team.id]);
   }
   syncLines(league, team);
 }

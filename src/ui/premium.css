@@ -34,3 +34,91 @@ body{background:radial-gradient(ellipse at 75% 0,#1e293b88,transparent 50%),var(
 /* Readable management interface: larger body text, clear status, visible budgets. */
 :root{--muted:#cbd5e1;--dim:#60a5fa}body{font-size:14px;line-height:1.55}.small{font-size:12px}.tiny{font-size:11px}.muted{color:var(--muted)}.dim{color:var(--dim)}.panel h3{font-size:12px;color:#e0e6f0;line-height:1.5}.eyebrow{font-size:10px;color:#e0e6f0}.notice{font-size:14px;line-height:1.65}.pill{font-size:12px;color:#e0e6f0}.nav button{font-size:12px}.nav-group{font-size:10px;color:#e0e6f0}.main button,.main input,.main select,.main textarea{font-size:12px}.main button{min-height:34px}table.t td{font-size:12px}table.t th{font-size:10px;color:#e0e6f0;letter-spacing:.6px}.player-cell .player-link{font-size:12px!important}.player-detail{font-size:10px;color:#e0e6f0}.ops-summary span{font-size:12px;color:#e0e6f0}.pagehead{flex-wrap:wrap}.pmeta{font-size:11px!important;color:#e0e6f0}.pwho .player-link{font-size:14px!important}.tabs{flex-wrap:wrap}.tabs button{font-size:12px}.ptsbig{font-size:34px;color:#fbbf24}.scout-budget{display:grid;grid-template-columns:auto auto;gap:1px 20px;align-items:center;padding:12px 18px;border:1px solid #14532d;border-radius:9px;background:linear-gradient(120deg,#1e293b,#1e293b);margin-left:auto;box-shadow:0 4px 18px #00000099}.scout-budget>span{font-size:11px;font-weight:800;letter-spacing:1px;color:#fbbf24}.scout-budget strong{grid-column:2;grid-row:1/3;font:700 42px/1 var(--display);color:#fbbf24}.scout-budget small{font-size:11px;color:#e0e6f0}.scout-budget.regional strong{font-size:34px}.reg-card p{font-size:12px}.screen-context{font-size:10px;color:#e0e6f0}.screen-context>span:last-child{font-size:10px}.title-hero p{font-size:14px;color:#e0e6f0}.teamcard .tn{font-size:12px}.teamcard .tr{font-size:10px;color:#fbbf24}.title .small.dim{font-size:11px;color:#fbbf24}.briefing-item small{font-size:11px;color:#e0e6f0}.briefing-item em{font-size:11px}.executive-stats>div>span:last-of-type{font-size:11px}.stat-label{font-size:10px;color:#e0e6f0}.hero-chips small{font-size:9px}.banner-details{font-size:11px;color:#e0e6f0}.modal .attr{font-size:12px}.team-banner p{font-size:12px}.banner-stats small{font-size:10px;color:#e0e6f0}.roster-group-title{font-size:11px}.roster-group-title span{font-size:10px}.command-result small{font-size:11px;color:#e0e6f0}.activity-feed p{font-size:13px}
 @media(max-width:600px){body{font-size:14px}.small,.main .small{font-size:12px}.tiny{font-size:11px}.main button,.main input,.main select{font-size:12px}.main button{min-height:40px}.tabs button{font-size:12px;min-height:40px}.ops-tabs button{flex:1 0 42%}.screen-context,.screen-context>span:last-child{font-size:8px}.title-hero p{font-size:12px}.teamcard .tn{font-size:11px}.teamcard .tr{font-size:9px}.teamcard{min-height:105px}.teamcard .team-strength{font-size:21px}.team-strength small{font-size:7px}.title .small.dim,.title .small.muted{font-size:11px}.banner-details{font-size:10px}.topbar .teaminfo .name{font-size:14px}.topbar .meta{max-width:none}.topbar .actions button{font-size:11px;min-height:39px}.mobile-menu label{font-size:11px}.mobile-menu select{font-size:12px}.mobile-menu button{font-size:10px;min-height:37px}.mobile-menu .row{gap:4px}.hero-copy .eyebrow{font-size:8px}.hero-copy p{font-size:11px}.hero-chips small{font-size:8px}.briefing-item b{font-size:13px}.briefing-item small,.briefing-item em{font-size:11px}.executive-stats>div>span:last-of-type{font-size:10px}.stat-label{font-size:9px}.match-teams small{font-size:11px}.match-date{font-size:10px}.match-date b{font-size:9px}.cornerstone small{font-size:11px}.cornerstone .eyebrow{font-size:10px}.tablewrap{overflow:auto}table.t td{font-size:12px}table.t th{font-size:10px}.player-cell .player-link{font-size:12px!important}.player-detail{font-size:10px}.scout-budget{width:100%;margin:4px 0;padding:13px 16px}.scout-budget strong{font-size:42px}.pwho .player-link{font-size:13px!important}.pmeta{font-size:11px!important}.pact{flex-wrap:wrap}.prow{row-gap:10px}.kv{grid-template-columns:85px minmax(0,1fr);font-size:12px}.lfirst{font-size:10px}.lcard .lposb{font-size:9px}.dev,.cov{font-size:10px}.read-label{font-size:10px}}
+
+/* ---- Floating toasts (FeedbackToast.jsx): the football game's look. One at a time,
+   queued; bottom-right on a desktop, bottom-centre above the home indicator on a phone. ---- */
+.rk-toasts { position: fixed; right: 20px; bottom: 20px; z-index: 4500; display: flex; flex-direction: column; align-items: flex-end; max-width: min(92vw, 420px); pointer-events: none; }
+.rk-toast { pointer-events: auto; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; background: #0b1220f2; border: 1px solid #22c55e66; border-left: 4px solid #22c55e; border-radius: 10px; padding: 10px 14px; font-size: 14px; line-height: 1.4; font-weight: 600; color: #e2e8f0; box-shadow: 0 8px 28px #000a; animation: rkToastIn .2s ease-out; }
+.rk-toast.t-warn { border-color: #f59e0b66; border-left-color: #f59e0b; }
+.rk-toast-msg { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.rk-toast-more { flex: 0 0 auto; align-self: center; font-size: 11px; font-weight: 800; color: #94a3b8; background: #1e293b; border: 1px solid #334155; border-radius: 999px; padding: 1px 7px; }
+@keyframes rkToastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) {
+  .rk-toasts { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: none; align-items: stretch; }
+  .rk-toast { padding: 8px 12px; font-size: 13px; }
+}
+.app[data-motion="reduced"] .rk-toast { animation: none; }
+
+/* ---- Home: the to-do rail (Needs Attention, urgent first) ---- */
+.rk-todo { border-left: 3px solid #38bdf8; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
+.rk-todo.t-urgent { border-left-color: #ef4444; } .rk-todo.t-action { border-left-color: #eab308; } .rk-todo.t-info { border-left-color: #38bdf8; }
+.app .main .rk-todo-main:not(.link):not(.player-link):not(.team-link) { display: block; width: 100%; min-height: 0; text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 4px 10px; color: #fff; font-size: 13.5px; font-weight: 600; line-height: 1.3; letter-spacing: 0; }
+.app .main .rk-todo-main:not(.link):not(.player-link):not(.team-link):hover:not(:disabled) { background: #ffffff0d; border: 0; }
+.rk-todo .rk-acts { padding: 0 0 4px 10px; gap: 5px; }
+.rk-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.app .main .rk-acts > button:not(.link):not(.player-link):not(.team-link) { min-height: 0; background: #22c55e22; border: 1px solid #22c55e77; color: #bbf7d0; border-radius: 6px; padding: 3px 8px; font-size: 11.5px; font-weight: 800; white-space: nowrap; }
+.app .main .rk-acts > button:not(.link):not(.player-link):not(.team-link):hover:not(:disabled) { background: #22c55e33; border-color: #22c55e; }
+
+/* ---- Needs Attention list (the football game's inbox): a drawer on the right, full screen on a phone ---- */
+.rk-inbox-bg { position: fixed; inset: 0; z-index: 1200; background: #0007; display: flex; justify-content: flex-end; align-items: flex-start; padding: 56px 14px 14px; }
+.rk-inbox { width: 440px; max-width: 100%; max-height: 80vh; overflow-y: auto; background: #111827; border: 1px solid #1e293b; border-radius: 14px; box-shadow: 0 18px 40px #000b; padding: 14px; outline: none; }
+.rk-inbox-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rk-inbox-head b { font-size: 20px; font-weight: 900; }
+.rk-inbox-head span { font-size: 13px; color: #64748b; }
+.app .main .rk-inbox-x:not(.link):not(.player-link):not(.team-link) { margin-left: auto; width: 34px; min-height: 34px; padding: 0; border-radius: 50%; }
+.rk-inbox-empty { color: #64748b; font-size: 14px; padding: 20px 4px; text-align: center; }
+.rk-inbox-list { display: flex; flex-direction: column; gap: 8px; }
+.rk-inbox-item { display: flex; gap: 10px; align-items: center; background: #080c14; border: 1px solid #1e293b; border-left: 4px solid #38bdf8; border-radius: 10px; padding: 10px 12px; }
+.rk-inbox-item.t-urgent { border-left-color: #ef4444; } .rk-inbox-item.t-action { border-left-color: #eab308; }
+.rk-inbox-icon { font-size: 22px; flex: 0 0 auto; }
+.rk-inbox-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.rk-inbox-body > b { font-weight: 800; font-size: 14px; color: #e0e6f0; }
+.rk-inbox-body > span { font-size: 12px; color: #64748b; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rk-inbox-body .rk-acts { margin-top: 5px; }
+.rk-inbox-side { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex: 0 0 auto; }
+.app .main .rk-cta:not(.link):not(.player-link):not(.team-link) { min-height: 0; background: #3b82f6; border: 0; color: #fff; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.app .main .rk-cta.t-urgent:not(.link):not(.player-link):not(.team-link) { background: #ef4444; }
+.app .main .rk-cta:not(.link):not(.player-link):not(.team-link):hover:not(:disabled) { filter: brightness(1.1); background: #3b82f6; border: 0; } .app .main .rk-cta.t-urgent:not(.link):not(.player-link):not(.team-link):hover:not(:disabled) { background: #ef4444; }
+.app .main .rk-dismiss:not(.link):not(.player-link):not(.team-link) { min-height: 0; background: transparent; border: 0; color: #64748b; font-size: 11px; padding: 0; font-weight: 600; }
+.app .main .rk-dismiss:not(.link):not(.player-link):not(.team-link):hover:not(:disabled) { background: transparent; border: 0; color: #cbd5e1; }
+@media (max-width: 760px) {
+  .rk-inbox-bg { padding: 0; background: #080c14; }
+  .rk-inbox { width: 100%; max-height: 100vh; height: 100%; border: 0; border-radius: 0; padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(96px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---- Home: Development Focus sort pills, and the highlight when a reminder jumps here ---- */
+.rk-lab-pick { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #64748b; white-space: nowrap; }
+.rk-sort { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0; }
+.rk-sort small { font-size: 11px; color: #64748b; font-weight: 600; margin-right: 2px; }
+.app .main .rk-sort > button:not(.link):not(.player-link):not(.team-link) { min-height: 0; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; border: 1px solid #1e293b; background: transparent; color: #64748b; letter-spacing: 0; }
+.app .main .rk-sort > button.on:not(.link):not(.player-link):not(.team-link) { border-color: #3b82f6; background: #3b82f633; color: #fff; }
+.app .main .rk-sort > button:not(.link):not(.player-link):not(.team-link):hover:not(:disabled):not(.on) { background: #ffffff0d; border-color: #334155; }
+.gg-lab.rk-flash { box-shadow: 0 0 0 2px #ef4444, 0 0 18px #ef444466; transition: box-shadow .3s; }
+
+/* ---- Season preview / stage confirmation: the coach reminder and its shortcut ---- */
+.gg-pv-staff b { color: #fde68a; }
+.app .gg-confirm-go { align-self: flex-start; margin-top: 4px; min-height: 0; padding: 3px 10px; font-size: 12px; background: #78350f; border: 1px solid #b45309; color: #fcd34d; }
+
+/* ---- Settings: the automatic backup ---- */
+.rk-backup-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #38bdf8; border-radius: 8px; padding: 8px 12px; }
+.rk-backup-row > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rk-crash-ask { margin-top: 12px; border-top: 1px solid #334155; padding-top: 10px; }
+@media (max-width: 760px) {
+  .app .main .rk-acts > button:not(.link):not(.player-link):not(.team-link), .app .main .rk-sort > button:not(.link):not(.player-link):not(.team-link) { min-height: 32px; padding: 4px 11px; }
+  .app .main .rk-todo-main:not(.link):not(.player-link):not(.team-link) { min-height: 36px; }
+  .app .main .rk-cta:not(.link):not(.player-link):not(.team-link) { min-height: 36px; padding: 6px 14px; }
+}
+/* Home rail: last results on one line (the score no longer squeezed into a 22px column). */
+.gg-home .gg-rail-game { grid-template-columns: 48px auto 22px minmax(0, 1fr); }
+.gg-home .gg-rail-game b { white-space: nowrap; }
+/* Needs Attention tile: red with something urgent, gold with only decisions and news, green when clear. */
+.gg-stat.rk-attn.warn .gg-stat-line b { color: #eab308; }
+/* On a phone, while a dialog or sheet is open its buttons sit at the bottom: the toast drops in at the top instead. */
+@media (max-width: 760px) {
+  body:has(.modalbg, .rk-inbox-bg, .overlay, .gg-splash) .rk-toasts { top: calc(8px + env(safe-area-inset-top, 0px)); bottom: auto; }
+}
+/* Season preview on a phone: with a coach shortcut there are three buttons; the big one gets its own row. */
+@media (max-width: 760px) {
+  .gg-pv-actions { flex-wrap: wrap; }
+  .app .gg-pv-actions button.big { flex: 1 0 100%; order: 9; }
+}

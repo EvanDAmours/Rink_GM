@@ -48,6 +48,24 @@ export function hireCoach(league, id) {
   t.coach={...c,hiredYear:league.year};league.coachMarket=league.coachMarket.filter(x=>x.id!==id);if(old)league.coachMarket.push(old);
   logTx(league,`${t.abbr} hire ${c.name} as head coach`,[t.id]);return {ok:true,msg:`${c.name} is your new head coach.`};
 }
+// Jobs on a club's staff that need a hire: the head coach when an interim runs the bench (or
+// nobody does), and an empty assistant or goalie-coach chair. Home, the season preview and the
+// off-season wrap-up remind you before the puck drops.
+export function staffGaps(t) {
+  const out = [];
+  if (!t) return out;
+  if (!t.coach || t.coach.interim) out.push("head coach");
+  if (!t.staff?.assistant) out.push("assistant coach");
+  if (!t.staff?.goalie) out.push("goalie coach");
+  return out;
+}
+export function staffGapText(t) {
+  const gaps = staffGaps(t);
+  if (!gaps.length) return null;
+  const head = `Your staff needs a ${gaps.join(" and a ")}`;
+  const text = t.coach?.interim ? `${t.coach.name} only runs the bench on an interim basis. An interim coach costs you development and special teams; hire a head coach on the Coaching page.` : "Hire from the coaching market on the Coaching page.";
+  return { head, text };
+}
 // Dismiss your head coach. An interim coach from the staff runs the bench until you hire;
 // the owner notes the cost and the room takes a hit.
 export function fireCoach(league) {
@@ -61,7 +79,7 @@ export function fireCoach(league) {
   if(t.morale!=null)t.morale=Math.max(0,t.morale-4);
   logTx(league,`${t.abbr} dismiss head coach ${old.name}; ${t.coach.name} named interim`,[t.id]);
   league.news ||= [];league.news.unshift({year:league.year,day:league.day,type:"coach",text:`${t.city} fire head coach ${old.name}. ${t.coach.name} takes over on an interim basis.`});
-  league.inbox?.push({year:league.year,day:league.day,text:`👔 ${old.name} has been dismissed. ${t.coach.name} runs the bench until you hire a head coach on the Coaching page.`});
+  league.inbox?.push({year:league.year,day:league.day,open:{tab:"coaching",sub:"coaching"},text:`👔 ${old.name} has been dismissed. ${t.coach.name} runs the bench until you hire a head coach on the Coaching page.`});
   return {ok:true,msg:`${old.name} dismissed. ${t.coach.name} is your interim head coach.`};
 }
 // Around the league, a club well under expectations by midseason changes its coach.
@@ -160,7 +178,7 @@ export function reviewOwner(league) {
     const before=t.owner.trust;
     t.owner.trust=clamp(t.owner.trust+(met?12:-10)+(league.playoffs?.champion===t.id?15:0),0,100);
     t.owner.reviews.unshift({year:league.year,goal:g.label,kind:g.kind,met,trust:t.owner.trust,before,rec:{...t.rec},playoff:t.playoffResult || null,champion:league.playoffs?.champion===t.id,developed});
-    if(t.id===league.userTid){league.inbox.push({year:league.year,day:league.day,text:`Owner review: ${met?"goal achieved":"goal missed"} — ${g.label}. Job security ${t.owner.trust}/100.`});league.ownerReviewPending=league.year;}
+    if(t.id===league.userTid){league.inbox.push({year:league.year,day:league.day,open:{tab:"frontoffice",sub:"owner"},text:`Owner review: ${met?"goal achieved":"goal missed"} — ${g.label}. Job security ${t.owner.trust}/100.`});league.ownerReviewPending=league.year;}
   }
   const t=league.teams[league.userTid],yr=league.year;
   const award=(key,name)=>{if(!league.achievements.some(a=>a.key===key))league.achievements.push({key,name,year:yr});};
