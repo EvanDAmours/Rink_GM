@@ -126,10 +126,10 @@ test("ring night: once, at the next season's opener, and only for the champions"
   simDraftToUser(lg, { all: true }); completeDraft(lg); goToFreeAgency(lg);
   while (lg.fa && lg.fa.day < FA_DAYS) simFADay(lg);
   beginNextSeason(lg);
-  const honoured = Object.fromEntries([...allNHL.first, ...allNHL.second].map((e) => [e.pid, lg.players[e.pid]?.ovr]));
+  // The gains come with off-season development (as Gridiron's All-Pros do), once.
+  assert.equal(lg.allNHL.applied, true, "last season's All-Star gains were applied in the off-season");
+  assert.deepEqual(applyAllStarGains(lg), [], "and never twice");
   startRegularSeason(lg);
-  assert.equal(lg.allNHL.applied, true, "last season's All-Star gains were applied at the opener");
-  for (const [pid, ovr] of Object.entries(honoured)) if (ovr != null && ovr < 95) assert.ok(lg.players[pid].ovr > ovr, "an honoured player below 95 gained");
   const rings = lg.moments.filter((m) => m.kind === "ringNight");
   assert.equal(rings.length, 1);
   assert.equal(rings[0].key, `rings-${lg.year - 1}`);
