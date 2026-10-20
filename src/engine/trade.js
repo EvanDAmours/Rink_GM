@@ -78,8 +78,13 @@ export function assetValue(league, id, viewer) {
   // How much of the season is gone: 0 in preseason, about 0.8 at the deadline.
   const rental = league.phase === "regular" ? Math.min(1, league.day / Math.max(1, lastDay(league.schedule))) : league.phase === "playoffs" ? 1 : 0;
   const v = inMinors && p.age <= 23 ? Math.max(prospectValue(p, { contending }), tradeValue(p, league.year, { contending, rental })) : tradeValue(p, league.year, { contending, rental });
-  return v * needFit(league,viewer,p);
+  return v * needFit(league,viewer,p) * abilityBump(p);
 }
+
+// EA NHL abilities (Elite Edges, Wheels, Quick Release…) are worth a little extra on the
+// market: about 5% for a player who carries any.
+export const ABILITY_TRADE_BUMP = 1.05;
+export const abilityBump = (p) => (p?.ratingData?.abilities?.length ? ABILITY_TRADE_BUMP : 1);
 
 // A club's young starting goalie (26 or younger, rated 80+, its best goalie) is built around
 // like a franchise player: AI clubs don't shop him, keep him when his deal is up if they can

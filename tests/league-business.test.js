@@ -13,6 +13,7 @@ import { ensureMinimums, counts, capSpace } from "../src/engine/roster.js";
 import { isFranchiseGoalie } from "../src/engine/trade.js";
 import { blockCandidates } from "../src/engine/market.js";
 import { minSalaryForYear, isGoalie } from "../src/engine/constants.js";
+import { assetValue, abilityBump } from "../src/engine/trade.js";
 const league = (abbr = "EDM", seed = 77) => L.createLeague({ userAbbr: abbr, seed });
 const byName = (lg, name) => Object.values(lg.players).find((p) => p.name === name);
 function farmPlayer(lg, t, opts = {}) {
@@ -174,5 +175,19 @@ test("AI clubs build around a young starting goalie", () => {
     else assert.fail(`${club.abbr} let its young starter walk`);
   }
   assert.ok(kept >= 3, `kept in every case checked (${kept})`);
+});
+
+test("EA abilities add about 5% to trade value", () => {
+  const lg = league();
+  const viewer = lg.teams[0];
+  const p = Object.values(lg.players).find((q) => q.ratingData?.abilities?.length && q.tid >= 0 && q.tid !== viewer.id);
+  assert.ok(p, "a player with EA abilities");
+  assert.equal(abilityBump(p), 1.05);
+  const withAbilities = assetValue(lg, p.id, viewer);
+  const saved = p.ratingData.abilities;
+  p.ratingData.abilities = [];
+  const without = assetValue(lg, p.id, viewer);
+  p.ratingData.abilities = saved;
+  assert.ok(Math.abs(withAbilities / without - 1.05) < 1e-9, `${withAbilities} vs ${without}`);
 });
 
