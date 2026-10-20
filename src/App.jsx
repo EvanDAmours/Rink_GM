@@ -374,11 +374,11 @@ export default function App({ resume = false }) {
     },
     simDay: () => {
       if (blockers()) return;
-      const ug = L.userGameOnDay(league);
       L.simDay(league);
       commit();
-      // One game simmed: show its box score, as a sim of several days shows a summary.
-      if (ug && ug.played && league.settings?.postgame !== false) setModal({ type: "box", game: ug });
+      // Your game's result card (compact, full or off in Settings) is queued by the engine
+      // (engine/momentsResults.js) and shows as a moment; its Box score button opens the box.
+      // A sim of several days keeps only the latest card, after its summary.
     },
     showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
