@@ -14,6 +14,8 @@ import { futurePayroll, extendPlayer } from "./extensions.js";
 import { projectedRole } from "./teamPlanning.js";
 import { roleUtility, promiseRole } from "./playerCommitments.js";
 import { clamp } from "./rng.js";
+import { queueMoment } from "./moments.js";
+import { signingMoment } from "./momentsSeason.js";
 
 export const BONUS_OPTIONS = [0, 25, 40, 55];
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -169,6 +171,8 @@ export function submitOffer(league, pid, { aav, yrs, bonusPct = 0, kind }) {
   if (!hasRoomFor(league, t)) return { ok: false, msg: `Roster is full (${MAX_ROSTER}).`, ev };
   if (!signPlayer(league, t, p, aav, yrs)) return { ok: false, msg: "No contract or reserve-list slot available.", ev };
   pay();
+  // Signing Day for an 80+ free agent from another club (Gridiron 3.0).
+  try { queueMoment(league, signingMoment(league, p, t, { aav, yrs })); } catch (e) { console.error("Signing moment failed", e); }
   promiseRole(league, p, t.id, projectedRole(league, t, p));
   return { ok: true, msg: `${p.name} signs with the ${t.name}!`, ev };
 }

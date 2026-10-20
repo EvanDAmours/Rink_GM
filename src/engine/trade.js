@@ -11,6 +11,8 @@ import { capSpace, counts, logTx, queueForLines, capYear } from "./roster.js";
 import { leagueTable, conferenceTable } from "./standings.js";
 import { teamRatings } from "./lines.js";
 import { pickLabel } from "./draft.js";
+import { queueMoment } from "./moments.js";
+import { tradeMoment } from "./momentsSeason.js";
 
 // Trading is open until the deadline passes (and again once the playoffs end).
 export function tradingClosed(league) {
@@ -217,6 +219,8 @@ export function executeTrade(league, offer, { record = true } = {}) {
   ensureUniforms(league,user);ensureUniforms(league,ai);
   queueForLines(league, user, offer.get);
   queueForLines(league, ai, offer.give);
+  // A blockbuster with your club in it gets the breaking-news card (Gridiron 3.0).
+  try { queueMoment(league, tradeMoment(league, offer)); } catch (e) { console.error("Trade moment failed", e); }
   const names = (ids) => ids.map((id) => league.players[id].name);
   const picks = (ids) => ids.map((pid) => pickLabel(league, league.draftPicks.find((p) => p.id === pid)));
   const userSends = [...names(offer.give), ...picks(offer.givePicks)].join(", ") || "nothing";
