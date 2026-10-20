@@ -8,6 +8,9 @@ import { restShare, REST_OPTIONS } from "../engine/sim.js";
 import { lineChemistry } from "../engine/development.js";
 import { POS_COLOR } from "./TradePage.jsx";
 import RinkLines from "./RinkLines.jsx";
+import { DevChip } from "./scoutingBits.jsx";
+import { DEV_TRAITS } from "../engine/players.js";
+import AbilityChip from "./AbilityChip.jsx";
 
 // The line chart: four forward lines, three pairs, two goalies, the special-teams units and
 // the scratches. Tap a player, then tap where he goes; a scratch can be tapped straight into
@@ -18,6 +21,10 @@ const D_POS = ["LD", "RD"];
 const splitName = (name) => { const i = name.lastIndexOf(" "); return i < 0 ? ["", name] : [name.slice(0, i), name.slice(i + 1)]; };
 const avg = (ps) => (ps.length ? Math.round(ps.reduce((s, p) => s + p.ovr, 0) / ps.length) : null);
 const sameLines = (a, b) => !!a && !!b && JSON.stringify([a.F, a.D, a.G]) === JSON.stringify([b.F, b.D, b.G]);
+// A young player's development trait (Late bloomer, Star, Superstar), as on the football depth
+// chart: shown through age 25, while it still matters; Normal isn't worth the room.
+const devTrait = (p) => (p && p.age <= 25 && p.dev && p.dev !== "normal" ? p.dev : null);
+const Dev = ({ p, className = "" }) => { const d = devTrait(p); return d ? <em className={`ln-dev ${className}`}><DevChip dev={d} /></em> : null; };
 
 export default function LinesPage({ onRoster }) {
   const { league, commit, openPlayer, toast } = useGame();
@@ -63,11 +70,16 @@ export default function LinesPage({ onRoster }) {
     const off = p && label && p.pos !== label && !(label !== "C" && isForward(p.pos) && p.pos !== "C") && !["PP", "PK", "G"].includes(label);
     const [first, last] = p ? splitName(p.name) : ["", "Empty"];
     const target = mine && sel && !isSel && kind(sel) === kind(a);
+    const dev = a.g === "F" || a.g === "D" || a.g === "G";
+    // A long trait name leaves room for just the initial: "I. [Late bloomer]".
+    const trait = dev ? devTrait(p) : null;
+    const firstShown = trait && first.length + DEV_TRAITS[trait].name.length > 13 ? `${first[0]}.` : first;
     return (
       <button type="button" key={`${a.g}${a.i}${a.j ?? ""}`} className={`ln-card${isSel ? " sel" : ""}${target ? " target" : ""}${p?.injury > 0 ? " out" : ""}${mine ? "" : " ro"}${!p ? " empty" : ""}`} onClick={() => act(a)} title={p ? `${p.name} · ${p.pos} · ${p.ovr} OVR` : "Empty slot"}>
         <span className="ln-num" style={{ background: c1, color: c2, borderColor: c2 }}>{p && headshotId(p) ? <Headshot p={p} team={team} size={34} decorative /> : (p?.number ?? "–")}</span>
-        <span className="ln-name"><small>{first}</small><b>{last}</b></span>
+        <span className="ln-name"><small><span className="ln-first">{firstShown}</span>{dev && <Dev p={p} />}</small><b>{last}</b></span>
         {p && <span className="ln-right"><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><i className={off ? "warn" : ""} style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i></span>}
+        {dev && <Dev p={p} className="ph" />}
         {p?.injury > 0 && <span className="ln-out">OUT {p.injury}g{sub ? ` · ${splitName(sub)[1]} in` : ""}</span>}
       </button>
     );
@@ -83,7 +95,7 @@ export default function LinesPage({ onRoster }) {
   const selPlayer = sel ? get(read(sel)) : null;
   const chip = (p, k) => { const a = { g: "X", id: p.id, k }; const hot = mine && sel && sel.g !== "X" && selKind === k; return (
     <button type="button" key={`${k}${p.id}`} className={`ln-scratch${same(sel, a) ? " sel" : ""}${hot ? " target" : ""}${mine ? "" : " ro"}`} onClick={() => act(a)}>
-      <i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span>{p.name}</span><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+      <i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span className="ln-sname">{p.name}<AbilityChip p={p} /></span><Dev p={p} /><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
     </button>
   ); };
   const chem = (ids) => { try { const v = lineChemistry(league, team, ids.filter(Boolean)); return Number.isFinite(v) ? v : null; } catch { return null; } };
@@ -104,7 +116,7 @@ export default function LinesPage({ onRoster }) {
         </Select>
       </div>
       <div className="ln-tools">
-        <div className="ln-hint">{view === "rink" ? (mine ? "One unit on the ice at a time; every line listed on the right." : `Viewing the ${team.name}' lines.`) : mine ? (selPlayer ? <><b>{selPlayer.name}</b> selected · tap another player or an empty slot to swap</> : "Tap a player, then tap another to swap. Scratches drop into a selected slot.") : `Viewing the ${team.name}' lines.`}</div>
+        <div className="ln-hint">{view === "rink" ? (mine ? "One unit on the ice at a time; every line listed on the right." : `Viewing the ${team.name}' lines.`) : mine ? (selPlayer ? <><b>{selPlayer.name}</b><AbilityChip p={selPlayer} /> selected · tap another player or an empty slot to swap</> : "Tap a player, then tap another to swap. Scratches drop into a selected slot.") : `Viewing the ${team.name}' lines.`}</div>
         <div className="row" style={{ gap: 6 }}>
           <div className="gg-chips rk-toggle"><button className={view === "rink" ? "on" : ""} onClick={() => pickView("rink")}>🏒 Rink</button><button className={view === "list" ? "on" : ""} onClick={() => pickView("list")}>≡ List</button></div>
           {mine && selPlayer && <><button className="small ghost" onClick={() => openPlayer(selPlayer.id)}>Profile</button><button className="small ghost" onClick={() => setSel(null)}>Cancel</button></>}

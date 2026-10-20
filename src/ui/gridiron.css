@@ -1504,3 +1504,19 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .gg-xf-pill b { color: #f5c542; font-weight: 900; }
 .app .gg-pc-tags .gg-xf-pill { font-size: 13px; padding: 5px 12px; }
 .gg-xf-row { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+/* Lines: development traits beside the rating, X-Factors in the scratch picker */
+.ln-name small { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.ln-name small .ln-first { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-dev { display: inline-flex; flex-shrink: 0; font-style: normal; }
+.app .ln-dev .dev { font-size: 9px; line-height: 13px; padding: 0 6px; border-radius: 999px; font-weight: 800; letter-spacing: .2px; }
+.app .ln-dev .dev.superstar { color: #f5c542; border-color: #8a6d1d; background: #f5c54214; }
+.app .ln-dev .dev.star { color: #60a5fa; border-color: #1e3a5f; background: #60a5fa14; }
+.app .ln-dev .dev.late { color: #c4b5fd; border-color: #6d5bd0; background: #c4b5fd14; }
+.ln-dev.ph { display: none; }
+.app .ln-scratch:has(> .ln-dev) { grid-template-columns: 30px minmax(0, 1fr) auto auto; }
+.app .ln-scratch span.ln-sname { display: block; }
+.app .ln-scratch span.gg-xf, .app .ln-scratch span.dev { display: inline-block; overflow: visible; }
+.ln-hint .gg-xf { margin-right: 4px; }
+.ln-dev.ph { grid-area: dev; }
+@media (max-width: 760px) { .ln-name small { display: none; } .ln-dev.ph { display: inline-flex; } .app .ln-row > .ln-card { grid-template-areas: "num name" "right right" "dev dev" "out out"; } }
