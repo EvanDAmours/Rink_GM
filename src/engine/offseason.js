@@ -202,7 +202,19 @@ export function offerContract(league, pid, aav, yrs) {
 
 const TARGET = { F: 13, D: 7, G: 2 };
 
+// One line on the day just played, as Gridiron's market reports it: how many signed and the
+// biggest name. Kept on league.fa.summary for the Free Agency screen and the Next Day toast.
+export function faDaySummary(league, before) {
+  const signed = before.map((id) => league.players[id]).filter((p) => p && p.tid >= 0);
+  const top = [...signed].sort((a, b) => b.ovr - a.ovr)[0];
+  const day = league.fa?.day ?? 0;
+  const abbr = top ? league.teams[top.tid]?.abbr : null;
+  const text = `Day ${day} of free agency: ${signed.length ? `${signed.length} signed${top ? `, led by ${top.name} (${abbr})` : ""}.` : "nobody signed."}`;
+  return { day, signed: signed.length, top: top ? { pid: top.id, name: top.name, pos: top.pos, ovr: top.ovr, tid: top.tid, abbr, cap: top.cap, yrs: top.yrs } : null, mine: signed.filter((p) => p.tid === league.userTid).map((p) => p.name), text };
+}
+
 export function simFADay(league) {
+  const before = [...league.freeAgents];
   league.fa.day++;
   settleNegotiations(league); processOfferSheets(league);aiOfferSheets(league); processWaivers(league);
   marketOffseasonDay(league);
@@ -253,6 +265,7 @@ export function simFADay(league) {
       if (!flush && payroll(league, t) >= capFloorForYear(league.year + 1)) break;
     }
   }
+  league.fa.summary = faDaySummary(league, before);
   return league.fa.day >= FA_DAYS;
 }
 

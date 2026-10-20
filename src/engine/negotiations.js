@@ -32,8 +32,14 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
   const continuity=Math.min(6,(p.career || []).filter(c=>c.t===t.abbr).length),trust=p.relationship?.trust??50;
   const modifier=prefs.priority==="winning"?(teamRatings(lg,t).ovr>=85?.97:1.05):prefs.priority==="role"?1-roleUtility(lg,t,p,promised)*.05:prefs.priority==="security"?1+Math.max(-.04,Math.min(.06,(prefs.preferredTerm-yrs)*.015)):prefs.priority==="loyalty" && p.tid===t.id?1-Math.max(0,Math.min(.06,continuity*.005+(trust-50)*.0004)):1;
   const counter=floor!=null?floor:Math.round(Math.max(ask.aav*modifier,p.qualified?.aav || 0)*100)/100;
-  const rounds=(old?.year===lg.year?old.rounds || 0:0)+1;
-  if(aav<counter){lg.negotiations[pid]={pid,year:lg.year,rounds,status:rounds>=4?"walked":"counter",counter,term:yrs,preferences:prefs};return {ok:false,msg:rounds>=4?`${p.name}'s agent ended this discussion.`:`Counteroffer: $${counter.toFixed(2)}M × ${yrs} years. Priority: ${prefs.priority}.`};}
+  // An offer already on the table stays there: a raise is free (it never counts toward the
+  // agent's patience), and a short offer while it is pending just gets his number back.
+  const myBid=old?.status==="pending" && old.year===lg.year ? old.bids?.find(b=>b.tid===t.id) : null;
+  const rounds=(old?.year===lg.year?old.rounds || 0:0)+(myBid?0:1);
+  if(aav<counter){
+    if(myBid)return keepPendingOnShortOffer(lg,pid,{aav:counter,yrs});
+    lg.negotiations[pid]={pid,year:lg.year,rounds,status:rounds>=4?"walked":"counter",counter,term:yrs,preferences:prefs};return {ok:false,msg:rounds>=4?`${p.name}'s agent ended this discussion.`:`Counteroffer: $${counter.toFixed(2)}M × ${yrs} years. Priority: ${prefs.priority}.`};
+  }
   if(old?.status==="walked")return {ok:false,msg:"The agent will reopen talks next season."};
   if(p.tid===t.id || lg.phase!=="freeagency") {
     if(lg.phase==="preseason" && counts(lg,t).active>=23 && !t.roster.includes(p.id))return {ok:false,msg:"Make an NHL roster spot before signing."};
@@ -52,6 +58,16 @@ export function negotiate(lg,pid,aav,yrs,clause="",role="",{floor=null,bonusCash
   lg.negotiations[pid]={pid,year:lg.year,rounds,status:"pending",closes:raising?old.closes:(lg.fa?.day || 0)+2,bids,preferences:prefs,mineAav:aav,mineYrs:yrs};p.negotiationPending=true;
   const st=bidStanding(lg,pid);
   return {ok:true,msg:st?st.toast:`Offer submitted. ${p.name}'s agent reviews competing bids in two free-agency days.`,standing:st};
+}
+// A short offer while yours is already on the table leaves the table alone: you hear his number
+// and your earlier offer still stands. Returns the reply, or null when you have no pending bid.
+// (Any offer screen should check this before recording a counter.)
+export function keepPendingOnShortOffer(lg,pid,counter){
+  const n=lg.negotiations?.[pid];
+  const mine=n?.status==="pending" && n.year===lg.year ? n.bids?.find(b=>b.tid===lg.userTid) : null;
+  if(!mine)return null;
+  const aav=Number(counter?.aav ?? counter),yrs=counter?.yrs ?? mine.yrs;
+  return {ok:false,keptBid:true,countered:true,counter:{aav,yrs},msg:`His agent wants $${aav.toFixed(2)}M × ${yrs} for that. Your offer of $${mine.aav.toFixed(2)}M × ${mine.yrs} stays on the table.`};
 }
 export function withdrawBid(lg,pid) {
   const n=lg.negotiations[pid];if(!n || n.status!=="pending")return {ok:false,msg:"No pending bid."};

@@ -14,6 +14,8 @@ import { isFranchiseGoalie } from "../src/engine/trade.js";
 import { blockCandidates } from "../src/engine/market.js";
 import { minSalaryForYear, isGoalie } from "../src/engine/constants.js";
 import { assetValue, abilityBump } from "../src/engine/trade.js";
+import { simFADay } from "../src/engine/offseason.js";
+import { negotiate, bidStanding, keepPendingOnShortOffer } from "../src/engine/negotiations.js";
 const league = (abbr = "EDM", seed = 77) => L.createLeague({ userAbbr: abbr, seed });
 const byName = (lg, name) => Object.values(lg.players).find((p) => p.name === name);
 function farmPlayer(lg, t, opts = {}) {
@@ -191,3 +193,56 @@ test("EA abilities add about 5% to trade value", () => {
   assert.ok(Math.abs(withAbilities / without - 1.05) < 1e-9, `${withAbilities} vs ${without}`);
 });
 
+function faLeague() {
+  const lg = league();
+  const t = lg.teams[lg.userTid];
+  t.roster.forEach((id) => { lg.players[id].cap = 1; });
+  while (counts(lg, t).active >= 23) t.prospects.push(t.roster.pop());
+  lg.phase = "freeagency";
+  lg.fa = { day: 0 };
+  return { lg, t };
+}
+
+test("free agency: a short offer keeps your pending bid, and raising never costs a round", () => {
+  const { lg, t } = faLeague();
+  const p = lg.players[lg.freeAgents.find((id) => lg.players[id].ovr < 76)];
+  // One short offer first, then a real one: the bid is in.
+  assert.equal(negotiate(lg, p.id, 0.9, 2).ok, false);
+  assert.equal(lg.negotiations[p.id].rounds, 1);
+  assert.ok(negotiate(lg, p.id, 6, 2).ok);
+  const n = lg.negotiations[p.id];
+  assert.equal(n.status, "pending");
+  const rounds = n.rounds, closes = n.closes, rivals = n.bids.filter((b) => b.tid !== t.id).length;
+  // A short offer now is answered, but the offer on the table stays.
+  const short = negotiate(lg, p.id, 0.9, 2);
+  assert.equal(short.ok, false);
+  assert.equal(short.keptBid, true);
+  assert.match(short.msg, /stays on the table/);
+  assert.equal(lg.negotiations[p.id].status, "pending");
+  assert.equal(lg.negotiations[p.id].bids.find((b) => b.tid === t.id).aav, 6);
+  assert.ok(keepPendingOnShortOffer(lg, p.id, { aav: 7, yrs: 2 })?.keptBid);
+  // Raise five times: no walk-away, same deadline, same rivals.
+  for (const aav of [6.25, 6.5, 6.75, 7, 7.25]) assert.ok(negotiate(lg, p.id, aav, 2).ok);
+  const after = lg.negotiations[p.id];
+  assert.equal(after.status, "pending");
+  assert.equal(after.rounds, rounds, "raises are free");
+  assert.equal(after.closes, closes);
+  assert.equal(after.bids.filter((b) => b.tid !== t.id).length, rivals);
+  assert.equal(bidStanding(lg, p.id).mine.aav, 7.25);
+  // With no bid on the table a short offer still draws a counter and counts.
+  const q = lg.players[lg.freeAgents.find((id) => id !== p.id && lg.players[id].ovr < 76)];
+  assert.equal(negotiate(lg, q.id, 0.9, 2).ok, false);
+  assert.equal(lg.negotiations[q.id].status, "counter");
+});
+
+test("each free-agency day leaves a summary: how many signed and the biggest name", () => {
+  const lg = league();
+  lg.phase = "freeagency";
+  lg.fa = { day: 0 };
+  let s = null;
+  for (let d = 0; d < 5 && !(s?.signed); d++) { simFADay(lg); s = lg.fa.summary; }
+  assert.ok(s && s.day === lg.fa.day);
+  assert.ok(s.signed > 0, "AI clubs sign players in the first days");
+  assert.ok(s.top && lg.players[s.top.pid].tid === s.top.tid);
+  assert.match(s.text, new RegExp(`Day ${s.day} of free agency: ${s.signed} signed, led by`));
+});

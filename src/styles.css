@@ -552,3 +552,21 @@ table.combine td.top { color: var(--good); font-weight: 700; }
 .overlay .box>.cup3d{margin:0 auto 10px}
 @media(max-width:600px){.topbar .teaminfo{width:100%;flex:1 1 100%}.topbar .teaminfo>div{min-width:0}.topbar .meta{white-space:normal;line-height:1.5}.topbar .teaminfo .name{white-space:normal;font-size:18px}.topbar .actions{width:100%}.topbar .spacer{display:none}}
 .stack .item.small{gap:10px;flex-wrap:wrap}.stack .bar{margin:6px 0 4px}
+
+/* Free agency, Gridiron style: the market day bar (day, the last day's signings, Next day) and
+   a market tag on every free agent. */
+.app .gg-faday { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; background: #3b82f614; border: 1px solid #3b82f655; border-radius: 10px; padding: 10px 14px; }
+.app .gg-faday-k { font-size: 18px; font-weight: 900; white-space: nowrap; color: #f1f5f9; }
+.app .gg-faday-txt { flex: 1 1 260px; font-size: 13px; line-height: 1.4; color: #cbd5e1; }
+.app .gg-faday-txt b { color: #f1f5f9; }
+.app .main button.gg-faday-btn:not(.link) { background: #3b82f6; border-color: #3b82f6; color: #fff; font-size: 15px; font-weight: 900; padding: 9px 18px; white-space: nowrap; }
+.app .main button.gg-faday-btn:not(.link):hover:not(:disabled) { background: #2563eb; border-color: #2563eb; }
+.app .gg-faday-last { font-size: 13px; font-weight: 700; color: #fde68a; }
+.app .gg-nobids { display: block; margin-top: 3px; font-size: 10px; font-weight: 700; color: var(--gg-mt, #94a3b8); white-space: nowrap; }
+.app .gg-nobids.has { color: #fca5a5; }
+@media (max-width: 640px) {
+  .app .gg-faday { padding: 8px 10px; }
+  .app .gg-faday-k { font-size: 16px; }
+  .app .gg-faday-txt { flex-basis: 100%; order: 3; font-size: 12px; }
+  .app .main button.gg-faday-btn:not(.link) { margin-left: auto; font-size: 14px; padding: 7px 14px; }
+}
