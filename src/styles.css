@@ -570,3 +570,20 @@ table.combine td.top { color: var(--good); font-weight: 700; }
   .app .gg-faday-txt { flex-basis: 100%; order: 3; font-size: 12px; }
   .app .main button.gg-faday-btn:not(.link) { margin-left: auto; font-size: 14px; padding: 7px 14px; }
 }
+
+/* Re-sign rows on phones, as in Gridiron: name and rating on top, then the asking price on
+   the same line as Negotiate and Let walk (the term picker hides; the mood shrinks). */
+.app .gg-farow.resign .gg-ask-k { display: none; }
+@media (max-width: 600px) {
+  .app .gg-farow.resign { grid-template-columns: 30px auto auto minmax(0, 1fr) auto 32px; grid-template-areas: "mug name name name name ovr" "ask ask mood . act act"; column-gap: 8px; row-gap: 4px; padding: 7px 4px; }
+  .app .gg-farow.resign > .gg-mugpos { grid-area: mug; }
+  .app .gg-farow.resign > .gg-faname { grid-area: name; }
+  .app .gg-farow.resign > .gg-faname small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app .gg-farow.resign > .gg-tovr { grid-area: ovr; font-size: 18px; }
+  .app .gg-farow.resign > .gg-famood { grid-area: mood; display: block; min-width: 0; font-size: 11px; white-space: nowrap; }
+  .app .gg-farow.resign > .gg-select { display: none; }
+  .app .gg-farow.resign > .gg-faask { grid-area: ask; display: flex; flex-direction: row; align-items: baseline; gap: 4px; min-width: 0; font-size: 14px; white-space: nowrap; }
+  .app .gg-farow.resign .gg-ask-k { display: inline; font-size: 11px; font-weight: 600; color: var(--gg-mt, #94a3b8); }
+  .app .gg-farow.resign > .gg-faact { grid-area: act; justify-self: end; }
+  .app .main .gg-farow.resign > .gg-faact button:not(.link):not(.player-link) { min-height: 34px; padding: 4px 10px; font-size: 12px; }
+}

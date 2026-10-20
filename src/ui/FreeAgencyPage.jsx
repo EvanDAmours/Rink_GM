@@ -80,8 +80,8 @@ function ResignView() {
               <Select value={termFor(p)} onChange={(e) => setTerms({ ...terms, [p.id]: Number(e.target.value) })} disabled={!p.willing} aria-label={`Term for ${p.name}`} style={{ minWidth: 90 }}>
                 {[1, 2, 3, 4, 5, 6, 7].map((y) => <option key={y} value={y}>{y} yr{y > 1 ? "s" : ""}</option>)}
               </Select>
-              <span className="gg-faask">{ask ? money(ask.aav) : "—"}</span>
-              <span className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+              <span className="gg-faask"><small className="gg-ask-k">Asking</small>{ask ? money(ask.aav) : "—"}</span>
+              <span className="row gg-faact" style={{ gap: 4, flexWrap: "nowrap" }}>
                 <button className="small primary" onClick={() => setTalk(p)}>Negotiate</button>
                 <button className="small ghost" onClick={() => walk(p)}>Let walk</button>
               </span>
