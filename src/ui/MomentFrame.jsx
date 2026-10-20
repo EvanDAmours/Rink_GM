@@ -16,7 +16,8 @@ export function momentColors(team) {
   const [a = "#1e3a8a", b = "#f59e0b"] = team?.colors || [];
   const clr = lum(a) > 0.8 ? b : a; // a white primary paints badly as a background
   let ac = clr === a ? b : a;
-  if (lum(ac) < 0.12 || Math.abs(lum(ac) - lum(clr)) < 0.12) ac = "#fde68a";
+  // The accent carries the kicker text and the Continue button (dark text on it), so it must be light enough.
+  if (lum(ac) < 0.3 || Math.abs(lum(ac) - lum(clr)) < 0.15) ac = "#fde68a";
   return { clr, ac };
 }
 

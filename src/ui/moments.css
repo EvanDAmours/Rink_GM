@@ -36,7 +36,7 @@
 .mm-pos { font-size: 11px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: #ffffff1f; color: #fff; letter-spacing: .5px; }
 .mm-big { font-size: 56px; font-weight: 900; line-height: 1; color: #fde68a; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .app .mm-cta, .mm-cta { margin-top: 18px; width: 100%; background: var(--mm-ac); color: #0b1220; border: 0; border-radius: 10px; padding: 12px 0; font-size: 16px; font-weight: 900; letter-spacing: 1px; cursor: pointer; min-height: 46px; }
-.mm-cta:hover { filter: brightness(1.08); }
+.app .mm-cta:hover:not(:disabled), .mm-cta:hover { background: var(--mm-ac); color: #0b1220; filter: brightness(1.08); }
 .mm-cta:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
 @media (max-width: 640px) {
