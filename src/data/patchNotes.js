@@ -244,4 +244,19 @@ export const PATCH_NOTES = [
     "At the Combine your scouts hand you a visit list around your picks, with three free private workouts.",
     "Your picks' ceilings are your scouts' estimate (~) until their first two seasons reveal a steal or a miss.",
   ] },
+  { v: "1.44", date: "2026-10-21", title: "Stars and Generations", notes: [
+    "Generational talents arrive: a rare tier above Superstar for players like McDavid, MacKinnon, Celebrini and Bedard. They grow fastest, peak longer and retire later. Every player's development trait now shows on his card at every age.",
+    "The wall: from about 33 most players decline faster (defencemen a year later, goalies later still). Superstars hold on longer.",
+    "Big seasons pay off: 40 goals, 100 points, 60 assists or 35 wins earns a summer boost, and a landslide league lead makes a cornerstone season.",
+    "Rare breakout summers, role-shaped growth and a new off-season report on the Development page.",
+    "Stars take a star's share: Art Ross winners now land around 120-140 points. Players can have a career year or a slump.",
+  ] },
+  { v: "1.45", date: "2026-10-21", title: "Roles and Situations", notes: [
+    "Every line and pair has a role, and each player shows how well he fits his spot.",
+    "Players are rated for the spot they play. Pick a player to see his rating at every spot, with a Move to button.",
+    "Team identity, line matching and ice-time sliders for each line and pair.",
+    "New Situations: 3-on-3 overtime trio, extra attacker, lead protection, defensive-zone faceoffs and shootout order.",
+    "Stats has a Team / Lines view with each unit against the league average, plus power-play and penalty-kill ranks.",
+    "On phones, the roster is a list of cards with a sort menu.",
+  ] },
 ];
