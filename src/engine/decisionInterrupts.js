@@ -1,7 +1,8 @@
 import {rosterIssues} from './roster.js';
 import {automaticallyHandleRoster} from './autoRoster.js';
 import {headCoachLines} from './lines.js';
-export const INTERRUPT_DEFAULTS={injuries:true,offers:true,roster:true};
+// Injuries no longer stop the sim by default: the weekly injury report card covers them (Gridiron 3.70).
+export const INTERRUPT_DEFAULTS={injuries:false,offers:true,roster:true};
 export function decisionInterrupt(lg){
  if(!lg || lg.phase!=='regular')return null;
  const settings={...INTERRUPT_DEFAULTS,...lg.settings?.simStops},t=lg.teams[lg.userTid],seen=lg.simStopSeen ||= {};

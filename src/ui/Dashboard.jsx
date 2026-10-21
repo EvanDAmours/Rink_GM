@@ -28,7 +28,6 @@ import { Sparkline } from "./ProspectWatch.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import GamePlanPicker from "./GamePlanPicker.jsx";
 import GamePrep from "./GamePrep.jsx";
-import InjuryReportCard from "./InjuryReportCard.jsx";
 import "./home.css";
 
 // Home, laid out like the football game's: the franchise tiles on top, then one panel with
@@ -216,7 +215,6 @@ export default function Dashboard({ act = {} }) {
         <aside className="rk-hm-menu gg-home-left">
           <div className="rk-hm-h">This week</div>
           <div className="rk-hm-scroll"><div className="rk-hm-scroll-in">{thisWeek}</div></div>
-          <InjuryReportCard />
         </aside>
 
         <section className="rk-hm-main gg-home-main">
@@ -297,7 +295,9 @@ export default function Dashboard({ act = {} }) {
         </aside>
       </div>
       {inboxOpen && <NeedsAttention items={attention} onClose={() => setInboxOpen(false)} />}
-      {prepOpen && <GamePrep onClose={() => setPrepOpen(false)} />}
+      {prepOpen && <GamePrep onClose={() => setPrepOpen(false)}
+        onPlay={lg.phase === "playoffs" ? act.playPlayoffLive : act.playLive}
+        onSim={lg.phase === "playoffs" ? act.simPlayoffDay : act.simDay} />}
     </div>
   );
 }

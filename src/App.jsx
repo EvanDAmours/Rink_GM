@@ -57,6 +57,7 @@ import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
 import FeedbackToast from "./ui/FeedbackToast.jsx";
 import Moment from "./ui/Moment.jsx";
+import InjuryReportCard from "./ui/InjuryReportCard.jsx";
 import { closeMoment, momentStopsSim } from "./engine/moments.js";
 import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
 import { staffGapText } from "./engine/franchise.js";
@@ -688,6 +689,8 @@ export default function App({ resume = false }) {
         {modal?.type === "pick" && <DraftPickCard pid={modal.pid} slot={modal.slot} onClose={() => setModal(null)} />}
         {/* The big moments wait until the sim has stopped, no live game is on and no other popup is open. */}
         {league.moments?.length > 0 && !busy && !live && !modal && <Moment key={league.moments[0].key || league.moments.length} m={league.moments[0]} onClose={() => { const done = closeMoment(league); commit(); if (done?.then) setModal(done.then); }} />}
+        {/* The weekly injury report (Gridiron 3.70): app-wide so it tracks spots whatever tab the sim ran from. */}
+        {!live && !busy && <InjuryReportCard />}
         {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {!modal && !live && !busy && league.ownerReviewPending != null && !league.playoffs?.papers?.some((p) => !p.seen) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}

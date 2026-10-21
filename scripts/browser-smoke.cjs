@@ -10,11 +10,11 @@ const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MO
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],requests=[];const mugs=[];await page.route(/assets\.nhle\.com\/mugs\//,route=>{mugs.push(route.request().url());route.abort();});page.on("request",r=>{if(/^https?:/.test(r.url())&&!/assets\.nhle\.com\/mugs\//.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));
  await page.goto(artifact);
  await page.evaluate(()=>document.fonts.ready);
- await page.waitForFunction(()=>[...document.querySelectorAll('.teamcard img')].every(img=>img.complete && img.naturalWidth>0));
- assert.equal(await page.locator('.teamcard img').count(),32);
- await page.getByRole('button',{name:'East',exact:true}).click();assert.equal(await page.locator('.teamcard').count(),16);await page.getByRole('button',{name:'West',exact:true}).click();assert.equal(await page.locator('.teamcard').count(),16);await page.getByRole('button',{name:'All clubs',exact:true}).click();
- console.log('All 32 embedded logos and conference filters passed');
- await page.getByText('Edmonton Oilers',{exact:true}).first().click();await page.getByRole('button',{name:'Start 2026-27 Season',exact:true}).click();{const w=page.getByRole('button',{name:'Show me around',exact:true});await w.waitFor({timeout:5000}).catch(()=>{});if(await w.count()){await w.click();for(let i=0;i<13;i++){await page.locator('.gg-tour-actions button.primary').click();await page.waitForTimeout(120);}assert.equal(await page.locator('.gg-tour').count(),0);console.log('Tour: 13 steps walked');}}
+ await page.getByRole('button',{name:'NEW GAME',exact:true}).click();
+ await page.waitForFunction(()=>[...document.querySelectorAll('.rkt-team img')].length===32&&[...document.querySelectorAll('.rkt-team img')].every(img=>img.complete && img.naturalWidth>0));
+ assert.equal(await page.locator('.rkt-team img').count(),32);
+ console.log('All 32 embedded logos passed');
+ await page.locator('.rkt-team').filter({hasText:'Oilers'}).first().click();{const w=page.getByRole('button',{name:'Show me around',exact:true});await w.waitFor({timeout:5000}).catch(()=>{});if(await w.count()){await w.click();for(let i=0;i<13;i++){await page.locator('.gg-tour-actions button.primary').click();await page.waitForTimeout(120);}assert.equal(await page.locator('.gg-tour').count(),0);console.log('Tour: 13 steps walked');}}
  await page.waitForFunction(()=>window.scrollY===0);assert.equal(await page.evaluate(()=>window.scrollY),0);
  const nav=async name=>{await page.locator('.nav button').filter({hasText:name}).first().click();await page.waitForTimeout(150);assert.ok(!await page.getByText('This screen could not load',{exact:true}).count());};
  assert.equal(await page.evaluate(()=>getComputedStyle(document.body).color),'rgb(224, 230, 240)');
@@ -60,6 +60,6 @@ const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MO
  assert.deepEqual(errors,[]);
  // Force unavailable GPU in a fresh context to exercise the original SVG fallback.
  const fallback=page;await fallback.evaluate(()=>localStorage.clear());await fallback.setViewportSize({width:1440,height:1000});await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl'?null:original.call(this,type,...args);};});
- await fallback.goto(artifact);await fallback.getByRole('button',{name:'Start 2026-27 Season',exact:true}).click();{const w=fallback.getByRole('button',{name:'Skip the tour',exact:true});await w.waitFor({timeout:5000}).catch(()=>{});if(await w.count())await w.click();}await fallback.locator('.nav button').filter({hasText:'League'}).click();await fallback.locator('.gg-hub-chips').getByRole('button',{name:'Legacy Hall',exact:true}).click();await fallback.waitForTimeout(100);assert.equal(await fallback.locator('canvas').count(),0);assert.ok(await fallback.getByRole('img',{name:'Stanley Cup',exact:true}).count());console.log('Unavailable-GPU trophy-room fallback passed');
+ await fallback.goto(artifact);await fallback.getByRole('button',{name:'NEW GAME',exact:true}).click();await fallback.locator('.rkt-team').filter({hasText:'Oilers'}).first().click();{const w=fallback.getByRole('button',{name:'Skip the tour',exact:true});await w.waitFor({timeout:5000}).catch(()=>{});if(await w.count())await w.click();}await fallback.locator('.nav button').filter({hasText:'League'}).click();await fallback.locator('.gg-hub-chips').getByRole('button',{name:'Legacy Hall',exact:true}).click();await fallback.waitForTimeout(100);assert.equal(await fallback.locator('canvas').count(),0);assert.ok(await fallback.getByRole('img',{name:'Stanley Cup',exact:true}).count());console.log('Unavailable-GPU trophy-room fallback passed');
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});

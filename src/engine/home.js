@@ -83,7 +83,8 @@ export function needsAttention(lg) {
 
   // Injured regulars: covered by the head coach, or a one-tap re-set of the lines around them.
   const covered = lg.settings?.coachLines !== false;
-  roster.filter((p) => p.injury > 0 && p.ovr >= 80).sort((a, b) => b.ovr - a.ovr).forEach((p) => add({ key: `inj${p.id}`, icon: "🚑", tone: covered ? "info" : "action",
+  // Covered injuries live on the weekly injury report card (Gridiron 3.70); only a hole you must fill stays here.
+  if (!covered) roster.filter((p) => p.injury > 0 && p.ovr >= 80).sort((a, b) => b.ovr - a.ovr).forEach((p) => add({ key: `inj${p.id}`, icon: "🚑", tone: covered ? "info" : "action",
     title: `${p.name} (${p.pos} ${p.ovr}) out ${plural(p.injury, "game")}${covered ? " · coach covered" : ""}`,
     sub: `${p.injuryNote ? `${p.injuryNote[0].toUpperCase()}${p.injuryNote.slice(1)}. ` : ""}${covered ? "Your head coach filled the hole with the best healthy scratch." : "Set your lines around him, or let the staff fill the hole."}`,
     cta: "Lines", to: ["lines"], fixes: covered || !games ? [] : [{ label: "Auto-set lines", fix: "autoLines" }] }));
