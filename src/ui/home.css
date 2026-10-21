@@ -1,0 +1,255 @@
+/* Home, framed like the football game's HomeScreen: one dark panel tinted with the club's colour,
+   three columns split by hairlines, the matchup card (PixelMatchup) in the middle.
+   This sheet loads before gridiron.css, so its rules carry enough specificity to win:
+   buttons use `.app .main .rk-home button.rk-b:not(.link):not(.player-link)` (B below). */
+
+.rk-home { display: flex; flex-direction: column; gap: 10px; }
+.rk-hm {
+  position: relative; display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(270px, 330px);
+  border: 1px solid #1e293b; border-radius: 14px; overflow: hidden; color: #e2e8f0;
+  background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--hm-team, #1e3a5f) 33%, transparent), transparent 60%), linear-gradient(160deg, #0b2a33, #050b12 70%);
+  min-height: calc(100vh - 150px);
+}
+.rk-hm-menu { padding: 14px; border-right: 1px solid #ffffff14; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rk-hm-main { padding: 14px 16px; min-width: 0; }
+.rk-hm-side { padding: 14px; border-left: 1px solid #ffffff14; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rk-hm-h { font-size: 16px; font-weight: 800; color: #fff; padding-bottom: 6px; border-bottom: 1px solid #ffffff22; }
+/* the to-do list scrolls inside its column, so it never makes the page taller */
+.rk-hm-scroll { flex: 1 1 0; min-height: 120px; position: relative; }
+.rk-hm-scroll-in { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: thin; }
+.rk-hm-quiet { font-size: 14px; color: #94a3b8; padding: 6px 2px; }
+.rk-hm-quiet.good { color: #22c55e; }
+
+/* B: every Home button starts from the same plain reset */
+.app .main .rk-home button.rk-b:not(.link):not(.player-link) {
+  display: block; gap: 0; justify-content: flex-start; align-items: stretch;
+  min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #fff;
+  font: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; text-align: left; cursor: pointer; transform: none;
+}
+.app .main .rk-home button.rk-b:not(.link):not(.player-link):hover:not(:disabled) { background: #ffffff10; border-color: inherit; color: #fff; }
+
+/* ---- This week ---- */
+.rk-hm-list { display: flex; flex-direction: column; gap: 4px; }
+.app .main .rk-home button.rk-b.rk-wk-first:not(.link):not(.player-link) { display: flex; flex-direction: column; gap: 2px; background: #00000055; border: 1px solid #f97316; padding: 8px 10px; }
+.app .main .rk-home button.rk-b.rk-wk-first:not(.link):not(.player-link):hover:not(:disabled) { background: #00000077; border-color: #fb923c; }
+.rk-wk-first b { font-size: 16px; font-weight: 800; }
+.rk-wk-first span { font-size: 12.5px; font-weight: 500; color: #cbd5e1; }
+.rk-wk-item { border-left: 3px solid var(--tone, #38bdf8); border-radius: 8px; }
+.app .main .rk-home button.rk-b.rk-wk-item:not(.link):not(.player-link), .app .main .rk-home button.rk-b.rk-wk-open:not(.link):not(.player-link) { display: flex; flex-direction: column; gap: 1px; width: 100%; padding: 4px 10px; border-radius: 0 8px 8px 0; }
+.app .main .rk-home button.rk-b.rk-wk-item:not(.link):not(.player-link) { border-left: 3px solid var(--tone, #38bdf8); border-radius: 8px; }
+.rk-wk-item b, .rk-wk-open b { font-size: 13.5px; font-weight: 600; color: #fff; }
+.rk-wk-open span, .rk-wk-item > span { font-size: 12px; font-weight: 500; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rk-wk-fixes { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px 10px 6px; }
+.app .main .rk-home button.rk-b.rk-fix:not(.link):not(.player-link) { background: #22c55e22; border: 1px solid #22c55e77; color: #bbf7d0; border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 800; }
+.app .main .rk-home button.rk-b.rk-fix:not(.link):not(.player-link):hover:not(:disabled) { background: #22c55e44; color: #fff; }
+
+/* ---- The heading row: phase title, buttons off-season, the week strip in season ---- */
+.rk-hm-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; min-height: 46px; }
+.app .rk-hm h3.rk-hm-label { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: 0; text-transform: none; color: #fff; white-space: nowrap; }
+.rk-hm-primary { display: flex; gap: 10px; flex-wrap: wrap; }
+.app .main .rk-home button.rk-b.rk-pbtn:not(.link):not(.player-link) { background: #ffffff22; color: #fff; border-radius: 4px; padding: 9px 18px; font-size: 15px; font-weight: 900; text-align: center; }
+.app .main .rk-home button.rk-b.rk-pbtn.go:not(.link):not(.player-link) { background: #22c55e; }
+.app .main .rk-home button.rk-b.rk-pbtn.go:not(.link):not(.player-link):hover:not(:disabled) { background: #16a34a; }
+.app .main .rk-home button.rk-b.rk-pbtn:not(.go):not(.link):not(.player-link):hover:not(:disabled) { background: #ffffff33; }
+.rk-strip { display: flex; gap: 6px; overflow-x: auto; flex: 1 1 0; min-width: 0; justify-content: flex-end; scrollbar-width: none; }
+.rk-strip::-webkit-scrollbar { display: none; }
+.app .main .rk-home button.rk-b.rk-tile:not(.link):not(.player-link) { flex: 0 1 64px; min-width: 48px; display: flex; flex-direction: column; align-items: stretch; gap: 1px; text-align: center; border-radius: 6px; }
+.app .main .rk-home button.rk-b.rk-tile:not(.link):not(.player-link):hover:not(:disabled) { background: transparent; }
+.rk-tile-box { height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #ffffff10; border: 2px solid #ffffff40; opacity: .78; transition: border-color .15s; }
+.rk-tile:hover .rk-tile-box { border-color: #ffffff99; opacity: 1; }
+.rk-tile.done .rk-tile-box { opacity: 1; }
+.rk-tile.on .rk-tile-box { background: var(--c1, #1e3a5f); border-color: #fff; opacity: 1; }
+.rk-tile-k { font-size: 10px; font-weight: 800; white-space: nowrap; color: #cbd5e1; letter-spacing: .3px; }
+.rk-tile-k.r-W { color: #22c55e; } .rk-tile-k.r-L { color: #ef4444; } .rk-tile-k.r-OTL { color: #eab308; }
+
+/* ---- The matchup card ---- */
+.rk-mx { box-sizing: border-box; container-type: inline-size; width: 100%; min-width: 0; overflow: hidden; color: #e2e8f0; background: #071b27; border: 1px solid #36566f; border-radius: 12px; }
+.rk-mx *, .rk-mx *::before, .rk-mx *::after { box-sizing: border-box; }
+.rk-mx-label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; color: #afc1d3; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+.rk-mx-badges { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rk-mx-badge { font-size: 11px; letter-spacing: 1.4px; font-weight: 900; padding: 3px 9px; border-radius: 999px; }
+.rk-mx-badge.prime { color: #fde68a; background: #1e1b4b; border: 1px solid #a5b4fc88; box-shadow: 0 0 12px #818cf855; }
+.rk-mx-badge.rival { color: #fff; background: #b91c1c; border: 1px solid #fca5a5aa; }
+.app .main .rk-home button.rk-b.rk-prep:not(.link):not(.player-link) { font-size: 11px; letter-spacing: 1px; font-weight: 900; text-transform: uppercase; padding: 4px 11px; border-radius: 999px; background: #0c4a6e; border: 1px solid #38bdf8aa; color: #e0f2fe; }
+.app .main .rk-home button.rk-b.rk-prep:not(.link):not(.player-link):hover:not(:disabled) { background: #075985; border-color: #7dd3fc; }
+/* the ice: blue lines, the red line and the centre circle, fading out under the players */
+.rk-mx-field { position: relative; padding: 22px 8px 8px; isolation: isolate; background: linear-gradient(to bottom, #12434b66, #071b2700 90%); }
+.rk-mx-field::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 62px, #60a5fa26 63px 65px, transparent 66px),
+    linear-gradient(90deg, transparent calc(30% - 3px), #3b82f640 calc(30% - 3px) 30%, transparent 30% calc(50% - 1.5px), #ef444440 calc(50% - 1.5px) calc(50% + 1.5px), transparent calc(50% + 1.5px) 70%, #3b82f640 70% calc(70% + 3px), transparent calc(70% + 3px));
+  -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent);
+}
+.rk-mx-matchup { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 1.2fr) minmax(0, 1fr); align-items: start; gap: 4px; }
+.rk-mx-player { margin: 0; min-width: 0; text-align: center; }
+.rk-mx-face { display: flex; justify-content: center; }
+.app .rk-mx-face .gg-mug { width: min(80%, 128px) !important; height: auto !important; aspect-ratio: 1; border: 3px solid var(--c2, #fff); box-shadow: 0 10px 26px #000000aa, 0 0 0 1px #00000066; }
+.app .rk-mx-face .gg-mug img { width: 100% !important; height: 100% !important; }
+.app .rk-mx-face .hockey-sweater { width: min(80%, 128px) !important; height: auto !important; aspect-ratio: 160 / 176; filter: drop-shadow(0 10px 14px #000a); }
+.rk-mx-player figcaption { padding-top: 6px; font-size: clamp(11px, 3.2cqi, 16px); line-height: 1.25; overflow-wrap: anywhere; }
+.rk-mx-player figcaption strong { display: block; font-weight: 800; color: #fff; }
+.rk-mx-player figcaption .nowrap { white-space: normal; }
+.app .main .rk-mx-player figcaption button.player-link { font-size: inherit; font-weight: 800; color: #fff; text-align: center; white-space: normal; padding: 0; min-height: 0; }
+.rk-mx-player figcaption > span { display: block; margin-top: 3px; color: #aebed0; font-size: clamp(10px, 2.7cqi, 13px); }
+.rk-mx-logos { display: flex; align-items: center; justify-content: center; align-self: start; gap: 6px; padding-top: 14%; min-width: 0; }
+.app .rk-mx-logos .teambadge { width: 42% !important; height: auto !important; aspect-ratio: 1; min-width: 0; filter: drop-shadow(0 0 1px #ffffffd9) drop-shadow(0 0 1px #ffffffb3) drop-shadow(0 2px 6px #0008); }
+.app .rk-mx-logos .teambadge img { width: 100%; height: 100%; object-fit: contain; }
+.rk-mx-logos b { font-size: clamp(12px, 3.7cqi, 24px); font-weight: 900; color: #fff; }
+.rk-mx-kickoff { display: grid; gap: 4px; padding: 6px 10px 16px; text-align: center; font-size: clamp(12px, 3.3cqi, 16px); }
+.rk-mx-kickoff strong { font-weight: 600; color: #f1f5f9; }
+.rk-mx-kickoff span { color: #aebed0; font-size: .92em; }
+.rk-mx-teams { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 0 14px 16px; }
+.rk-mx-team { min-width: 0; }
+.rk-mx-team:first-child { padding-right: 12px; border-right: 1px solid #36566f; }
+.rk-mx-team:last-child { padding-left: 12px; }
+.rk-mx-city { color: #cbd5e1; font-size: clamp(12px, 3.5cqi, 17px); }
+.app .rk-mx-team h3 { margin: 1px 0 0; text-transform: uppercase; letter-spacing: 0; font-size: clamp(13px, 4.2cqi, 26px); font-weight: 900; line-height: 1.1; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .rk-mx-team h3.long { font-size: clamp(12px, 3.7cqi, 22px); }
+/* both names sit in the same height of box, so the two clubs' ratings line up */
+.app .rk-mx-team h3 { height: calc(clamp(13px, 4.2cqi, 26px) * 1.15); display: flex; align-items: flex-end; }
+.app .rk-mx-team h3 > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rk-mx-rec { margin: 4px 0 10px; font-size: clamp(12px, 3.7cqi, 17px); color: #cbd5e1; }
+.rk-mx-ratings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.rk-mx-rating { overflow: hidden; border: 2px solid #94a3b8; border-radius: 6px; text-align: center; }
+.rk-mx-rating strong { display: block; padding: 4px 0; font-size: clamp(16px, 4.4cqi, 26px); line-height: 1; font-weight: 900; color: #fff; }
+.rk-mx-rating span { display: block; padding: 3px 0; background: #94a3b8; color: #07121f; font-weight: 900; font-size: clamp(9px, 2.8cqi, 12px); letter-spacing: .5px; }
+.rk-mx-rating.ahead { border-color: #22c55e; background: #22c55e14; }
+.rk-mx-rating.ahead span { background: #22c55e; }
+@container (min-width: 640px) { .rk-mx-matchup { max-width: 560px; margin: 0 auto; } .rk-mx-teams { max-width: 780px; margin: 0 auto; } }
+/* big games dress up: Saturday night in Canada under the lights, a rivalry in both clubs' colours */
+.rk-mx.prime { background: radial-gradient(ellipse at 50% -20%, #312e8199, transparent 65%), #040817; border-color: #6366f1; box-shadow: 0 0 30px #6366f133, inset 0 1px 0 #a5b4fc33; }
+.rk-mx.prime .rk-mx-field { background: linear-gradient(to bottom, #1e1b4b55, #04081700 90%); }
+.rk-mx.prime .rk-mx-label { color: #c7d2fe; }
+.rk-mx.rival { border-color: #ef4444; background: linear-gradient(90deg, color-mix(in srgb, var(--mx-a) 30%, #071b27), #071b27 45%, #071b27 55%, color-mix(in srgb, var(--mx-h) 30%, #071b27)); box-shadow: 0 0 26px #ef444433; }
+.rk-mx.rival.prime { border-color: #a855f7; }
+/* a computer with a short window: the same card, tighter, so Home fits without scrolling */
+@media (min-width: 761px) and (max-height: 860px) {
+  .rk-mx-label { padding: 8px 12px; }
+  .rk-mx-field { padding: 4px 8px 0; }
+  .app .rk-mx-face .gg-mug, .app .rk-mx-face .hockey-sweater { width: min(70%, 92px) !important; }
+  .rk-mx-logos { padding-top: 4%; }
+  .app .rk-mx-logos .teambadge { width: 36% !important; }
+  .rk-mx-player figcaption { padding-top: 2px; font-size: 14px; }
+  .rk-mx-kickoff { padding: 2px 10px 8px; font-size: 13px; gap: 1px; }
+  .rk-mx-teams { padding: 0 12px 10px; }
+  .rk-mx-city { font-size: 12px; }
+  .app .rk-mx-team h3 { font-size: 18px; height: 21px; } .app .rk-mx-team h3.long { font-size: 16px; }
+  .rk-mx-rec { margin: 1px 0 6px; font-size: 13px; }
+  .rk-mx-rating strong { font-size: 18px; padding: 3px 0; }
+  .rk-mx-rating span { font-size: 10px; padding: 2px 0; }
+}
+
+/* ---- What's at stake, and the details under it ---- */
+.rk-stakes { margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid #eab30855; background: #eab30812; border-radius: 10px; padding: 8px 12px; }
+.rk-stakes.bare { background: transparent; border: 0; padding: 0; }
+.rk-stakes-txt { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; }
+.rk-stakes-txt small { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: #eab308; margin-bottom: 2px; }
+.rk-stakes-txt b { font-size: 15px; font-weight: 800; color: #fff; line-height: 1.35; }
+.rk-stakes-txt span { font-size: 13.5px; font-weight: 600; color: #cbd5e1; line-height: 1.35; }
+.app .main .rk-home button.rk-b.rk-more:not(.link):not(.player-link) { background: #00000033; border: 1px solid #ffffff2a; color: #cbd5e1; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 800; white-space: nowrap; }
+.app .main .rk-home button.rk-b.rk-more:not(.link):not(.player-link):hover:not(:disabled) { background: #00000055; border-color: #ffffff55; color: #fff; }
+.rk-details { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.rk-details-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.rk-box { background: #00000040; border: 1px solid #ffffff1a; border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.rk-box-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 6px; }
+.rk-box-sub { font-size: 13px; color: #cbd5e1; margin-bottom: 3px; line-height: 1.4; }
+.rk-box-sub b { color: #fff; }
+.rk-form { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 4px; }
+.rk-form b { width: 38px; }
+.rk-pill { display: inline-block; width: 24px; text-align: center; font-size: 11.5px; font-weight: 900; font-style: normal; border-radius: 4px; padding: 1px 0; background: #eab30833; color: #eab308; border: 1px solid #eab30866; }
+.rk-pill.W { background: #22c55e33; color: #22c55e; border-color: #22c55e66; }
+.rk-pill.L { background: #ef444433; color: #ef4444; border-color: #ef444466; }
+.rk-line { font-size: 20px; font-weight: 900; color: #fff; }
+.rk-km { display: flex; align-items: center; gap: 6px 8px; font-size: 14px; padding: 4px 0; flex-wrap: wrap; border-top: 1px solid #ffffff0d; }
+.rk-km:first-of-type { border-top: 0; }
+.rk-km > span { color: #64748b; font-size: 12px; flex: 1 1 100%; }
+.rk-km em, .rk-km i { color: #64748b; font-style: normal; }
+.rk-km strong { margin-left: auto; font-size: 12px; font-weight: 900; }
+
+/* ---- No game: the logo hero and the off-season board ---- */
+.rk-hero { display: flex; align-items: center; gap: 16px; padding: 8px 4px 14px; }
+.app .rk-hero .rk-hero-logo { filter: drop-shadow(0 0 1px #ffffffd9) drop-shadow(0 0 1px #ffffffb3) drop-shadow(0 4px 12px #000a); flex: 0 0 auto; }
+.rk-hero-title { font-size: clamp(24px, 3vw, 34px); font-weight: 900; text-transform: uppercase; line-height: 1.05; color: #fff; }
+.rk-hero-sub { font-size: 15px; color: #cbd5e1; margin-top: 4px; }
+.rk-board { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.rk-board > .rk-box { flex: 1 1 260px; }
+.app .main .rk-home button.rk-b.rk-board-row:not(.link):not(.player-link) { display: flex; align-items: center; gap: 8px; width: 100%; border-bottom: 1px solid #ffffff10; border-radius: 0; padding: 6px 2px; }
+.app .main .rk-home button.rk-b.rk-board-row:not(.link):not(.player-link):last-child { border-bottom: 0; }
+.rk-board-row b { font-size: 14px; font-weight: 800; white-space: nowrap; }
+.rk-board-why { margin-left: auto; min-width: 0; font-size: 12.5px; font-weight: 600; color: #94a3b8; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-board-name { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-board-age { font-size: 12px; font-weight: 600; color: #94a3b8; }
+.rk-board-ovr { min-width: 22px; text-align: right; font-size: 14px; }
+.rk-phase { margin-top: 10px; }
+.rk-phase-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
+.rk-phase-row { display: flex; flex-direction: column; gap: 1px; padding: 6px 9px; background: #ffffff08; border-radius: 6px; min-width: 0; }
+.rk-phase-row small { font-size: 11px; color: #94a3b8; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-phase-row b { font-size: 14px; color: #fff; }
+.app .main .rk-home button.rk-b.rk-link:not(.link):not(.player-link) { color: #7dd3fc; font-size: 12.5px; font-weight: 800; letter-spacing: 0; padding: 2px 4px; margin-left: auto; border-radius: 4px; white-space: nowrap; flex: 0 0 auto; }
+.rk-box-h .rk-link + .rk-link { margin-left: 4px !important; }
+
+/* ---- Right column ---- */
+.rk-tabs { display: flex; gap: 4px; padding-bottom: 6px; border-bottom: 1px solid #ffffff22; }
+.app .main .rk-home button.rk-b.rk-tab:not(.link):not(.player-link) { flex: 1 1 0; min-width: 0; text-align: center; border: 1px solid transparent; border-radius: 8px; padding: 5px 4px; color: #94a3b8; font-size: 13.5px; font-weight: 800; white-space: nowrap; }
+.app .main .rk-home button.rk-b.rk-tab.on:not(.link):not(.player-link) { background: #ffffff1f; border-color: #ffffff40; color: #fff; }
+.rk-side-scroll { flex: 1 1 0; min-height: 220px; position: relative; }
+.rk-side-scroll-in { position: absolute; inset: 0; overflow-y: auto; padding-right: 2px; scrollbar-width: thin; }
+.rk-side-h { margin: 2px 0 4px; }
+.rk-story { display: flex; flex-direction: column; gap: 4px; background: #ffffff0d; border: 1px solid #ffffff1a; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.rk-story.lead { background: linear-gradient(135deg, color-mix(in srgb, var(--c1, #1e3a5f) 80%, transparent), #0b1220); }
+.rk-story.mine { border-color: #f97316; }
+.rk-story-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.rk-story-mine { font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #fdba74; }
+.rk-story b { font-size: 14.5px; font-weight: 800; line-height: 1.3; color: #fff; }
+.rk-story.lead b { font-size: 17px; }
+.rk-story span { font-size: 13px; color: #cbd5e1; line-height: 1.45; }
+.rk-inj-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #ffffff14; min-width: 0; }
+.rk-inj-who { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.rk-inj-who b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-inj-who em { font-style: normal; font-weight: 600; color: #94a3b8; }
+.rk-inj-who span { font-size: 12px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-inj-who i { font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: .5px; padding: 0 5px; border-radius: 4px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
+.rk-inj-n { margin-left: auto; font-weight: 800; }
+.rk-inj-row b .player-link, .rk-inj-who .player-link { color: #fff; }
+.app .rk-hm .gg-home-watch-row { border-bottom-color: #ffffff14; }
+.app .rk-hm .gg-lab.rk-lab { margin-top: 0; background: #0b1220cc; border-color: #ffffff1a; border-radius: 12px; padding: 12px 14px; }
+.rk-info { font-size: 12px; color: #64748b; letter-spacing: 0; cursor: help; }
+
+/* ---- Laptops: the stories and focus drop under the matchup ---- */
+@media (max-width: 1180px) and (min-width: 761px) {
+  .rk-hm { grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); }
+  .rk-hm-side { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #ffffff14; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .rk-hm-side .rk-tabs { grid-column: 1; }
+  .rk-hm-side .rk-side-scroll { grid-column: 1; flex: none; max-height: 420px; overflow-y: auto; }
+  .rk-hm-side .rk-side-scroll-in { position: static; }
+  .rk-hm-side .rk-lab { grid-column: 2; grid-row: 1 / span 2; }
+}
+/* ---- Phones: the matchup first, then this week's list, then the news ---- */
+@media (max-width: 760px) {
+  .rk-hm { grid-template-columns: minmax(0, 1fr); min-height: 0; border-radius: 12px; }
+  .rk-hm-main { order: -1; padding: 12px 10px; }
+  .rk-hm-menu { border-right: 0; border-top: 1px solid #ffffff14; padding: 12px 10px; }
+  .rk-hm-scroll { flex: none; min-height: 0; }
+  .rk-hm-scroll-in { position: static; overflow: visible; }
+  .rk-hm-side { border-left: 0; border-top: 1px solid #ffffff14; padding: 12px 10px; }
+  .rk-side-scroll { flex: none; min-height: 0; max-height: 380px; overflow-y: auto; }
+  .rk-side-scroll-in { position: static; }
+  .rk-hm-top { gap: 8px; min-height: 0; }
+  .app .rk-hm h3.rk-hm-label { white-space: normal; }
+  .rk-strip { flex: 1 1 100%; justify-content: space-between; }
+  .app .main .rk-home button.rk-b.rk-tile:not(.link):not(.player-link) { flex: 1 1 0; min-width: 0; }
+  .app .main .rk-home button.rk-b.rk-pbtn:not(.link):not(.player-link) { padding: 9px 14px; font-size: 14px; flex: 1 1 auto; }
+  .rk-hm-primary { width: 100%; gap: 8px; }
+  .rk-mx-label { padding: 9px 10px; font-size: 11px; letter-spacing: 1.1px; }
+  .rk-mx-teams { padding: 0 10px 12px; }
+  .rk-mx-team:first-child { padding-right: 8px; } .rk-mx-team:last-child { padding-left: 8px; }
+  .rk-mx-ratings { gap: 3px; }
+  .rk-hero { justify-content: center; padding: 10px 2px; gap: 12px; }
+  .app .rk-hero .rk-hero-logo { width: 72px !important; height: 72px !important; }
+  .app .rk-hero .rk-hero-logo img { width: 100%; height: 100%; }
+  .rk-board-why { max-width: 55%; }
+  .app .main .rk-home button.rk-b.rk-wk-open:not(.link):not(.player-link), .app .main .rk-home button.rk-b.rk-wk-item:not(.link):not(.player-link) { padding: 7px 10px; }
+  .app .main .rk-home button.rk-b.rk-fix:not(.link):not(.player-link) { padding: 6px 10px; }
+  .app .main .rk-home button.rk-b.rk-tab:not(.link):not(.player-link) { font-size: 13px; padding: 7px 2px; }
+}
