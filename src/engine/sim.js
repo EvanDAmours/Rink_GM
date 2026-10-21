@@ -12,11 +12,16 @@ import {opposite as other, isOpenIce, activePenalties, skaterCount, strengthType
   notePowerPlays, resetOvertimeStrength, takeTimeout, delayPenalty, settleDelayedPenalty} from './gameRules.js';
 import {shotGeometry, expectedGoal, shotSkills, shiftEfficiency} from './shotModel.js';
 import {matchupEdge, defaultStyle} from './matchup.js';
+import {slotFit} from './roles.js';
+import {shareFractions, gameUnits, matchLine, UNIT_KINDS} from './situations.js';
+import {recordGameUnits, tallyUsage} from './unitStats.js';
 export {shotSkills, shiftEfficiency, takeTimeout, skaterCount, assessPenalty};
 
 // The UI advances ten seconds at a time. Internally, events occur on their own
 // playing-time clock, split at penalty expirations and period boundaries.
 const STEP = 10, PERIOD = 1200, REG_OT = 300;
+// Default even-strength rotation; a club's own shares (Lines sliders, identity) come from
+// situations.js iceShares and live on side.shares.
 const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
 // How a club's league-relative edge (matchup.js, in rating points) moves play:
 // tempo while in possession, zone-entry and cycle execution, and shot quality.
@@ -90,7 +95,7 @@ function makeSide(league, team, opts) {
     lines, dressed, form, star, eliteAt: bar, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
-    fShiftLength: 45, dShiftLength: 55, pulledReason: null};
+    fShiftLength: 45, dShiftLength: 55, pulledReason: null, ...linesSetup(league, team, lines, comp, pl)};
 }
 
 export function createGame(league, home, away, opts = {}) {
@@ -145,7 +150,7 @@ function zoneX(s, k, depth) {
 
 function chooseLine(s, k, group) {
   const side = s[k], rows = side.lines[group], toi = group === 'F' ? side.fToi : side.dToi;
-  let shares = group === 'F' ? F_SHARE : D_SHARE;
+  let shares = (group === 'F' ? side.shares?.F : side.shares?.D) || (group === 'F' ? F_SHARE : D_SHARE);
   const late = s.period >= 3 && s.clock <= 480 && Math.abs(s.score[k] - s.score[other(k)]) <= 2;
   if (side.ride || late) shares = group === 'F' ? [.40, .32, .20, .08] : [.46, .35, .19];
   const total = toi.reduce((a, b) => a + b, 0);
@@ -159,7 +164,8 @@ function chooseLine(s, k, group) {
     const ability = avg(available.map(id => defensiveDraw || matching ? side.comp[id].def : side.comp[id].off));
     const need = (total + 60) * shares[i] - toi[i];
     const value = need - avg(available.map(id => side.fatigue[id])) * 2.2
-      + (offensiveDraw || defensiveDraw || matching ? (ability - 80) * 2 : 0) + rand() * 8;
+      + (offensiveDraw || defensiveDraw || matching ? (ability - 80) * 2 : 0) + rand() * 8
+      + (group === 'F' ? matchBonus(s, k, i) : 0);
     if (value > bestValue) { bestValue = value; best = i; }
   });
   return best;
@@ -185,6 +191,7 @@ function onIce(s, k) {
   const boxed = s.pen[k].length ? new Set(s.pen[k].map(p => p.pid)) : null;
   const free = id => id && !isGoalie(side.pl[id]?.pos) && !(boxed && boxed.has(id));
   let ids;
+  side.unitOn = null;
   if (type === 'PP') {
     const first = side.lines.PP[0].filter(free);
     const unit = s.ppTime[k] % 115 < 65 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
@@ -194,6 +201,8 @@ function onIce(s, k) {
     const unit = Math.floor(s.ppTime[other(k)] / 38) % 2;
     ids = side.lines.PK[unit].filter(free);
     if (n === 3) ids = [...ids.filter(id => isForward(side.pl[id].pos)).slice(0, 1), ...ids.filter(id => isDefense(side.pl[id].pos)).slice(0, 2)];
+  } else if ((ids = situationalIce(s, k, n, free))) {
+    // a situational unit is on (OT trio, extra attacker, lead protection, D-zone draw)
   } else {
     const f = side.lines.F[side.fIdx].filter(free), d = side.lines.D[side.dIdx].filter(free);
     ids = n === 3 ? [f[1] || f[0], f[0] || f[2], d[0]]
@@ -274,6 +283,7 @@ function pickCenter(side, ids, assigned = false) {
 function faceoff(s) {
   // Visitors set their unit first; home coach can then match it (Rule 82).
   rotate(s, 'a', true); rotate(s, 'h', true);
+  markDzDraw(s);
   const ice = {h: onIce(s, 'h'), a: onIce(s, 'a')};
   const assigned = skaterCount(s, 'h') === 5 && skaterCount(s, 'a') === 5;
   const h = pickCenter(s.h, ice.h, assigned), a = pickCenter(s.a, ice.a, assigned);
@@ -313,6 +323,7 @@ function playingTime(s, dt, ice) {
     if (type === 'PP') { s.ppTime[k] += dt; s.special[k].seconds += dt; }
     else s.ppTime[k] = 0;
   }
+  tallyUsage(s, dt);
   tickPenalties(s, dt); notePowerPlays(s);
 }
 
@@ -416,6 +427,59 @@ function hockeyEvent(s, ice, R) {
     touch(s, k, receiver); s.lateral = chance(clamp(.40 + (carrierSkill.pass - 82) * .01, .15, .65)); s.rush = false;
     s.puck = {x: zoneX(s, k, isDefense(att.pl[receiver].pos) ? randFloat(42, 60) : randFloat(62, 80)), y: randFloat(20, 65)};
   } else changePossession(s, o, ice);
+}
+
+// ---------- Lines, roles and situations (roles.js, situations.js) ----------
+// Kept apart from the scoring model on purpose. None of these draw from the random stream.
+// linesSetup: per-side fields made once at puck drop. Slot fit moves a skater's composites by
+// what he gives up in his even-strength slot (a winger at centre, a forward on defence...);
+// natural slots cost nothing, so the staff's usual lineups play as before.
+const F_SLOTS = ['LW', 'C', 'RW'], D_SLOTS = ['LD', 'RD'];
+const SLOT_WEIGHT = .6;
+function linesSetup(league, team, lines, comp, pl) {
+  const fit = (id, slot) => {
+    const c = comp[id], f = pl[id] ? slotFit(pl[id], slot) : 0;
+    if (!c || !f || !('off' in c)) return;
+    for (const key of ['off', 'def', 'ctrl', 'pass']) c[key] += f * SLOT_WEIGHT;
+  };
+  lines.F.forEach(row => row.forEach((id, j) => id && fit(id, F_SLOTS[j])));
+  lines.D.forEach(row => row.forEach((id, j) => id && fit(id, D_SLOTS[j])));
+  const dressed = [...lines.F.flat(), ...lines.D.flat()].filter(Boolean);
+  return {shares: {F: shareFractions(team, 'F'), D: shareFractions(team, 'D')}, units: gameUnits(league, team, dressed),
+    matchIdx: matchLine(team), unitOn: null, dzUntil: -1};
+}
+// Line matching: when the other club's top line is out, a matching coach favours his checking
+// line (always with the last change at home, on a whistle on the road).
+function matchBonus(s, k, i) {
+  const side = s[k], opp = s[other(k)];
+  if (side.matchIdx == null || side.matchIdx < 0 || i !== side.matchIdx || opp.fIdx !== 0) return 0;
+  return k === 'h' || s.faceoffNext ? 14 : 0;
+}
+// A defensive-zone draw at five-on-five sends out the D-zone unit for the first 20 seconds.
+function markDzDraw(s) {
+  for (const k of ['h', 'a']) {
+    const side = s[k];
+    if (s.stoppage?.zone === 1 && s.stoppage.side === other(k) && skaterCount(s, k) === 5 && skaterCount(s, other(k)) === 5 && !side.pulled && side.units?.custom?.DZ) side.dzUntil = s.elapsed + 20;
+  }
+}
+// Which situational unit (if any) is on: the extra attacker with the goalie pulled, the overtime
+// trio at three-on-three, lead protection in the last 90 seconds, the D-zone unit after a draw.
+// A tired unit (average fatigue over 45 seconds) gives way to the normal rotation.
+function situationalIce(s, k, n, free) {
+  const side = s[k], U = side.units;
+  if (!U) return null;
+  const lead = s.score[k] - s.score[other(k)];
+  let kind = null;
+  if (side.pulled && n === 5) kind = 'EA';
+  else if (s.phase === 'ot' && !s.playoff && n === 3 && skaterCount(s, other(k)) === 3) kind = 'OT';
+  else if (n === 5 && s.phase === 'reg' && s.period === 3 && s.clock <= 90 && lead >= 1 && lead <= 2 && U.custom?.LP) kind = 'LP';
+  else if (n === 5 && side.dzUntil > s.elapsed) kind = 'DZ';
+  const ids = kind ? (U[kind] || []).filter(free) : [];
+  const size = kind ? UNIT_KINDS[kind].size : 0;
+  if (!kind || ids.length < size - 1 || (kind !== 'EA' && avg(ids.map(id => side.fatigue[id])) > 45)) { side.lastUnit = null; return null; }
+  if (s.live && side.lastUnit !== kind) push(s, {t: 'play', side: k, text: `${side.abbr} send out their ${UNIT_KINDS[kind].name.toLowerCase()} unit: ${ids.map(id => lastName(side, id)).join(', ')}.`});
+  side.unitOn = kind; side.lastUnit = kind;
+  return ids.slice(0, kind === 'OT' ? 3 : size);
 }
 
 // ---------- Commentary (live games only) ----------
@@ -587,8 +651,11 @@ function periodEnd(s) {
 }
 
 function shootoutOrder(side) {
-  return side.dressed.filter(id => !isGoalie(side.pl[id].pos))
+  const auto = side.dressed.filter(id => !isGoalie(side.pl[id].pos))
     .sort((a, b) => side.comp[b].dek + side.comp[b].shoot - side.comp[a].dek - side.comp[a].shoot);
+  // The coach's shootout order goes first (Lines > Situations), then the rest by skill.
+  const set = (side.units?.SO || []).filter(id => auto.includes(id));
+  return [...set, ...auto.filter(id => !set.includes(id))];
 }
 function startShootout(s) {
   s.phase = 'so';
@@ -767,7 +834,7 @@ export function applyResult(league, s, { playoff = false } = {}) {
       }
     }
   }
-  if (!playoff) { recordGame(league, s); recordRoles(league, s); }
+  if (!playoff) { recordGame(league, s); recordRoles(league, s); recordGameUnits(league, s); }
   return s.appliedResult = {
     hs: s.score.h,
     as: s.score.a,

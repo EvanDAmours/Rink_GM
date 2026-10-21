@@ -287,3 +287,82 @@
   .app .main .lnx .lx-sec-h small { display: block; margin: 2px 0 0; }
   .app .main .lnx .lx-nhl.ok { display: none; } /* just a status; "Changed · Reset" stays */
 }
+
+/* ---- Roles, slot fit, coaching tools (LinesTactics.jsx) ---- */
+.app .main .lnx .lx-fit { flex-shrink: 0; color: #94a3b8; }
+.app .main .lnx .lx-fit b { font-weight: 800; }
+.app .main .lnx .lx-was { display: block; font-size: 9px; font-weight: 700; color: #64748b; text-decoration: line-through; line-height: 1; text-align: right; }
+.app .main .lnx .lx-proj { flex-shrink: 0; font-size: 12px; color: #60a5fa; font-weight: 700; border: 1px dashed #60a5fa66; border-radius: 4px; padding: 1px 5px; }
+.app .main .lnx .lx-role { margin-left: 2px; font-size: 12px; color: #94a3b8; font-weight: 700; }
+.app .main .lnx select.lx-role, .app .main .lnx .lx-role select { font-size: 12px; padding: 2px 22px 2px 6px; min-height: 26px; max-width: 150px; }
+.app .main .lnx .lx-cards2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.app .main .lnx .lx-idn { display: flex; flex-direction: column; gap: 8px; }
+.app .main .lnx .lx-idn .lx-style:disabled { opacity: .75; cursor: default; }
+.app .main .lnx .lx-idn-sh { color: #64748b !important; font-variant-numeric: tabular-nums; }
+.app .main .lnx .lx-idn-row { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; }
+.app .main .lnx .lx-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #e2e8f0; white-space: nowrap; }
+.app .main .lnx .lx-icebox { display: flex; flex-direction: column; gap: 4px; }
+.app .main .lnx .lx-icebox .lx-k { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.app .main .lnx .lx-ice { display: grid; grid-template-columns: 74px minmax(0, 1fr) minmax(90px, 160px) 40px; align-items: center; gap: 8px; min-height: 34px; }
+.app .main .lnx .lx-ice-l { display: flex; flex-direction: column; line-height: 1.1; }
+.app .main .lnx .lx-ice-l b { font-size: 13px; font-weight: 900; color: #e2e8f0; }
+.app .main .lnx .lx-ice-l small { font-size: 10px; color: #64748b; font-weight: 700; }
+.app .main .lnx .lx-ice-n { font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .main .lnx .lx-ice input[type=range] { width: 100%; accent-color: #3b82f6; }
+.app .main .lnx .lx-ice-v { font-size: 14px; font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
+.app .main .lnx .lx-gsep { display: block; height: 1px; background: #1e293b; margin: 4px 0; }
+.app .main .lnx .lx-spv { background: #0b1220; border: 1px solid #1e3a5f; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.app .main .lnx .lx-spv-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.app .main .lnx .lx-spv-c { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 4px; min-width: 0; }
+.app .main .lnx .lx-spv-c i { font-style: normal; font-size: 10px; font-weight: 900; color: #fff; border-radius: 3px; padding: 0 5px; }
+.app .main .lnx .lx-spv-c b { font-size: 18px; font-weight: 900; line-height: 1.1; }
+.app .main .lnx .lx-spv-c small { font-size: 10px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }
+.app .main .lnx .lx-spv-c.here { border-color: #22c55e; background: #22c55e10; }
+.app .main .lnx .lx-spv-c.here small, .app .main .lnx .lx-spv-c.free small { color: #4ade80; }
+.app .main .lnx .lx-spv-c.cheap small { color: #fbbf24; }
+.app .main .lnx .lx-spv-c.costly small { color: #f87171; }
+.app .main .lnx button.lx-move { background: transparent; color: #93c5fd; border: 1px solid #1e3a5f; border-radius: 4px; padding: 2px 4px; font-size: 10.5px; font-weight: 800; min-height: 24px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.app .main .lnx button.lx-move:hover { background: #1e3a5f; color: #e0f2fe; }
+.app .main .lnx .lx-spv-roles { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: #94a3b8; }
+.app .main .lnx .lx-spv-roles b { font-weight: 900; }
+.app .main .lnx .lx-rolewant { padding: 2px 4px; }
+.app .main .lnx .lx-gtag.lx-sit { background: #0ea5e9; }
+.app .main .lnx .lx-sit-d { margin: -2px 0 6px; }
+.app .main .lnx .lx-plan-box { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; }
+/* the plan usage report also sits on the game-plan card, outside the Lines screen */
+.lx-usage { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1e293b; }
+.lx-usage .lx-k { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #64748b; }
+.lx-usage .lx-k span { letter-spacing: 0; font-weight: 600; }
+.lx-usage-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.lx-usage-g > span { display: flex; flex-direction: column; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 8px; min-width: 0; }
+.lx-usage-g small { font-size: 11px; color: #94a3b8; font-weight: 700; }
+.lx-usage-g b { font-size: 14px; font-weight: 800; color: #e2e8f0; }
+.lx-usage-g em { font-style: normal; font-size: 11px; color: #64748b; }
+@media (max-width: 699px) {
+  .app .main .lnx .lx-spv-row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .app .main .lnx button.lx-move { font-size: 0; min-height: 32px; padding: 2px 6px; }
+  .app .main .lnx button.lx-move::after { content: "Move"; font-size: 11px; }
+  .app .main .lnx .lx-ice { grid-template-columns: 56px minmax(0, 1fr) 40px; }
+  .app .main .lnx .lx-ice-n { display: none; }
+  .app .main .lnx .lx-ice input[type=range] { min-height: 32px; }
+}
+
+/* ---- Roster page on phones: Gridiron's roster cards (RosterPage.jsx RosterCards) ---- */
+.rk-rcards, .rk-rc-sort { display: none; }
+@media (max-width: 640px) {
+  .rk-rtable { display: none; }
+  .rk-rc-sort { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
+  .rk-rc-sort select { flex: 1; min-height: 44px; }
+  .rk-rcards { display: flex; flex-direction: column; gap: 6px; }
+  button.rk-rcard { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #1e293b; border-radius: 10px; padding: 8px 10px; min-height: 58px; color: var(--gg-tx, #e0e6f0); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  button.rk-rcard.top { border-left-color: #22c55e; }
+  button.rk-rcard.out { border-left-color: #ef4444; }
+  .rk-rc-face { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; }
+  .rk-rc-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .rk-rc-nm { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 15px; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
+  .rk-rc-meta { display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; font-size: 12.5px; color: #94a3b8; }
+  .rk-rc-meta .posbadge { font-size: 11px; }
+  .rk-rc-r { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .rk-rc-r b { font-size: 22px; font-weight: 900; line-height: 1; }
+  .rk-rc-r small { font-size: 11px; color: #64748b; }
+}

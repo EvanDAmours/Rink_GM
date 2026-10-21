@@ -4,6 +4,8 @@ import Select from "./Select.jsx";
 import { useGame, Table, PlayerName, TeamBadge, Ovr, pct, signed, POS_ORDER } from "./common.jsx";
 import { isGoalie, isDefense } from "../engine/constants.js";
 import { savePct, gaa } from "../engine/players.js";
+import { blankSeason, unitRates, leagueUnitAverages, specialTeamsTable } from "../engine/unitStats.js";
+import { lineRoles, LINE_ROLES } from "../engine/roles.js";
 
 const toi = (s) => (s.gp ? `${Math.floor(s.toi / s.gp / 60)}:${String(Math.round((s.toi / s.gp) % 60)).padStart(2, "0")}` : "-");
 
@@ -81,7 +83,9 @@ export default function StatsPage() {
         <div className="tabs" style={{ margin: 0 }}>
           <button className={kind === "sk" ? "on" : ""} onClick={() => setKind("sk")}>Skaters</button>
           <button className={kind === "g" ? "on" : ""} onClick={() => setKind("g")}>Goalies</button>
+          <button className={kind === "units" ? "on" : ""} onClick={() => setKind("units")}>Team / Lines</button>
         </div>
+        {kind !== "units" && <>
         <Select value={season} onChange={(e) => setSeason(e.target.value)}>
           <option value="rs">Regular season</option>
           <option value="po">Playoffs</option>
@@ -98,13 +102,85 @@ export default function StatsPage() {
           </Select>
         )}
         <label className="row small"><input type="checkbox" checked={rookies} onChange={(e) => setRookies(e.target.checked)} /> Rookies</label>
+        </>}
       </div>
-      {kind === "sk" ? (
+      {kind === "units" ? <UnitStats league={league} /> : kind === "sk" ? (
         <Table columns={skCols} rows={skaters} initialSort={{ key: "pts", dir: "desc" }} limit={150} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense />
       ) : (
         <Table columns={gCols} rows={goalies} initialSort={{ key: "w", dir: "desc" }} limit={100} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense />
       )}
       {kind === "g" && <div className="muted small">SV% and GAA rankings require {minGp}+ games played.</div>}
+    </div>
+  );
+}
+
+// Stats > Team / Lines (Gridiron 3.25 "By the Numbers"): a club's season by forward line and
+// special-teams unit next to the league average for that unit, green when better and red when
+// worse; then every team's power play and penalty kill.
+const UNIT_ROWS = [["Line 1", "L1"], ["Line 2", "L2"], ["Line 3", "L3"], ["Line 4", "L4"], ["PP", "PP"], ["SH", "PK"]];
+const f1 = (v) => (v == null ? "—" : v.toFixed(1));
+function UnitStats({ league }) {
+  const [tid, setTid] = useState(league.userTid);
+  const team = league.teams[tid];
+  const S = team.unitSeason?.year === league.year ? team.unitSeason : blankSeason(league.year);
+  const avg = leagueUnitAverages(league);
+  const roles = lineRoles(team);
+  const mark = (v, ref, higher = true) => (v == null || ref == null || Math.abs(v - ref) < 0.05 ? "" : (v > ref) === higher ? "good" : "bad");
+  const cell = (v, ref, higher, digits = 1) => <span><b className={mark(v, ref, higher)}>{v == null ? "—" : v.toFixed(digits)}</b>{ref != null && <small className="dim"> {ref.toFixed(digits)}</small>}</span>;
+  const st = specialTeamsTable(league);
+  const rank = (key, dir) => { const xs = st.filter((r) => r[key] != null).sort((a, b) => (b[key] - a[key]) * dir); return (r) => (r[key] == null ? "—" : xs.indexOf(r) + 1); };
+  const ppRank = rank("ppPct", 1), pkRank = rank("pkPct", 1);
+  const mine = st.find((r) => r.tid === tid);
+  return (
+    <div className="stack rk-units">
+      <div className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <TeamBadge team={team} size={26} />
+        <Select value={tid} onChange={(e) => setTid(Number(e.target.value))} aria-label="Team">
+          {[...league.teams].sort((a, b) => a.city.localeCompare(b.city)).map((t) => <option key={t.id} value={t.id}>{t.city} {t.name}{t.id === league.userTid ? " (you)" : ""}</option>)}
+        </Select>
+        <span className="muted small">{S.gp} games · small numbers are the league average for the same unit</span>
+      </div>
+      <div className="gg-tiles">
+        <div><small>POWER PLAY</small><b>{f1(mine?.ppPct)}%</b><span className="dim small"> {mine?.ppGoals ?? 0}/{mine?.ppOpp ?? 0} · #{ppRank(mine || {})}</span></div>
+        <div><small>PENALTY KILL</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
+        <div><small>LEAGUE PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
+      </div>
+      <Table
+        columns={[
+          { key: "unit", label: "Unit", render: (r) => <span><b>{r.label}</b> <span className="muted small">{r.name}</span></span> },
+          { key: "min", label: "Min", num: true, render: (r) => (r.r ? Math.round(r.r.min) : "—") },
+          { key: "cf", label: "CF%", num: true, title: "Share of shot attempts", render: (r) => cell(r.r?.cfPct, r.a?.cfPct, true) },
+          { key: "xgf", label: "xGF%", num: true, title: "Share of chance quality (model goals)", render: (r) => cell(r.r?.xgfPct, r.a?.xgfPct, true) },
+          { key: "gf60", label: "GF/60", num: true, render: (r) => cell(r.r?.gf60, r.a?.gf60, true, 2) },
+          { key: "ga60", label: "GA/60", num: true, render: (r) => cell(r.r?.ga60, r.a?.ga60, false, 2) },
+          { key: "sf60", label: "SF/60", num: true, render: (r) => cell(r.r?.sf60, r.a?.sf60, true) },
+          { key: "sa60", label: "SA/60", num: true, render: (r) => cell(r.r?.sa60, r.a?.sa60, false) },
+          { key: "gf", label: "GF", num: true, render: (r) => r.U?.gf ?? 0 },
+          { key: "ga", label: "GA", num: true, render: (r) => r.U?.ga ?? 0 },
+        ]}
+        rows={UNIT_ROWS.map(([k, label], i) => ({ id: k, label, name: i < 4 ? LINE_ROLES[roles.F[i]]?.name : k === "SH" ? "Penalty kill" : "Power play", U: S.units[k], r: unitRates(S.units[k]), a: avg.units[k] || null }))}
+        dense
+      />
+      <h3 style={{ margin: "6px 0 0" }}>Special teams</h3>
+      <Table
+        columns={[
+          { key: "tm", label: "Team", render: (r) => <span className="row" style={{ gap: 6 }}><TeamBadge team={league.teams[r.tid]} size={20} />{league.teams[r.tid].city} {league.teams[r.tid].name}</span>, sort: (r) => league.teams[r.tid].city },
+          { key: "gp", label: "GP", num: true, sort: (r) => r.gp },
+          { key: "pp", label: "PP%", num: true, render: (r) => <b>{f1(r.ppPct)}</b>, sort: (r) => r.ppPct ?? -1 },
+          { key: "ppr", label: "Rk", num: true, render: (r) => ppRank(r), sort: (r) => r.ppPct ?? -1 },
+          { key: "ppg", label: "PPG", num: true, render: (r) => r.ppGoals, sort: (r) => r.ppGoals },
+          { key: "ppo", label: "PPO", num: true, render: (r) => r.ppOpp, sort: (r) => r.ppOpp },
+          { key: "pk", label: "PK%", num: true, render: (r) => <b>{f1(r.pkPct)}</b>, sort: (r) => r.pkPct ?? -1 },
+          { key: "pkr", label: "Rk", num: true, render: (r) => pkRank(r), sort: (r) => r.pkPct ?? -1 },
+          { key: "pkga", label: "PPGA", num: true, render: (r) => r.pkGa, sort: (r) => -r.pkGa },
+          { key: "tsh", label: "TSH", num: true, title: "Times shorthanded", render: (r) => r.pkOpp, sort: (r) => r.pkOpp },
+        ]}
+        rows={st}
+        initialSort={{ key: "pp", dir: "desc" }}
+        rowClass={(r) => (r.tid === league.userTid ? "me" : "")}
+        empty="No games played yet."
+        dense
+      />
     </div>
   );
 }
