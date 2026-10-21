@@ -259,4 +259,11 @@ export const PATCH_NOTES = [
     "Stats has a Team / Lines view with each unit against the league average, plus power-play and penalty-kill ranks.",
     "On phones, the roster is a list of cards with a sort menu.",
   ] },
+  { v: "1.46", date: "2026-10-21", title: "Scoring Races", notes: [
+    "Scoring races are more realistic: the scoring leader lands around 120-140 points, and goal leaders come in much closer to real NHL totals.",
+    "Superstar prospects are rarer, about one per draft class, so the league no longer fills up with Superstars over a long franchise.",
+    "Your top power-play unit now gets about 70% of each man advantage, and the Lines screen shows the new split.",
+    "Generational talents sort to the top of the scouting board, are valued properly in AI drafts and interviews, and keep their badge at any age.",
+    "The player card has a new Role Fit section showing each skater's three best roles.",
+  ] },
 ];
