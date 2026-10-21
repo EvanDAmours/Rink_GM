@@ -1602,6 +1602,19 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { .app .modalbg.rk-sheetbg > .modal.rk-sheet { animation: none; } }
 .app[data-motion="reduced"] .modalbg.rk-sheetbg > .modal.rk-sheet { animation: none; }
 
+/* Roster status badges (RosterPage rosterBadges) */
+.rk-rbadges { display: inline-flex; flex-wrap: wrap; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.rk-rb { display: inline-block; font-size: 9.5px; font-weight: 900; letter-spacing: .5px; line-height: 15px; padding: 0 5px; border-radius: 4px; white-space: nowrap; cursor: help; color: #cbd5e1; background: #33415566; border: 1px solid #47556999; }
+.rk-rb.rb-inj { color: #fca5a5; background: #ef444422; border-color: #ef444466; }
+.rk-rb.rb-ltir { color: #d8b4fe; background: #a855f722; border-color: #a855f766; }
+.rk-rb.rb-wv { color: #fde68a; background: #eab30822; border-color: #eab30866; }
+.rk-rb.rb-tr { color: #fecaca; background: #b91c1c55; border-color: #ef4444aa; }
+.rk-rb.rb-exp { color: #fbbf24; background: transparent; border-color: #f59e0b44; }
+.rk-rb.rb-ext { color: #93c5fd; background: #3b82f622; border-color: #3b82f666; }
+.rk-rb.rb-rook { color: #86efac; background: #22c55e1a; border-color: #22c55e55; }
+.rk-rb.rb-dev { color: #67e8f9; background: #06b6d41a; border-color: #06b6d455; }
+.rk-rlegend .rk-rb { cursor: default; margin: 0 1px; }
+
 /* A busy bar (Play Live and the sims on the right) shortens the longest tab names, as in the football game. */
 .gg-tab-tiny { display: none; }
 @media (max-width: 1599px) { .gg-head.busy .gg-tab-full { display: none; } .gg-head.busy .gg-tab-tiny { display: inline; } }
