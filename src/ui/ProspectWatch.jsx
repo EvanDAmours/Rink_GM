@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useCallUp } from "./CallUpFlow.jsx";
 import { useGame, PlayerName, ovrColor } from "./common.jsx";
 import Headshot from "./Headshot.jsx";
 import Select from "./Select.jsx";
@@ -26,6 +27,7 @@ const FILTERS = [["all", "All"], ["farm", "On the farm"], ["nhl", "In the NHL"],
 
 export default function ProspectWatch({ compact = false, limit }) {
   const { league, commit, toast, openPlayer, go } = useGame();
+  const callUpFlow = useCallUp();
   const t = league.teams[league.userTid];
   const [filter, setFilter] = useState("all");
   const rows = useMemo(() => prospectWatch(league, t), [league, t, league.day, league.phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -36,7 +38,7 @@ export default function ProspectWatch({ compact = false, limit }) {
   const doNext = (r) => {
     const p = r.p;
     if (!r.next) return;
-    if (r.next.kind === "callup") { if (!hasRoomFor(league, t)) { toast("Your NHL roster is full (23). Send someone down first."); return; } if (callUp(league, t, p.id)) { commit(); toast(`${p.name} called up.`); } else toast(`${p.name} cannot be recalled yet.`); }
+    if (r.next.kind === "callup") { callUpFlow.start(p); }
     else if (r.next.kind === "role") { p.farmRole = r.prod === "dominant" ? "top" : "middle"; commit(); toast(`${p.name} moved to a ${p.farmRole} role.`); }
     else if (r.next.kind === "assign") act(assignProspect(league, p.id, "ahl"));
     else if (r.next.kind === "focus") { if (used >= FOCUS_SLOTS) { toast("All focus slots are in use. Free one in the plan below."); return; } act(setTraining(league, p.id, weakestGroup(p))); }
@@ -46,6 +48,7 @@ export default function ProspectWatch({ compact = false, limit }) {
   const moved = rows.filter((r) => r.delta > 0).length, dom = rows.filter((r) => r.prod === "dominant").length, decisions = rows.filter((r) => r.next).length;
   return (
     <section className={`gg-card gg-watch${compact ? " compact" : ""}`}>
+      {callUpFlow.element}
       <div className="gg-k">PROSPECT WATCH <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {rows.length} young players · {moved} up this season · {dom} dominating · {decisions} need a decision</span>{compact && <button className="small" style={{ marginLeft: "auto" }} onClick={() => go("development")}>Open the development desk →</button>}</div>
       {!compact && <div className="gg-chips gg-watch-filters">{FILTERS.map(([k, l]) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>}
       <div className="gg-watch-grid">
