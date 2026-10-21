@@ -1352,7 +1352,13 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .app .gg-right .actions button { font-size: 13px; font-weight: 700; padding: 4px 10px; height: 23px; min-height: 0; border-radius: 4px; white-space: nowrap; }
 .app button.gg-ico { background: #1e293b; color: #cbd5e1; padding: 4px 10px; height: 23px; min-height: 0; border-radius: 4px; font-size: 13px; border-color: #1e293b; }
 .gg-cur-tab { display: none; }
-.app button.gg-menu-btn { display: none; }
+/* the ☰ menu is on every screen size (the football game's Menu); on a computer it skips the screens already in the bar */
+.app button.gg-menu-btn { display: inline-flex; align-items: center; }
+.gg-menu-scrim { position: fixed; inset: 0; z-index: 59; }
+.gg-menu-nav { display: none; flex-direction: column; gap: 2px; }
+.gg-menu-grp { font-size: 10px; font-weight: 900; letter-spacing: 1.4px; color: #64748b; padding: 8px 10px 2px; }
+.app .gg-menu button > span:first-child { display: inline-flex; gap: 8px; }
+@media (max-width: 760px) { .gg-menu-nav { display: flex; } .app .gg-menu button.gg-menu-desk { display: none; } .gg-menu { max-height: calc(100vh - 60px); overflow-y: auto; } }
 .gg-menu { position: absolute; right: 8px; top: 44px; background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 220px; z-index: 60; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
 .app .gg-menu button { background: transparent; border: 0; color: #cbd5e1; text-align: left; font-size: 14px; font-weight: 700; padding: 8px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
 .app .gg-menu button.active { background: rgba(59, 130, 246, 0.2); color: #fff; }
@@ -1580,3 +1586,29 @@ body, .app { background: #0f172a !important; font-size: 14px; }
   .gg-chips::-webkit-scrollbar, .gg-tabs2::-webkit-scrollbar, .app .tabs::-webkit-scrollbar { display: none; }
   .app .gg-chips button, .app .gg-tabs2 button, .app .tabs button { flex: 0 0 auto; white-space: nowrap; }
 }
+
+/* Phones: popups are bottom sheets (the football game's sheetBox): full width, rounded top,
+   sliding up, with a grip to drag down. Search stays a dialog at the top. */
+.rk-grip { display: contents; } .rk-grip > span { display: none; }
+@keyframes rkSheetUp { from { transform: translateY(45%); opacity: .5; } to { transform: none; opacity: 1; } }
+@media (max-width: 760px) {
+  .app .modalbg.rk-sheetbg { align-items: flex-end; justify-content: stretch; padding: 0; overflow: hidden; }
+  .app .modalbg.rk-sheetbg > .modal.rk-sheet { width: 100%; max-width: none; max-height: 92vh; margin: 0; overflow-y: auto; overscroll-behavior: contain; border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); animation: rkSheetUp .22s ease-out; }
+  .app .modal.rk-sheet .rk-grip { display: flex; justify-content: center; padding: 8px 0 4px; touch-action: none; position: sticky; top: 0; z-index: 4; background: inherit; border-radius: 18px 18px 0 0; }
+  .app .modal.rk-sheet .rk-grip > span { display: block; width: 44px; height: 5px; border-radius: 3px; background: #475569; }
+  .app .modal.rk-sheet .mhead { touch-action: pan-x; }
+  .app .modal.rk-sheet .rk-grip .gg-bare-close { top: 8px; right: 10px; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) { .app .modalbg.rk-sheetbg > .modal.rk-sheet { animation: none; } }
+.app[data-motion="reduced"] .modalbg.rk-sheetbg > .modal.rk-sheet { animation: none; }
+
+/* A busy bar (Play Live and the sims on the right) shortens the longest tab names, as in the football game. */
+.gg-tab-tiny { display: none; }
+@media (max-width: 1599px) { .gg-head.busy .gg-tab-full { display: none; } .gg-head.busy .gg-tab-tiny { display: inline; } }
+
+/* Needs Attention always spans the row on phones (the football game's wide tile) */
+@media (max-width: 760px) { .gg-status-row .gg-stat.rk-attn { grid-column: 1 / -1; } }
+/* Search: a compact box near the top, like the football game's */
+.app .modal.rk-cmd { width: min(620px, 100%); }
+.app .modal.rk-cmd .mhead { padding: 12px 16px; }
+.app .modal.rk-cmd .modal-title { font-size: 18px; }

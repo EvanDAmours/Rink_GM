@@ -62,16 +62,20 @@ import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js
 import { staffGapText } from "./engine/franchise.js";
 import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
+import TrophyRoom from "./ui/TrophyRoom.jsx";
+import GameUpdates from "./ui/GameUpdates.jsx";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},
   {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Player Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
   {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
-  {id:"league",label:"League",short:"League"},
+  {id:"league",label:"League",short:"League"},{id:"legacy",label:"Legacy Hall",short:"Legacy Hall",tiny:"Legacy"},
 ];
+// Screens reached from the menu rather than the bar (search finds them too).
+const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:"Game updates"},{id:"settings",label:"Settings"}];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["league","legacy"], legacy:["league","legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -247,7 +251,8 @@ export default function App({ resume = false }) {
     setTimeout(tick, 20);
   }, [commit, showToast]);
 
-  useEffect(()=>{const key=e=>{if((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="k" && screen==="game" && !live){e.preventDefault();setSearchOpen(v=>!v);}};window.addEventListener("keydown",key);return ()=>window.removeEventListener("keydown",key);},[screen,live]);
+  // Search from anywhere: "/" (unless you're typing in a field) or Ctrl/Cmd+K, as in the football game.
+  useEffect(()=>{const key=e=>{if(screen!=="game" || live)return;const el=e.target,typing=el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.tagName==="SELECT" || el.isContentEditable);if((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="k"){e.preventDefault();setSearchOpen(v=>!v);}else if(e.key==="/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey){e.preventDefault();setSearchOpen(true);}};window.addEventListener("keydown",key);return ()=>window.removeEventListener("keydown",key);},[screen,live]);
   // A new screen starts at the top (matters most on phones).
   useEffect(() => {
     try {
@@ -462,7 +467,8 @@ export default function App({ resume = false }) {
     toDraft: () => {
       backup(`the ${seasonLabel} playoffs`);
       L.finishPlayoffs(league);
-      setTab("draft");
+      // Each off-season step lands on Home, where the phase card says what's next.
+      setTab("dashboard");
       commit();
     },
     startDraft: () => {
@@ -477,7 +483,7 @@ export default function App({ resume = false }) {
     startDraftNow: () => {
       setModal(null);
       openDraftFloor(league);
-      setTab("draft");
+      setTab("dashboard");
       commit();
     },
     simToMyPick: () => {
@@ -491,7 +497,7 @@ export default function App({ resume = false }) {
     toResign: () => {
       backup(`the ${league.draft?.year ?? league.year + 1} draft`);
       L.completeDraft(league);
-      go("freeagency");
+      setTab("dashboard");
       commit();
     },
     toFA: () => {
@@ -505,7 +511,7 @@ export default function App({ resume = false }) {
       setModal(null);
       backup(`the ${league.year + 1} re-sign window`);
       L.goToFreeAgency(league);
-      go("freeagency");
+      setTab("dashboard");
       commit();
     },
     faDay: () => {
@@ -613,32 +619,37 @@ export default function App({ resume = false }) {
   return (
     <GameCtx.Provider value={ctx}>
       <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
-        <header className="gg-head">
+        <header className={`gg-head${actions.length >= 3 ? " busy" : ""}`}>
           <TeamBadge team={user} size={26} className="gg-badge"/>
           <nav className="gg-tabs nav hdr-tabs" aria-label="Main navigation">
             {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
               <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => setTab(n.id)}>
-                <span className="gg-tab-label">{n.short}</span><span className="sr-only">{n.label}</span>
+                {n.tiny ? <><span className="gg-tab-label gg-tab-full">{n.short}</span><span className="gg-tab-label gg-tab-tiny">{n.tiny}</span></> : <span className="gg-tab-label">{n.short}</span>}<span className="sr-only">{n.label}</span>
                 {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
               </button>
             ))}
           </nav>
-          <span className="gg-cur-tab" aria-hidden="true">{live ? "Live Game" : (NAV.find((n) => n.id === tab)?.short || (tab === "activity" ? "News" : tab === "settings" ? "Settings" : "Home"))}</span>
+          <span className="gg-cur-tab" aria-hidden="true">{live ? "Live Game" : (NAV.find((n) => n.id === tab)?.short || (tab === "activity" ? "News" : tab === "settings" ? "Settings" : tab === "updates" ? "Game updates" : "Home"))}</span>
           <div className="gg-right">
             {!live && <div className="actions">{actions}</div>}
-            <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search (Ctrl/⌘ K)">🔍</button>
+            <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search players, teams and screens (press /)">🔍</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
             <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("settings")} aria-label="Settings" title="Settings">🔧</button>
             <button className="gg-ico gg-menu-btn" disabled={!!live} aria-label="Game navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen((v)=>!v)}>☰</button>
           </div>
-          {menuOpen && !live && <div className="gg-menu" role="menu">
-            {NAV.filter((n) => !n.when || n.when(league)).map((n) => <button key={n.id} role="menuitem" data-id={n.id} className={tab === n.id ? "active" : ""} onClick={() => { setMenuOpen(false); go(n.id); }}>{n.label}{badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}</button>)}
-            <button role="menuitem" data-id="activity" className={tab === "activity" ? "active" : ""} onClick={() => { setMenuOpen(false); go("activity"); }}>News & Inbox{unread>0 && <span className="badge">{unread}</span>}</button>
-            <button role="menuitem" data-id="trophies" onClick={() => { setMenuOpen(false); go("trophies"); }}>Trophy room</button>
-            <button role="menuitem" data-id="settings" className={tab === "settings" ? "active" : ""} onClick={() => { setMenuOpen(false); go("settings"); }}>Settings</button>
-            <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}>Take the tour</button>
-          </div>}
+          {/* The menu: on phones every screen (the bar is hidden), then the same small groups as on a computer. */}
+          {menuOpen && !live && <><div className="gg-menu-scrim" onClick={() => setMenuOpen(false)} /><div className="gg-menu" role="menu">
+            <div className="gg-menu-nav">{NAV.filter((n) => !n.when || n.when(league)).map((n) => <button key={n.id} role="menuitem" data-id={n.id} className={tab === n.id ? "active" : ""} onClick={() => { setMenuOpen(false); go(n.id); }}>{n.label}{badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}</button>)}</div>
+            <div className="gg-menu-grp">FRANCHISE</div>
+            <button role="menuitem" data-id="activity" className={tab === "activity" ? "active" : ""} onClick={() => { setMenuOpen(false); go("activity"); }}><span>📰 News & Inbox</span>{unread>0 && <span className="badge">{unread}</span>}</button>
+            <button role="menuitem" data-id="trophies" className={`gg-menu-desk${tab === "legacy" ? " active" : ""}`} onClick={() => { setMenuOpen(false); go("legacy"); }}><span>🏆 Legacy Hall</span></button>
+            <div className="gg-menu-grp">SETTINGS</div>
+            <button role="menuitem" data-id="settings" className={tab === "settings" ? "active" : ""} onClick={() => { setMenuOpen(false); go("settings"); }}><span>🔧 Settings</span></button>
+            <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}><span>🧭 Take the tour</span></button>
+            <div className="gg-menu-grp">MORE</div>
+            <button role="menuitem" data-id="updates" className={tab === "updates" ? "active" : ""} onClick={() => { setMenuOpen(false); go("updates"); }}><span>📝 Game updates</span></button>
+          </div></>}
         </header>
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
@@ -659,12 +670,14 @@ export default function App({ resume = false }) {
                 {tab === "development" && <DevelopmentHub sub={sub.development} onSub={(k) => setSub("development", k)} />}
                 {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
+                {tab === "legacy" && <TrophyRoom />}
+                {tab === "updates" && <GameUpdates />}
               </>
             )}
           </ErrorBoundary></div>
         </div>
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
-        {searchOpen && !live && <CommandPalette league={league} nav={NAV} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
+        {searchOpen && !live && <CommandPalette league={league} nav={[...NAV, ...EXTRA_SCREENS]} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "paper" && (league.papers || []).some((p) => p.id === modal.id) && <NewsPaper paper={league.papers.find((p) => p.id === modal.id)} onClose={() => { league.papers.find((p) => p.id === modal.id).seen = true; setModal(null); commit(); }} />}
         {modal?.type === "simsummary" && <SimSummary data={modal.data} onClose={() => setModal(null)} />}
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
