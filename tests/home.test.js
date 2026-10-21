@@ -86,11 +86,10 @@ test("one-tap fix: an injured regular without coach lines offers Auto-set lines,
   runFix(lg, "autoLines");
   assert.ok(!t.lines.F.flat().includes(hurt.id), "the injured player is out of the saved lines");
   assert.equal(t.lines.F.flat().filter(Boolean).length, 12, "every forward slot is filled");
-  // With the head coach setting the lines, the item is news and offers no fix.
+  // With the head coach setting the lines, a covered injury is news for the weekly injury card,
+  // not a to-do (Gridiron 3.70).
   lg.settings.coachLines = true;
-  const covered = needsAttention(lg).find((x) => x.key === `inj${hurt.id}`);
-  assert.equal(covered.tone, "info");
-  assert.equal(covered.fixes.length, 0);
+  assert.equal(needsAttention(lg).find((x) => x.key === `inj${hurt.id}`), undefined);
 });
 
 test("one-tap fix: too many players on the NHL roster are sent down without waivers", () => {
