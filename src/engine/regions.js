@@ -34,12 +34,22 @@ export function scoutRegion(league, key) {
   a.points -= TRIP_COST; a.trips[key] = (a.trips[key] || 0) + 1;
   return { ok: true, msg: `Visit ${a.trips[key]} to ${REGIONS[key].name} completed. Reports improved across this region.` };
 }
+// What your area scouts think of a prospect from a region they've worked (null if they haven't).
+// More trips sharpen every read there; from the third trip on they start seeing through Central
+// Scouting's list (a hidden gem's real ceiling, a red flag's), and a gem can turn up as a hunch
+// from the second trip (a sleeper by the fourth). After the fourth trip they've seen enough of
+// everyone there to put a number on him today too (~OVR).
 export function regionRead(league, p) {
   const a = league.teams[league.userTid]?.area;
-  const trips = a?.year === league.draftClassYear ? a.trips[regionOf(p)] || 0 : 0;
+  const trips = Math.min(MAX_TRIPS, a?.year === league.draftClassYear ? a.trips[regionOf(p)] || 0 : 0);
   if (!trips) return null;
   const sd = [0, 7, 5, 3.5, 2.5][trips];
+  const see = trips >= 4 ? 0.6 : trips === 3 ? 0.35 : 0;
+  const hidden = (p.bust?.gap || 0) - (p.gem?.gap || 0); // the public read minus the truth
   const r = stream(`${p.id}|area|${trips}`);
-  const pot = clamp(p.pot + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd), 40, 99);
-  return { pot, trips, sd, sleeper: trips >= 3 && pot >= 84 && (p.cs?.final ?? p.cs?.mid ?? 999) > 64 };
+  const pot = clamp(p.pot + hidden * (1 - see) + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd), 40, 99);
+  const hunch = !!p.gem && trips >= 2 && stream(`${p.id}|areahunch`).next() < 0.2 * trips;
+  const flag = !!p.bust && trips >= 3 && stream(`${p.id}|areaflag`).next() < (trips >= 4 ? 0.7 : 0.4);
+  const ovr = trips >= MAX_TRIPS ? Math.round(clamp(p.ovr + clamp(stream(`${p.id}|areaovr`).gauss(0, 2), -3, 3), 40, 99)) : null;
+  return { pot, trips, sd, ovr, hunch, flag, sleeper: hunch && trips >= 4, region: regionOf(p), who: `Your area scouts (${REGIONS[regionOf(p)]?.name || "Europe"})` };
 }

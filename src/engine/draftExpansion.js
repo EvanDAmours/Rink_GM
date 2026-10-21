@@ -1,7 +1,7 @@
 import {stream} from "./rng.js";
 import {randomNameWith} from "./names.js";
 import {REAL_PROSPECTS} from "../data/realProspects.js";
-import {makeBio,rankClass,prospectRead,csRank} from "./scouting.js";
+import {makeBio,rankClass,prospectRead,csRank,plantHiddenTalent,resetHiddenTalent} from "./scouting.js";
 import {createPlayer} from "./players.js";
 import {defaultArchetype} from "./ratings.js";
 import {evaluateTrade,executeTrade,pickValue} from "./trade.js";
@@ -34,7 +34,10 @@ export function importDraftClass(lg,rows) {
   const seen=new Set();
   for(const r of rows){if(!r.name || seen.has(r.name) || !["C","LW","RW","LD","RD","G"].includes(r.pos) || !Number.isFinite(r.ovr) || !Number.isFinite(r.pot) || r.ovr<40 || r.ovr>99 || r.pot<r.ovr || r.pot>99)return {ok:false,msg:"Each prospect needs a unique name, hockey position, OVR and POT (40–99)."};if(Object.values(lg.players).some(p=>p.name===r.name && p.tid!==-2))return {ok:false,msg:`${r.name} already belongs to the league.`};seen.add(r.name);}
   rows.forEach((r,i)=>{const old=lg.players[lg.draftClass[i]],p=createPlayer({id:old.id,name:r.name,nat:r.nat || "",pos:r.pos,ovr:r.ovr,pot:r.pot,age:r.age || 18,tid:-2,src:"draft"},lg.year);p.signed=false;p.consensus=old.consensus;p.scout={lvl:0,base:{...old.scout.base}};p.bio=makeBio(p);if(r.lg)p.bio.lg=r.lg;if(r.team)p.bio.team=r.team;p.identitySource=r.source || "User-imported class";p.realIdentity=true;lg.players[p.id]=p;});
-  rankClass(lg,lg.draftClass);return {ok:true,msg:`Imported ${rows.length} prospect identities. Unfilled slots retain fictional depth.`};
+  rankClass(lg,lg.draftClass);
+  // The imported class gets its own hidden gems and red flags, planted after the board is set.
+  resetHiddenTalent(lg,lg.draftClass);plantHiddenTalent(lg,lg.draftClass,lg.draftClassYear);
+  return {ok:true,msg:`Imported ${rows.length} prospect identities. Unfilled slots retain fictional depth.`};
 }
 export function tradeUpOffers(lg) {
   const current=currentSlot(lg);if(!current || current.owner===lg.userTid || lg.draft.stage!=="live")return [];

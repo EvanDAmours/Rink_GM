@@ -1,6 +1,8 @@
-// Scouting: your scouting staff (a major and a minor scout), what they can tell you about
-// draft prospects, prospect bios, NHL Central Scouting's rankings, the Scouting Combine,
-// and the analysts' instant grades on draft day.
+// Scouting: your scouting staff (two major and two minor scouts), what they can tell you about
+// draft prospects, prospect bios, NHL Central Scouting's rankings (and how they move during the
+// season), the Scouting Combine, hidden gems and red flags, scouting checkpoints, the scouts'
+// visit list, scouting misses revealed over a draftee's first two seasons, and the analysts'
+// instant grades on draft day.
 //
 // Everything here that's random draws from keyed streams (rng.stream), so a prospect's bio
 // or a scout's read never changes between renders and the main game stream is untouched.
@@ -12,8 +14,19 @@ import { isGoalie, isDefense, posGroup, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBIN
 
 // ---------- Scouting staff ----------
 
-import { creditAreaWeeks, regionRead } from "./regions.js";
+import { creditAreaWeeks, regionRead, regionOf, REGIONS } from "./regions.js";
 import { scoutingPaper } from "./papers.js";
+import { teamNeeds, roleOf } from "./teamPlanning.js";
+import { myDraftSlots, projectedDraftOrder } from "./draft.js";
+import { queueMoment } from "./moments.js";
+import { checkpointMoment, revealMoment } from "./momentsScouting.js";
+
+// Your scouts can only carry so much unfiled work: past the cap a week's point is lost. Spend them.
+export const SCOUT_PTS_CAP = 14;
+// Every fourth week of the regular season the sim pauses for a scouting checkpoint.
+export const CHECKPOINT_EVERY = 4;
+// Combine week: prospects you bring in for a day get a full workup without the points.
+export const PRIVATE_WORKOUTS = 3;
 
 export const SCOUT_GROUPS = { C: "Centers", W: "Wingers", D: "Defensemen", G: "Goalies" };
 export const scoutGroup = (pos) => (pos === "C" ? "C" : pos === "LW" || pos === "RW" ? "W" : isDefense(pos) ? "D" : "G");
@@ -86,11 +99,14 @@ export function hireScout(league, scoutId, role) {
   const s = (league.scoutPool || []).find((x) => x.id === scoutId);
   if (!s || !SCOUT_ROLES[role]) return { ok: false, msg: "That scout isn't available." };
   t.scouts ||= { major: null, minor: null };
+  // Scouts can share a group: more eyes read it sharper, and leave more of the class to the front office.
+  const same = SCOUT_SLOTS.filter((k) => k !== role && t.scouts[k]?.group === s.group).length;
   const old = t.scouts[role];
   t.scouts[role] = s;
   league.scoutPool = league.scoutPool.filter((x) => x.id !== s.id);
   if (old) league.scoutPool.push(old);
-  return { ok: true, msg: `${s.name} is your new ${SCOUT_ROLES[role].name.toLowerCase()} (${SCOUT_GROUPS[s.group].toLowerCase()}).` };
+  const grp = SCOUT_GROUPS[s.group].toLowerCase();
+  return { ok: true, msg: `${s.name} is your new ${SCOUT_ROLES[role].name.toLowerCase()} (${grp}).${same ? ` ${same + 1} of your scouts now work ${grp}: sharper reads there, and fewer groups covered.` : ""}` };
 }
 
 export function releaseScout(league, role) {
@@ -113,6 +129,9 @@ export function swapScoutRoles(league) {
 
 // Scouting points: some in the bank when the class is announced, one a week through the
 // regular season, more at the Combine. Weeks are credited even if the sim skips a day.
+// During the season they're use-or-lose: past SCOUT_PTS_CAP a week's point is gone (a points
+// balance already over the cap, from an older save, is left alone). Every fourth week the sim
+// pauses at a scouting checkpoint, and Central Scouting's rankings move.
 export function scoutWeek(league) {
   const t = league.teams[league.userTid];
   if (!t) return;
@@ -120,13 +139,32 @@ export function scoutWeek(league) {
   const paid = t.scoutWeekPaid ?? -1;
   const s = t.scouts || {};
   const workhorse = SCOUT_SLOTS.some((role) => s[role]?.trait === "workhorse");
+  const season = league.phase === "regular";
   creditAreaWeeks(league);
+  let lost = 0;
   for (let w = paid + 1; w <= week; w++) {
-    t.scoutPts = (t.scoutPts || 0) + SCOUT_POINTS_WEEKLY;
-    if (workhorse && w > 0 && w % 4 === 0) t.scoutPts++;
-    if (w > 0 && w % 8 === 0 && league.phase === "regular") scoutingPaper(league, w);
+    const credit = SCOUT_POINTS_WEEKLY + (workhorse && w > 0 && w % 4 === 0 ? 1 : 0);
+    const pts = t.scoutPts || 0;
+    const add = season ? Math.max(0, Math.min(credit, SCOUT_PTS_CAP - pts)) : credit;
+    t.scoutPts = pts + add;
+    lost += credit - add;
+    if (w > 0 && w % 8 === 0 && season) scoutingPaper(league, w);
+    if (w > 0 && w % CHECKPOINT_EVERY === 0 && season) scoutCheckpoint(league, w);
   }
+  if (lost) noteLostPoints(league, t, lost);
   t.scoutWeekPaid = Math.max(paid, week);
+  revealDraftees(league);
+}
+
+// Points lost to the cap this season (shown on the checkpoint and the Scouts screen).
+export function scoutPointsLost(league) {
+  const t = league.teams[league.userTid];
+  return t?.scoutLost?.year === league.draftClassYear ? t.scoutLost.n : 0;
+}
+function noteLostPoints(league, t, n) {
+  const first = scoutPointsLost(league) === 0;
+  t.scoutLost = { year: league.draftClassYear, n: scoutPointsLost(league) + n };
+  if (first) league.inbox?.push({ year: league.year, day: league.day, text: `⚠ Your scouts carry at most ${SCOUT_PTS_CAP} scouting points of unfiled work. ${n} point${n === 1 ? " was" : "s were"} lost this week: spend them on reports before more go to waste.` });
 }
 
 // ---------- What your scouts know ----------
@@ -135,23 +173,54 @@ const EURO_LEAGUES = new Set(["SHL", "J20 Nationell", "HockeyAllsvenskan", "Liig
 const OFFICE_EVAL = 60;
 
 // Which of your scouts covers a prospect: "major", "minor", or "office" (nobody, so the
-// front office's generalists handle it).
+// front office's generalists handle it). With several scouts on one group the best major scout
+// leads and the rest are second opinions (`second` is the next one, `others` all of them).
 export function coverage(league, p) {
   const s = league.teams[league.userTid]?.scouts || {};
   const g = scoutGroup(p.pos);
-  for (const type of ["major", "minor"]) {
-    const scouts = SCOUT_SLOTS.filter((k) => roleType(k) === type).map((k) => s[k]).filter((sc) => sc?.group === g).sort((a,b) => scoutEval(b,p) - scoutEval(a,p));
-    if (scouts.length) return { role: type, scout: scouts[0] };
-  }
-  return { role: "office", scout: null };
+  const on = SCOUT_SLOTS.filter((k) => s[k]?.group === g).map((k) => ({ kind: roleType(k), scout: s[k] }))
+    .sort((a, b) => (a.kind === b.kind ? scoutEval(b.scout, p) - scoutEval(a.scout, p) : a.kind === "major" ? -1 : 1));
+  if (!on.length) return { role: "office", scout: null };
+  const others = on.slice(1).map((x) => x.scout);
+  return { role: on[0].kind, scout: on[0].scout, ...(others.length ? { second: others[0], others } : {}) };
 }
 
-export function scoutEval(scout, p) {
+// second: another scout (or a list of them) on the same group. More eyes read better than the
+// best one alone (+6, and +2 for each scout past the second), and anyone's specialty counts.
+export function scoutEval(scout, p, second) {
   if (!scout) return OFFICE_EVAL;
-  let e = scout.eval;
-  if (scout.trait === "sharp") e += 8;
-  if (scout.trait === "europe" && p && EURO_LEAGUES.has(p.bio?.lg)) e += 12;
+  const more = [].concat(second || []).filter(Boolean);
+  let e = more.length ? Math.max(scout.eval, ...more.map((x) => x.eval)) + 6 + 2 * (more.length - 1) : scout.eval;
+  const has = (t) => scout.trait === t || more.some((x) => x.trait === t);
+  if (has("sharp")) e += 8;
+  if (has("europe") && p && EURO_LEAGUES.has(p.bio?.lg)) e += 12;
   return clamp(e, 40, 99);
+}
+
+// A scouting crew: everyone you have on a prospect's position group. Several good scouts on one
+// group see through the board: `see` (0..1) is how far past the public read they get before a
+// report. One scout alone rarely does; a deep, sharp crew does.
+export function crewOf(league, p) {
+  const cov = coverage(league, p);
+  if (cov.role === "office") return null;
+  const n = 1 + (cov.others?.length || 0), ev = scoutEval(cov.scout, p, cov.others);
+  return { cov, n, ev, see: clamp((ev - 75) / 24, 0, 1) * Math.min(1, 0.25 + 0.25 * n) };
+}
+
+// Crew strength by group, for the Scouts screen and Scouting HQ: who works it, their combined
+// evaluation, and what they can see through the board.
+export function crewStrength(league) {
+  const s = league.teams[league.userTid]?.scouts || {};
+  return Object.keys(SCOUT_GROUPS).map((g) => {
+    const on = SCOUT_SLOTS.filter((k) => s[k]?.group === g).map((k) => ({ role: k, scout: s[k] }));
+    if (!on.length) return { group: g, n: 0, ev: OFFICE_EVAL, see: 0, scouts: [], label: "Front office only" };
+    const lead = [...on].sort((a, b) => (roleType(a.role) === roleType(b.role) ? b.scout.eval - a.scout.eval : roleType(a.role) === "major" ? -1 : 1));
+    const ev = scoutEval(lead[0].scout, null, lead.slice(1).map((x) => x.scout));
+    const n = on.length;
+    const see = clamp((ev - 75) / 24, 0, 1) * Math.min(1, 0.25 + 0.25 * n);
+    const label = n >= 2 ? (see >= 0.4 ? "Deep crew: sees through the board" : see > 0 ? "Crew: sharper reads, early hunches" : "Crew: sharper reads") : roleType(lead[0].role) === "major" ? "One major scout" : "One minor scout";
+    return { group: g, n, ev, see, scouts: on, label };
+  });
 }
 
 // How far off a read on POT can be (OVR reads are a bit tighter). Level 0 is the passive
@@ -171,7 +240,7 @@ export function scoutCost(p) {
 
 // Would the next report on this prospect reveal his development trait?
 function seesDev(cov, lvl) {
-  if (cov.role === "major") return lvl >= 2 || cov.scout.trait === "projector";
+  if (cov.role === "major") return lvl >= 2 || [cov.scout, ...(cov.others || [])].some((x) => x.trait === "projector");
   if (cov.role === "minor") return lvl >= 2 && cov.scout.trait === "projector";
   return false;
 }
@@ -190,13 +259,18 @@ export function scoutProspect(league, pid) {
 
 function fileReport(league, p, lvl) {
   const cov = coverage(league, p);
-  const ev = scoutEval(cov.scout, p);
+  const ev = scoutEval(cov.scout, p, cov.others);
   const sd = readSd(cov.role, lvl, ev);
   const r = stream(`${p.id}|${cov.scout?.id || "office"}|${lvl}`);
   const n = (s) => (s ? clamp(r.gauss(0, s), -1.6 * s, 1.6 * s) : 0);
   const eOvr = clamp(Math.round(p.ovr + n(sd * 0.8)), 40, 99);
   const ePot = clamp(Math.max(eOvr + (sd ? 1 : 0), Math.round(p.pot + n(sd))), eOvr, 99);
   const skills = skillReads(p, sd, ePot - eOvr, r);
+  const office = cov.role === "office";
+  const notes = notesFor(p, skills, r);
+  // A report sees what the board can't: the hidden gem's ceiling and the red flag's reason.
+  if (p.bust) notes.flag = `🚩 Red flag: ${p.bust.why}. ${office ? "Our people see" : "Your scout sees"} a high bust risk.`;
+  else if (p.gem) notes.gem = `💎 Sleeper: ${p.gem.why}. ${office ? "Our people think" : "Your scout thinks"} he's much better than where Central Scouting has him.`;
   Object.assign(p.scout, {
     lvl,
     eOvr,
@@ -204,24 +278,132 @@ function fileReport(league, p, lvl) {
     sd,
     exact: sd === 0,
     by: cov.role,
-    who: cov.scout?.name || "Your front office",
+    who: cov.others ? [cov.scout, ...cov.others].map((x) => x.name).join(" & ") : cov.scout?.name || "Your front office",
     dev: seesDev(cov, lvl) ? p.dev : p.scout.dev || null,
     skills,
-    notes: notesFor(p, skills, r),
+    notes,
     comp: comparable(league, p, ePot),
   });
 }
 
-// The general idea a scout has of every prospect at his position, without a report.
+// ---------- Hidden gems and red flags ----------
+// Every class has a few sleepers (Kucherov went 58th, Point 79th, Pavelski 205th): players far
+// better than Central Scouting's read, each with a hockey reason the board missed. And a few
+// red flags: prospects the board loves (rounds 1-2) whose real ceiling is 8-15 lower. The public
+// (Central Scouting, the analysts, the AI clubs) only ever sees the public read; your reports,
+// a deep crew, area trips and Combine interviews can see through it.
+//   p.gem  = { gap, why, kind }  his real ceiling is `gap` above the public read
+//   p.bust = { gap, why, kind }  his real ceiling is `gap` below the public read
+// p.pot is always the truth (development grows toward it); publicPot() is what the board sees.
+export const GEM_WHY = {
+  size: "Undersized: teams worry a forward his size won't hold up against NHL defensemen",
+  young: "A late birthday: one of the youngest players in the class, still growing into his frame",
+  overseas: "Buried on a men's team overseas: fourth-line minutes, so his numbers undersell him",
+  injury: "Missed most of his draft year hurt, so there's little recent tape",
+  raw: "A late starter: only two seasons of elite hockey, but the flashes are special",
+  quiet: "Played behind older linemates in a market few scouts visit",
+  goalie: "A goalie on a bad team: the save percentage hides how much rubber he faced",
+};
+export const BUST_WHY = {
+  overage: "Overage one-year wonder: his big season came as a 19-year-old against kids",
+  pp: "Power-play merchant: most of his points came on the man advantage",
+  concussion: "Concussion history: two this season, and his club played them down",
+  ethic: "Work-ethic concerns: coaches question his compete away from the puck",
+  combine: "Workout warrior: tests off the charts, but it doesn't show up on the ice",
+  linemate: "Rode a star linemate: his production fell off whenever they were split up",
+  shelter: "Sheltered behind a stacked team: his numbers came from the skaters in front of him",
+};
+export const gemGap = (p) => p?.gem?.gap || 0;
+export const bustGap = (p) => p?.bust?.gap || 0;
+// What the public (Central Scouting, the analysts, the AI clubs) thinks his ceiling is.
+export const publicPot = (p) => p.pot - gemGap(p) + bustGap(p);
+// A read that sees `see` of the way through the board (0: the public read, 1: the truth).
+export const seenPot = (p, see) => p.pot + (bustGap(p) - gemGap(p)) * (1 - see);
+
+const MEN_EURO = new Set(["SHL", "HockeyAllsvenskan", "Liiga", "Mestis", "KHL", "VHL", "Czechia", "Slovakia", "NL", "DEL"]);
+// Plant this class's gems and red flags once, after Central Scouting's board is set, so the board
+// never sees them. Deterministic for the class (keyed stream). Prospects you've already filed a
+// report on are left alone (an old save mid-season).
+export function plantHiddenTalent(league, ids, year = league.draftClassYear) {
+  const cls = (ids || []).map((id) => league.players[id]).filter((p) => p && p.tid === -2);
+  if (!cls.length || cls.some((p) => p.gem || p.bust) || league.hiddenSeeded === year) return { gems: [], busts: [] };
+  league.hiddenSeeded = year;
+  const r = stream(`hidden|${year}|${cls.length}|${cls[0].id}`);
+  const rank = (p) => p.cs?.mid ?? 999;
+  const gems = [], busts = [];
+  // 4-6 gems from the back of the board (round 3 on) with a modest public ceiling.
+  const nG = 4 + (r.chance(0.5) ? 1 : 0) + (r.chance(0.25) ? 1 : 0);
+  const gPool = cls.filter((p) => !(p.scout?.lvl > 0) && rank(p) > 72 && p.pot < 84 && p.ovr >= 50);
+  for (let i = 0; i < nG && gPool.length; i++) {
+    const p = gPool.splice(Math.floor(r.next() * gPool.length), 1)[0];
+    const target = clamp(Math.max(p.pot + r.int(10, 17), r.int(82, 88)), p.pot + 6, 93);
+    const kinds = isGoalie(p.pos) ? ["goalie"] : ["size", "size", "young", "injury", "raw", "quiet", ...(MEN_EURO.has(p.bio?.lg) ? ["overseas", "overseas"] : [])];
+    const kind = r.pick(kinds);
+    if (kind === "size" && p.bio && !p.realIdentity) { p.bio.ht = r.int(67, 69); p.bio.wt = r.int(158, 172); }
+    if (kind === "young") p.age = 18;
+    const x = r.next();
+    p.dev = x < 0.25 ? "superstar" : x < 0.75 ? "star" : "late";
+    p.gem = { gap: target - p.pot, why: GEM_WHY[kind], kind };
+    p.pot = target;
+    gems.push(p.id);
+  }
+  // 3-5 red flags the board has in rounds 1-2.
+  const nB = 3 + (r.chance(0.5) ? 1 : 0) + (r.chance(0.25) ? 1 : 0);
+  const bPool = cls.filter((p) => !p.gem && !(p.scout?.lvl > 0) && rank(p) <= 64 && rank(p) > 2);
+  for (let i = 0; i < nB && bPool.length; i++) {
+    const p = bPool.splice(Math.floor(r.next() * bPool.length), 1)[0];
+    const target = Math.max(p.ovr + 2, p.pot - r.int(8, 15));
+    if (p.pot - target < 5) continue;
+    const kinds = isGoalie(p.pos) ? ["shelter", "shelter", "concussion", "ethic"] : ["pp", "concussion", "ethic", "ethic", "combine", "linemate", ...(p.age >= 19 ? ["overage", "overage"] : [])];
+    const kind = r.pick(kinds);
+    p.dev = r.chance(0.3) ? "late" : "normal";
+    p.bust = { gap: p.pot - target, why: BUST_WHY[kind], kind };
+    p.pot = target;
+    busts.push(p.id);
+  }
+  return { gems, busts };
+}
+
+// Undo a class's gems and red flags (an imported class replants its own): back to the public read.
+export function resetHiddenTalent(league, ids) {
+  for (const id of ids || []) {
+    const p = league.players[id];
+    if (!p || p.tid !== -2 || !(p.gem || p.bust)) continue;
+    p.pot = Math.max(p.ovr, publicPot(p));
+    delete p.gem;
+    delete p.bust;
+  }
+  league.hiddenSeeded = null;
+}
+
+// The general idea your scouts have of every prospect in their group, without a report. One
+// scout has the public read of a sleeper and now and then a hunch. A deep, sharp crew on one
+// group (several good scouts all working it) sees through the board: it flags that group's
+// sleepers and red flags, and spots Star and Superstar traits early, before you spend a point.
+// Without a scout on the group it's only what your area scouts have (or nothing).
 export function generalIdea(league, p) {
-  const cov = coverage(league, p);
-  const area = regionRead(league, p);
-  if (cov.role === "office") return area ? { pot: area.pot, grade: potGrade(area.pot), tier: projection(p.pos, area.pot), by: "area", who: "Regional scouts" } : null;
-  if (p.scout?.base?.ePot == null && !area) return null;
-  const sd = readSd(cov.role, 0, scoutEval(cov.scout, p));
+  const crew = crewOf(league, p);
+  if (!crew) return null;
+  const { cov, n, ev, see } = crew;
+  const sd = readSd(cov.role, 0, ev);
   const r = stream(`${p.id}|${cov.scout.id}|gen`);
-  const pot = area && area.sd < sd ? area.pot : (p.scout?.base?.ePot ?? area.pot) + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd);
-  return { pot:clamp(pot,40,99), grade: potGrade(pot), tier: projection(p.pos, pot), by: cov.role, who: cov.scout.name };
+  // Anchored on the public read filed with the class (scout.base), so a general idea never reads the
+  // live hidden ratings; a crew sees `see` of the way to a gem's or red flag's real ceiling.
+  const pub = p.scout?.base?.ePot ?? publicPot(p);
+  const pot = clamp(pub + see * (gemGap(p) - bustGap(p)) + clamp(r.gauss(0, sd), -1.6 * sd, 1.6 * sd), 40, 99);
+  const s = league.teams[league.userTid]?.scouts || {};
+  const staffHas = (t) => SCOUT_SLOTS.some((k) => s[k]?.trait === t);
+  // A hunch: your scouts think there's more to him than the board says (now and then they're wrong).
+  const h = stream(`${p.id}|${cov.scout.id}|hunch`).next();
+  const knack = Math.min(0.97, (cov.role === "major" ? 0.5 : 0.3) + 0.12 * (n - 1) + clamp((ev - 80) / 50, 0, 0.3) + (staffHas("europe") && EURO_LEAGUES.has(p.bio?.lg) ? 0.3 : 0) + (staffHas("sharp") ? 0.1 : 0));
+  const hunch = p.gem ? h < knack : (p.cs?.mid ?? 0) > 90 && h < 0.02 / n;
+  // A red flag before a report: a deep crew sometimes catches what the board missed.
+  const flag = !!p.bust && see >= 0.4 && stream(`${p.id}|${cov.scout.id}|flag`).next() < knack;
+  // A crew that sees through the board says so outright: "he's a sleeper".
+  const sleeper = !!p.gem && hunch && see >= 0.5;
+  // Star and Superstar traits, spotted early by a crew (two or more good scouts on the group).
+  const spot = n >= 2 && ["superstar", "star"].includes(p.dev) && stream(`${p.id}|crew|dev`).next() < clamp((ev - 76) / 19, 0, 1) * Math.min(0.95, 0.2 + 0.22 * n);
+  return { pot, grade: potGrade(pot), tier: projection(p.pos, pot), by: cov.role, sd, who: n > 1 ? `Your ${n} scouts on ${SCOUT_GROUPS[scoutGroup(p.pos)].toLowerCase()}` : cov.scout.name, hunch, sleeper, flag, dev: spot ? p.dev : null, crew: n };
 }
 
 // Everything the UI shows about a prospect, from your point of view.
@@ -229,26 +411,87 @@ export function prospectRead(league, p) {
   const s = p.scout || { lvl: 0 };
   const cov = coverage(league, p);
   const has = s.lvl > 0 && s.eOvr != null;
-  const gen = has ? null : generalIdea(league, p);
+  const gen0 = has ? null : generalIdea(league, p);
+  const reg = has ? null : regionRead(league, p);
+  // The sharper of your position scouts' general idea and your area scouts' regional read.
+  const either = (k) => !!(gen0?.[k] || reg?.[k]);
+  const gen = gen0 && reg
+    ? { ...gen0, ...(reg.sd < gen0.sd ? { pot: reg.pot, who: reg.who, regional: true } : {}), hunch: either("hunch"), sleeper: either("sleeper"), flag: either("flag") }
+    : gen0 || (reg && { ...reg, grade: potGrade(reg.pot), tier: projection(p.pos, reg.pot), by: "region", regional: true, dev: null });
   const potV = has ? s.ePot : gen ? gen.pot : null;
+  const regOvr = !has && reg?.ovr != null ? reg.ovr : null;
+  const flagWhy = s.notes?.flag || s.intv?.flag || (gen?.flag && p.bust ? `🚩 ${p.bust.why}.` : null);
+  const sleeper = !!(s.notes?.gem || gen?.sleeper);
   return {
     lvl: s.lvl || 0,
     cov: cov.role,
     scout: cov.scout,
-    ovr: has ? (s.exact ? `${s.eOvr}` : `~${s.eOvr}`) : "??",
-    pot: has ? (s.exact ? `${s.ePot}` : `~${s.ePot}`) : gen ? gen.grade : "??",
-    ovrV: has ? s.eOvr : null,
+    second: cov.second || null,
+    others: cov.others || [],
+    crew: 1 + (cov.others?.length || 0),
+    trips: reg?.trips || 0,
+    region: regionOf(p),
+    regional: !!gen?.regional,
+    ovr: has ? (s.exact ? `${s.eOvr}` : `~${s.eOvr}`) : regOvr != null ? `~${regOvr}` : "??",
+    pot: has ? (s.exact ? `${s.ePot}` : `~${s.ePot}`) : gen ? potGrade(gen.pot) : "??",
+    ovrV: has ? s.eOvr : regOvr,
     potV,
     exact: !!s.exact,
     general: !!gen,
+    hunch: !sleeper && !!gen?.hunch,
+    sleeper,
+    gemWhy: s.notes?.gem || (gen?.sleeper && p.gem ? `💎 ${p.gem.why}.` : null),
+    flag: !!flagWhy,
+    flagWhy,
+    devEarly: !s.dev && !!gen?.dev,
     grade: potV != null ? potGrade(potV) : null,
     tier: potV != null ? projection(p.pos, potV) : null,
-    dev: s.dev || null,
+    dev: s.dev || gen?.dev || null,
+    role: roleOf(p),
     sd: has ? s.sd ?? null : null,
     by: s.by || null,
     who: s.who || gen?.who || null,
     cost: scoutCost(p),
   };
+}
+
+// ---------- Your scouts' board ----------
+// Everyone ranked on what your scouts think of him: their estimates (reports, a crew's general
+// idea, area reads) and the development traits they've seen. Where they have no read, they go
+// with Central Scouting. Returns Map id -> your rank (1 = best).
+const DEV_BUMP = { superstar: 2, star: 1, late: 0, normal: 0 };
+export function myScore(league, p, read = prospectRead(league, p)) {
+  if (read.potV == null) return csScore(p);
+  const extra = (DEV_BUMP[read.dev] || 0) - (read.flag ? 3 : 0);
+  if (read.lvl > 0 && read.ovrV != null) return read.potV * 0.78 + read.ovrV * 0.22 + extra;
+  // Only a general idea (a scout's letter grade, an area read): Central Scouting's slot, moved by how
+  // far your scouts' ceiling is from the public one. A hunch or a sleeper call counts for more.
+  const pub = p.scout?.base?.ePot ?? publicPot(p);
+  const w = read.sleeper ? 1 : read.hunch ? 0.8 : 0.4;
+  return csScore(p) + w * 0.78 * (read.potV - pub) + extra;
+}
+export function myBoard(league, ps = classPool(league)) {
+  const ranked = ps.map((p) => [p, myScore(league, p)]).sort((a, b) => b[1] - a[1] || csRank(a[0]) - csRank(b[0]));
+  return new Map(ranked.map(([p], i) => [p.id, i + 1]));
+}
+
+// The Big Board's "Show" filters (Gridiron 1.81), one place for every board: [value, label].
+export const SHOW_FILTERS = [
+  ["all", "Everyone"], ["covered", "Positions my scouts cover"], ["scouted", "Scouted"], ["unscouted", "Not scouted yet"], ["list", "On my list"],
+  ["flagged", "💎 Sleepers & hunches"], ["redflags", "🚩 Red flags (bust risks)"], ["special", "⭐ Star traits spotted"], ["regions", "🗺️ From regions I've scouted"],
+];
+export function showMatch(league, p, show, read = null) {
+  if (show === "all") return true;
+  if (show === "scouted") return p.scout?.lvl > 0;
+  if (show === "unscouted") return !p.scout?.lvl;
+  if (show === "list") return onMyList(league, p.id);
+  const r = read || prospectRead(league, p);
+  if (show === "covered") return r.cov !== "office";
+  if (show === "flagged") return r.sleeper || r.hunch;
+  if (show === "redflags") return r.flag;
+  if (show === "special") return ["superstar", "star"].includes(r.dev);
+  if (show === "regions") return r.trips > 0;
+  return true;
 }
 
 // ---------- Grades, projections and reports ----------
@@ -463,16 +706,237 @@ export function rankClass(league, ids) {
   const ps = ids.map((id) => league.players[id]).filter(Boolean);
   for (const p of ps) {
     p.bio ||= makeBio(p);
-    p.cs ||= { score: p.pot * 0.78 + p.ovr * 0.22 + stream(`${p.id}|cs`).gauss(0, 2.4) };
+    // The public read: blind to hidden gems and red flags.
+    p.cs ||= { score: publicPot(p) * 0.78 + p.ovr * 0.22 + stream(`${p.id}|cs`).gauss(0, 2.4) };
   }
   [...ps].sort((a, b) => b.cs.score - a.cs.score).forEach((p, i) => (p.cs.mid = i + 1));
 }
 
-export const csRank = (p) => p.cs?.final ?? p.cs?.mid ?? 999;
-export const csScore = (p) => p.cs?.fscore ?? p.cs?.score ?? p.pot * 0.78 + p.ovr * 0.22;
+// Central Scouting's rank: final after the Combine, otherwise where the in-season moves have
+// him now (cs.now), otherwise the midterm rank.
+export const csRank = (p) => p.cs?.final ?? p.cs?.now ?? p.cs?.mid ?? 999;
+export const csScore = (p) => p.cs?.fscore ?? p.cs?.score ?? publicPot(p) * 0.78 + p.ovr * 0.22;
 
 export function classPool(league) {
   return (league.draftClass || []).map((id) => league.players[id]).filter((p) => p && p.tid === -2);
+}
+
+// ---------- Junior stock watch ----------
+// At each checkpoint the season moves Central Scouting's list: a handful of prospects rise or
+// fall. Half the moves are real (toward what he truly is), half are hype or a bad stretch; only
+// your scouts can tell which. The AI clubs lean on the list, so a hype riser goes too early.
+const RISE = ["a six-point weekend against the league's best", "a dominant month in his league", "a standout CHL/U.S. Prospects showing", "a breakout stretch after a slow start", "scouts packing the stands for his last few games", "a big World Juniors camp"];
+const FALL = ["a quiet stretch against weak competition", "three games missed with a lower-body injury", "questions about his compete level", "a rough outing at the World Juniors camp", "a long scoring drought", "too many turnovers at the blue line"];
+export function stockWatch(league, week) {
+  const cls = classPool(league);
+  if (!cls.length || cls.some((p) => p.cs?.final != null) || cls.some((p) => p.cs?.moves?.some((m) => m.wk === week && m.yr === league.year))) return [];
+  const r = stream(`${league.year}|${week}|stock|${cls[0].id}`);
+  const pool = cls.filter((p) => p.cs && csRank(p) <= 160);
+  const news = [];
+  for (let i = 0; i < 6 && pool.length; i++) {
+    const p = pool.splice(Math.floor(r.next() * pool.length), 1)[0];
+    const truth = p.pot * 0.78 + p.ovr * 0.22 - p.cs.score;
+    const real = r.next() < 0.5;
+    const dir = real ? (truth >= 0 ? 1 : -1) : r.next() < 0.5 ? 1 : -1;
+    const mag = 1.4 + r.next() * 2.4;
+    const before = csRank(p);
+    p.cs.score += dir * mag;
+    p.cs.moves = [...(p.cs.moves || []), { yr: league.year, wk: week, d: dir, real }];
+    news.push({ p, dir, before, why: (dir > 0 ? RISE : FALL)[Math.floor(r.next() * RISE.length)] });
+  }
+  // The list re-ranks (the midterm rank, cs.mid, stays as it was published).
+  [...cls].sort((a, b) => b.cs.score - a.cs.score).forEach((p, i) => (p.cs.now = i + 1));
+  return news.map((n) => ({ pid: n.p.id, name: n.p.name, pos: n.p.pos, team: n.p.bio?.team || "", lg: n.p.bio?.lg || "", dir: n.dir, from: n.before, to: csRank(n.p), why: n.why }));
+}
+
+// Who your scouts want eyes on at a checkpoint: prospects Central Scouting has near your pick (and
+// fits for your needs, and this week's movers) that you haven't fully worked up.
+export function scoutTargets(league, { pick = 16, needs = [], movers = [], n = 4 } = {}) {
+  const near = (p) => Math.abs(csRank(p) - pick);
+  return classPool(league).filter((p) => (p.scout?.lvl || 0) < 2 && near(p) <= 24)
+    .map((p) => ({ p, s: near(p) - (needs.includes(p.pos) ? 10 : 0) - (movers.includes(p.id) ? 8 : 0) - ((p.scout?.lvl || 0) === 0 ? 3 : 0) }))
+    .sort((a, b) => a.s - b.s || csRank(a.p) - csRank(b.p)).slice(0, n).map((x) => x.p);
+}
+
+// The positions your club needs most (teamPlanning.teamNeeds, the one needs model): up to n,
+// only real needs.
+export function userNeeds(league, n = 3, min = 20) {
+  const t = league.teams[league.userTid];
+  return t ? teamNeeds(league, t).filter((x) => x.score >= min).slice(0, n).map((x) => x.pos) : [];
+}
+
+// Where you pick: your earliest remaining pick in the coming draft (projected from the one draft
+// order), or where your own record would put you if you've traded it.
+export function userPickAround(league) {
+  const slots = myDraftSlots(league);
+  if (slots.length) return { slot: slots[0], own: true, slots };
+  const order = projectedDraftOrder(league);
+  const i = order ? order.indexOf(league.userTid) : -1;
+  return { slot: i >= 0 ? i + 1 : null, own: false, slots };
+}
+
+// ---------- Scouting checkpoints ----------
+// Every fourth week of the regular season: Central Scouting's list moves, and your scouts come
+// back with who they want eyes on near your pick. Queued as a moment that pauses a running sim.
+export function scoutCheckpoint(league, week) {
+  const t = league.teams[league.userTid];
+  if (!t || !classPool(league).length) return null;
+  const news = stockWatch(league, week);
+  const { slot } = userPickAround(league);
+  const pick = slot || 16;
+  const targets = scoutTargets(league, { pick, needs: userNeeds(league, 3), movers: news.map((x) => x.pid) });
+  const m = checkpointMoment(league, { week, news, targetIds: targets.map((p) => p.id), pick: slot, pts: t.scoutPts || 0, cap: SCOUT_PTS_CAP, lost: scoutPointsLost(league) });
+  if (m && queueMoment(league, m) && m.stop) {
+    // It's what stopped the sim, so it's the first thing on screen: ahead of quieter moments (a result card).
+    const q = league.moments;
+    const i = q.findIndex((x) => !x.stop);
+    if (i >= 0 && i < q.length - 1) q.splice(i, 0, q.pop());
+  }
+  return m;
+}
+
+// ---------- Scouting misses ----------
+// A drafted player's ceiling (POT) starts as what was believed on draft day: your scouts' read for
+// your own picks (exact only if they nailed him), Central Scouting's public read otherwise. The
+// truth comes out over his first two seasons: a first read by the middle of his first season, most
+// of it by the end of it, all of it by the end of his second. His real ceiling (p.pot) drives his
+// growth the whole time; only what the club believes moves. p.potRev = { from, stage, by }.
+export const REVEAL = [0, 0.4, 0.75, 1];
+export const PUBLIC_MISS_SD = 4.5;
+export function draftedPot(league, p, read) {
+  const v = read?.potV;
+  if (v != null) return Math.round(v);
+  const miss = clamp(stream(`miss|${p.id}`).gauss(0, PUBLIC_MISS_SD), -10, 10);
+  return Math.round(publicPot(p) + miss);
+}
+// Stamp a pick you just made with what's believed. No-op when it's already the truth.
+export function tagDraftee(league, p, read) {
+  const believed = clamp(draftedPot(league, p, read), p.ovr, 99);
+  if (read?.exact || believed === p.pot) return null;
+  p.potRev = { from: believed, stage: 0, by: read?.potV != null ? (read.lvl > 0 ? "report" : "read") : "cs", year: p.draft?.year ?? league.year + 1 };
+  return p.potRev;
+}
+// Stage of the reveal right now: his first season is the season that starts the autumn after the
+// draft (league.year === draft year).
+export function revealStage(league, p) {
+  const rk = p.potRev?.year ?? p.draft?.year;
+  if (rk == null) return 3;
+  const over = league.phase !== "regular" && league.phase !== "preseason";
+  const mid = league.phase === "regular" && league.day >= lastDay(league.schedule || []) / 2;
+  if (league.year > rk + 1 || (league.year === rk + 1 && over)) return 3;
+  if (league.year > rk || (league.year === rk && over)) return 2;
+  if (league.year === rk && mid) return 1;
+  return 0;
+}
+// The ceiling the club believes now, and whether it's still an estimate.
+export function believedPot(league, p) {
+  const r = p.potRev;
+  if (!r || r.stage >= 3) return { pot: p.pot, est: false };
+  return { pot: clamp(Math.round(r.from + (p.pot - r.from) * REVEAL[r.stage]), p.ovr, 99), est: true, stage: r.stage, from: r.from };
+}
+// Move your draftees' believed ceilings toward the truth. Mutates; returns the news lines.
+export function revealDraftees(league) {
+  const t = league.teams[league.userTid];
+  if (!t) return [];
+  const out = [];
+  for (const id of [...t.roster, ...t.prospects]) {
+    const p = league.players[id];
+    const r = p?.potRev;
+    if (!r || r.stage >= 3) continue;
+    const st = revealStage(league, p);
+    if (st <= r.stage) continue;
+    const before = believedPot(league, p).pot;
+    r.stage = st;
+    const now = believedPot(league, p).pot;
+    const gap = p.pot - r.from;
+    if (Math.abs(gap) >= 4 && now !== before) {
+      const n = { pid: p.id, name: p.name, pos: p.pos, stage: st, from: r.from, to: now, gap };
+      out.push(n);
+      league.inbox?.push({ year: league.year, day: league.day, text: revealLine(n) });
+      if (st >= 3) queueMoment(league, revealMoment(league, p, n));
+    }
+  }
+  return out;
+}
+export function revealLine({ name, pos, stage, from, to, gap }) {
+  const who = `${name} (${pos})`;
+  if (stage >= 3) return gap > 0
+    ? `💎 SCOUTING STEAL: ${who} is better than anyone thought. His ceiling is ${to}, not the ${from} your draft-day read had.`
+    : `📉 SCOUTING MISS: ${who} isn't what the scouts said. His ceiling is ${to}, not the ${from} your draft-day read had.`;
+  return gap > 0
+    ? `📈 ${who} is showing more than expected: the development staff now see a ceiling around ${to} (draft-day read ${from}).`
+    : `⚠️ ${who} isn't developing like the scouts said: the development staff now see a ceiling around ${to} (draft-day read ${from}).`;
+}
+
+// ---------- The scouts' visit list ----------
+// Combine week: your scouts' shortlist of who to interview and bring in for a private workout,
+// the way a real staff builds its visit list. They weigh:
+//  - where you pick: prospects Central Scouting has a little ahead of or behind each of your first
+//    three picks (wider for later picks). Stars long gone before you pick are left off.
+//  - what you need: your thinnest positions first (teamPlanning.teamNeeds).
+//  - what they think of him: one they grade above the rest of that range (or a sleeper or hunch)
+//    is worth a closer look; one they grade well below it drops off.
+//  - Combine fallers: early names who tested poorly. A real concern or a bad day?
+//  - what they don't know yet: before a 1st- or 2nd-round pick they want answers on a rough read,
+//    a red flag, a poor Combine or a raw project.
+// Returns [{ p, slot, why: [..], interview, workout }].
+export function scoutsShortlist(league, { max = 8, slots = myDraftSlots(league) } = {}) {
+  const cls = classPool(league);
+  const needs = userNeeds(league, 3);
+  const picks = [...new Set(slots)].filter((s) => s > 0).sort((a, b) => a - b).slice(0, 3);
+  const out = [];
+  const taken = new Set();
+  picks.forEach((slot, k) => {
+    const premium = slot <= 64;
+    const lo = Math.max(1, slot - (k === 0 ? 8 : 12)), hi = slot + (k === 0 ? 14 : 24);
+    const near = cls.filter((p) => !taken.has(p.id) && csRank(p) >= lo && csRank(p) <= hi).map((p) => ({ p, read: prospectRead(league, p) }));
+    const pots = near.map((x) => x.read.potV).filter((v) => v != null).sort((a, b) => a - b);
+    const mid = pots.length ? pots[Math.floor(pots.length / 2)] : null;
+    const pool = near.map(({ p, read }) => {
+      const interview = !!p.combine && !p.scout?.intv, workout = read.lvl < 2;
+      const need = needs.includes(p.pos), faller = !!p.combine && p.combine.pct < 0.3 && (p.cs?.mid ?? 999) <= 96;
+      const flag = read.flag && !p.scout?.intv;
+      const rel = read.potV != null && mid != null ? read.potV - mid : 0;
+      const likes = read.sleeper || read.hunch || rel >= 3;
+      const rough = read.lvl === 0, raw = read.potV != null && read.ovrV != null && read.potV - read.ovrV >= 18;
+      const unsure = (rough ? 2 : read.lvl < 2 ? 1 : 0) + (flag ? 3 : 0) + (faller ? 2 : 0) + (raw ? 1 : 0);
+      const score = (need ? 6 : 0) + Math.max(-4, Math.min(4, rel / 1.5)) + (read.sleeper ? 3 : read.hunch ? 2 : 0) + unsure * (premium ? 1.2 : 0.6) + (interview ? 1 : 0) - Math.abs(csRank(p) - slot) / 8;
+      return { p, slot, read, interview, workout, need, faller, flag, likes, rel, rough, raw, premium, score };
+    })
+      .filter((x) => (x.interview || x.workout) && !(x.rel <= -4 && !x.need && !x.likes))
+      .sort((a, b) => b.score - a.score || csRank(a.p) - csRank(b.p))
+      .slice(0, k === 0 ? 4 : 2);
+    for (const x of pool) { taken.add(x.p.id); out.push(x); }
+  });
+  return out.slice(0, max).map(({ p, slot, read, interview, workout, need, faller, flag, likes, rel, rough, raw, premium }) => {
+    const r = csRank(p);
+    const why = [r <= slot - 3 ? `CS #${r}: could slide to your #${slot}` : r >= slot + 6 ? `CS #${r}: there at #${slot}, maybe later` : `CS #${r}: right around your #${slot}`];
+    if (need) why.push(`fills a need (${p.pos})`);
+    if (read.sleeper) why.push("your scouts think he's a sleeper");
+    else if (read.hunch) why.push("your scouts have a hunch about him");
+    else if (likes && read.grade) why.push(`your scouts rate him above the others in this range (${read.grade})`);
+    else if (rel <= -3 && read.grade) why.push(`your scouts are lukewarm (${read.grade})`);
+    const pickWord = slot <= 32 ? "a 1st" : slot <= 64 ? "a 2nd" : "this pick";
+    if (flag) why.push(`red flag: get the story before spending ${pickWord}`);
+    else if (faller) why.push("tested poorly: a real concern or a bad day?");
+    else if (rough && premium) why.push(`only a rough read so far: know more before spending ${pickWord}`);
+    else if (raw && premium) why.push("a raw project: is the work ethic there?");
+    else if (!interview && workout) why.push("interviewed; a workout gets his exact ratings");
+    return { p, slot, why, interview, workout };
+  });
+}
+
+// A private workout (Combine week only): a full workup for free.
+export function privateWorkout(league, pid) {
+  const d = league.draft;
+  const p = league.players[pid];
+  if (!d || d.stage !== "combine") return { ok: false, msg: "Private workouts happen during Combine week." };
+  if (!p || p.tid !== -2 || !p.scout) return { ok: false, msg: "He isn't in this draft." };
+  if ((d.workoutsLeft ?? 0) <= 0) return { ok: false, msg: "You've used all your private workouts." };
+  if ((p.scout.lvl || 0) >= 2) return { ok: false, msg: `${p.name} is already fully scouted.` };
+  d.workoutsLeft--;
+  fileReport(league, p, 2);
+  return { ok: true, msg: `${p.name} came in for a private workout: ${p.scout.who} has the full read.` };
 }
 
 // ---------- Scouting Combine ----------
@@ -504,6 +968,10 @@ function combineTests(p) {
     pullups: Math.round(clamp(7 + (str - 60) * 0.2 + r.gauss(0, 2.2), 0, 20)),
   };
 }
+// A red-flag workout warrior tests like a top-10 pick; it just doesn't show up on the ice.
+function warriorTests(t) {
+  return { ...t, wingate: Math.min(17.5, Math.round((t.wingate + 1.4) * 10) / 10), vo2: Math.min(62, Math.round((t.vo2 + 4) * 10) / 10), jump: Math.min(124, t.jump + 7), agility: Math.max(4.15, Math.round((t.agility - 0.14) * 100) / 100), bench: Math.min(18, t.bench + 4), pullups: Math.min(20, t.pullups + 4) };
+}
 
 const COMBINE_LETTERS = [[0.95, "A+"], [0.85, "A"], [0.75, "A-"], [0.65, "B+"], [0.55, "B"], [0.45, "B-"], [0.35, "C+"], [0.25, "C"], [0.15, "C-"], [-1, "D"]];
 
@@ -511,10 +979,13 @@ const COMBINE_LETTERS = [[0.95, "A+"], [0.85, "A"], [0.75, "A-"], [0.65, "B+"], 
 // publishes its final rankings, and you get interview slots and a little more budget.
 export function runCombine(league) {
   const d = league.draft;
-  const pool = classPool(league).sort((a, b) => (a.cs?.mid ?? 999) - (b.cs?.mid ?? 999));
+  revealDraftees(league);
+  const pool = classPool(league);
   if (pool.some((p) => !p.cs)) rankClass(league, pool.map((p) => p.id));
+  // Invitations go by where Central Scouting has him now (the in-season moves count).
+  pool.sort((a, b) => csRank(a) - csRank(b));
   const invited = pool.slice(0, COMBINE_INVITES);
-  for (const p of invited) p.combine = { tests: combineTests(p) };
+  for (const p of invited) p.combine = { tests: p.bust?.kind === "combine" ? warriorTests(combineTests(p)) : combineTests(p) };
   for (const test of COMBINE_TESTS) {
     const sorted = [...invited].sort((a, b) => (test.lowGood ? b.combine.tests[test.k] - a.combine.tests[test.k] : a.combine.tests[test.k] - b.combine.tests[test.k]));
     sorted.forEach((p, i) => ((p.combine.pcts ||= {})[test.k] = sorted.length > 1 ? i / (sorted.length - 1) : 0.5));
@@ -528,23 +999,25 @@ export function runCombine(league) {
   if (d) {
     d.stage = "combine";
     d.interviewsLeft = COMBINE_INTERVIEWS;
+    d.workoutsLeft = PRIVATE_WORKOUTS;
     d.buzz = combineBuzz(pool, invited);
   }
   const t = league.teams[league.userTid];
   const s = t.scouts || {};
   const bonus = SCOUT_POINTS_COMBINE + (SCOUT_SLOTS.some((role) => s[role]?.trait === "combine") ? 3 : 0);
   t.scoutPts = (t.scoutPts || 0) + bonus;
-  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: test results and Central Scouting's final rankings are out. You have ${COMBINE_INTERVIEWS} interview slots and ${bonus} extra scouting points before the draft.` });
+  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: test results and Central Scouting's final rankings are out. You have ${COMBINE_INTERVIEWS} interview slots, ${PRIVATE_WORKOUTS} private workouts and ${bonus} extra scouting points before the draft. Your scouts' visit list is on the Your scouts tab.` });
 }
 
 function combineBuzz(pool, invited) {
-  const top = pool.filter((p) => p.cs.mid <= 128 || p.cs.final <= 96);
+  const pre = (p) => p.cs.now ?? p.cs.mid;
+  const top = pool.filter((p) => pre(p) <= 128 || p.cs.final <= 96);
   const short = (p) => `${p.name} (${p.pos}, ${p.bio?.team || "?"})`;
-  const up = [...top].sort((a, b) => b.cs.mid - b.cs.final - (a.cs.mid - a.cs.final)).slice(0, 5).filter((p) => p.cs.mid > p.cs.final);
-  const down = [...top].sort((a, b) => a.cs.mid - a.cs.final - (b.cs.mid - b.cs.final)).slice(0, 4).filter((p) => p.cs.final > p.cs.mid);
+  const up = [...top].sort((a, b) => pre(b) - b.cs.final - (pre(a) - a.cs.final)).slice(0, 5).filter((p) => pre(p) > p.cs.final);
+  const down = [...top].sort((a, b) => pre(a) - a.cs.final - (pre(b) - b.cs.final)).slice(0, 4).filter((p) => p.cs.final > pre(p));
   const buzz = [];
-  for (const p of up) buzz.push({ kind: "up", pid: p.id, text: `${short(p)} climbs from #${p.cs.mid} to #${p.cs.final}${p.combine ? ` after ${p.combine.grade[0] === "A" ? "an eye-opening" : "a solid"} Combine (${p.combine.grade})` : ""}.` });
-  for (const p of down) buzz.push({ kind: "down", pid: p.id, text: `${short(p)} slides from #${p.cs.mid} to #${p.cs.final}${p.combine ? `; his ${p.combine.grade} Combine raised questions` : "; he wasn't invited to the Combine"}.` });
+  for (const p of up) buzz.push({ kind: "up", pid: p.id, text: `${short(p)} climbs from #${pre(p)} to #${p.cs.final}${p.combine ? ` after ${p.combine.grade[0] === "A" ? "an eye-opening" : "a solid"} Combine (${p.combine.grade})` : ""}.` });
+  for (const p of down) buzz.push({ kind: "down", pid: p.id, text: `${short(p)} slides from #${pre(p)} to #${p.cs.final}${p.combine ? `; his ${p.combine.grade} Combine raised questions` : "; he wasn't invited to the Combine"}.` });
   for (const test of COMBINE_TESTS.slice(0, 4)) {
     const best = [...invited].sort((a, b) => (test.lowGood ? a.combine.tests[test.k] - b.combine.tests[test.k] : b.combine.tests[test.k] - a.combine.tests[test.k]))[0];
     if (best) buzz.push({ kind: "best", pid: best.id, text: `${short(best)} topped the ${test.name.toLowerCase()} (${best.combine.tests[test.k].toFixed(test.dp)}${test.unit ? ` ${test.unit}` : ""}).` });
@@ -568,9 +1041,12 @@ export function interviewProspect(league, pid) {
   if ((d.interviewsLeft ?? 0) <= 0) return { ok: false, msg: "You've used all your interview slots." };
   d.interviewsLeft--;
   const r = stream(`${p.id}|intv`);
-  const v = ({ superstar: 90, star: 85, normal: 77, late: 73 }[p.dev] ?? 77) + r.gauss(0, 3.5);
-  (p.scout ||= { lvl: 0 }).intv = { grade: potGrade(v), note: r.pick(INTERVIEW_NOTES[v >= 85 ? "high" : v >= 77 ? "mid" : "low"]) };
-  return { ok: true, msg: `Interview with ${p.name}: work ethic ${p.scout.intv.grade}.` };
+  // A work-ethic red flag shows in the room; so does a workout warrior who can't talk the game.
+  const ethic = p.bust?.kind === "ethic", warrior = p.bust?.kind === "combine";
+  const v = ({ superstar: 90, star: 85, normal: 77, late: 73 }[p.dev] ?? 77) + r.gauss(0, 3.5) - (ethic ? 14 : 0);
+  const flag = ethic || warrior ? `🚩 Red flag from the interview: ${p.bust.why}.` : null;
+  (p.scout ||= { lvl: 0 }).intv = { grade: potGrade(v), note: ethic ? r.pick(INTERVIEW_NOTES.low) : warrior ? "Couldn't walk us through his own shifts on video. The testing is real; the hockey sense isn't." : r.pick(INTERVIEW_NOTES[v >= 85 ? "high" : v >= 77 ? "mid" : "low"]), ...(flag ? { flag } : {}) };
+  return { ok: true, msg: `Interview with ${p.name}: work ethic ${p.scout.intv.grade}.${flag ? " 🚩 Red flag raised: see his profile." : ""}` };
 }
 
 export function openDraftFloor(league) {
@@ -653,4 +1129,8 @@ export function migrateScouting(l) {
   const cls = (l.draftClass || []).filter((id) => l.players[id]);
   if (cls.some((id) => !l.players[id].cs)) rankClass(l, cls);
   if (l.draft && !l.draft.stage) l.draft.stage = "live";
+  // Saves from before hidden gems and red flags: plant them in the coming class (never in one
+  // whose draft has started), on prospects you haven't filed a report on.
+  if (cls.length && l.hiddenSeeded !== l.draftClassYear && !l.draft && !cls.some((id) => l.players[id].gem || l.players[id].bust)) plantHiddenTalent(l, cls, l.draftClassYear);
+  if (l.draft?.stage === "combine" && l.draft.workoutsLeft == null) l.draft.workoutsLeft = PRIVATE_WORKOUTS;
 }
