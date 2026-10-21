@@ -222,4 +222,11 @@ export const PATCH_NOTES = [
     "Draft Recap: true ratings for every pick, a verdict on each, and all 32 classes graded.",
     "Drafting on your phone: one compact row per prospect and Draft then Confirm.",
   ] },
+  { v: "1.41", date: "2026-10-21", title: "Built for Phones", notes: [
+    "A bottom tab bar (Home, Lines, Scouting, the season's screen, More), a big button for the day's main action with a ▾ for every sim option, and a More sheet with every screen.",
+    "Standings, stats, the schedule and the playoffs share one screen on your phone, and the Home matchup is a compact side-by-side card.",
+    "Tap a badge or chip to see what it means; press and hold a button to see what it does.",
+    "Deadline Day on your phone: the clock pinned at the top, tabs for the feed, the block and buyers & sellers, and controls at the bottom.",
+    "Offline play: the game saves itself to your device and installs as an app. Settings has an Offline Play panel.",
+  ] },
 ];
