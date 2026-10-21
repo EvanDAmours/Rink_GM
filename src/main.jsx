@@ -9,6 +9,7 @@ import "./ui/clubhouse.css";
 import "./ui/gridiron.css";
 import "./ui/mobile.css"; // last, so the phone layout wins
 import { backupInfo, restoreBackupRaw } from "./engine/saveSlots.js";
+import { registerServiceWorker } from "./ui/OfflinePanel.jsx";
 
 class ErrorBoundary extends React.Component {
   constructor(p) {
@@ -76,3 +77,14 @@ function start(data) {
 if (hot?.ready) hot.ready(start);
 else start(hot?.data ?? {});
 
+// Offline play (the published desktop and /mobile/ pages only; see ui/OfflinePanel.jsx).
+// The browser's offer to install the game as an app is kept for the Offline Play panel's button.
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    window.__installPrompt = e;
+    window.dispatchEvent(new Event("rk-install-ready"));
+  });
+  if (document.readyState === "complete") registerServiceWorker();
+  else window.addEventListener("load", () => registerServiceWorker());
+}
