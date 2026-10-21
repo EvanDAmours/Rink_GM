@@ -181,3 +181,4 @@ html.rk-mobile-entry input:not([type=checkbox]):not([type=radio]):not([type=rang
 .app.rk-phone-app button.ticker { min-height: 40px; }
 .app.rk-phone-app .an-card .an-x, .app.rk-phone-app .an-x { width: 40px; height: 40px; min-height: 40px; }
 .app.rk-phone-app .main .rk-inbox-x:not(.link):not(.player-link):not(.team-link), .app.rk-phone-app .rk-inbox-x { width: 40px; min-height: 40px; }
+.app.rk-phone-app button.gg-paper-btn { min-height: 40px; }
