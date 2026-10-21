@@ -1615,6 +1615,17 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .rk-rb.rb-dev { color: #67e8f9; background: #06b6d41a; border-color: #06b6d455; }
 .rk-rlegend .rk-rb { cursor: default; margin: 0 1px; }
 
+/* Combine search (DraftPage CombineSearch) */
+.rk-csearch .search { width: 100%; max-width: 520px; }
+.rk-csearch-row { padding: 8px 2px; border-top: 1px solid #1e293b; }
+.rk-csearch-row:first-of-type { margin-top: 8px; }
+.rk-csearch-who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rk-csearch-cs { margin-left: auto; font-size: 13px; color: #94a3b8; white-space: nowrap; }
+.rk-csearch-cs.up { color: #22c55e; } .rk-csearch-cs.down { color: #ef4444; }
+.rk-csearch-tests { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 12px; color: #94a3b8; }
+.rk-csearch-tests b { color: #e2e8f0; }
+.rk-csearch-tests .top b { color: #22c55e; }
+
 /* A busy bar (Play Live and the sims on the right) shortens the longest tab names, as in the football game. */
 .gg-tab-tiny { display: none; }
 @media (max-width: 1599px) { .gg-head.busy .gg-tab-full { display: none; } .gg-head.busy .gg-tab-tiny { display: inline; } }
