@@ -275,4 +275,7 @@ export const PATCH_NOTES = [
   { v: "1.48", date: "2026-10-21", title: "A Tidy Bracket", notes: [
     "The playoff bracket stays lined up as games are played: every series card keeps the same size, scores no longer spill onto extra lines, and each round sits level with the series that feed it, on desktop and phone.",
   ] },
+  { v: "1.49", date: "2026-10-21", title: "Deal on Top", notes: [
+    "The Trade Center's deal summary (what you send, what you get, and the Execute button) now sits at the top and stays in view as you scroll, so you can always see what's in the trade.",
+  ] },
 ];
