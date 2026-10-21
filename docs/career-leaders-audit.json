@@ -1,0 +1,236 @@
+{
+  "date": "2026-10-21T05:37:16.133Z",
+  "seed": 4242,
+  "seasons": [
+    {
+      "year": 2026,
+      "artRoss": {
+        "name": "Jack Eichel",
+        "ovr": 94,
+        "g": 41,
+        "a": 75,
+        "pts": 116
+      },
+      "second": 115,
+      "tenth": 95,
+      "rocket": {
+        "name": "Pavel Dorofeyev",
+        "g": 55
+      },
+      "hundredPoint": 8,
+      "fortyGoal": 16,
+      "after": {
+        "n90": 56,
+        "n95": 14,
+        "n99": 0,
+        "generational": 9,
+        "level": 82.76
+      },
+      "cornerstones": [
+        "Quinn Hughes"
+      ],
+      "breakouts": 10
+    },
+    {
+      "year": 2027,
+      "artRoss": {
+        "name": "Jack Eichel",
+        "ovr": 95,
+        "g": 46,
+        "a": 76,
+        "pts": 122
+      },
+      "second": 119,
+      "tenth": 97,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 65
+      },
+      "hundredPoint": 7,
+      "fortyGoal": 30,
+      "after": {
+        "n90": 60,
+        "n95": 8,
+        "n99": 2,
+        "generational": 9,
+        "level": 82.63
+      },
+      "cornerstones": [
+        "Quinn Hughes"
+      ],
+      "breakouts": 13
+    },
+    {
+      "year": 2028,
+      "artRoss": {
+        "name": "Connor Bedard",
+        "ovr": 95,
+        "g": 75,
+        "a": 52,
+        "pts": 127
+      },
+      "second": 123,
+      "tenth": 105,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 75
+      },
+      "hundredPoint": 11,
+      "fortyGoal": 22,
+      "after": {
+        "n90": 48,
+        "n95": 10,
+        "n99": 3,
+        "generational": 8,
+        "level": 82.87
+      },
+      "cornerstones": [],
+      "breakouts": 15
+    },
+    {
+      "year": 2029,
+      "artRoss": {
+        "name": "Connor McDavid",
+        "ovr": 97,
+        "g": 54,
+        "a": 92,
+        "pts": 146
+      },
+      "second": 134,
+      "tenth": 110,
+      "rocket": {
+        "name": "Matvei Michkov",
+        "g": 81
+      },
+      "hundredPoint": 13,
+      "fortyGoal": 25,
+      "after": {
+        "n90": 64,
+        "n95": 12,
+        "n99": 4,
+        "generational": 11,
+        "level": 83.39
+      },
+      "cornerstones": [
+        "Connor McDavid"
+      ],
+      "breakouts": 21
+    },
+    {
+      "year": 2030,
+      "artRoss": {
+        "name": "Connor McDavid",
+        "ovr": 99,
+        "g": 51,
+        "a": 94,
+        "pts": 145
+      },
+      "second": 120,
+      "tenth": 100,
+      "rocket": {
+        "name": "Matt Coronato",
+        "g": 66
+      },
+      "hundredPoint": 12,
+      "fortyGoal": 24,
+      "after": {
+        "n90": 43,
+        "n95": 7,
+        "n99": 4,
+        "generational": 11,
+        "level": 83.36
+      },
+      "cornerstones": [
+        "Connor McDavid",
+        "Quinn Hughes"
+      ],
+      "breakouts": 29
+    },
+    {
+      "year": 2031,
+      "artRoss": {
+        "name": "Matt Boldy",
+        "ovr": 95,
+        "g": 82,
+        "a": 56,
+        "pts": 138
+      },
+      "second": 118,
+      "tenth": 95,
+      "rocket": {
+        "name": "Matt Boldy",
+        "g": 82
+      },
+      "hundredPoint": 5,
+      "fortyGoal": 20,
+      "after": {
+        "n90": 49,
+        "n95": 10,
+        "n99": 3,
+        "generational": 10,
+        "level": 83.67
+      },
+      "cornerstones": [
+        "Connor McDavid",
+        "Matt Boldy"
+      ],
+      "breakouts": 32
+    },
+    {
+      "year": 2032,
+      "artRoss": {
+        "name": "Topi Lehtonen",
+        "ovr": 94,
+        "g": 59,
+        "a": 77,
+        "pts": 136
+      },
+      "second": 133,
+      "tenth": 104,
+      "rocket": {
+        "name": "Matt Boldy",
+        "g": 77
+      },
+      "hundredPoint": 14,
+      "fortyGoal": 23,
+      "after": {
+        "n90": 59,
+        "n95": 11,
+        "n99": 2,
+        "generational": 11,
+        "level": 83.88
+      },
+      "cornerstones": [
+        "Quinn Hughes"
+      ],
+      "breakouts": 28
+    },
+    {
+      "year": 2033,
+      "artRoss": {
+        "name": "Matt Boldy",
+        "ovr": 95,
+        "g": 64,
+        "a": 68,
+        "pts": 132
+      },
+      "second": 118,
+      "tenth": 98,
+      "rocket": {
+        "name": "Matt Boldy",
+        "g": 64
+      },
+      "hundredPoint": 9,
+      "fortyGoal": 24,
+      "after": {
+        "n90": 52,
+        "n95": 7,
+        "n99": 2,
+        "generational": 11,
+        "level": 83.8
+      },
+      "cornerstones": [],
+      "breakouts": 27
+    }
+  ]
+}

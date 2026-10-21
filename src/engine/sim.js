@@ -27,7 +27,7 @@ export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality:
   // Star share (Gridiron 1.88): an elite puck handler (control composite above eliteAt) draws the
   // puck far more often, convexly (e-fold every `elite` points), and as a carrier he creates more for
   // his linemates than he shoots himself (`distribute` per point, at most .12).
-  eliteAt: 91.5, elite: 2.4, eliteCap: 6, eliteRef: 94.5, distribute: .012});
+  eliteAt: 91.5, elite: 2.4, eliteCap: 6, eliteRef: 94.5, distribute: .012, touchCap: .58});
 // The elite threshold follows the league's own top end: when the ten best puck handlers' control
 // rises above the 2026 league's (eliteRef), the bar rises with it, so the star share stays the same
 // share instead of compounding as ratings drift. Fixed per season and kept on the league (like the
@@ -122,6 +122,14 @@ export function createGame(league, home, away, opts = {}) {
 
 function decision(s, k, action) { s.decisions[k][action] = (s.decisions[k][action] || 0) + 1; }
 const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2 * (side.star?.[id] ?? Math.exp(clamp(side.comp[id].ctrl - (side.eliteAt ?? EDGE.eliteAt), 0, EDGE.eliteCap) / EDGE.elite));
+// Who gets the puck: weighted by skill, but no one player takes more than touchCap of a unit's
+// touches, however far above his linemates he is (a lone star on a weak club still has to share).
+function share(items, f) {
+  const w = items.map(f), tot = w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < w.length; i++) if (w[i] > EDGE.touchCap * tot) w[i] = EDGE.touchCap / (1 - EDGE.touchCap) * (tot - w[i]);
+  const idx = weighted(items.map((_, i) => i), i => w[i]);
+  return items[idx];
+}
 function touch(s, k, id) {
   if (!id) return;
   if (s.poss !== k) s.touches = [];
@@ -277,7 +285,7 @@ function faceoff(s) {
   s.touches = []; touch(s, winner, winner === 'h' ? h : a);
   // The draw winner usually moves it to a teammate, rather than shooting off
   // every faceoff. Only actual touches can become assists.
-  const receiver = weighted(ice[winner].filter(id => id !== s.carrier), id => puckWeight(s[winner], id));
+  const receiver = share(ice[winner].filter(id => id !== s.carrier), id => puckWeight(s[winner], id));
   touch(s, winner, receiver);
   s.rush = false; s.lateral = false; s.faceoffNext = false; s.stoppage = null;
   if (s.live && visual(s).chance(.3)) push(s, {t: 'fo', side: winner, text: `${lastName(s[winner], winner === 'h' ? h : a)} wins the draw.`, ...s.puck});
@@ -353,7 +361,7 @@ function hockeyEvent(s, ice, R) {
     const clear = strengthType(s, k) === 'SH';
     const success = clamp((clear ? .76 : .72) + (carrierSkill.pass * .65 + R[k].pass * .35 + carrierSkill.ctrl * .5 + R[k].ctrl * .5 - R[o].def - R[o].skate) * EDGE.breakout + manEdge * .055, .35, .92);
     if (chance(success)) {
-      const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.5 : 1));
+      const receiver = share(ice[k].filter(id => id !== s.carrier), id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.5 : 1));
       touch(s, k, receiver); s.zone = clear ? 1 : 0; s.puck = {x: zoneX(s, k, clear ? 55 : -8), y: randFloat(15, 70)};
       if (clear) changePossession(s, o, ice);
     } else if (!clear && chance(.17)) {
@@ -379,7 +387,7 @@ function hockeyEvent(s, ice, R) {
     s.zone = 1; s.puck = {x: zoneX(s, k, controlled ? 58 : 82), y: randFloat(12, 73)};
     if (chance(clamp(success, .25, .9))) {
       s.rush = controlled; s.lateral = false;
-      touch(s, k, weighted(ice[k], id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.8 : .5)));
+      touch(s, k, share(ice[k], id => puckWeight(att, id) * (isForward(att.pl[id].pos) ? 1.8 : .5)));
     } else changePossession(s, o, ice);
     return;
   }
@@ -392,7 +400,7 @@ function hockeyEvent(s, ice, R) {
   if (carrier?.type === 'PLY') shoot -= .07;
   if (carrier?.type === 'SNP') shoot += .06;
   const cs = att.comp[s.carrier], over = cs ? Math.log(att.star?.[s.carrier] ?? 1) * EDGE.elite : 0;
-  if (over > 0) shoot -= Math.min(.12, over * EDGE.distribute) * (cs.pass >= cs.shoot ? 1 : .5);
+  if (over > 0) shoot -= Math.min(.12, over * EDGE.distribute);
   if (chance(shoot)) {
     decision(s, k, 'shoot'); shotAttempt(s, k, ice, R); return;
   }
@@ -401,7 +409,7 @@ function hockeyEvent(s, ice, R) {
   const success = clamp(.78 + (passing - R[o].def) * EDGE.passing + advantage * .035 + (att.edge || 0) * EDGE.pass
     - (att.tactic === 'attack' ? .035 : 0) - (att.plan?.forecheck === 'aggressive' ? .025 : 0), .45, .94);
   if (chance(success)) {
-    const receiver = weighted(ice[k].filter(id => id !== s.carrier), id => {
+    const receiver = share(ice[k].filter(id => id !== s.carrier), id => {
       const p = att.pl[id], c = att.comp[id];
       return (c.ctrl / 82) ** 2 * ((c.shoot / 82) ** 3 * (p.type === 'SNP' ? 1.3 : 1) + (c.pass / 82) ** 3 * (p.type === 'PLY' ? 1.3 : 1));
     });
