@@ -65,6 +65,10 @@ import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
+import { usePhone, desktopUrl, phoneUrl } from "./ui/mobile.js";
+import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
+import { OfflineChip } from "./ui/OfflinePanel.jsx";
+import { setInjuriesEnabled } from "./engine/injuries.js";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},
@@ -77,6 +81,8 @@ const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
   operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
+// Phones keep the standings, stats, schedule and playoffs on one screen with a chip for each.
+const PHONE_ALIAS = { standings:["season","standings"], stats:["season","stats"], schedule:["season","schedule"], playoffs:["season","playoffs"] };
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -96,8 +102,13 @@ export default function App({ resume = false }) {
   const [tab, setTab] = useState("dashboard");
   const [sub, setSubState] = useState({});
   const setSub = useCallback((t, k) => setSubState((prev) => (prev[t] === k ? prev : { ...prev, [t]: k })), []);
+  // Phones: the bottom tab bar, the More sheet and the action button (ui/MobileShell.jsx).
+  const phone = usePhone();
+  const phoneRef = useRef(phone);
+  phoneRef.current = phone;
+  const [moreOpen, setMoreOpen] = useState(false);
   // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
-  const go = useCallback((id, k) => { const [t, kk] = ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); }, [setSub]);
+  const go = useCallback((id, k) => { const [t, kk] = (phoneRef.current && PHONE_ALIAS[id]) || ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); setMoreOpen(false); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [ffOpen,setFfOpen]=useState(false);
@@ -617,9 +628,109 @@ export default function App({ resume = false }) {
   const capCeiling = capForYear(capYear(league));
   const unread = Math.max(0, league.inbox.length - (league.settings.activityReadCount || 0));
 
+  // ---------- Phones ----------
+  // The bottom bar: Home, Lines, Scouting (the Draft while it runs), whatever the season phase is
+  // about, and More. The phase item follows the football game's: Camp, Standings, Playoffs, then
+  // the off-season's own screen.
+  const linesSub = sub.lines || "lines";
+  const tradeSub = sub.trade || "trade";
+  const PHASE_ITEM = {
+    preseason: { key: "camp", icon: "🏕️", label: "Camp", on: tab === "lines" && linesSub === "roster", onClick: () => go("lines", "roster") },
+    regular: { key: "season", icon: "📊", label: "Standings", on: tab === "season", onClick: () => go("season", sub.season || "standings") },
+    playoffs: { key: "season", icon: "🏆", label: "Playoffs", on: tab === "season", onClick: () => go("season", "playoffs") },
+    draft: { key: "trade", icon: "🔁", label: "Trade", on: tab === "trade" && tradeSub === "trade", onClick: () => go("trade", "trade") },
+    resign: { key: "fa", icon: "✍️", label: "Re-sign", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
+    freeagency: { key: "fa", icon: "✍️", label: "Free Agency", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
+  };
+  const phoneNav = [
+    { key: "home", icon: "🏠", label: "Home", on: tab === "dashboard", onClick: () => go("dashboard") },
+    { key: "lines", icon: "🏒", label: "Lines", on: tab === "lines" && !(league.phase === "preseason" && linesSub === "roster"), onClick: () => go("lines", "lines") },
+    { key: "draft", icon: league.phase === "draft" ? "🎯" : "🔎", label: league.phase === "draft" ? "Draft" : "Scouting", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") },
+    PHASE_ITEM[league.phase] || PHASE_ITEM.regular,
+  ];
+  // The day's main action, then the rest behind the ▾ (the same act functions as the top bar's).
+  const phoneActions = (() => {
+    const A = [];
+    const ph = league.phase;
+    if (ph === "preseason") A.push({ label: "Start Season ▶", onClick: act.startSeason });
+    if (ph === "regular") {
+      if (L.seasonOver(league)) A.push({ label: "Start Playoffs 🏆", onClick: act.startPlayoffs, tone: "gold" });
+      else if (deadlinePending(league)) A.push({ label: "⏰ Trade Deadline Day", onClick: openDeadline, tone: "red" });
+      else {
+        const ug = L.userGameOnDay(league);
+        if (ug) {
+          const opp = league.teams[ug.h === user.id ? ug.a : ug.h];
+          A.push({ label: `▶ Play Live ${ug.h === user.id ? "vs" : "@"} ${opp.abbr}`, onClick: act.playLive });
+          A.push({ label: "Sim Game", onClick: act.simDay, tone: "blue" });
+        } else A.push({ label: "Sim Day", onClick: act.simDay, tone: "blue" });
+        A.push({ label: "Sim Week", onClick: () => act.simDays(7, "Simulating a week"), tone: "blue" });
+        if (league.day < league.deadlineDay) A.push({ label: "Sim to Deadline", onClick: act.simToDeadline, tone: "red" });
+        A.push({ label: "Sim to End of Season", onClick: act.simToEnd, tone: "violet" });
+      }
+    }
+    if (ph === "playoffs") {
+      if (league.playoffs.champion != null) A.push({ label: "Go to the Draft →", onClick: act.toDraft, tone: "gold" });
+      else {
+        if (userSeries(league)) A.push({ label: "▶ Play Live", onClick: act.playPlayoffLive });
+        A.push({ label: "Sim Day", onClick: act.simPlayoffDay, tone: "blue" });
+        A.push({ label: "Sim Round", onClick: act.simPlayoffRound, tone: "gold" });
+        A.push({ label: "Sim to the Final", onClick: act.simPlayoffsAll, tone: "violet" });
+      }
+    }
+    if (ph === "draft") {
+      if (atCombine(league)) A.push({ label: "Start the Draft →", onClick: act.startDraft, tone: "gold" });
+      else if (draftDone(league)) A.push({ label: "Continue to Re-signing →", onClick: act.toResign, tone: "gold" });
+      else {
+        // On the clock, the pick is yours to make on the screen: the bar only offers the auto-draft.
+        if (currentSlot(league).owner !== user.id) A.push({ label: "⏩ Sim to My Pick", onClick: act.simToMyPick });
+        A.push({ label: "Auto-Draft the Rest", onClick: act.autoDraft, tone: "violet", small: currentSlot(league).owner === user.id });
+      }
+    }
+    if (ph === "resign") A.push({ label: "Finish → Free Agency", onClick: act.toFA, tone: "gold", small: true });
+    if (ph === "freeagency") {
+      const next = { label: `Start ${league.year + 1}-${String(league.year + 2).slice(2)} Season →`, onClick: act.nextSeason, tone: "gold" };
+      if (league.fa.day < FA_DAYS) A.push({ label: "Next Day", onClick: act.faDay, tone: "blue" }, { label: "Sim to the End of Free Agency", onClick: act.faToEnd, tone: "violet" }, next);
+      else A.push(next);
+    }
+    // Off Home and the draft, the main action shrinks to a pill so a tap meant for the screen can't sim.
+    if (A[0] && tab !== "dashboard" && tab !== "draft") A[0] = { ...A[0], small: true };
+    return A;
+  })();
+  const tradeDeadlineOpen = (league.phase === "regular" || league.phase === "playoffs") && (deadlinePending(league) || (league.deadline?.year === league.year && !league.deadline.synthetic));
+  // The deadline desk has its own action bar (the clock's controls).
+  const onDeadlineDesk = tab === "trade" && tradeSub === "deadline" && tradeDeadlineOpen && league.deadline?.year === league.year;
+  const injOn = league.settings.injuries !== false;
+  // More: every screen, the sections inside each, and the settings.
+  const moreScreens = [
+    ...NAV.filter((n) => n.id !== "dashboard").flatMap((n) => (n.id === "schedule" ? [{ key: "season", label: "Schedule & Standings", on: tab === "season", onClick: () => go("season", "standings") }] : n.id === "stats" ? [] : [{ key: n.id, label: n.label, on: tab === n.id, badge: badgeFor(n.id), onClick: () => go(n.id) }])),
+    { key: "activity", label: unread ? `News & Inbox (${unread})` : "News & Inbox", on: tab === "activity", onClick: () => go("activity") },
+    { key: "settings", label: "Settings", on: tab === "settings", onClick: () => go("settings") },
+  ];
+  // a hub on a given section (go() would send "trade" or "development" to their first one)
+  const openSub = (t, k) => { setTab(t); setSub(t, k); setMoreOpen(false); };
+  const jump = (t, k, label, cur) => ({ key: `${t}-${k}`, label, on: tab === t && cur === k, onClick: () => openSub(t, k) });
+  const moreJumps = [
+    { label: "Lines", items: [jump("lines", "lines", "Lines", linesSub), jump("lines", "roster", league.phase === "preseason" ? "Roster & camp" : "Roster", linesSub)] },
+    { label: "Season", items: SEASON_TABS.map(([k, l]) => jump("season", k, l, sub.season || "standings")) },
+    { label: "Trade & Market", items: [jump("trade", "trade", "Trade Center", tradeSub), jump("trade", "block", "Trade Block", tradeSub), jump("trade", "fa", league.phase === "resign" ? "Re-sign" : "Free Agency", tradeSub), ...(tradeDeadlineOpen ? [jump("trade", "deadline", "Deadline Day", tradeSub)] : [])] },
+    { label: "Front Office", items: [["overview", "Overview"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]].map(([k, l]) => jump("frontoffice", k, l, sub.frontoffice || "overview")) },
+    { label: "Coaching", items: [jump("coaching", "coaching", "Head coach", sub.coaching || "coaching"), jump("coaching", "plan", "Game plan", sub.coaching || "coaching")] },
+    { label: "Development", items: [jump("development", "development", "Development", sub.development || "development"), jump("development", "pipeline", "Pipeline", sub.development || "development")] },
+    { label: "League", items: [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]].map(([k, l]) => jump("league", k, l, sub.league || "standings")) },
+  ];
+  const moreActions = [
+    { label: "💾 Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
+    { label: injOn ? "🩹 Injuries: on (tap to turn off)" : "🩹 Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
+    { label: "✈️ Offline play", onClick: () => { go("settings"); setTimeout(() => document.getElementById("rk-offline")?.scrollIntoView({ block: "start" }), 120); } },
+    { label: "🧭 Take the tour", onClick: () => { setMoreOpen(false); setTour("run"); } },
+    { label: "📝 Game updates", onClick: () => go("updates") },
+    { label: "🖥 Computer layout", onClick: () => { flushSave(); window.location.href = desktopUrl(); } },
+  ];
+
   return (
     <GameCtx.Provider value={ctx}>
-      <div className="app" data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
+      <div className={`app${phone ? " rk-phone-app" : ""}`} data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
+        {phone ? <PhoneHeader team={user} season={seasonLabel} record={recordStr(user.rec)} cap={space} live={!!live} unread={unread} onSearch={() => setSearchOpen(true)} onInbox={() => go("activity")} /> : (
         <header className={`gg-head${actions.length >= 3 ? " busy" : ""}`}>
           <TeamBadge team={user} size={26} className="gg-badge"/>
           <nav className="gg-tabs nav hdr-tabs" aria-label="Main navigation">
@@ -632,6 +743,7 @@ export default function App({ resume = false }) {
           </nav>
           <span className="gg-cur-tab" aria-hidden="true">{live ? "Live Game" : (NAV.find((n) => n.id === tab)?.short || (tab === "activity" ? "News" : tab === "settings" ? "Settings" : tab === "updates" ? "Game updates" : "Home"))}</span>
           <div className="gg-right">
+            <OfflineChip />
             {!live && <div className="actions">{actions}</div>}
             <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search players, teams and screens (press /)">🔍</button>
             <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
@@ -650,8 +762,9 @@ export default function App({ resume = false }) {
             <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}><span>🧭 Take the tour</span></button>
             <div className="gg-menu-grp">MORE</div>
             <button role="menuitem" data-id="updates" className={tab === "updates" ? "active" : ""} onClick={() => { setMenuOpen(false); go("updates"); }}><span>📝 Game updates</span></button>
+            <button role="menuitem" data-id="phone" onClick={() => { setMenuOpen(false); flushSave(); window.location.href = phoneUrl(); }}><span>📱 Phone layout</span></button>
           </div></>}
-        </header>
+        </header>)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
           <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
@@ -664,6 +777,7 @@ export default function App({ resume = false }) {
                 {tab === "lines" && <LinesHub sub={sub.lines} onSub={(k) => setSub("lines", k)} />}
                 {tab === "schedule" && <SchedulePage />}
                 {tab === "stats" && <StatsPage />}
+                {tab === "season" && <SeasonHub league={league} sub={sub.season} onSub={(k) => setSub("season", k)} act={act} />}
                 {tab === "draft" && <DraftPage act={act} />}
                 {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}
                 {tab === "frontoffice" && <FrontOfficeHub sub={sub.frontoffice} onSub={(k) => setSub("frontoffice", k)} />}
@@ -707,6 +821,11 @@ export default function App({ resume = false }) {
             </div>
           </div>
         )}
+        <div id="rk-dock" className="rk-dock" />
+        {phone && moreOpen && !live && <MoreSheet screens={moreScreens} jumps={moreJumps} actions={moreActions} onClose={() => setMoreOpen(false)} />}
+        {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
+        {phone && !live && <MobileNav items={phoneNav} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />}
+        {phone && <TapTips />}
         {confirmEl}
         <FeedbackToast toast={toastHead} waiting={toasts.length - 1} onDismiss={nextToast} />
       </div>

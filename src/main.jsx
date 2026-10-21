@@ -1,3 +1,4 @@
+import "./ui/mobile.js"; // phone mode and the 90% phone scale, before anything draws
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
@@ -6,6 +7,7 @@ import "./ui/fonts.css";
 import "./ui/premium.css";
 import "./ui/clubhouse.css";
 import "./ui/gridiron.css";
+import "./ui/mobile.css"; // last, so the phone layout wins
 import { backupInfo, restoreBackupRaw } from "./engine/saveSlots.js";
 
 class ErrorBoundary extends React.Component {
@@ -73,3 +75,4 @@ function start(data) {
 
 if (hot?.ready) hot.ready(start);
 else start(hot?.data ?? {});
+
