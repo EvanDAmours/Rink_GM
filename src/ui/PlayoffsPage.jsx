@@ -8,7 +8,8 @@ import { playoffPicture } from "../engine/standings.js";
 function SeriesCard({ s, compact = false }) {
   const { league, openBox } = useGame();
   const me = s && (s.top === league.userTid || s.bot === league.userTid);
-  if (!s) return <div className="gg-series tbd"><div className="gg-stm"><span className="gg-stm-slot">TBD</span></div><div className="gg-stm"><span className="gg-stm-slot">TBD</span></div></div>;
+  // Every card keeps the same shape (two rows + a fixed game strip) so the tree stays aligned as results arrive.
+  if (!s) return <div className="gg-series tbd"><div className="gg-stm"><span className="gg-stm-slot">TBD</span></div><div className="gg-stm"><span className="gg-stm-slot">TBD</span></div><div className="gg-sgames" /></div>;
   const row = (tid, w) => {
     const t = league.teams[tid];
     const won = s.winner === tid, lost = s.winner != null && !won;
@@ -24,15 +25,16 @@ function SeriesCard({ s, compact = false }) {
     <div className={`gg-series${me ? " me" : ""}${s.winner != null ? " done" : ""}`}>
       {row(s.top, s.wTop)}
       {row(s.bot, s.wBot)}
-      {s.games.length > 0 && (
-        <div className="gg-sgames">
-          {s.games.map((g, i) => (
-            <span key={i} className="gg-sgame" title={`Game ${i + 1} box score`} onClick={() => openBox({ ...g, day: null, shots: null })}>
-              G{i + 1} <b>{league.teams[g.a].abbr} {g.as}-{g.hs} {league.teams[g.h].abbr}</b>{g.ot ? ` ${g.ot}` : ""}
+      <div className="gg-sgames">
+        {s.games.map((g, i) => {
+          const aWon = g.as > g.hs, w = aWon ? g.a : g.h;
+          return (
+            <span key={i} className="gg-sgame" title={`Game ${i + 1}: ${league.teams[g.a].abbr} ${g.as}-${g.hs} ${league.teams[g.h].abbr}${g.ot ? ` (${g.ot})` : ""} · box score`} onClick={() => openBox({ ...g, day: null, shots: null })}>
+              <i>G{i + 1}</i><b>{league.teams[w].abbr}</b> {Math.max(g.as, g.hs)}-{Math.min(g.as, g.hs)}{g.ot ? <small>{g.ot}</small> : null}
             </span>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
