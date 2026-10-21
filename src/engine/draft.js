@@ -1,7 +1,32 @@
 import {releasePlayer} from './roster.js';
-import {teamNeeds as positionalNeeds} from './teamPlanning.js';
+import {teamNeeds,orgDepth,roleNeeds,roleFit} from './teamPlanning.js';
 // Entry draft: prospect classes, the two-draw lottery, and AI picks. Scouting lives in
 // scouting.js.
+//
+// Exports other screens and agents rely on (names are stable):
+//   generateDraftClass(league, year)   a new class: Central Scouting's board, then the hidden gems
+//                                      and red flags (scouting.plantHiddenTalent), which the board
+//                                      never sees
+//   projectedDraftOrder(league)        THE draft order (Gridiron 2.69), used by pick labels, the
+//                                      mock draft, Scouting HQ, the checkpoints, the weekly paper and
+//                                      trade values: the live draft's first round once the order is
+//                                      set; in season non-playoff and playoff clubs by points
+//                                      percentage (worst first); during the playoffs clubs out of them
+//                                      first, then playoff clubs by the round they went out in, the
+//                                      champion last; before any game last draft's order (or null)
+//   pickSlot(league, pk) / pickLabel   where a pick falls ({ overall, projected })
+//   myDraftSlots(league, tid?)         a club's remaining picks in the coming (or running) draft as
+//                                      overall numbers, earliest first
+//   aiChoose(league, tid)              an AI club's pick: the public read (blind to gems and red
+//                                      flags) blended with Central Scouting, org depth by position
+//                                      (roster + prospects), the NHL positional-value curve, team
+//                                      needs (teamPlanning.teamNeeds) and role needs
+//   aiPickScore(league, tid, p, ctx?)  the score behind aiChoose, for draft-day explanations
+//   makePick(league, pid)              records the pick; your own picks get their draft-day POT
+//                                      read (scouting.tagDraftee) for the scouting-miss reveals
+//   visibleRatings(lg, p)              what the user sees: other clubs' prospects fail closed to the
+//                                      public read; your own unrevealed draftees show POT as "~84"
+//                                      (potEst: true) until the reveal checkpoints
 import {seedDraftIdentities,resolveProtections} from "./draftExpansion.js";
 import { gauss, clamp, rand, randInt, chance, weighted } from "./rng.js";
 import { generatePlayer } from "./players.js";
@@ -9,7 +34,7 @@ import { DRAFT_ROUNDS, isGoalie, isDefense, isForward, MAX_PROSPECTS } from "./c
 import { compareTeams } from "./standings.js";
 import { defaultArchetype } from "./ratings.js";
 import { rollDev } from "./players.js";
-import { rankClass, csRank, csScore, pickGrade, openDraftFloor } from "./scouting.js";
+import { rankClass, csRank, csScore, pickGrade, openDraftFloor, plantHiddenTalent, publicPot, prospectRead, tagDraftee, believedPot } from "./scouting.js";
 
 const CLASS_SIZE = 280; // Seven rounds, plus an undrafted pool.
 const POS_MIX = [["C", 25], ["LW", 17], ["RW", 17], ["LD", 14], ["RD", 14], ["G", 8]];
@@ -45,6 +70,8 @@ export function generateDraftClass(league, draftYear) {
   league.draftClassYear = draftYear;
   rankClass(league, ids);
   seedDraftIdentities(league,ids,draftYear);
+  // After the board is set (seedDraftIdentities re-ranks), so Central Scouting never sees them.
+  plantHiddenTalent(league, ids, draftYear);
   return ids;
 }
 
@@ -108,11 +135,25 @@ export function pickSlot(league, pk) {
 // the draft order is set, its first round. Null before anyone has played.
 export function projectedDraftOrder(league) {
   if (league.draft?.year === league.year + 1) return league.draft.slots.filter((s) => s.round === 1).map((s) => s.orig);
-  if (!league.teams.some((t) => (t.rec?.gp || 0) > 0)) return null;
+  if (!league.teams.some((t) => (t.rec?.gp || 0) > 0)) {
+    // Before a game is played: last draft's order (last season's standings), as the football game does.
+    const last = (league.draftHistory || []).find((d) => d.year === league.year);
+    const r1 = last ? last.picks.filter((s) => s.round === 1).map((s) => s.orig) : [];
+    return r1.length === league.teams.length && new Set(r1).size === r1.length ? r1 : null;
+  }
   const { nonPlayoff, playoff } = standingsGroups(league);
   const pct = (t) => t.rec.pts / Math.max(1, t.rec.gp) || 0;
   const worstFirst = nonPlayoff.map((id) => league.teams[id]).sort((a, b) => pct(a) - pct(b) || -compareTeams(a, b)).map((t) => t.id);
   return [...worstFirst, ...playoff];
+}
+
+// A club's remaining picks in the coming draft (or the running one) as overall numbers, earliest
+// first: real slots once the order is set, projected ones before (projectedDraftOrder).
+export function myDraftSlots(league, tid = league.userTid) {
+  const d = league.draft;
+  if (d && Array.isArray(d.slots) && d.year === league.year + 1) return d.slots.filter((s) => s.owner === tid && !s.pid).map((s) => s.overall).sort((a, b) => a - b);
+  const year = league.year + 1;
+  return league.draftPicks.filter((pk) => pk.year === year && pk.owner === tid).map((pk) => pickSlot(league, pk)?.overall).filter(Boolean).sort((a, b) => a - b);
 }
 
 // Clubs out of the playoffs, fewest points first; playoff clubs by how far they went.
@@ -176,29 +217,41 @@ export function startDraft(league) {
   return league.draft;
 }
 
-function teamNeeds(league, tid) {
-  const t = league.teams[tid];
-  const all = [...t.roster, ...t.prospects].map((id) => league.players[id]).filter(Boolean);
-  const g = all.filter((p) => isGoalie(p.pos)).length;
-  const d = all.filter((p) => isDefense(p.pos)).length;
-  const f = all.filter((p) => isForward(p.pos)).length;
-  return { G: g < 4 ? 1.04 : 0.93, D: d < 12 ? 1.03 : 1, F: f < 20 ? 1.02 : 1 };
-}
-
 // AI teams blend their own scouts' (noisy) read with Central Scouting's rankings, so they
-// mostly follow the board and the sleepers your scouts find can still be there.
+// mostly follow the board and the sleepers your scouts find can still be there. Their read is the
+// public one: blind to hidden gems and red flags. On top of the board they weigh (Gridiron 1.999):
+//  - the NHL positional-value curve: centres and right-shot defensemen go a little early, goalies
+//    rarely in round 1 (they take years and miss often), wingers at their board slot;
+//  - organizational depth (roster + prospects): a young starting goalie with a goalie prospect
+//    behind him means no early goalie; a deep pipeline at a position counts it down;
+//  - team needs (teamPlanning.teamNeeds, the one needs model) and role holes in the lineup.
 const DEV_EYE = { superstar: 1.2, star: 0.6, late: -0.3 };
+const POS_VALUE = { C: [0.8, 0.5, 0.2], RD: [0.5, 0.3, 0.1], LD: [0.2, 0.1, 0], LW: [0, 0, 0], RW: [0, 0, 0], G: [-3, -1.5, -0.4] };
+export function aiPickContext(league, tid) {
+  const t = league.teams[tid];
+  const round = currentSlot(league)?.round ?? 1;
+  return { round, needs: Object.fromEntries(teamNeeds(league, t).map((n) => [n.pos, n.score])), depth: orgDepth(league, t), roles: roleNeeds(league, t) };
+}
+export function aiPickScore(league, tid, p, ctx = aiPickContext(league, tid), noise = 0) {
+  const own = (publicPot(p) + (p.consensus || 0)) * 0.78 + p.ovr * 0.22 + (p.gem || p.bust ? 0 : DEV_EYE[p.dev] || 0);
+  const base = own * 0.5 + csScore(p) * 0.5;
+  const ri = Math.min(2, ctx.round - 1);
+  const dep = ctx.depth[p.pos] || {};
+  let adj = (POS_VALUE[p.pos] || [0, 0, 0])[ri];
+  if (dep.locked && ctx.round <= 3) adj -= 4;
+  if ((dep.pipeline || 0) >= 3) adj -= 0.8;
+  else if ((dep.nhl || 0) + (dep.pipeline || 0) <= 1 && !isGoalie(p.pos)) adj += 0.5;
+  adj += ((ctx.needs[p.pos] || 0) / 100) * 1.6;
+  adj += roleFit(p, ctx.roles) * 1.0;
+  return base + adj + noise;
+}
 export function aiChoose(league, tid) {
   const avail = league.draftClass.filter((id) => league.players[id]?.tid === -2);
-  const need = teamNeeds(league, tid);
-  const positional=Object.fromEntries(positionalNeeds(league,league.teams[tid]).map(n=>[n.pos,1+n.score*.0005]));
+  const ctx = aiPickContext(league, tid);
   let best = null;
   let bestScore = -Infinity;
   for (const id of avail) {
-    const p = league.players[id];
-    const grp = isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F";
-    const own = (p.pot + (p.consensus || 0)) * 0.78 + p.ovr * 0.22 + (DEV_EYE[p.dev] || 0);
-    const score = (own * 0.5 + csScore(p) * 0.5 + gauss(0, 1.2)) * need[grp] * (positional[p.pos] || 1);
+    const score = aiPickScore(league, tid, league.players[id], ctx, gauss(0, 1.2));
     if (score > bestScore) { bestScore = score; best = id; }
   }
   return best;
@@ -210,6 +263,8 @@ export function makePick(league, pid) {
   const p = league.players[pid];
   if (!slot || !p || p.tid !== -2) return false;
   openDraftFloor(league);
+  // Your pick: what your scouts believed on draft day (the truth comes out over two seasons).
+  const read = slot.owner === league.userTid ? prospectRead(league, p) : null;
   slot.pid = pid;
   slot.csr = csRank(p);
   slot.grade = pickGrade(slot.overall, slot.csr);
@@ -220,6 +275,7 @@ export function makePick(league, pid) {
   p.signed = false;
   p.rightsUntil=d.year+(p.bio?.lg==="NCAA"?4:["OHL","WHL","QMJHL"].includes(p.bio?.lg)?2:4);
   p.assignment=p.bio?.lg==="NCAA"?"college":["OHL","WHL","QMJHL"].includes(p.bio?.lg)?"junior":"europe";
+  if (read) { slot.read = { pot: read.pot, potV: read.potV != null ? Math.round(read.potV) : null, lvl: read.lvl, gem: read.sleeper, flag: read.flag }; tagDraftee(league, p, read); }
   const team = league.teams[slot.owner];
   team.prospects.push(pid);
   league.draftPicks = league.draftPicks.filter((pk) => !(pk.year === d.year && pk.round === slot.round && pk.orig === slot.orig));
@@ -299,5 +355,8 @@ export function expandLegacyDraftClass(league) {
 // Player-facing evaluation; opponents' development players fail closed.
 export function visibleRatings(lg,p){
  const hidden=p.tid===-2 || p.tid!==lg.userTid && lg.teams[p.tid]?.prospects.includes(p.id);
- return hidden?shownRatings(p):{ovr:p.ovr,pot:p.pot,exact:true};
+ if(hidden)return shownRatings(p);
+ // Your own draftee before the scouting-miss reveal: his ceiling is still your scouts' estimate.
+ if(p.tid===lg.userTid&&p.potRev&&p.potRev.stage<3){const b=believedPot(lg,p);return {ovr:p.ovr,pot:`~${b.pot}`,potV:b.pot,exact:true,potEst:true};}
+ return {ovr:p.ovr,pot:p.pot,exact:true};
 }

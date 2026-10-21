@@ -1,21 +1,29 @@
 import { csRank, prospectRead, pickGrade } from "./scouting.js";
-import { currentSlot } from "./draft.js";
+import { currentSlot, projectedDraftOrder } from "./draft.js";
+import { teamNeeds } from "./teamPlanning.js";
 import { evaluateTrade, executeTrade, pickValue } from "./trade.js";
 import { stream } from "./rng.js";
 
+// The experts' mock draft: walk the first round in the one projected draft order (the live order
+// once it's set) and give each club the prospect the analysts expect: the best on Central
+// Scouting's list, nudged toward what the club needs (teamPlanning.teamNeeds). Only public
+// information: never hidden POT/OVR, gems or red flags. `need` is the club's top need position.
 export function mockDraft(league) {
   const pool = league.draftClass.map(id => league.players[id]).filter(p => p?.tid === -2).sort((a,b) => csRank(a)-csRank(b));
-  const slots = league.draft?.slots.filter(s => s.round === 1 && !s.pid) || [...league.teams].sort((a,b) => a.rec.pts-b.rec.pts).map((t,i) => ({owner:t.id,orig:t.id,overall:i+1,round:1}));
+  const order = projectedDraftOrder(league);
+  const slots = league.draft?.slots.filter(s => s.round === 1 && !s.pid) || (order || [...league.teams].sort((a,b) => a.rec.pts-b.rec.pts || a.id-b.id).map(t => t.id)).map((tid,i) => {
+    const pk = league.draftPicks.find(x => x.year === league.year + 1 && x.round === 1 && x.orig === tid);
+    return {owner:pk ? pk.owner : tid,orig:tid,overall:i+1,round:1};
+  });
   return slots.map((slot) => {
     const t = league.teams[slot.owner];
-    const roster = [...t.roster,...t.prospects].map(id=>league.players[id]).filter(Boolean);
-    const groups = {G:roster.filter(p=>p.pos === "G"),D:roster.filter(p=>p.pos.endsWith("D")),F:roster.filter(p=>["C","LW","RW"].includes(p.pos))};
-    const mean = ps => ps.reduce((s,p)=>s+p.ovr,0)/Math.max(1,ps.length);
-    const need = Object.keys(groups).sort((a,b)=>mean(groups[a])-mean(groups[b]))[0];
-    const candidates = pool.slice(0,5);
+    const needs = Object.fromEntries(teamNeeds(league, t).map(n => [n.pos, n.score]));
+    const need = Object.entries(needs).sort((a,b) => b[1]-a[1])[0]?.[0];
+    const candidates = pool.slice(0,6);
     const r = stream(`${league.year}|mock|${slot.overall}`);
-    // Only public ranks and positional needs: never use hidden POT/OVR for a mock.
-    const p = candidates.map(p=>({p,score:-csRank(p)+(groups[need].includes(p)?0:((p.pos === "G" ? "G" : p.pos.endsWith("D") ? "D" : "F") === need ? 3:0))+r.next()})).sort((a,b)=>b.score-a.score)[0]?.p;
+    // A club reaches a few spots for a need (goalies only when it badly needs one).
+    const bonus = (p) => { const n = needs[p.pos] || 0; return p.pos === "G" ? (n >= 45 ? 2 : -3) : n / 100 * 4; };
+    const p = candidates.map(p=>({p,score:-csRank(p)+bonus(p)+r.next()})).sort((a,b)=>b.score-a.score)[0]?.p;
     if (p) pool.splice(pool.indexOf(p),1);
     return {...slot,pid:p?.id,need};
   });

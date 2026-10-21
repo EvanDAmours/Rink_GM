@@ -10,7 +10,7 @@ import { DIFFICULTY, MAX_ROSTER, isGoalie, isDefense, capForYear } from "./const
 import { capSpace, counts, logTx, queueForLines, capYear } from "./roster.js";
 import { leagueTable, conferenceTable } from "./standings.js";
 import { teamRatings } from "./lines.js";
-import { pickLabel } from "./draft.js";
+import { pickLabel, projectedDraftOrder } from "./draft.js";
 import { queueMoment } from "./moments.js";
 import { tradeMoment } from "./momentsSeason.js";
 
@@ -59,9 +59,11 @@ export function projectedPickSlot(league, pk) {
     const slot = league.draft.slots.find((s) => s.orig === pk.orig && s.round === 1);
     if (slot) return slot.overall;
   }
-  if (pk.year !== league.year + 1 || !league.teams[pk.orig].rec.gp) return 16;
-  const table = leagueTable(league).reverse();
-  return table.findIndex((t) => t.id === pk.orig) + 1;
+  if (pk.year !== league.year + 1) return 16;
+  // The coming draft: the one projected order every screen uses (draft.js projectedDraftOrder).
+  const order = projectedDraftOrder(league);
+  const i = order ? order.indexOf(pk.orig) : -1;
+  return i < 0 ? 16 : i + 1;
 }
 
 export function pickValue(league, pk, { contending = false } = {}) {

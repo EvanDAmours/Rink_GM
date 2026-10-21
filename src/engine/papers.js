@@ -5,6 +5,8 @@
 import { place } from "./market.js";
 import { isGoalie } from "./constants.js";
 import { openingNight } from "./momentsCup.js";
+import { myDraftSlots, projectedDraftOrder } from "./draft.js";
+import { csRank } from "./scouting.js";
 
 export function pushPaper(league, paper) {
   league.papers ||= [];
@@ -183,8 +185,12 @@ export function scoutingPaper(league, week) {
   const t = league.teams[league.userTid];
   const cls = (league.draftClass || []).map((id) => league.players[id]).filter((p) => p && p.tid === -2);
   if (!t || !cls.length) return;
-  const order = [...league.teams].sort((a, b) => (a.rec.pts / Math.max(1, a.rec.gp) || 0) - (b.rec.pts / Math.max(1, b.rec.gp) || 0));
-  const slot = order.findIndex((x) => x.id === t.id) + 1;
+  // Where you pick: your earliest pick in the one projected draft order (draft.js), or your own
+  // record's slot if you've traded it.
+  const mine = myDraftSlots(league);
+  const order = projectedDraftOrder(league) || [];
+  const slot = mine[0] || order.indexOf(t.id) + 1 || 16;
+  cls.sort((a, b) => csRank(a) - csRank(b));
   const near = cls.slice(Math.max(0, slot - 8), slot + 6);
   const blind = near.filter((p) => !p.scout?.lvl);
   const pts = t.scoutPts || 0, area = t.area?.year === league.draftClassYear ? t.area.points : 0;
