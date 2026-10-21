@@ -111,7 +111,7 @@ Before → after (same seeds):
 | Fixed-roster season: goals/team/game | 3.083 | 3.165 |
 | Fixed-roster season: save % | .8979 | .8959 |
 | Separate-seed season: goals/team/game, save % | — | 3.103, .8979 |
-| Art Ross (mean of 8 fixed-roster seasons) | 112 | ~120 (range 108-153) |
+| Art Ross (mean of 8 fixed-roster seasons) | 112 | 117-124 (4-seed means; single seasons 108-153) |
 | Rocket Richard (mean of 8) | 54 | ~56 |
 | 100-point players / 40-goal scorers per season | 3.8 / 15.8 | ~5 / ~17 |
 
