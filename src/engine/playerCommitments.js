@@ -1,5 +1,6 @@
 import {isGoalie,isDefense} from './constants.js';
 import {projectedRole,ROLE_MINUTES,ROLE_LABELS} from './teamPlanning.js';
+import {contractYearDay} from './contractYear.js';
 export function promiseRole(lg,p,tid,role){
  if(!p||!ROLE_MINUTES[role]||isGoalie(p.pos)!==['starter','backup'].includes(role)||['topPair','topFour'].includes(role)&&!isDefense(p.pos)||['topLine','topSix'].includes(role)&&isDefense(p.pos))return false;
  const future=['resign','freeagency'].includes(lg.phase);
@@ -10,6 +11,8 @@ export function roleUtility(lg,t,p,role){
  return Math.max(-1,Math.min(1,(offered-expected)/(isGoalie(p.pos)?.3:8)));
 }
 export function commitmentWeek(lg){
+ // Contract years, holdouts and AI extensions ride the same daily pass (contractYear.js).
+ try{contractYearDay(lg);}catch(e){console.error('Contract-year update failed',e);}
  for(const p of Object.values(lg.players)){
   const a=p.rolePromise;if(!a||a.tid!==p.tid||a.year>lg.year)continue;
   const t=lg.teams[p.tid];if(!t)continue;

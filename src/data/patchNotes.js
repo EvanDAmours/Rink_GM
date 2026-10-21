@@ -229,4 +229,11 @@ export const PATCH_NOTES = [
     "Deadline Day on your phone: the clock pinned at the top, tabs for the feed, the block and buyers & sellers, and controls at the bottom.",
     "Offline play: the game saves itself to your device and installs as an app. Settings has an Offline Play panel.",
   ] },
+  { v: "1.42", date: "2026-10-21", title: "A Real Market", notes: [
+    "Free agency is a real market: AI clubs put offers on the players who'd make their lineup, and each player picks the best offer on his own day. Only a 20% overpay signs anyone on the spot.",
+    "Build your 23: during the draft, re-sign week and free agency, see your roster by position against a typical NHL 23, your cap room and the best free agent left at each spot.",
+    "A Contracts screen with cap hits, years, RFA or UFA, NTC/NMC, buyout costs and extensions. Extensions open on July 1 of a player's final season.",
+    "Contract years have drama: extend now or let him bet on himself. Asks follow the season he had, loyal players take 10% less, and snipers cost more than grinders.",
+    "Qualified RFAs can hold out for a market deal. AI clubs lock up their franchise stars, and players retire at ages that fit their position.",
+  ] },
 ];

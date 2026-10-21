@@ -24,6 +24,7 @@ import { savePct } from "../engine/players.js";
 import { prospectWatch } from "../engine/prospectWatch.js";
 import { myOffers } from "../engine/negotiations.js";
 import { needsAttention, runFix, topPlayer, kickoffText, primeTime, offseasonBoard, signedForNextSeason } from "../engine/home.js";
+import { BuildYour23, faStart } from "./ContractBits.jsx";
 import { Sparkline } from "./ProspectWatch.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import GamePlanPicker from "./GamePlanPicker.jsx";
@@ -260,6 +261,7 @@ export default function Dashboard({ act = {} }) {
                 </div>
               </div>
               <OffseasonBoard lg={lg} go={go} openPlayer={openPlayer} />
+              <BuildYour23 onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} />
               <PhaseCard lg={lg} t={t} go={go} slot={slot} series={series} />
             </>
           )}

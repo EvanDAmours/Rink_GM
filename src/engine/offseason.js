@@ -4,7 +4,7 @@ import {recruitmentOrder} from './teamPlanning.js';
 // rollover into a new season (aging, development, retirements, new schedule).
 import { clamp, chance, shuffle, randInt, gauss } from "./rng.js";
 import {archiveRetirement} from "./dynasty.js";
-import { contractAsk, developPlayer, retirementChance, blankStats, marketValue, generatePlayer, isRFA, round2 } from "./players.js";
+import { contractAsk, developPlayer, blankStats, marketValue, generatePlayer, isRFA, round2 } from "./players.js";
 import { capForYear, capFloorForYear, minSalaryForYear, maxSalaryForYear, DIFFICULTY, FA_DAYS, SCOUT_POINTS_START, isGoalie, isDefense, isForward, MAX_ROSTER } from "./constants.js";
 import { payroll, capSpace, counts, signPlayer, releasePlayer, callUp, sendDown, canSendDown, logTx, ensureMinimums, hasRoomFor } from "./roster.js";
 import { teamRatings, autoLines, syncLines } from "./lines.js";
@@ -24,6 +24,11 @@ import { applyTrainingYear } from "./franchise.js";
 import { queueMoment } from "./moments.js";
 import { signingMoment, legendMoment } from "./momentsSeason.js";
 import { applyAllStarGains } from "./awards.js";
+import { rolePay, perfFactor, loyalDiscount, veteranTerm, isFranchisePlayer, depthValue as youthEdge, stampPerformance } from "./contractValue.js";
+import { retireChance } from "./retirement.js";
+import { aiMarketDay, aiDepthDay, decidingToday } from "./faMarket.js";
+import { settleRFARights } from "./contractYear.js";
+import { termWindow } from "./contracts.js";
 
 const diff = (league) => DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal;
 
@@ -44,12 +49,18 @@ export function playerMood(league, p) {
   return clamp(m, 0, 1);
 }
 
-export function resignAsk(league, p, yrs) {
-  const year = league.year + 1;
-  const base = contractAsk(p, year, { mood: p.mood ?? 0.5, mult: diff(league).faAskMult });
-  const term = Math.min(7, yrs ?? base.yrs);
-  const aav = round2(clamp(base.aav * (1 + 0.025 * Math.abs(term - base.yrs)), minSalaryForYear(year), maxSalaryForYear(year)));
-  return { aav, yrs: term, prefYrs: base.yrs };
+// What one of your own players asks to stay (re-signing or an extension). Priced like the open
+// market (rating, age, role: contractValue.js), then his last season counts (a big year costs more,
+// a down year means a cheaper long deal or a prove-it year) and a loyal player takes 10% less.
+// Veterans 32 and older want one or two years. start: the first season of the deal (next season by
+// default; this season for an in-season holdout).
+export function resignAsk(league, p, yrs, { start } = {}) {
+  const year = start ?? league.year + 1;
+  const base = contractAsk(p, year, { mood: p.mood ?? 0.5, mult: diff(league).faAskMult * rolePay(p) });
+  const pref = veteranTerm(p, base.yrs);
+  const term = Math.min(7, yrs ?? pref);
+  const aav = round2(clamp(base.aav * (1 + 0.025 * Math.abs(term - pref)) * perfFactor(league, p, term, "resign") * loyalDiscount(league, p, "resign"), minSalaryForYear(year), maxSalaryForYear(year)));
+  return { aav, yrs: term, prefYrs: pref };
 }
 
 export function expiringPlayers(league, team) {
@@ -60,6 +71,8 @@ export function startResign(league) {
   ensureHockeyRules(league);
   if (league.expiryAppliedYear===league.year) return;
   league.expiryAppliedYear=league.year;
+  // The season just played prices the re-sign and extension asks (contractValue.js).
+  stampPerformance(league);
   closeCapYear(league);
   announceRetirements(league);
   for (const id in league.players) {
@@ -125,9 +138,10 @@ export function letWalk(league, pid) {
 export function endResign(league) {
   for (const t of league.teams) {
     const expiring = expiringPlayers(league, t);
-    // A young starting goalie is the club's first call, before anyone else uses up the room.
-    const franchise = new Set(t.id === league.userTid ? [] : expiring.filter((p) => isFranchiseGoalie(league, t, p)).map((p) => p.id));
-    if (franchise.size) expiring.sort((a, b) => franchise.has(b.id) - franchise.has(a.id));
+    // Franchise players (and a young starting goalie) are the club's first calls, before anyone
+    // else uses up the room; then the best players first.
+    const franchise = new Set(t.id === league.userTid ? [] : expiring.filter((p) => isFranchisePlayer(p) || isFranchiseGoalie(league, t, p)).map((p) => p.id));
+    if (t.id !== league.userTid) expiring.sort((a, b) => franchise.has(b.id) - franchise.has(a.id) || b.ovr - a.ovr);
     for (const p of expiring) {
       if (t.id === league.userTid) {
         if (p.qualified) {holdQualifiedRFA(league,p);continue;}
@@ -140,10 +154,13 @@ export function endResign(league) {
       if (payroll(league, t) < capFloorForYear(league.year + 1)) keep += 0.25;
       if (p.age >= 35) keep *= 0.5;
       const ask = resignAsk(league, p);
-      // He is kept whenever the club can fit him, without the usual cushion.
-      if (franchise.has(p.id) && ask.aav <= capSpace(league, t) && contractCount(league,t)<50) {
-        p.cap = ask.aav;
-        p.yrs = ask.yrs;
+      // A franchise player is never let go while the club can fit him: it clears cap room if it
+      // has to (burying or buying out depth contracts), and signs him long.
+      const deal = franchise.has(p.id) ? franchiseDeal(league, p) : null;
+      if (deal && deal.aav > capSpace(league, t)) clearCapFor(league, t, deal.aav, p);
+      if (deal && deal.aav <= capSpace(league, t) && contractCount(league,t)<50) {
+        p.cap = deal.aav;
+        p.yrs = deal.yrs;
       } else if (chance(keep) && ask.aav <= capSpace(league, t) - 1 && contractCount(league,t)<50) {
         p.cap = ask.aav;
         p.yrs = ask.yrs;
@@ -167,21 +184,47 @@ export function endResign(league) {
     league.players[p.id] = p;
     league.freeAgents.push(p.id);
   }
+  // July 1: the market opens, and AI clubs table their first offers (faMarket.js).
+  for (const id of league.freeAgents) { const p = league.players[id]; if (p) p.faSince = { year: league.year, day: 0 }; }
+  aiMarketDay(league, { perTeam: 2 });
+}
+
+// A franchise player's new deal: his ask, on a long term while he's young.
+function franchiseDeal(league, p) {
+  const win = termWindow(p, "resign");
+  const yrs = Math.min(win.hi, 7, Math.max(resignAsk(league, p).yrs, p.age <= 27 ? 6 : 3));
+  return resignAsk(league, p, yrs);
+}
+// Make cap room for a franchise player: send waiver-exempt depth contracts to the farm, then buy
+// out the worst-value depth deals. The top six and other franchise players are never touched.
+function clearCapFor(league, t, need, keep) {
+  const core = new Set(t.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).slice(0, 6).map((p) => p.id));
+  core.add(keep.id);
+  for (let i = 0; i < 5 && capSpace(league, t) < need; i++) {
+    const depth = t.roster.map((id) => league.players[id]).filter((p) => p && p.yrs > 0 && p.signed !== false && !core.has(p.id) && !isFranchisePlayer(p) && !p.ltir && !p.waiverPending && !p.offerSheetPending);
+    const bury = depth.filter((p) => canSendDown(p) && p.cap > 1).sort((a, b) => b.cap - a.cap)[0];
+    if (bury) { sendDown(league, t, bury.id); continue; }
+    const cut = depth.filter((p) => p.cap > 1.5 && !p.clause).sort((a, b) => b.cap - marketValue(b, league.year + 1) - (a.cap - marketValue(a, league.year + 1)))[0];
+    if (!cut) break;
+    releasePlayer(league, t, cut.id);
+  }
 }
 
 // What a free agent wants right now (asks fall as the summer drags on).
 export function faAsk(league, p, yrs) {
   const offseason = league.phase === "freeagency" || league.phase === "resign";
   const year = offseason ? league.year + 1 : league.year;
-  const base = contractAsk(p, year, { mood: p.mood ?? 0.5, mult: diff(league).faAskMult });
+  // Priced by rating, age and role (the market pays snipers more than grinders: contractValue.js).
+  const base = contractAsk(p, year, { mood: p.mood ?? 0.5, mult: diff(league).faAskMult * rolePay(p) });
   // Unsigned players come down a little as free agency drags on, but never to bargain
   // prices: stars hold out near their number.
   const day = offseason ? league.fa?.day || 0 : FA_DAYS + 10;
   const floor = p.ovr >= 88 ? 0.92 : p.ovr >= 82 ? 0.88 : 0.82;
   const decay = Math.max(floor, Math.pow(0.992, day));
-  const term = Math.min(6, yrs ?? base.yrs);
-  const aav = round2(clamp(base.aav * decay * (1 + 0.025 * Math.abs(term - base.yrs)), minSalaryForYear(year), maxSalaryForYear(year)));
-  return { aav, yrs: term, prefYrs: base.yrs };
+  const pref = veteranTerm(p, Math.min(6, base.yrs));
+  const term = Math.min(6, yrs ?? pref);
+  const aav = round2(clamp(base.aav * decay * (1 + 0.025 * Math.abs(term - pref)), minSalaryForYear(year), maxSalaryForYear(year)));
+  return { aav, yrs: term, prefYrs: pref };
 }
 
 function teamAppeal(league, team) {
@@ -209,71 +252,41 @@ export function offerContract(league, pid, aav, yrs) {
 
 const TARGET = { F: 13, D: 7, G: 2 };
 
-// One line on the day just played, as Gridiron's market reports it: how many signed and the
-// biggest name. Kept on league.fa.summary for the Free Agency screen and the Next Day toast.
-export function faDaySummary(league, before) {
+// The day just played, as Gridiron's market reports it: how many signed and the biggest name,
+// your wins and losses (what he took against your offer), and who decides at the end of the new
+// day. Kept on league.fa.summary for the Free Agency screen and the Next Day toast.
+export function faDaySummary(league, before, res = {}) {
   const signed = before.map((id) => league.players[id]).filter((p) => p && p.tid >= 0);
   const top = [...signed].sort((a, b) => b.ovr - a.ovr)[0];
   const day = league.fa?.day ?? 0;
   const abbr = top ? league.teams[top.tid]?.abbr : null;
-  const text = `Day ${day} of free agency: ${signed.length ? `${signed.length} signed${top ? `, led by ${top.name} (${abbr})` : ""}.` : "nobody signed."}`;
-  return { day, signed: signed.length, top: top ? { pid: top.id, name: top.name, pos: top.pos, ovr: top.ovr, tid: top.tid, abbr, cap: top.cap, yrs: top.yrs } : null, mine: signed.filter((p) => p.tid === league.userTid).map((p) => p.name), text };
+  const mine = signed.filter((p) => p.tid === league.userTid).map((p) => p.name);
+  const lost = (res.lost || []).map((x) => ({ ...x }));
+  const next = league.phase === "freeagency" && day < FA_DAYS ? decidingToday(league) : { count: 0, mine: 0 };
+  const bits = [`Day ${day} of free agency: ${signed.length ? `${signed.length} signed${top ? `, led by ${top.name} (${abbr})` : ""}.` : "nobody signed."}`];
+  if (mine.length) bits.push(`You signed ${mine.join(", ")}.`);
+  for (const x of lost.slice(0, 2)) bits.push(`${x.name} chose ${x.abbr} ($${x.aav.toFixed(2)}M × ${x.yrs}) over your $${x.mineAav.toFixed(2)}M × ${x.mineYrs}.`);
+  if (next.count) bits.push(`${next.count} player${next.count === 1 ? "" : "s"} decide${next.count === 1 ? "s" : ""} at the end of today${next.mine ? `, ${next.mine} with your offer` : ""}.`);
+  return { day, signed: signed.length, top: top ? { pid: top.id, name: top.name, pos: top.pos, ovr: top.ovr, tid: top.tid, abbr, cap: top.cap, yrs: top.yrs } : null, mine, lost, won: res.won || [], fell: res.fell || [], deciding: next.count, decidingMine: next.mine, text: bits.join(" ") };
 }
 
+// One free-agency day: the agents due to decide pick the best offer they'd take (faMarket.js),
+// offer sheets and waivers run, clubs short of bodies sign depth, and AI clubs table tomorrow's
+// offers. Returns true on the last day.
 export function simFADay(league) {
+  league.fa ||= { day: 0 };
+  // A market opened before this version (or a hand-built test league): AI clubs bid first.
+  if (league.phase === "freeagency" && league.fa.marketYear !== league.year) aiMarketDay(league, { perTeam: 2 });
   const before = [...league.freeAgents];
   league.fa.day++;
-  settleNegotiations(league); processOfferSheets(league);aiOfferSheets(league); processWaivers(league);
+  const last = league.fa.day >= FA_DAYS;
+  const res = settleNegotiations(league, { last }) || {};
+  processOfferSheets(league);aiOfferSheets(league); processWaivers(league);
   marketOffseasonDay(league);
-  const order = shuffle(league.teams.filter((t) => t.id !== league.userTid));
-  const pool = team => league.freeAgents.map((id) => league.players[id]).filter(p=>p && !p.negotiationPending).sort(recruitmentOrder(league,team));
-  for (const t of order) {
-    const c = counts(league, t);
-    const short = c.G < TARGET.G ? "G" : c.D < TARGET.D ? "D" : c.F < TARGET.F ? "F" : null;
-    const space = capSpace(league, t);
-    if (short) {
-      if (!chance(0.55)) continue;
-      const fits = (p) => (short === "G" ? isGoalie(p.pos) : short === "D" ? isDefense(p.pos) : isForward(p.pos));
-      const target = pool(t).find((p) => fits(p) && faAsk(league, p).aav <= space - 0.5);
-      if (target) {
-        const ask = faAsk(league, target);
-        signPlayer(league, t, target, ask.aav, ask.yrs);
-      }
-      continue;
-    }
-    // Teams with room under the cap chase upgrades over their weakest regular; the first
-    // few days are a frenzy for the best names. Clubs under the cap floor have to spend.
-    const floorGap = capFloorForYear(league.year + 1) - payroll(league, t);
-    const mustSpend = floorGap > 0;
-    // A club with lots of room (12%+ of the cap) keeps shopping all month, like real
-    // teams do; everyone else picks spots.
-    const flush = space > capForYear(league.year + 1) * 0.12;
-    if (space < 3 || !chance(mustSpend ? 0.9 : flush ? 0.5 : league.fa.day <= 3 ? 0.6 : 0.25)) continue;
-    const grp = (p) => (isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F");
-    for (let n = mustSpend || flush ? 2 : 1; n > 0; n--) {
-      const roster = t.roster.map((id) => league.players[id]).filter(Boolean);
-      const room = capSpace(league, t);
-      const upgrade = pool(t).find((p) => {
-        if (faAsk(league, p).aav > room - 1.5) return false;
-        const worst = roster.filter((x) => grp(x) === grp(p)).sort((a, b) => a.ovr - b.ovr)[0];
-        return worst && p.ovr >= worst.ovr + (mustSpend || flush ? 1 : 3) && (grp(p) !== "G" || p.ovr > roster.filter((x) => grp(x) === "G").sort((a, b) => b.ovr - a.ovr)[1]?.ovr + 2);
-      });
-      if (!upgrade) break;
-      const worst = roster.filter((x) => grp(x) === grp(upgrade)).sort((a, b) => a.ovr - b.ovr)[0];
-      if (!hasRoomFor(league, t)) {
-        if (canSendDown(worst)) sendDown(league, t, worst.id);
-        else releasePlayer(league, t, worst.id);
-      }
-      const ask = faAsk(league, upgrade);
-      // A club short of the floor pays over the ask to get there.
-      const gap = capFloorForYear(league.year + 1) - payroll(league, t);
-      const aav = gap > 0 ? round2(Math.min(capSpace(league, t) - 0.5, ask.aav + Math.min(gap, ask.aav * 0.3))) : ask.aav;
-      signPlayer(league, t, upgrade, Math.max(ask.aav, aav), ask.yrs);
-      if (!flush && payroll(league, t) >= capFloorForYear(league.year + 1)) break;
-    }
-  }
-  league.fa.summary = faDaySummary(league, before);
-  return league.fa.day >= FA_DAYS;
+  aiDepthDay(league);
+  if (!last) aiMarketDay(league, { perTeam: 1 });
+  league.fa.summary = faDaySummary(league, before, res);
+  return last;
 }
 
 // Mean OVR of the league's top 600 rostered players; used to keep the rating
@@ -360,16 +373,8 @@ export function startNewSeason(league) {
   for (const g of applyAllStarGains(league) || []) { const p = league.players[g.pid]; if (p && g.gain) p.lastChange = (p.lastChange || 0) + g.gain; }
   pruneFreeAgents(league);
 
-  for(const t of league.teams)for(const id of [...t.rfaRights]){
-    const p=league.players[id];if(!p)continue;
-    if(!isRFA(p)){letWalk(league,id);continue;}
-    // Nobody sits out a season in limbo: the qualifying offer is signed when the club has
-    // cap and contract room, otherwise the rights lapse and he hits the open market.
-    const aav=p.qualified?.aav || qualifyingAmount(p,league.year);
-    const ok=capSpace(league,t)>=aav && contractCount(league,t)<50 && signPlayer(league,t,p,aav,1);
-    if(ok){t.rfaRights=t.rfaRights.filter(x=>x!==id);delete p.qualified;if(t.id===league.userTid)league.inbox.push({year:league.year,day:0,text:`${p.name} signed his one-year qualifying offer ($${aav.toFixed(2)}M).`});}
-    else letWalk(league,id);
-  }
+  // Qualified RFAs sign their qualifying offer (or their rights lapse); yours may hold out.
+  settleRFARights(league);
 
   // Free-agent pool cleanup: unsigned depth players head to Europe or retire.
   const fas = league.freeAgents.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
@@ -463,7 +468,9 @@ export function announceRetirements(league) {
     // younger players in the system are still developing and never retire here.
     const inMinors = p.tid >= 0 && !!league.teams[p.tid]?.prospects.includes(p.id);
     if (inMinors && p.age + 1 < MINORS_RETIRE_AGE) continue;
-    if (chance(retirementChance({ ...p, age: p.age + 1 }))) retiring.push(p);
+    // Position-specific retirement ages (retirement.js): forwards around 35, defencemen 36,
+    // goalies 37, enforcers earlier; stars later, fringe veterans sooner.
+    if (chance(retireChance({ ...p, age: p.age + 1 }))) retiring.push(p);
   }
   for (const p of retiring) {
     if ((p.stats.gp || p.pstats.gp) && p.tid >= -1) {
@@ -506,14 +513,17 @@ function retire(league, p, quiet = false) {
 
 // AI: promote ready prospects, fill holes, stay under 23 and under the cap.
 // In-season calls skip cap shedding (emergency call-ups ride like LTIR).
+// Off-season decisions break near-ties toward young players with upside over end-of-career
+// veterans (depthValue, 2.79); in-season injury moves stay on rating alone.
 export function aiManageRoster(league, t, { inSeason = false } = {}) {
   const grp = (p) => (isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F");
+  const depthValue = inSeason ? (p) => p.ovr : youthEdge;
   const rosterOf = () => t.roster.map((id) => league.players[id]).filter(Boolean);
-  const ready = t.prospects.map((id) => league.players[id]).filter((p) => p && p.ovr >= 74 && p.age >= 19).sort((a, b) => b.ovr - a.ovr);
+  const ready = t.prospects.map((id) => league.players[id]).filter((p) => p && p.ovr >= 74 && p.age >= 19).sort((a, b) => depthValue(b) - depthValue(a));
   for (const p of ready) {
-    const same = rosterOf().filter((x) => grp(x) === grp(p)).sort((a, b) => a.ovr - b.ovr);
+    const same = rosterOf().filter((x) => grp(x) === grp(p)).sort((a, b) => depthValue(a) - depthValue(b));
     const worst = same[0];
-    if (hasRoomFor(league, t) || (worst && p.ovr > worst.ovr + 1)) {
+    if (hasRoomFor(league, t) || (worst && depthValue(p) > depthValue(worst) + 1)) {
       if (!hasRoomFor(league, t) && worst) {
         if (canSendDown(worst)) sendDown(league, t, worst.id);
         else releasePlayer(league, t, worst.id);
@@ -525,9 +535,9 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
   for (const need of ["G", "D", "F"]) {
     let guard = 0;
     while (rosterOf().filter((p) => grp(p) === need).length < TARGET[need] && guard++ < 4 && hasRoomFor(league, t)) {
-      const fa = league.freeAgents.map((id) => league.players[id]).filter((p) => p && grp(p) === need).sort((a, b) => b.ovr - a.ovr).find((p) => marketValue(p, league.year) <= capSpace(league, t) - 0.3);
+      const fa = league.freeAgents.map((id) => league.players[id]).filter((p) => p && grp(p) === need && !p.negotiationPending).sort((a, b) => depthValue(b) - depthValue(a)).find((p) => marketValue(p, league.year) <= capSpace(league, t) - 0.3);
       if (!fa) break;
-      signPlayer(league, t, fa, Math.max(minSalaryForYear(league.year), round2(marketValue(fa, league.year) * 0.9)), randInt(1, 3));
+      signPlayer(league, t, fa, Math.max(minSalaryForYear(league.year), round2(marketValue(fa, league.year) * 0.9)), veteranTerm(fa, randInt(1, 3)));
     }
   }
   // A full contract list must not prevent an AI club from dressing two
@@ -538,7 +548,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
     if (c.G >= 2 && c.D >= 6 && c.F >= 12) break;
     const core = new Set(rosterOf().sort((a,b) => b.ovr-a.ovr).slice(0,6).map(p => p.id));
     const surplus = rosterOf().filter(p => !core.has(p.id) && !p.clause && !p.ltir && !p.waiverPending && !p.offerSheetPending && !isFranchiseGoalie(league, t, p)
-      && (grp(p) === 'G' ? c.G > 2 : grp(p) === 'D' ? c.D > 6 : c.F > 12)).sort((a,b) => a.ovr-b.ovr)[0];
+      && (grp(p) === 'G' ? c.G > 2 : grp(p) === 'D' ? c.D > 6 : c.F > 12)).sort((a,b) => depthValue(a)-depthValue(b))[0];
     if (!surplus) break;
     releasePlayer(league, t, surplus.id);
   }
@@ -547,8 +557,8 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
   let guard = 0;
   while (counts(league, t).active > MAX_ROSTER && guard++ < 10) {
     const c = counts(league, t);
-    const extras = rosterOf().filter((p) => (grp(p) === "G" ? c.G > 2 : grp(p) === "D" ? c.D > 7 : c.F > 13)).sort((a, b) => a.ovr - b.ovr);
-    const cut = extras[0] || rosterOf().sort((a, b) => a.ovr - b.ovr)[0];
+    const extras = rosterOf().filter((p) => (grp(p) === "G" ? c.G > 2 : grp(p) === "D" ? c.D > 7 : c.F > 13)).sort((a, b) => depthValue(a) - depthValue(b));
+    const cut = extras[0] || rosterOf().sort((a, b) => depthValue(a) - depthValue(b))[0];
     if (canSendDown(cut)) sendDown(league, t, cut.id);
     else releasePlayer(league, t, cut.id);
   }
@@ -567,7 +577,7 @@ export function aiManageRoster(league, t, { inSeason = false } = {}) {
       continue;
     }
     const overpaid = rosterOf()
-      .filter((p) => !core.has(p.id) && p.cap > 1 && !isFranchiseGoalie(league, t, p))
+      .filter((p) => !core.has(p.id) && p.cap > 1 && !isFranchiseGoalie(league, t, p) && !isFranchisePlayer(p))
       .sort((a, b) => b.cap - marketValue(b, league.year) - (a.cap - marketValue(a, league.year)))[0];
     if (!overpaid) break;
     releasePlayer(league, t, overpaid.id);

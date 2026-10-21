@@ -18,6 +18,7 @@ import { SKATER_SKILLS, GOALIE_SKILLS, fmtHeight, COMBINE_TESTS } from "../engin
 import { POS_COLOR } from "./TradePage.jsx";
 import AbilityChip from "./AbilityChip.jsx";
 import { injuryReturn } from "../engine/injuryReport.js";
+import PlayerContract from "./PlayerContract.jsx";
 
 // The player card, laid out like the football game's: hero with the face, number and an
 // OVR ring; tags; three quick tiles; attribute bars on the left, the season, scouting
@@ -109,11 +110,7 @@ export default function PlayerCard({ p }) {
           <div className="gg-pc-col">
             {shownGroups.map((g) => <section key={g} className="gg-pc-panel"><div className="gg-pc-k">{g}</div><Bars attrs={groups[g]} p={p} hide={hidden} /></section>)}
             <button className="link gg-pc-more" onClick={() => setAllAttrs((v) => !v)}>{allAttrs ? "Fewer skills ▴" : `All ${Object.values(groups).reduce((n, g) => n + Object.keys(g).length, 0)} skills ▾`}</button>
-            <section className="gg-pc-panel"><div className="gg-pc-k contract">CONTRACT</div>
-              <div className="gg-pc-kv"><span>Deal</span><b>{p.signed === false ? "Unsigned draft pick" : p.yrs > 0 ? `${money(p.cap)} × ${p.yrs} yr${p.yrs > 1 ? "s" : ""}` : "None"}</b></div>
-              {p.yrs > 0 && <div className="gg-pc-kv"><span>Through</span><b>{league.year + p.yrs - 1}-{String(league.year + p.yrs).slice(2)}{p.tid >= 0 && p.yrs <= 1 && p.signed !== false ? ` · ${isRFA(p) ? "RFA" : "UFA"} next summer` : ""}</b></div>}
-              <div className="gg-pc-kv"><span>Market value</span><b>{hidden ? "Needs an NHL evaluation" : `${money(marketValue(p, league.year))} / yr`}</b></div>
-            </section>
+            <PlayerContract p={p} hidden={hidden} />
             <section className="gg-pc-panel"><div className="gg-pc-k draft">DRAFT PEDIGREE</div><div className="gg-pc-big">{p.draft ? `${p.draft.year} · Round ${p.draft.round}, #${p.draft.pick}${league.teams[p.draft.tid] ? ` by ${league.teams[p.draft.tid].abbr}` : ""}` : p.src === "gen" ? "Undrafted" : "Pre-franchise"}</div></section>
             {p.combine && <section className="gg-pc-panel"><div className="gg-pc-k combine">SCOUTING COMBINE{p.combine.grade ? ` · ${p.combine.grade}` : ""}</div><div className="gg-pc-combine">{COMBINE_TESTS.filter((t) => Number.isFinite(p.combine.tests?.[t.k])).map((t) => <div key={t.k}><small>{t.short.toUpperCase()}</small><b>{p.combine.tests[t.k].toFixed(t.dp)}{t.unit === "in" ? '"' : ""}</b><span>{t.unit !== "in" ? t.unit : ""}</span></div>)}</div></section>}
             <div className="dim small gg-pc-src">{p.ratingData ? `EA SPORTS NHL ${p.ratingData.edition}: ${p.ratingData.keys.length} published attributes; the rest are estimates.` : p.src === "ea27" ? "Official EA SPORTS NHL 27 overall; attributes are estimates." : "Generated player; attributes are gameplay estimates."}</div>
