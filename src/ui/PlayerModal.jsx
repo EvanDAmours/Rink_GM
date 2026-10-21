@@ -16,6 +16,7 @@ import { careerTotals, careerMilestones } from "../engine/records.js";
 import { prospectReport, isProspectWatch } from "../engine/prospectWatch.js";
 import { Sparkline } from "./ProspectWatch.jsx";
 import AbilityChip, { abilitiesOf } from "./AbilityChip.jsx";
+import { injuryReturn, injuryLine } from "../engine/injuryReport.js";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
@@ -81,7 +82,7 @@ export default function PlayerModal({ pid }) {
             <span className="k">Market value</span><span>{hidden ? 'Unavailable without an NHL evaluation' : `${money(marketValue(p, league.year))} / yr`}</span>
             <span className="k">Rating source</span>
             <span>{p.ratingData ? <><span className="src ea">EA</span> EA SPORTS {p.ratingData.edition} · {p.ratingData.keys.length} published attributes{league.year>(league.startYear || 2026)?" · franchise development applied":""}</> : p.src === "ea27" ? <><span className="src ea">EA</span> Official EA SPORTS NHL 27 overall</> : p.src === "est" ? <><span className="src est">EST</span> Estimated — update it in Settings → Ratings Import</> : "Generated player"}</span>
-            {p.injury > 0 && (<><span className="k">Injury</span><span className="bad">{p.injuryNote} — out {p.injury} game{p.injury > 1 ? "s" : ""}</span></>)}
+            {injuryReturn(league, p) && (<><span className="k">Injury</span><span className="bad">{p.injuryNote || "Injury"} — {injuryLine(league, p)}</span></>)}
             {p.draft && (<><span className="k">Drafted</span><span>{p.draft.year} · Round {p.draft.round}, #{p.draft.pick} by {league.teams[p.draft.tid]?.abbr}</span></>)}
           </div>
         </div>
