@@ -1,5 +1,6 @@
 import CupFinalSplash from "./CupFinalSplash.jsx";
-import Rink from "./LiveRink.jsx";
+import Rink, { RINK_ASPECT } from "./LiveRink.jsx";
+import { arenaLabel } from "../data/arenas.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useGame, TeamBadge } from "./common.jsx";
 import { takeTimeout, serializeGame, restoreGame, createGame, stepGame, simToEnd, applyResult, periodLabel, clockLabel,
@@ -282,13 +283,15 @@ export default function LiveGame({ spec, onDone }) {
   );
 
   const units = lastPlay ? unitsLine(lastPlay, s) : null;
+  // A neutral-site regular-season game names its building on the boards.
+  const venue = spec.kind === "regular" ? league.schedule.find((g) => g.id === spec.gid)?.venue || undefined : undefined;
   return (
-    <div className={`lv-game ${tvOn ? "tv" : "desk"}${done ? " done" : ""}`}>
+    <div className={`lv-game ${tvOn ? "tv" : "desk"}${done ? " done" : ""}`} style={{ "--rink-aspect": RINK_ASPECT }}>
       <div className="lv-top">
         <h2>Live Game</h2>
         <span className="pill">{title}</span>
       </div>
-      {isFinal && <div className="gg-final-banner"><span>🏆</span><div><b>STANLEY CUP FINAL · GAME {(spec.series?.games?.length || 0) + 1}</b><small>{league.year}-{String(league.year + 1).slice(2)} · the winner takes home the Stanley Cup</small></div><span>🏆</span></div>}
+      {isFinal && <div className="gg-final-banner"><span>🏆</span><div><b>STANLEY CUP FINAL · GAME {(spec.series?.games?.length || 0) + 1}</b><small>{arenaLabel(home)} · {league.year}-{String(league.year + 1).slice(2)} · the winner takes home the Stanley Cup</small></div><span>🏆</span></div>}
       <div className="lv-headrow">
         <div className="lv-bug" aria-label={`${away.abbr} ${s.score.a}, ${home.abbr} ${s.score.h}`}>
           {bugSide("a")}
@@ -336,7 +339,9 @@ export default function LiveGame({ spec, onDone }) {
               <span className="lv-mini-r">{done ? `FINAL${s.endedIn ? ` (${s.endedIn})` : ""}` : `${perText || "SO"} · ${bugTag}`}</span>
             </div>
             <div className="lv-rinkpos">
-              <Rink s={s} home={home} away={away} stepInfo={stepInfo} clockRef={clockRef} banner={null} final={isFinal} />
+              {/* The rink lights the goal lamp while a GOAL callout is up; the callout itself is drawn here, over the rink. */}
+              <Rink s={s} home={home} away={away} stepInfo={stepInfo} clockRef={clockRef} final={isFinal} variant={tvOn ? "tv" : undefined} arena={venue}
+                banner={callout?.kind === "goal" ? { kind: "goal", title: callout.title, n: callout.n } : null} />
               <RinkCallout c={callout} home={home} away={away} />
             </div>
           </div>
