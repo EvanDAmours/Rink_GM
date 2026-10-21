@@ -57,6 +57,7 @@ import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
 import FeedbackToast from "./ui/FeedbackToast.jsx";
 import Moment from "./ui/Moment.jsx";
+import { simControl } from "./ui/moments/scouting.jsx";
 import InjuryReportCard from "./ui/InjuryReportCard.jsx";
 import { closeMoment, momentStopsSim } from "./engine/moments.js";
 import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
@@ -399,6 +400,7 @@ export default function App({ resume = false }) {
     },
     showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
+      simControl.resume = null; // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       let i = 0;
       const snap = snapshotForSummary(league);
@@ -414,6 +416,7 @@ export default function App({ resume = false }) {
       );
     },
     simToDeadline: () => {
+      simControl.resume = () => act.simToDeadline(); // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       const snap = snapshotForSummary(league);
       runChunked(
@@ -427,6 +430,7 @@ export default function App({ resume = false }) {
       );
     },
     simToEnd: () => {
+      simControl.resume = () => act.simToEnd(); // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       const snap = snapshotForSummary(league);
       runChunked(
