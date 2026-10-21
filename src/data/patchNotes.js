@@ -266,4 +266,10 @@ export const PATCH_NOTES = [
     "Generational talents sort to the top of the scouting board, are valued properly in AI drafts and interviews, and keep their badge at any age.",
     "The player card has a new Role Fit section showing each skater's three best roles.",
   ] },
+  { v: "1.47", date: "2026-10-21", title: "A League That Holds Up", notes: [
+    "League scoring now stays around 3 goals a game for the whole franchise, instead of slowly drying up after year five.",
+    "As veterans retire and rookies arrive, the game measures the league's overall talent each season so ordinary skaters aren't overmatched by goalies.",
+    "Superstars no longer run away from a thinning league: goal leaders mostly land in the 50s and 60s instead of spiking toward 80.",
+    "A league at today's talent level plays exactly as before, and saved games simulate the same way after loading.",
+  ] },
 ];
