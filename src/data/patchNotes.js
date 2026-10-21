@@ -278,4 +278,10 @@ export const PATCH_NOTES = [
   { v: "1.49", date: "2026-10-21", title: "Deal on Top", notes: [
     "The Trade Center's deal summary (what you send, what you get, and the Execute button) now sits at the top and stays in view as you scroll, so you can always see what's in the trade.",
   ] },
+  { v: "1.50", date: "2026-10-21", title: "New Lines Screen", notes: [
+    "New Lines screen: one strength at a time (Even Strength, Power Play, Penalty Kill, Situations), with each line laid out as a row of player cards like in the hockey video games.",
+    "Moving players is easy: drag a card onto another to swap them, or tap one player and then another. Tap a spot to see who fits there best and what each would rate.",
+    "Each line shows its rating, role, chemistry and ice time in one small tag. Off-position players are flagged with a small \"!\".",
+    "Identity, line matching, ice time, roles, goalie rest and the game plan now sit in a Line settings drawer. The rink view is gone.",
+  ] },
 ];
