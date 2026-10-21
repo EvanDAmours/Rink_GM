@@ -67,12 +67,39 @@ export function restShare(league, team, userTeam = team.id === league.userTid) {
   return gap <= 1 ? .42 : gap <= 3 ? .33 : gap <= 6 ? .25 : .18;
 }
 
+// League talent anchor (Rink 1.x drift fix): over a long franchise the skater pool thins (aging
+// and retirements replaced by raw draftees) while starting goalies hold their level, so scoring
+// sank and the few grown stars ran away from the league. Each season the depth of the skater pool
+// (the top 384 finishers, about twelve forwards a club) and the 32 best goalies are measured
+// against the 2026 league, and the gap is applied to every skater's composites and finishing and to
+// every goalie's save skill. A league at its 2026 level plays unchanged. Fixed per season and kept
+// on the league (like the elite bar) so a loaded save plays the same.
+export const ANCHOR = Object.freeze({skaters: 85.4, goalies: 88.1, depth: 384, starters: 32, cap: 12, gain: 2.2, finish: .6, top: 95});
+// The lift is full for depth players and tapers to nothing at the league's top end (ANCHOR.top), so
+// the gap between stars and the rest returns to its 2026 width instead of widening as depth thins.
+export const anchorLift = (a, x) => a > 0 ? a * clamp((ANCHOR.top - x) / (ANCHOR.top - ANCHOR.skaters + 4), 0, 1) : a;
+export function talentAnchor(league) {
+  const hit = league?.talentAnchor;
+  if (hit && hit.year === league.year) return hit;
+  const fin = [], gk = [];
+  for (const t of league?.teams || []) for (const id of t.roster || []) {
+    const p = league.players[id]; if (!p?.attrs) continue;
+    if (isGoalie(p.pos)) gk.push(composites(p).goalie); else fin.push(shotSkills(p, 'wrist').finishing);
+  }
+  const top = (a, n, ref) => { a.sort((x, y) => y - x); const s = a.slice(0, n); return s.length >= n / 2 ? s.reduce((x, y) => x + y, 0) / s.length : ref; };
+  const out = {year: league?.year,
+    skater: clamp((ANCHOR.skaters - top(fin, ANCHOR.depth, ANCHOR.skaters)) * ANCHOR.gain, -ANCHOR.cap, ANCHOR.cap),
+    goalie: clamp(ANCHOR.goalies - top(gk, ANCHOR.starters, ANCHOR.goalies), -ANCHOR.cap, ANCHOR.cap)};
+  if (league?.teams) league.talentAnchor = out;
+  return out;
+}
+
 function makeSide(league, team, opts) {
   const userTeam = team.id === opts.userTid;
   syncLines(league, team);
   const lines = gameLines(league, team);
   const dressed = [...new Set([...lines.F.flat(), ...lines.D.flat(), ...lines.G].filter(Boolean))];
-  const pl = {}, comp = {}, fatigue = {}, form = {}, star = {}, bar = eliteBar(league);
+  const pl = {}, comp = {}, fatigue = {}, form = {}, star = {}, bar = eliteBar(league), anchor = talentAnchor(league);
   for (const id of dressed) {
     pl[id] = league.players[id]; comp[id] = composites(pl[id]); fatigue[id] = 0;
     // His star pull, from his own puck control (form doesn't compound it).
@@ -82,6 +109,7 @@ function makeSide(league, team, opts) {
     if (f) { form[id] = f; for (const k of FORM_KEYS) if (k in comp[id]) comp[id][k] += f; }
     const fit = schemeFit(pl[id], team);
     if (comp[id].off) { comp[id].off += fit; comp[id].def += fit; }
+    if (anchor.skater && !isGoalie(pl[id].pos)) for (const k of FORM_KEYS) if (k in comp[id]) comp[id][k] += anchorLift(anchor.skater, comp[id][k]);
   }
   let goalie = lines.G[0];
   const backup = lines.G[1];
@@ -92,7 +120,7 @@ function makeSide(league, team, opts) {
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
     chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
     pref: defaultStyle(league, team), tactic: defaultStyle(league, team),
-    lines, dressed, form, star, eliteAt: bar, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
+    lines, dressed, form, star, eliteAt: bar, anchor, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
     fShiftLength: 45, dShiftLength: 55, pulledReason: null, ...linesSetup(league, team, lines, comp, pl)};
@@ -561,7 +589,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     if (chance(.55)) changePossession(s, o, ice);
     return;
   }
-  const pMiss = clamp(.245 - (skill.accuracy * efficiency - 82) * .0035 + geometry.angle * .035, .10, .42);
+  const pMiss = clamp(.245 - ((skill.accuracy + anchorLift(att.anchor?.skater || 0, skill.accuracy) * ANCHOR.finish) * efficiency - 82) * .0035 + geometry.angle * .035, .10, .42);
   if (chance(pMiss)) {
     if (s.live && visual(s).chance(.5)) push(s, {t: 'miss', side: k, att: k, ...onIceTag(s, ice), text: `${lastName(att, shooter)} fires wide.`, x, y});
     if (chance(.56)) changePossession(s, o, ice);
@@ -576,11 +604,11 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   }
   addBox(s, shooter, 'sog'); s.shots[k]++;
   const goalie = def.pl[def.goalie], saveKey = pick(['glh', 'gll', 'sth', 'stl', 'fiv']);
-  const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0);
+  const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0) + (def.anchor?.goalie || 0);
   // Shot quality also follows the units on the ice: a star-driven unit against a
   // weak defending unit creates better looks than its shot location alone says.
   const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
-  const xg = expectedGoal({...geometry, finishing: finishCurve((skill.finishing + (att.form?.[shooter] || 0)) * efficiency), goalie: goalieSkill, quality,
+  const xg = expectedGoal({...geometry, finishing: finishCurve((skill.finishing + (att.form?.[shooter] || 0) + anchorLift(att.anchor?.skater || 0, skill.finishing) * ANCHOR.finish) * efficiency), goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;

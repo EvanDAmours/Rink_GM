@@ -130,7 +130,19 @@ Every simulation-audit and season-audit check passes (`simulation-audit-results.
 | Superstars (before) | 27 | 38 | 44 | 51 | 61 | 63 | 69 | 78 |
 | Superstars (after) | 16 | 20 | 23 | 23 | 25 | 26 | 27 | 26 |
 
-Changes: finishing above 83 counts at 15% per point (`FINISH` in sim.js), so elite snipers convert less of their volume; PP1 takes 80 of every 115 power-play seconds (`PP_SPLIT`, shared with the Lines screen); draft Superstar odds fall to about one per class (`rollDev`), and leading the league lifts a young player only as far as Star (Superstar still comes from a landslide). Open items: the leader still reaches 68-78 goals in some later seasons when a grown star (97-99) faces a thinner league, and league scoring drifts down after year five (pre-existing: the old run went 3.19 to 2.80).
+Changes: finishing above 83 counts at 15% per point (`FINISH` in sim.js), so elite snipers convert less of their volume; PP1 takes 80 of every 115 power-play seconds (`PP_SPLIT`, shared with the Lines screen); draft Superstar odds fall to about one per class (`rollDev`), and leading the league lifts a young player only as far as Star (Superstar still comes from a landslide).
+
+**League talent anchor (drift fix).** Diagnosis (seed 4242): the skater pool thins over a franchise while goalies and the top end hold. The mean wrist-shot finishing of the 384 best skaters fell 85.4 to 80.4 across eight seasons and the 600-deep pool 80.8 to 75.8, but the 32 best goalies stayed at 87-88.5 and the top-10 finishers stayed at 94-96. Scoring sank because every depth shooter was worse against the same goalies, and the leaders ran away because the star-to-depth gap widened (top-10 vs top-384 shooting composite 8.6 to 15.6 points), which gave lone stars 450-500 shots. `talentAnchor` in `sim.js` now measures both pools once per season against the 2026 league (stored on the league like the elite bar, so a loaded save plays the same). The skater depth gap (times `ANCHOR.gain`) lifts skater composites, and 60% of it goes to finishing and accuracy. The lift is full for depth players and tapers to nothing at the top end (`anchorLift`, `ANCHOR.top` 95), so the star gap returns to its 2026 width. The goalie gap is applied to save skill. A league at its 2026 level plays unchanged.
+
+| Season (anchor) | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Goals/team/game | 3.06 | 3.11 | 3.08 | 3.07 | 2.98 | 3.07 | 3.13 | 2.97 |
+| Save % (empty nets incl.) | .896 | .895 | .896 | .896 | .897 | .895 | .894 | .896 |
+| Art Ross | 117 | 119 | 122 | 116 | 122 | 122 | 134 | 100 |
+| Rocket Richard | 66 | 70 | 56 | 54 | 61 | 68 | 66 | 50 |
+| Superstars | 17 | 19 | 22 | 27 | 28 | 26 | 27 | 25 |
+
+Single-season audits after the change: goals/team/game 3.03 (holdout 3.00), goalie save % .900 (.902). Every simulation, positional and season check passes. The career save % column counts empty-net goals, so it reads about .004 under goalie save %. Leaders still vary season to season with seed noise (50-70 goals).
 
 ## Development depth (Gridiron 1.5, 1.34, 1.75, 2.76, 2.77, 2.80, 3.27)
 

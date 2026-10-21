@@ -1,267 +1,267 @@
 {
-  "date": "2026-10-21T12:20:16.782Z",
+  "date": "2026-10-21T14:54:40.774Z",
   "seed": 4242,
   "seasons": [
     {
       "year": 2026,
       "artRoss": {
-        "name": "Nathan MacKinnon",
-        "ovr": 97,
-        "g": 50,
-        "a": 68,
-        "pts": 118
+        "name": "Jack Eichel",
+        "ovr": 94,
+        "g": 43,
+        "a": 74,
+        "pts": 117
       },
-      "second": 109,
-      "tenth": 91,
+      "second": 116,
+      "tenth": 95,
       "rocket": {
-        "name": "Kirill Kaprizov",
-        "g": 57
+        "name": "Tage Thompson",
+        "g": 66
       },
-      "gpg": 3.03,
-      "svPct": 0.897,
-      "hundredPoint": 3,
-      "fortyGoal": 15,
+      "gpg": 3.06,
+      "svPct": 0.896,
+      "hundredPoint": 8,
+      "fortyGoal": 17,
       "after": {
-        "n90": 60,
-        "n95": 13,
+        "n90": 57,
+        "n95": 10,
         "n99": 1,
-        "generational": 8,
-        "superstar": 16,
-        "star": 156,
-        "level": 82.68
+        "generational": 7,
+        "superstar": 17,
+        "star": 157,
+        "level": 82.71
       },
-      "cornerstones": [],
-      "breakouts": 14
+      "cornerstones": [
+        "Tage Thompson"
+      ],
+      "breakouts": 13
     },
     {
       "year": 2027,
       "artRoss": {
-        "name": "Connor Bedard",
-        "ovr": 94,
-        "g": 57,
-        "a": 62,
+        "name": "Connor McDavid",
+        "ovr": 99,
+        "g": 64,
+        "a": 55,
         "pts": 119
       },
-      "second": 115,
-      "tenth": 103,
+      "second": 118,
+      "tenth": 95,
       "rocket": {
-        "name": "Aleksander Barkov",
-        "g": 57
+        "name": "Martin Necas",
+        "g": 70
       },
-      "gpg": 3.09,
+      "gpg": 3.11,
       "svPct": 0.895,
-      "hundredPoint": 12,
-      "fortyGoal": 27,
+      "hundredPoint": 6,
+      "fortyGoal": 19,
       "after": {
-        "n90": 54,
-        "n95": 12,
-        "n99": 0,
+        "n90": 59,
+        "n95": 8,
+        "n99": 1,
         "generational": 7,
-        "superstar": 20,
-        "star": 191,
-        "level": 82.75
+        "superstar": 19,
+        "star": 197,
+        "level": 82.64
       },
       "cornerstones": [],
-      "breakouts": 19
+      "breakouts": 8
     },
     {
       "year": 2028,
       "artRoss": {
-        "name": "Connor McDavid",
-        "ovr": 98,
-        "g": 47,
-        "a": 85,
-        "pts": 132
+        "name": "Connor Bedard",
+        "ovr": 95,
+        "g": 56,
+        "a": 66,
+        "pts": 122
       },
-      "second": 124,
-      "tenth": 98,
+      "second": 113,
+      "tenth": 96,
       "rocket": {
         "name": "Connor Bedard",
-        "g": 69
+        "g": 56
       },
-      "gpg": 2.95,
-      "svPct": 0.898,
-      "hundredPoint": 8,
-      "fortyGoal": 21,
+      "gpg": 3.08,
+      "svPct": 0.896,
+      "hundredPoint": 6,
+      "fortyGoal": 24,
       "after": {
-        "n90": 61,
-        "n95": 8,
-        "n99": 1,
+        "n90": 49,
+        "n95": 7,
+        "n99": 0,
         "generational": 7,
-        "superstar": 23,
-        "star": 217,
-        "level": 82.98
+        "superstar": 22,
+        "star": 214,
+        "level": 82.78
       },
       "cornerstones": [
-        "Quinn Hughes",
-        "Theo Hedlund"
+        "Jackson LaCombe",
+        "Joel Hofer"
       ],
       "breakouts": 17
     },
     {
       "year": 2029,
       "artRoss": {
-        "name": "Tim Stutzle",
-        "ovr": 93,
-        "g": 57,
-        "a": 67,
-        "pts": 124
+        "name": "Connor Bedard",
+        "ovr": 96,
+        "g": 51,
+        "a": 65,
+        "pts": 116
       },
-      "second": 118,
-      "tenth": 97,
+      "second": 109,
+      "tenth": 93,
       "rocket": {
-        "name": "Cole Caufield",
-        "g": 59
+        "name": "Matt Boldy",
+        "g": 54
       },
-      "gpg": 2.93,
-      "svPct": 0.897,
-      "hundredPoint": 8,
-      "fortyGoal": 22,
+      "gpg": 3.07,
+      "svPct": 0.896,
+      "hundredPoint": 5,
+      "fortyGoal": 19,
       "after": {
-        "n90": 43,
-        "n95": 8,
-        "n99": 1,
+        "n90": 52,
+        "n95": 12,
+        "n99": 0,
         "generational": 7,
-        "superstar": 23,
-        "star": 253,
-        "level": 83.08
+        "superstar": 27,
+        "star": 238,
+        "level": 83.18
       },
       "cornerstones": [
-        "Quinn Hughes"
+        "Logan Thompson"
       ],
-      "breakouts": 11
+      "breakouts": 17
     },
     {
       "year": 2030,
       "artRoss": {
-        "name": "Connor McDavid",
+        "name": "Macklin Celebrini",
         "ovr": 98,
-        "g": 68,
-        "a": 69,
-        "pts": 137
+        "g": 58,
+        "a": 64,
+        "pts": 122
       },
-      "second": 119,
-      "tenth": 97,
+      "second": 113,
+      "tenth": 91,
       "rocket": {
-        "name": "Connor McDavid",
-        "g": 68
+        "name": "Connor Bedard",
+        "g": 61
       },
-      "gpg": 2.87,
-      "svPct": 0.898,
-      "hundredPoint": 9,
+      "gpg": 2.98,
+      "svPct": 0.897,
+      "hundredPoint": 5,
       "fortyGoal": 18,
       "after": {
-        "n90": 57,
-        "n95": 11,
+        "n90": 49,
+        "n95": 13,
         "n99": 1,
         "generational": 7,
-        "superstar": 25,
-        "star": 274,
-        "level": 83.42
+        "superstar": 28,
+        "star": 265,
+        "level": 83.46
       },
       "cornerstones": [
-        "Connor McDavid"
+        "Jackson LaCombe"
       ],
-      "breakouts": 18
+      "breakouts": 15
     },
     {
       "year": 2031,
       "artRoss": {
-        "name": "Matt Boldy",
-        "ovr": 93,
+        "name": "Beckett Sennecke",
+        "ovr": 96,
         "g": 68,
-        "a": 53,
-        "pts": 121
+        "a": 54,
+        "pts": 122
       },
-      "second": 119,
-      "tenth": 93,
+      "second": 116,
+      "tenth": 85,
       "rocket": {
-        "name": "Matt Boldy",
+        "name": "Beckett Sennecke",
         "g": 68
       },
-      "gpg": 2.77,
-      "svPct": 0.901,
-      "hundredPoint": 6,
-      "fortyGoal": 14,
+      "gpg": 3.07,
+      "svPct": 0.895,
+      "hundredPoint": 3,
+      "fortyGoal": 8,
       "after": {
-        "n90": 44,
-        "n95": 4,
+        "n90": 62,
+        "n95": 9,
         "n99": 0,
-        "generational": 8,
+        "generational": 7,
         "superstar": 26,
-        "star": 269,
-        "level": 83.5
+        "star": 274,
+        "level": 83.83
       },
-      "cornerstones": [],
-      "breakouts": 17
+      "cornerstones": [
+        "Joel Hofer"
+      ],
+      "breakouts": 25
     },
     {
       "year": 2032,
       "artRoss": {
         "name": "Connor Bedard",
-        "ovr": 94,
-        "g": 78,
+        "ovr": 97,
+        "g": 66,
         "a": 68,
-        "pts": 146
+        "pts": 134
       },
-      "second": 127,
-      "tenth": 96,
+      "second": 114,
+      "tenth": 89,
       "rocket": {
         "name": "Connor Bedard",
-        "g": 78
+        "g": 66
       },
-      "gpg": 2.79,
-      "svPct": 0.901,
-      "hundredPoint": 7,
-      "fortyGoal": 18,
+      "gpg": 3.13,
+      "svPct": 0.894,
+      "hundredPoint": 3,
+      "fortyGoal": 17,
       "after": {
-        "n90": 54,
-        "n95": 7,
-        "n99": 1,
+        "n90": 32,
+        "n95": 6,
+        "n99": 0,
         "generational": 7,
         "superstar": 27,
-        "star": 289,
-        "level": 83.88
+        "star": 288,
+        "level": 83.62
       },
       "cornerstones": [
-        "Connor McDavid",
-        "Connor Bedard",
-        "Luke Hughes"
+        "Connor Bedard"
       ],
-      "breakouts": 17
+      "breakouts": 32
     },
     {
       "year": 2033,
       "artRoss": {
-        "name": "Matt Boldy",
-        "ovr": 93,
-        "g": 66,
-        "a": 52,
-        "pts": 118
+        "name": "Alexis Joseph",
+        "ovr": 89,
+        "g": 41,
+        "a": 59,
+        "pts": 100
       },
-      "second": 117,
-      "tenth": 94,
+      "second": 97,
+      "tenth": 86,
       "rocket": {
-        "name": "Matt Boldy",
-        "g": 66
+        "name": "Connor Bedard",
+        "g": 50
       },
-      "gpg": 2.66,
-      "svPct": 0.902,
-      "hundredPoint": 7,
-      "fortyGoal": 13,
+      "gpg": 2.97,
+      "svPct": 0.896,
+      "hundredPoint": 1,
+      "fortyGoal": 10,
       "after": {
-        "n90": 45,
+        "n90": 52,
         "n95": 7,
         "n99": 1,
         "generational": 7,
-        "superstar": 26,
-        "star": 297,
-        "level": 83.98
+        "superstar": 25,
+        "star": 292,
+        "level": 83.95
       },
-      "cornerstones": [
-        "Luke Hughes"
-      ],
-      "breakouts": 25
+      "cornerstones": [],
+      "breakouts": 22
     }
   ]
 }
