@@ -236,4 +236,12 @@ export const PATCH_NOTES = [
     "Contract years have drama: extend now or let him bet on himself. Asks follow the season he had, loyal players take 10% less, and snipers cost more than grinders.",
     "Qualified RFAs can hold out for a market deal. AI clubs lock up their franchise stars, and players retire at ages that fit their position.",
   ] },
+  { v: "1.43", date: "2026-10-21", title: "Scouting Season", notes: [
+    "Every draft class hides a few gems Central Scouting misses and a few red flags it loves. Reports, crews, area trips and Combine interviews can find them (💎 / 🚩, with the reason).",
+    "Put two or more scouts on one position to form a crew: sharper reads, early hunches and Star traits spotted before you spend a point.",
+    "Every four weeks the sim pauses at a scouting checkpoint: see who rose and fell, scout the prospects near your pick, then keep simming. Unspent points top out at 14.",
+    "A Your scouts big board with filters for sleepers, red flags, Star traits, regions and roles. A role turns green with NEED when your lineup lacks it.",
+    "At the Combine your scouts hand you a visit list around your picks, with three free private workouts.",
+    "Your picks' ceilings are your scouts' estimate (~) until their first two seasons reveal a steal or a miss.",
+  ] },
 ];
