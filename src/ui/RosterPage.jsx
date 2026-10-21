@@ -1,4 +1,5 @@
 import {buyoutSummary} from '../engine/capAccounting.js';
+import { useCallUp } from "./CallUpFlow.jsx";
 import Select from "./Select.jsx";
 import {automaticallyHandleRoster,automaticRosterPlan} from "../engine/autoRoster.js";
 import React, { useState } from "react";
@@ -29,6 +30,7 @@ const lineRank = (slots, p) => slots[p.id]?.rank ?? 100 + (p.injury > 0 || p.lti
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
+  const callUpFlow = useCallUp();
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
   const [view, setView] = useState(league.phase === "preseason" && !(user.camp?.year === league.year && user.camp.games.length >= 4) ? "camp" : "roster");
@@ -56,11 +58,7 @@ export default function RosterPage() {
     releasePlayer(league, user, p.id);
     commit();
   };
-  const doCallUp = (p) => {
-    if (!hasRoomFor(league, user)) return toast(`Roster is full (${MAX_ROSTER} active). Send someone down first.`);
-    if(!callUp(league,user,p.id))return toast("Recall blocked by cap, eligibility or contract limits.");
-    commit();
-  };
+  const doCallUp = (p) => callUpFlow.start(p);
 
   // Name, X-Factor tag and a trade-request badge, so the whole roster reads at a glance.
   const nameCell = (p) => (
@@ -118,6 +116,7 @@ export default function RosterPage() {
 
   return (
     <div className="stack gg-roster">
+      {callUpFlow.element}
       <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
         <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (

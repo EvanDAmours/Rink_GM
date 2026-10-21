@@ -159,12 +159,78 @@ export function sendDown(league, team, pid) {
   return true;
 }
 
+// ---------- Call-ups you can act on ----------
+// What a recall costs against the cap today: an entry-level deal for an unsigned pick, otherwise
+// the part of his cap hit that isn't already buried in the minors.
+export function callUpCost(league, p) {
+  return p.signed === false ? elcSalary(league.year) : Math.max(0, p.cap - buriedCap(p, capYear(league)));
+}
+
+// Why a call-up can't happen right now, in plain words; null when it can.
+// code: "notyours" | "room" | "cap" | "recall" | "contracts". `room` and `cap` can be solved by
+// sending someone down (see sendDownOptions).
+export function callUpBlock(league, team, pid) {
+  const p = league.players[pid];
+  if (!p || p.tid !== team.id || !team.prospects.includes(pid)) return { code: "notyours", msg: "He isn't in your system's minors." };
+  if (p.ahlRecallAfter > league.day && !(isGoalie(p.pos) && counts(league, team, { healthyOnly: true }).G < 2)) {
+    const back = p.ahlRecallAfter - league.day;
+    return { code: "recall", msg: `${p.name} was just sent down. He can be recalled in ${back} day${back === 1 ? "" : "s"}.` };
+  }
+  if (p.signed === false && contractCount(league, team) >= 50) return { code: "contracts", msg: `Calling up ${p.name} means signing him, and you're at the 50-contract limit. Release, trade or let a contract go first.` };
+  if (league.phase !== "preseason" && counts(league, team).active >= MAX_ROSTER) return { code: "room", msg: `Your NHL roster is full (${MAX_ROSTER} active). Pick someone to send down.` };
+  const cost = callUpCost(league, p), room = capSpace(league, team);
+  if (room < cost) return { code: "cap", short: round2(cost - room), msg: `He costs $${cost.toFixed(2)}M against the cap and you have $${Math.max(0, room).toFixed(2)}M. Send down a bigger contract to make room.` };
+  return null;
+}
+
+// Who could go down to make room for `upPid`: everyone on the active roster except LTIR, NMC and
+// players already on waivers. Waiver-exempt players go down at once; the rest go on waivers first.
+// `works`: sending him down would clear both the roster spot and the cap for the call-up.
+export function sendDownOptions(league, team, upPid) {
+  const up = league.players[upPid];
+  const cost = up ? callUpCost(league, up) : 0;
+  const year = capYear(league);
+  const room = capSpace(league, team);
+  const grp = (q) => (isGoalie(q.pos) ? "G" : isDefense(q.pos) ? "D" : "F");
+  return team.roster.map((id) => league.players[id]).filter((q) => q && !q.ltir && !onIR(q) && !q.waiverPending).map((q) => {
+    const nmc = q.clause?.type === "NMC";
+    const exempt = waiverStatus(q).exempt || !!q.waiverClear;
+    const freed = Math.max(0, q.cap - buriedCap(q, year));
+    return { p: q, nmc, exempt, waivers: !exempt && !nmc, freed: round2(freed), works: !nmc && room + freed >= cost, samePos: up ? grp(q) === grp(up) : false };
+  }).sort((a, b) => (a.nmc - b.nmc) || (b.works - a.works) || (b.exempt - a.exempt) || (b.samePos - a.samePos) || (a.p.ovr - b.p.ovr));
+}
+
+// Send `downPid` to the minors and call up `upPid` in one move. Only for a waiver-exempt (or
+// recently cleared) player going down; someone who needs waivers goes on waivers first.
+export function swapCallUp(league, team, upPid, downPid) {
+  const up = league.players[upPid], down = league.players[downPid];
+  if (!up || !down) return { ok: false, msg: "Choose two of your players." };
+  if (!canSendDown(down)) return { ok: false, msg: down.clause?.type === "NMC" ? `${down.name} has a no-movement clause.` : `${down.name} needs waivers before he can go down.` };
+  const block = callUpBlock(league, team, upPid);
+  if (block && block.code !== "room" && block.code !== "cap") return { ok: false, msg: block.msg };
+  const freed = Math.max(0, down.cap - buriedCap(down, capYear(league)));
+  if (capSpace(league, team) + freed < callUpCost(league, up)) return { ok: false, msg: `Sending ${down.name} down doesn't free enough cap for ${up.name}.` };
+  if (!sendDown(league, team, downPid)) return { ok: false, msg: `${down.name} can't be sent down right now.` };
+  if (!callUp(league, team, upPid)) {
+    // Undo the send-down so nothing is half done.
+    team.prospects = team.prospects.filter((x) => x !== downPid);
+    team.roster.push(downPid);
+    delete down.waivedDown; delete down.ahlRecallAfter; down.assignment = "nhl";
+    syncLines(league, team);
+    return { ok: false, msg: `${up.name} couldn't be called up.` };
+  }
+  logTx(league, `${team.abbr} recall ${up.name} and assign ${down.name} to the AHL`, [team.id]);
+  return { ok: true, msg: `${up.name} is up. ${down.name} goes down to the AHL.` };
+}
+
 // Call up from the minors; unsigned draft picks get an entry-level deal.
 export function callUp(league, team, pid, {emergency=false}={}) {
   const p = league.players[pid];
   if (!p || p.tid!==team.id || !team.prospects.includes(pid)) return false;
   const cost=p.signed===false?elcSalary(league.year):p.cap-buriedCap(p,capYear(league));
-  if(!emergency && (counts(league,team).active>=23 || capSpace(league,team)<cost))return false;
+  // Training camp carries more than 23; the roster is cut to 23 when the season starts.
+  const camp = league.phase === "preseason";
+  if(!emergency && ((!camp && counts(league,team).active>=23) || capSpace(league,team)<cost))return false;
   if (p.ahlRecallAfter>league.day && !(isGoalie(p.pos) && counts(league,team,{healthyOnly:true}).G<2)) return false;
   if (p.signed===false && contractCount(league,team)>=50) return false;
   if (!p.signed) {

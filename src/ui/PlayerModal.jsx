@@ -1,4 +1,5 @@
 import {buyoutSummary} from '../engine/capAccounting.js';
+import { useCallUp } from "./CallUpFlow.jsx";
 import ArchivedPlayerCard from './ArchivedPlayerCard.jsx';
 import React from "react";
 import Headshot from "./Headshot.jsx";
@@ -18,6 +19,7 @@ import AbilityChip, { abilitiesOf } from "./AbilityChip.jsx";
 
 export default function PlayerModal({ pid }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
+  const callUpFlow = useCallUp();
   const p = league.players[pid];
   if (!p) return <ArchivedPlayerCard pid={pid} onClose={closeModal}/>;
   const team = league.teams[p.tid];
@@ -176,7 +178,7 @@ export default function PlayerModal({ pid }) {
             </>
           )}
           {mine && inMinors && (
-            <button onClick={() => { if (!hasRoomFor(league, team)) return toast("Roster is full."); if(!callUp(league, team, p.id))return toast("Recall blocked by contract, cap or assignment rules."); commit(); closeModal(); }}>Call up</button>
+            <><button onClick={() => callUpFlow.start(p)}>Call up</button>{callUpFlow.element}</>
           )}
           {!mine && p.tid >= 0 && <button className="primary" onClick={() => proposeTradeFor(p.id)}>Trade for {p.name.split(" ").slice(-1)[0]}</button>}
           {p.tid === -1 && <button className="primary" onClick={() => { closeModal(); go("freeagency"); }}>Go to free agency</button>}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useCallUp } from "./CallUpFlow.jsx";
 import { useGame, PlayerName, Ovr } from "./common.jsx";
 import { DevChip } from "./scoutingBits.jsx";
 import { isGoalie, isDefense, posGroup } from "../engine/constants.js";
@@ -21,6 +22,7 @@ const eta = (p) => {
 
 export default function PipelinePage() {
   const { league: lg, commit, toast } = useGame();
+  const callUpFlow = useCallUp();
   const t = lg.teams[lg.userTid];
   const [level, setLevel] = useState("all");
   const young = useMemo(() => [...t.prospects, ...t.roster].map((id) => lg.players[id]).filter((p) => p && (t.prospects.includes(p.id) || p.age <= 24 || (p.draft && lg.year - p.draft.year <= 3))), [lg, t, lg.day]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -32,10 +34,11 @@ export default function PipelinePage() {
   const worstDressed = (grp) => [...dressed].map((id) => lg.players[id]).filter((p) => p && posGroup(p.pos) === grp).sort((a, b) => a.ovr - b.ovr)[0];
   const suggestions = rows.filter((r) => r.level === "ahl" && r.p.signed !== false && r.p.injury <= 0).map((r) => ({ ...r, beats: worstDressed(posGroup(r.p.pos)) })).filter((r) => r.beats && r.p.ovr >= r.beats.ovr + 1).slice(0, 4);
   const inSeason = ["preseason", "regular", "playoffs"].includes(lg.phase);
-  const doCallUp = (p) => { if (!hasRoomFor(lg, t)) { toast("Your NHL roster is full (23). Send someone down first."); return; } if (callUp(lg, t, p.id)) { commit(); toast(`${p.name} called up.`); } else toast(`${p.name} cannot be recalled yet.`); };
+  const doCallUp = (p) => callUpFlow.start(p);
   const doSendDown = (p) => { if (!canSendDown(p)) { toast(`${p.name} would need waivers to go down.`); return; } if (sendDown(lg, t, p.id)) { commit(); toast(`${p.name} assigned to the minors.`); } };
   return (
     <div className="stack gg-pipe">
+      {callUpFlow.element}
       <div className="gg-pipe-top">
         <div className="gg-chips">
           <button className={level === "all" ? "on" : ""} onClick={() => setLevel("all")}>All <small>{rows.length}</small></button>
