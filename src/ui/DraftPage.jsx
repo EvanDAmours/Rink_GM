@@ -1,25 +1,79 @@
 import React, { useEffect, useState } from "react";
 import Select from "./Select.jsx";
 import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
-import { makePick, currentSlot, draftDone, aiChoose, pickSlot } from "../engine/draft.js";
+import { currentSlot, draftDone, pickSlot } from "../engine/draft.js";
 import { teamNeeds } from "../engine/teamPlanning.js";
 import { POS_COLOR } from "./TradePage.jsx";
 import { DRAFT_ROUNDS, SCOUT_POINTS_START, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBINE, COMBINE_INVITES } from "../engine/constants.js";
 import {
   prospectRead, classPool, csRank, fmtHeight, gradeClass, COMBINE_TESTS, interviewProspect, atCombine, openDraftFloor,
   myList, onMyList, toggleMyList, moveOnMyList, pickTake, teamDraftGrade, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_TRAITS,
-  staffWindowOpen, hireScout, releaseScout, swapScoutRoles, scoutGroup, SCOUT_SLOTS,
+  staffWindowOpen, hireScout, releaseScout, swapScoutRoles, scoutGroup, SCOUT_SLOTS, scoutProspect,
 } from "../engine/scouting.js";
 import { Read, DevChip, CovTag, ScoutButton, statText } from "./scoutingBits.jsx";
 
 import RegionalScouting from "./RegionalScouting.jsx";
 import ScoutingHQ from "./ScoutingHQ.jsx";
 import ScoutBoard from "./ScoutBoard.jsx";
-import DraftTools, { DraftRecap } from "./DraftTools.jsx";
+import DraftRecap from "./DraftRecap.jsx";
+import {
+  usePhone, PosChip, ValueTag, DraftTicker, PickIsIn, ClockBar, OnTheClock, WarRoom, OffersFold, IncomingCall,
+  ForPickPanel, TradeUpPanel, ShopPanel, DraftQueue, DraftStatusLine,
+} from "./DraftTools.jsx";
+import { draftLive, draftClock, draftPlayer, onClockOffers, incomingCall } from "../engine/draftClock.js";
+import { stampDraftTruth } from "../engine/draftRecap.js";
 import { REGIONS, regionOf } from "../engine/regions.js";
+import "./draft.css";
 
 const POSITIONS = ["all", "C", "LW", "RW", "LD", "RD", "G"];
 const PAGE = 50;
+
+// A rating as you know it, in plain big type for the phone row: "?" (no idea), "B+" (a scout's
+// general idea), "~72" (a report's estimate) or "72" (exact).
+function Val({ txt, title }) {
+  const unk = txt === "??", gen = /^[A-D]/.test(txt), est = String(txt).startsWith("~");
+  return <b className={`dd-val${unk ? " unk" : gen ? ` gen ${gradeClass(txt)}` : est ? " est" : " exact"}`} title={title}>{unk ? "?" : txt}</b>;
+}
+
+// A pick can't be taken back, so on a phone the first tap arms the button and the second drafts.
+function ArmButton({ onGo, disabled }) {
+  const [arm, setArm] = useState(false);
+  useEffect(() => { if (!arm) return undefined; const t = setTimeout(() => setArm(false), 3000); return () => clearTimeout(t); }, [arm]);
+  return <button type="button" className={`dd-arm${arm ? " armed" : ""}`} disabled={disabled} onClick={(e) => { e.stopPropagation(); if (arm) { setArm(false); onGo(); } else setArm(true); }}>{arm ? "Confirm" : "Draft"}</button>;
+}
+
+// The phone row's one button when you're not drafting: a scouting report, then the workup.
+function PhoneScout({ p, read }) {
+  const { league, commit, toast } = useGame();
+  const pts = league.teams[league.userTid].scoutPts || 0;
+  const cost = read.cost;
+  const tip = !cost ? "Fully scouted" : read.lvl === 0 ? `File a scouting report (${cost} point)` : `Full workup (${cost} points)`;
+  return <button type="button" className={`dd-scout${cost ? "" : " done"}`} disabled={!cost || pts < cost} title={tip} onClick={(e) => { e.stopPropagation(); const r = scoutProspect(league, p.id); toast(r.msg); commit(); }}>{!cost ? "✓" : `${read.lvl === 0 ? "Scout" : "Workup"} ${cost}`}</button>;
+}
+
+// Phones: one compact row per prospect. The single button is Draft while you're on the clock,
+// otherwise Scout / Workup; tap the row for his full profile.
+function PhoneRow({ p, onDraft, canDraft }) {
+  const { league, commit, openPlayer } = useGame();
+  const read = prospectRead(league, p);
+  const listed = onMyList(league, p.id);
+  const drafted = p.tid !== -2;
+  const drafting = !!onDraft && canDraft && !drafted;
+  const slot = drafted && league.draft ? league.draft.slots.find((s) => s.pid === p.id) : null;
+  return (
+    <div className={`dd-prow${drafting ? " live" : ""}${drafted ? " gone" : ""}`} onClick={() => openPlayer(p.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && openPlayer(p.id)} aria-label={`${p.name}, ${p.pos}, Central Scouting ${csRank(p)}`}>
+      <span className="dd-prow-rk">{csRank(p)}</span>
+      <button type="button" className={`dd-star${listed ? " on" : ""}`} aria-label={listed ? "Remove from your list" : "Add to your list"} onClick={(e) => { e.stopPropagation(); toggleMyList(league, p.id); commit(); }}>{listed ? "★" : "☆"}</button>
+      <PosChip pos={p.pos} />
+      <span className="dd-prow-name">{p.name}</span>
+      <span className="dd-prow-v"><Val txt={read.ovr} /><small>OVR</small></span>
+      <span className="dd-prow-v"><Val txt={read.pot} title={read.tier ? `Projects as ${read.tier}` : undefined} /><small>POT</small></span>
+      <span className="dd-prow-act" onClick={(e) => e.stopPropagation()}>
+        {drafted ? <small className="muted">{slot ? `#${slot.overall} ${league.teams[slot.owner].abbr}` : "Drafted"}</small> : drafting ? <ArmButton onGo={() => onDraft(p)} /> : <PhoneScout p={p} read={read} />}
+      </span>
+    </div>
+  );
+}
 
 // ---------- Big Board rows ----------
 
@@ -71,11 +125,13 @@ function ProspectRow({ p, onDraft, canDraft }) {
 
 function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }) {
   const { league } = useGame();
+  const phone = usePhone();
   const [pos, setPos] = useState("all");
   const [q, setQ] = useState("");
   const [show, setShow] = useState("all");
   const [region, setRegion] = useState("all");
   const [hideTaken, setHideTaken] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [n, setN] = useState(PAGE);
   const user = league.teams[league.userTid];
   const s = user.scouts || {};
@@ -89,6 +145,26 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
     .filter((p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || (p.bio?.team || "").toLowerCase().includes(q.toLowerCase()))
     .filter((p) => show === "all" || (show === "scouted" ? p.scout?.lvl > 0 : show === "unscouted" ? !p.scout?.lvl : show === "list" ? onMyList(league, p.id) : myGroups.includes(scoutGroup(p.pos))))
     .sort((a, b) => csRank(a) - csRank(b));
+  const leagueSel = <Select aria-label="Scouting league" value={region} onChange={(e) => {setRegion(e.target.value); setN(PAGE);}}><option value="all">All leagues</option><option value="CHL">CHL · all three leagues</option>{Object.entries(REGIONS).map(([k,r]) => <option key={k} value={k}>{r.name}</option>)}</Select>;
+  const showSel = <Select value={show} onChange={(e) => { setShow(e.target.value); setN(PAGE); }} aria-label="Show"><option value="all">Everyone</option><option value="covered">Positions my scouts cover</option><option value="scouted">Scouted</option><option value="unscouted">Not scouted yet</option><option value="list">On my list</option></Select>;
+  // Phones: the filters share one row and search sits behind 🔍; one compact row per prospect.
+  if (phone) return (
+    <div className="panel dd-board phone">
+      <h3>{title}<span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>CS {all.some((p) => p.cs?.final) ? "final" : "midterm"}</span></h3>
+      <div className={`dd-filters${searching ? " wrap" : ""}`}>
+        <Select aria-label="Position" value={pos} onChange={(e) => { setPos(e.target.value); setN(PAGE); }}>{POSITIONS.map((x) => <option key={x} value={x}>{x === "all" ? "All pos." : x}</option>)}</Select>
+        {leagueSel}
+        {showSel}
+        {!searching && <button type="button" className="dd-mag" aria-label="Search prospects" onClick={() => setSearching(true)}>🔍</button>}
+        {searching && <input className="search" autoFocus placeholder="Search name or team" value={q} onChange={(e) => { setQ(e.target.value); setN(PAGE); }} aria-label="Search prospects" />}
+      </div>
+      <div className="dd-plist">
+        {list.slice(0, n).map((p) => <PhoneRow key={p.id} p={p} onDraft={onDraft} canDraft={canDraft} />)}
+        {!list.length && <div className="dim small">No prospects match.</div>}
+      </div>
+      {list.length > n && <div style={{ marginTop: 10 }}><button className="small" onClick={() => setN(n + PAGE)}>Show more ({list.length - n} left)</button></div>}
+    </div>
+  );
   return (
     <div className="panel">
       <h3>
@@ -102,14 +178,8 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
       </div>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
         <input className="search" placeholder="Search name or team" value={q} onChange={(e) => { setQ(e.target.value); setN(PAGE); }} aria-label="Search prospects" />
-        <Select aria-label="Scouting league" value={region} onChange={(e) => {setRegion(e.target.value); setN(PAGE);}}><option value="all">All leagues</option><option value="CHL">CHL · all three leagues</option>{Object.entries(REGIONS).map(([k,r]) => <option key={k} value={k}>{r.name}</option>)}</Select>
-        <Select value={show} onChange={(e) => { setShow(e.target.value); setN(PAGE); }} aria-label="Show">
-          <option value="all">Everyone</option>
-          <option value="covered">Positions my scouts cover</option>
-          <option value="scouted">Scouted</option>
-          <option value="unscouted">Not scouted yet</option>
-          <option value="list">On my list</option>
-        </Select>
+        {leagueSel}
+        {showSel}
         {!availableOnly && league.phase === "draft" && (
           <label className="small muted row" style={{ gap: 4 }}>
             <input type="checkbox" checked={hideTaken} onChange={(e) => setHideTaken(e.target.checked)} /> Hide drafted
@@ -140,6 +210,7 @@ function Legend() {
 
 function MyListPanel({ onDraft, canDraft, compact = false }) {
   const { league, commit } = useGame();
+  const phone = usePhone();
   const ids = myList(league).ids.filter((id) => league.players[id]);
   const ps = ids.map((id) => league.players[id]);
   const shown = compact ? ps.filter((p) => p.tid === -2).slice(0, 6) : ps;
@@ -170,7 +241,7 @@ function MyListPanel({ onDraft, canDraft, compact = false }) {
                   <>
                     {!compact && <button className="tiny ghost" aria-label="Move up" disabled={i === 0} onClick={() => { moveOnMyList(league, p.id, -1); commit(); }}>▲</button>}
                     {!compact && <button className="tiny ghost" aria-label="Move down" disabled={i === ids.length - 1} onClick={() => { moveOnMyList(league, p.id, 1); commit(); }}>▼</button>}
-                    {onDraft && <button className="tiny primary" disabled={!canDraft} onClick={() => onDraft(p)}>Draft</button>}
+                    {onDraft && (phone && canDraft ? <ArmButton onGo={() => onDraft(p)} /> : <button className="tiny primary" disabled={!canDraft} onClick={() => onDraft(p)}>Draft</button>)}
                   </>
                 )}
                 {!compact && <button className="tiny ghost" aria-label="Remove from list" onClick={() => { toggleMyList(league, p.id); commit(); }}>✕</button>}
@@ -499,23 +570,25 @@ function RecentPicks({ n = 8 }) {
 
 // ---------- Draft floor ----------
 
-function DraftFloor({ act, onDraft, canDraft }) {
-  const { league, commit } = useGame();
+// The floor while the draft runs (Gridiron's Draft Day): the ticker, the On the Clock stage with
+// the phone, your points and picks on one slim line, the board, and Up next, recent picks, your
+// list, your needs and the full order beside it. Once the last pick is in: the class grades.
+function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, onRecap }) {
+  const { league } = useGame();
   const user = league.teams[league.userTid];
   const d = league.draft;
   const done = draftDone(league);
-  const slot = !done ? currentSlot(league) : null;
-  const onClock = slot && slot.owner === user.id;
+  const live = draftLive(league);
+  const slot = live ? currentSlot(league) : null;
+  const onClock = !!slot && slot.owner === user.id;
   const [roundSel, setRound] = useState(null);
+  const [fold, setFold] = useState(false);
   const round = roundSel ?? (slot ? slot.round : DRAFT_ROUNDS);
-  const upcoming = !done ? d.slots.slice(d.idx + 1, d.idx + 9) : [];
-  const listTop = myList(league).ids.map((id) => league.players[id]).find((p) => p && p.tid === -2);
-  const bpa = classPool(league).sort((a, b) => csRank(a) - csRank(b))[0];
-  const nextPick = () => {
-    if (!slot || onClock) return;
-    makePick(league, aiChoose(league, slot.owner));
-    commit();
-  };
+  const offers = onClock ? onClockOffers(league) : [];
+  const call = onClock && !panel && !league.moments?.length ? incomingCall(league) : null;
+  const forPick = (o) => setPanel(panel?.kind === "for" && panel.overall === o ? null : { kind: "for", overall: o });
+  const tradeUp = () => setPanel(panel?.kind === "up" ? null : { kind: "up" });
+  const shop = (o) => setPanel(panel?.kind === "shop" && panel.overall === o ? null : { kind: "shop", overall: o });
   const slotLine = (s) => {
     const p = s.pid ? league.players[s.pid] : null;
     const now = slot && s.overall === slot.overall;
@@ -527,6 +600,7 @@ function DraftFloor({ act, onDraft, canDraft }) {
           {p ? <><PlayerName p={p} /> <span className="dim small">{p.pos}</span></> : now ? <b>On the clock</b> : <span className="dim">{league.teams[s.owner].abbr} · round {s.round}, pick {((s.overall - 1) % 32) + 1}</span>}
           {s.orig !== s.owner && <span className="dim small"> (from {league.teams[s.orig].abbr})</span>}
         </span>
+        {s.pid && <ValueTag overall={s.overall} csr={s.csr} small />}
         {s.grade && <span className={`grade sm ${gradeClass(s.grade)}`} title={pickTake(s.grade, s.overall, s.csr)}>{s.grade}</span>}
       </div>
     );
@@ -534,71 +608,50 @@ function DraftFloor({ act, onDraft, canDraft }) {
   const grades = done ? league.teams.map((t) => ({ t, g: teamDraftGrade(league, t.id) })).filter((x) => x.g) : [];
   const order = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D"];
   grades.sort((a, b) => order.indexOf(a.g) - order.indexOf(b.g));
+  const mineBox = onClock && (
+    <div className="dd-otc-war">
+      <WarRoom />
+      <OffersFold offers={offers} open={fold} onToggle={() => setFold((v) => !v)} />
+    </div>
+  );
 
   return (
-    <div className="stack">
-      {!done && (
-        <div className={`otc${onClock ? " you" : ""}`} style={{ "--c1": league.teams[slot.owner].colors[0] }}>
-          <TeamBadge team={league.teams[slot.owner]} size={52} />
-          <div style={{ minWidth: 0 }}>
-            <div className="otc-k">{onClock ? "You're on the clock" : "On the clock"}</div>
-            <div className="otc-t">{league.teams[slot.owner].city} {league.teams[slot.owner].name}</div>
-            <div className="small muted">
-              Pick {slot.overall} overall · round {slot.round}, pick {((slot.overall - 1) % 32) + 1}
-              {slot.orig !== slot.owner ? ` · from ${league.teams[slot.orig].abbr}` : ""}
-            </div>
-          </div>
-          <div style={{ flex: 1 }} />
-          {onClock ? (
-            <div className="row">
-              {listTop && <button className="primary" onClick={() => onDraft(listTop)}>Draft {listTop.name} <span className="tiny">(your list)</span></button>}
-              {bpa && (!listTop || bpa.id !== listTop.id) && <button className={listTop ? "" : "primary"} onClick={() => onDraft(bpa)}>Draft {bpa.name} <span className="tiny">(CS #{csRank(bpa)})</span></button>}
-            </div>
-          ) : (
-            <div className="row">
-              <button onClick={nextPick}>Next pick</button>
-              <button className="primary" onClick={act.simToMyPick}>Sim to my pick</button>
-            </div>
-          )}
-        </div>
+    <div className="stack dd-floor">
+      {live && <DraftTicker />}
+      {live && !phone && (
+        <OnTheClock onForPick={forPick} onTradeUp={tradeUp} onShop={shop} forOpen={panel?.kind === "for" && panel.overall === slot.overall} upOpen={panel?.kind === "up"}>
+          {mineBox}
+        </OnTheClock>
       )}
+      {live && phone && mineBox && <div className="panel dd-mine-phone">{mineBox}</div>}
+      {!phone && panelEl}
+      {call && <IncomingCall o={call} phone={phone} />}
+      {live && (phone ? <DraftStatusLine /> : (
+        <div className="dd-slim">
+          <span className={`dd-pts${user.scoutPts ? " on" : ""}`} title="Scouting points left: reports can still be filed on the floor">🔎 {user.scoutPts || 0} pts</span>
+          <PickTracker years={[d.year]} />
+        </div>
+      ))}
       {done && (
-        <div className="otc you">
+        <div className="otc you dd-done">
           <div>
             <div className="otc-k">Draft complete</div>
             <div className="otc-t">Your new prospects are in the minors.</div>
-            {teamDraftGrade(league, user.id) && <div className="small muted">Analysts give your class a <b>{teamDraftGrade(league, user.id)}</b>.</div>}
+            {teamDraftGrade(league, user.id) && <div className="small muted">Analysts give your class a <b>{teamDraftGrade(league, user.id)}</b>. The recap has every pick's real ratings.</div>}
           </div>
           <div style={{ flex: 1 }} />
-          <button className="primary" onClick={act.toResign}>Continue to re-signing →</button>
-        </div>
-      )}
-      <PickTracker years={[d.year]} />
-      {!done && <DraftTools onDraft={onDraft} canDraft={onClock} />}
-      {upcoming.length > 0 && (
-        <div className="row small" style={{ gap: 6 }}>
-          <span className="muted">Up next:</span>
-          {upcoming.map((s) => <span key={s.overall} className={`pill${s.owner === user.id ? " on" : ""}`}>#{s.overall} {league.teams[s.owner].abbr}</span>)}
-        </div>
-      )}
-      {d.lottery?.draws?.length > 0 && d.idx < 32 && (
-        <div className="panel">
-          <h3>Draft lottery</h3>
-          <div className="row" style={{ gap: 14 }}>
-            {d.lottery.draws.map((x, i) => (
-              <span key={i} className="row" style={{ gap: 6 }}>
-                <b>#{i + 1}</b> <TeamBadge team={league.teams[x.id]} size={20} /> <TeamName tid={x.id} />
-                <span className="muted small">{x.from > x.to ? `jumped from ${x.from}` : x.to === 1 ? "held the top spot" : "kept its spot"}</span>
-              </span>
-            ))}
+          <div className="row">
+            <button onClick={onRecap}>📋 Draft recap</button>
+            <button className="primary" onClick={act.toResign}>Continue to re-signing →</button>
           </div>
         </div>
       )}
+      {done && <PickTracker years={[d.year]} />}
       <div className="dgrid">
-        {!done ? <Board onDraft={onDraft} canDraft={onClock} availableOnly title="Best available" /> : (
+        {!done ? <Board onDraft={onDraft} canDraft={canDraft} availableOnly title="Best available" /> : (
           <div className="panel">
             <h3>Draft grades</h3>
-            <div className="muted small" style={{ marginBottom: 8 }}>Instant grades compare where each player went with where Central Scouting had him. Analysts don't know what your scouts know.</div>
+            <div className="muted small" style={{ marginBottom: 8 }}>Instant grades compare where each player went with where Central Scouting had him. Analysts don't know what your scouts know. The <button className="link" onClick={onRecap}>draft recap</button> shows how each class really graded out.</div>
             <div className="ggrid">
               {grades.map(({ t, g }) => (
                 <div key={t.id} className={`gcell${t.id === user.id ? " mine" : ""}`}><TeamBadge team={t} size={22} /> <b>{t.abbr}</b> <span className={`grade ${gradeClass(g)}`}>{g}</span></div>
@@ -607,14 +660,28 @@ function DraftFloor({ act, onDraft, canDraft }) {
           </div>
         )}
         <div className="stack">
+          {live && <DraftQueue onForPick={forPick} onShop={shop} />}
           <RecentPicks />
-          {!done && <MyListPanel onDraft={onDraft} canDraft={onClock} compact />}
+          {!done && <MyListPanel onDraft={onDraft} canDraft={canDraft} compact />}
           <NeedsPanel />
+          {d.lottery?.draws?.length > 0 && d.idx < 32 && (
+            <div className="panel">
+              <h3>Draft lottery</h3>
+              <div className="stack" style={{ gap: 6 }}>
+                {d.lottery.draws.map((x, i) => (
+                  <span key={i} className="row small" style={{ gap: 6 }}>
+                    <b>#{i + 1}</b> <TeamBadge team={league.teams[x.id]} size={20} /> <TeamName tid={x.id} />
+                    <span className="muted small">{x.from > x.to ? `jumped from ${x.from}` : x.to === 1 ? "held the top spot" : "kept its spot"}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="panel">
             <h3>Draft order</h3>
             <div className="row" style={{ gap: 4, marginBottom: 8 }}>
               {Array.from({ length: DRAFT_ROUNDS }, (_, i) => i + 1).map((r) => (
-                <button key={r} className={`small${round === r ? " primary" : ""}`} onClick={() => setRound(r)}>Round {r}</button>
+                <button key={r} className={`small${round === r ? " primary" : ""}`} onClick={() => setRound(r)}>{phone ? `R${r}` : `Round ${r}`}</button>
               ))}
             </div>
             <div className="dorder">{d.slots.filter((s) => s.round === round).map(slotLine)}</div>
@@ -627,8 +694,13 @@ function DraftFloor({ act, onDraft, canDraft }) {
 
 // ---------- Page ----------
 
+// A save picked up mid-draft opens paused (press Resume), as in Gridiron; navigating away and back
+// in the same visit keeps the clock as you left it.
+const SESSION = Math.random().toString(36).slice(2, 10);
+
 export default function DraftPage({ act }) {
-  const { league, commit, toast, openPick } = useGame();
+  const { league, commit, toast } = useGame();
+  const phone = usePhone();
   const user = league.teams[league.userTid];
   const inDraft = league.phase === "draft" && !!league.draft;
   const combine = atCombine(league);
@@ -652,40 +724,79 @@ export default function DraftPage({ act }) {
   const view = views.some(([k]) => k === viewSel) ? viewSel : defaultView;
   const year = inDraft ? league.draft.year : league.draftClassYear;
   const done = inDraft && draftDone(league);
-  const slot = inDraft && !combine && !done ? currentSlot(league) : null;
+  const live = draftLive(league);
+  const slot = live ? currentSlot(league) : null;
   const onClock = !!slot && slot.owner === user.id;
   // The tracker: this draft while it runs (or at the combine), otherwise every year you hold picks in.
   const trackerYears = inDraft ? [league.draft.year] : [...new Set(league.draftPicks.filter((p) => p.owner === user.id).map((p) => p.year))].sort((a, b) => a - b);
+  // The phone: one trade panel at a time ({ kind: "for" | "up" | "shop", overall }); the clock holds while it's open.
+  const [panel, setPanel] = useState(null);
+  // "The pick is in": the overall pick being announced.
+  const [announce, setAnnounce] = useState(null);
+
+  useEffect(() => {
+    if (!live) return;
+    const c = draftClock(league);
+    if (c.session && c.session !== SESSION && !c.paused) {
+      c.paused = true;
+      toast("Picking the draft up where you left it. It's paused: press Resume.", 5000);
+    }
+    c.session = SESSION;
+  }, [live]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Draft-day truth for the recap, also for picks simmed from the top bar (and, until the next
+  // season starts, for a class archived before anyone looked).
+  useEffect(() => { if (stampDraftTruth(league)) commit(3000); });
+  // The recap opens on its own once the last pick is in.
+  useEffect(() => {
+    if (done && !league.draft.recapShown) {
+      league.draft.recapShown = true;
+      setView("recap");
+      commit();
+    }
+  }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!live) setPanel(null); }, [live]);
 
   const draft = (p) => {
-    if (!onClock) return;
-    const sl = currentSlot(league);
-    if (!makePick(league, p.id)) return;
+    if (!onClock || !draftPlayer(league, p.id)) return;
+    setPanel(null);
     commit();
-    openPick(p.id, { round: sl.round, overall: sl.overall, owner: sl.owner, grade: sl.grade, csr: sl.csr });
   };
+  const onPick = (r) => {
+    if (r.slot.round === 1 && r.slot.owner !== league.userTid && league.draft?.clock?.speed !== "Fast") setAnnounce(r.slot.overall);
+    else setAnnounce(null);
+  };
+  const closePanel = () => setPanel(null);
+  const panelEl = panel && live && (
+    panel.kind === "for" ? <ForPickPanel key={`for${panel.overall}`} overall={panel.overall} phone={phone} onDone={closePanel} onClose={closePanel} />
+      : panel.kind === "up" ? <TradeUpPanel phone={phone} onDone={closePanel} onClose={closePanel} />
+      : <ShopPanel key={`shop${panel.overall}`} overall={panel.overall} phone={phone} onDone={closePanel} onClose={closePanel} />
+  );
 
   return (
-    <div className="stack gg-draft">
+    <div className={`stack gg-draft${live ? " dd-running" : ""}`}>
       <div className="pagehead">
         <h2>{combine ? `${year} Scouting Combine` : `${year} NHL Entry Draft`}</h2>
         {slot && <span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span>}
         {!inDraft && <span className="pill">{DRAFT_ROUNDS} rounds · {DRAFT_ROUNDS * 32} picks</span>}
-        <div className="scout-budget" aria-label={`${user.scoutPts || 0} scouting points available`}><span>SCOUTING POINTS</span><strong>{user.scoutPts || 0}</strong><small>Available for player reports</small></div>
+        {!live && <div className="scout-budget" aria-label={`${user.scoutPts || 0} scouting points available`}><span>SCOUTING POINTS</span><strong>{user.scoutPts || 0}</strong><small>Available for player reports</small></div>}
       </div>
       <div className="tabs">
         {views.map(([k, label]) => (
           <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>
         ))}
       </div>
+      {live && <ClockBar phone={phone} hold={!!league.moments?.length || !!panel} onPick={onPick} onForPick={(o) => setPanel({ kind: "for", overall: o })} onTradeUp={() => setPanel({ kind: "up" })} />}
+      {live && phone && panelEl}
+      {announce != null && <PickIsIn overall={announce} onDone={() => setAnnounce(null)} />}
 
-      {view === "floor" && <DraftFloor act={act} onDraft={draft} canDraft={onClock} />}
+      {view === "floor" && <DraftFloor act={act} onDraft={draft} canDraft={onClock} panel={panel} setPanel={setPanel} panelEl={panelEl} phone={phone} onRecap={() => setView("recap")} />}
       {view === "myscouts" && <ScoutBoard />}
       {view === "board" && (
         <>
           {!inDraft && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} />}
-          <PickTracker years={trackerYears} />
-          <Legend />
+          {!(live && phone) && <PickTracker years={trackerYears} />}
+          {live && phone && <DraftStatusLine />}
+          {!(live && phone) && <Legend />}
           <div className="dgrid">
             <Board onDraft={slot ? draft : null} canDraft={onClock} />
             <div className="stack">

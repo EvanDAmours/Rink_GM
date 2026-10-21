@@ -1,0 +1,250 @@
+/* Draft day and draft night (Gridiron's DraftDay.jsx, DraftRecap.jsx and the phone draft board).
+   This file loads before gridiron.css, so rules that compete with its `.app .main button` and
+   panel styles carry an extra class. */
+@keyframes ddIn { from { opacity: 0; transform: translateY(-14px) scale(.97) } to { opacity: 1; transform: none } }
+@keyframes ddRing { 0% { box-shadow: 0 0 0 0 #a78bfa99 } 70% { box-shadow: 0 0 0 16px #a78bfa00 } 100% { box-shadow: 0 0 0 0 #a78bfa00 } }
+@keyframes ddBar { from { width: 100% } to { width: 0% } }
+@keyframes ddShake { 0%, 100% { transform: rotate(0) } 10%, 30% { transform: rotate(-12deg) } 20%, 40% { transform: rotate(12deg) } 50% { transform: rotate(0) } }
+@keyframes ddBlink { 50% { opacity: .35 } }
+@keyframes ddSheet { from { transform: translateY(40px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+/* ---------- Buttons ---------- */
+.app .main button.dd-b:not(.link), .dd-call button.dd-b {
+  background: var(--b-bg, #1e293b); color: var(--b-c, #e2e8f0); border: 1px solid var(--b-bd, transparent); border-radius: 8px;
+  font-family: var(--gg-f, system-ui); font-size: 14px; font-weight: 800; padding: 7px 14px; min-height: 34px; line-height: 1.2; white-space: nowrap; cursor: pointer;
+}
+.app .main button.dd-b:not(.link):hover:not(:disabled), .dd-call button.dd-b:hover:not(:disabled) { background: var(--b-bg, #1e293b); color: var(--b-c, #fff); border-color: var(--b-bd, transparent); filter: brightness(1.18); }
+.app .main button.dd-b:not(.link):disabled { opacity: .45; }
+.dd-b.sim { --b-bg: #0e7490; --b-c: #fff; }
+.dd-b.go, .dd-b.accept { --b-bg: #22c55e; --b-c: #fff; }
+.dd-b.speed { --b-bg: #1e293b; --b-c: #cbd5e1; --b-bd: #334155; }
+.dd-b.for { --b-bg: #422006; --b-c: #fde68a; } .dd-b.for.on { --b-bg: #854d0e; }
+.dd-b.up { --b-bg: #1e1b4b; --b-c: #c4b5fd; } .dd-b.up.on { --b-bg: #4c1d95; }
+.dd-b.shop { --b-bg: #0c2a3a; --b-c: #7dd3fc; }
+.dd-b.more { --b-bg: #1e3a5f; --b-c: #7dd3fc; }
+.dd-b.pass { --b-bg: #1e293b; --b-c: #94a3b8; }
+.dd-b.hang { --b-bg: #7f1d1d; --b-c: #fecaca; }
+.app .main button.dd-pause:not(.link) { background: #f97316; color: #fff; border: 2px solid #ffffff55; border-radius: 10px; padding: 6px 14px; font-size: 15px; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 12px #0007; min-height: 36px; }
+.app .main button.dd-pause.go:not(.link) { background: #22c55e; }
+.app .main button.dd-pause:not(.link):hover:not(:disabled) { background: #ea580c; color: #fff; border-color: #ffffff77; }
+.app .main button.dd-pause.go:not(.link):hover:not(:disabled) { background: #16a34a; }
+
+/* ---------- Sticky clock bar ---------- */
+/* .main clips sideways overflow with overflow-x: hidden, which turns it into a scroll box and stops
+   anything inside from sticking to the window. While the draft runs, clip it instead. */
+@supports (overflow: clip) { .app .main:has(.dd-bar) { overflow-x: clip; } }
+.dd-bar { position: sticky; top: 42px; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 12px; border-radius: 10px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--clr) 55%, #0b1120) 0%, #0b1120 34%, #0b1120f5 100%); border: 1px solid #1e293b; box-shadow: 0 8px 20px #0008; backdrop-filter: blur(6px); }
+.dd-bar.mine { border-color: #22c55e; box-shadow: 0 0 0 1px #22c55e, 0 8px 20px #0008; }
+.dd-live { background: #b91c1c; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+.dd-live.off { background: #475569; }
+.dd-bar-pick { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #fffc; white-space: nowrap; }
+.dd-bar-team { font-size: 15px; color: #e2e8f0; white-space: nowrap; } .dd-bar-team b { font-weight: 900; color: #fff; }
+.dd-bar-clock { font-size: 24px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; min-width: 62px; }
+.dd-bar-clock.mine { color: #eab308; } .dd-bar-clock.low { color: #ef4444; animation: ddBlink 1s step-end infinite; }
+.dd-bar-nx { font-size: 13px; color: #cbd5e1; white-space: nowrap; }
+.dd-bar-sp { flex: 1; }
+.dd-bar.paused .dd-bar-clock { opacity: .6; }
+/* Phones: the whole clock, pinned under the header, buttons in one even row of three. */
+.dd-bar.phone { display: block; padding: 0; top: 41px; overflow: hidden; border-radius: 12px; background: #0b1120; }
+.dd-bar.phone .dd-bar-top { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: linear-gradient(120deg, var(--clr) 0%, #0b1120 85%); }
+.dd-bar-who { flex: 1; min-width: 0; }
+.dd-bar-k { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #fffb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-bar-t { font-size: 17px; font-weight: 900; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-bar.phone .dd-bar-nx { font-size: 12px; color: #fffc; }
+.dd-bar.phone .dd-bar-clock { font-size: 26px; min-width: 0; }
+.dd-bar-row { display: flex; gap: 8px; padding: 6px 8px; background: #0b1120; }
+.app .main .dd-bar-row button.dd-b:not(.link) { flex: 1 1 0; min-width: 0; min-height: 42px; padding: 6px 4px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .main .dd-bar.phone button.dd-pause:not(.link) { padding: 6px 10px; font-size: 14px; min-height: 34px; }
+
+/* ---------- The ticker ---------- */
+.dd-ticker { display: flex; align-items: stretch; height: 34px; overflow: hidden; background: #020617; border: 1px solid #1e293b; border-radius: 8px; }
+.dd-ticker-k { flex-shrink: 0; background: #b91c1c; color: #fff; font-weight: 900; font-size: 12px; letter-spacing: 1.5px; padding: 0 10px; display: flex; align-items: center; }
+.dd-ticker-list { display: flex; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+.dd-ticker-list::-webkit-scrollbar { display: none; }
+.dd-tick { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; font-size: 13px; color: #e2e8f0; border-right: 1px solid #1e293b; opacity: .85; }
+.dd-tick.new { opacity: 1; } .dd-tick.mine { color: #22c55e; }
+.dd-tick-n, .dd-tick-pos { color: #64748b; }
+.dd-vtag { border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 900; letter-spacing: 1px; white-space: nowrap; }
+.dd-vtag.sm { padding: 0 4px; font-size: 10px; }
+.dd-vtag.steal { background: #14532d; color: #86efac; } .dd-vtag.reach { background: #7f1d1d; color: #fca5a5; }
+
+/* ---------- The pick is in ---------- */
+.dd-pickin-wrap { position: fixed; left: 0; right: 0; top: 70px; z-index: 1500; display: flex; justify-content: center; padding: 0 12px; cursor: pointer; pointer-events: none; }
+.dd-pickin { pointer-events: auto; width: 100%; max-width: 560px; border-radius: 14px; overflow: hidden; box-shadow: 0 18px 50px #000c; border: 1px solid #ffffff22; animation: ddIn .35s ease-out; }
+.dd-stripe { height: 6px; background: linear-gradient(90deg, var(--c1) 0 47%, #fff 47% 53%, var(--c2) 53%); }
+.dd-pickin-body { display: flex; gap: 14px; align-items: center; padding: 14px 18px; background: linear-gradient(120deg, var(--clr) 0%, #0b1120 75%); }
+.dd-pickin-text { flex: 1; min-width: 0; }
+.dd-k { font-size: 11px; letter-spacing: 3px; font-weight: 900; } .dd-k.gold { color: #fbbf24; }
+.dd-quote { font-size: 13px; color: #fffd; font-style: italic; line-height: 1.35; margin: 2px 0 4px; }
+.dd-pickin-name { font-size: 26px; font-weight: 900; color: #fff; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-pickin-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; font-size: 13px; color: #fffc; }
+.dd-gradechip { background: #0008; border-radius: 4px; padding: 1px 6px; font-weight: 800; }
+
+/* ---------- On the clock ---------- */
+.dd-otc { border-radius: 14px; overflow: hidden; border: 1px solid #1e293b; background: #0b1120; }
+.dd-otc.mine { border: 2px solid #22c55e; }
+.dd-otc-main { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: linear-gradient(120deg, var(--clr) 0%, #0b1120 80%); }
+.dd-otc-who { flex: 1 1 260px; min-width: 0; }
+.dd-otc-k { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: #fffa; letter-spacing: 2px; font-weight: 800; }
+.dd-badge { background: #b91c1c; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 2px; padding: 2px 8px; border-radius: 4px; }
+.dd-badge.off { background: #475569; }
+.dd-via { font-size: 11px; color: #fde68a; }
+.dd-otc-t { font-size: 28px; font-weight: 900; color: #fff; line-height: 1.15; margin-top: 2px; font-family: var(--gg-f, system-ui); }
+.dd-needs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.dd-needs > span:first-child { font-size: 11px; color: #fffa; font-weight: 800; letter-spacing: 1px; margin-right: 2px; }
+.dd-otc-nx { font-size: 13.5px; color: #fffc; margin-top: 3px; }
+.dd-otc-clock { text-align: right; line-height: 1; }
+.dd-big { font-size: 40px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; }
+.dd-big.mine { color: #eab308; } .dd-big.low { color: #ef4444; }
+.dd-otc-clock small { display: block; font-size: 11px; color: #fffa; margin-top: 4px; letter-spacing: 1px; }
+.dd-otc-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 14px; background: #0b1120; border-top: 1px solid #ffffff14; }
+.dd-otc-war { padding: 8px 14px 10px; background: #0b1120; border-top: 1px solid #ffffff14; display: flex; flex-direction: column; gap: 8px; }
+.app .main .dd-mine-phone.panel { padding: 0; overflow: hidden; border-color: #22c55e; }
+.dd-war { display: flex; align-items: baseline; gap: 6px 10px; flex-wrap: wrap; font-size: 14px; color: #e2e8f0; line-height: 1.4; }
+.dd-war-k { font-size: 11px; color: #60a5fa; letter-spacing: 1.5px; }
+.dd-war-rule { font-size: 12px; color: #64748b; }
+.dd-slim { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.app .main .dd-slim .gg-picks { flex: 1; min-width: 0; padding: 6px 10px; margin: 0; }
+.dd-pts { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #111827; border: 1px solid #1e293b; font-size: 13px; font-weight: 800; color: #64748b; white-space: nowrap; }
+.dd-pts.on { background: #eab30822; border-color: #eab308; color: #fde68a; }
+.dd-status { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; font-size: 13px; color: #94a3b8; }
+.dd-status .good { color: #22c55e; font-weight: 800; }
+.dd-done .row { flex-wrap: wrap; }
+
+/* ---------- The phone ---------- */
+.dd-fold-btn { width: auto; }
+.app .main button.dd-fold-btn:not(.link) { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #1e1b4b; border: 1px solid #7c3aed66; border-radius: 8px; color: #c4b5fd; font-size: 14px; font-weight: 800; padding: 8px 12px; }
+.app .main button.dd-fold-btn:not(.link):hover:not(:disabled) { background: #2e1065; color: #ddd6fe; border-color: #7c3aed; }
+.dd-fold { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.dd-fold .dd-offers { width: 100%; }
+.dd-offers { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.dd-offer { background: #0d1020; border: 1px solid #7c3aed66; border-radius: 10px; padding: 10px 12px; }
+.dd-offer.good { border-color: #22c55e; } .dd-offer.hot { border-color: #f87171; box-shadow: 0 0 0 1px #f8717155; }
+.dd-offer-h { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.dd-offer-who { flex: 1; min-width: 0; } .dd-offer-who > b { display: block; font-size: 15px; font-weight: 800; color: #f1f5f9; }
+.dd-offer-who small { font-size: 12px; color: #64748b; } .dd-offer-who small b.pos { color: #86efac; } .dd-offer-who .neg, .neg { color: #fca5a5; }
+.dd-offer-k { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 800; letter-spacing: .5px; }
+.dd-pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 6px; }
+.dd-pill { font-size: 13px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: #1e293b; color: #e2e8f0; }
+.dd-pill.good { background: #14532d; color: #86efac; } .dd-pill.bad { background: #7f1d1d; color: #fca5a5; }
+.dd-offer-chart { font-size: 12px; color: #eab308; margin-bottom: 6px; } .dd-offer-chart.ok { color: #22c55e; }
+.dd-offer-act { display: flex; gap: 6px; }
+.app .main .dd-offer-act button.dd-b:not(.link), .dd-call .dd-offer-act button.dd-b { flex: 1; font-size: 13px; padding: 6px 0; }
+.app .main .dd-offer-act button.dd-b.pass:not(.link) { flex: 0 0 auto; padding: 6px 10px; }
+.dd-panel { background: #111827; border-radius: 10px; padding: 12px 14px; border: 1px solid #334155; }
+.dd-panel.for { border-color: #ca8a0466; } .dd-panel.up { border-color: #7c3aed66; } .dd-panel.shop { border-color: #0ea5e966; }
+.dd-panel-h { font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #e2e8f0; }
+.dd-panel.for .dd-panel-h { color: #fde68a; } .dd-panel.up .dd-panel-h { color: #c4b5fd; } .dd-panel.shop .dd-panel-h { color: #7dd3fc; }
+.dd-panel-h small { font-size: 12px; color: #64748b; font-weight: 500; }
+.dd-panel-no { font-size: 14px; color: #94a3b8; }
+.dd-panel-f { display: flex; gap: 6px; margin-top: 10px; }
+.dd-sheet-bg { position: fixed; inset: 0; z-index: 1100; background: #000a; display: flex; align-items: flex-end; }
+.dd-sheet { position: relative; width: 100%; max-height: 85vh; overflow-y: auto; background: #080c14; border-radius: 18px 18px 0 0; padding: 30px 10px calc(14px + env(safe-area-inset-bottom, 0px)); animation: ddSheet .22s ease-out; }
+.app .main button.dd-sheet-x:not(.link) { position: absolute; top: 6px; right: 8px; width: 34px; height: 30px; padding: 0; background: #1e293b; color: #94a3b8; border-radius: 8px; }
+.dd-sheet .dd-offers { grid-template-columns: 1fr; }
+
+/* The incoming call: on the page, bottom right, clear of the board. */
+.dd-call { position: fixed; right: 18px; bottom: 18px; z-index: 2400; width: 380px; max-width: calc(100vw - 16px); border-radius: 16px; overflow: hidden; color: #e0e6f0; font-family: var(--gg-f, system-ui);
+  background: linear-gradient(160deg, #1e1b4b, #0b1120 70%); border: 1px solid #a78bfa88; box-shadow: 0 20px 60px #000d, 0 0 0 1px #000; animation: ddIn .3s ease-out; }
+.dd-call.phone { left: 8px; right: 8px; width: auto; top: 64px; bottom: auto; }
+.dd-call.urgent { border-color: #f87171; }
+.dd-call-h { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; }
+.dd-call-ring { border-radius: 50%; padding: 6px; background: #0b1120; animation: ddRing 1.4s infinite; display: inline-flex; }
+.dd-call-who { flex: 1; min-width: 0; }
+.dd-call-k { font-size: 11px; font-weight: 900; letter-spacing: 2px; color: #c4b5fd; }
+.dd-call-ico { display: inline-block; animation: ddShake 1.2s infinite; }
+.dd-call-t { font-size: 17px; font-weight: 900; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-call-q { font-size: 12.5px; color: #cbd5e1; }
+.dd-call-b { padding: 0 16px 12px; }
+.dd-call-timer { height: 4px; background: #ffffff14; } .dd-call-timer i { display: block; height: 100%; background: #a78bfa; animation: ddBar 20s linear forwards; }
+.dd-call.urgent .dd-call-timer i { background: #f87171; }
+
+/* ---------- Up next ---------- */
+.app .main .dd-queue.panel { padding: 12px 12px 8px; }
+.dd-queue h3 .right b.good { color: #22c55e; text-transform: none; letter-spacing: 0; }
+.dd-queue h3 .right { text-transform: none; letter-spacing: 0; color: #94a3b8; font-size: 12px; }
+.dd-q { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; margin-bottom: 2px; border: 1px solid transparent; }
+.dd-q.now { background: color-mix(in srgb, var(--clr) 33%, transparent); border-color: #ffffff40; }
+.dd-q.mine { background: #22c55e1f; border-color: #22c55e; }
+.dd-q-n { width: 58px; flex-shrink: 0; font-size: 12px; font-weight: 800; color: #64748b; font-variant-numeric: tabular-nums; } .dd-q.now .dd-q-n { color: #fff; }
+.dd-q-t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dd-q.now .dd-q-t, .dd-q.mine .dd-q-t { font-weight: 800; }
+.dd-q-via { font-size: 11px; color: #64748b; white-space: nowrap; }
+.dd-q-otc { font-size: 11px; font-weight: 900; color: #facc15; letter-spacing: 1px; white-space: nowrap; }
+.app .main button.dd-q-act:not(.link) { padding: 2px 8px; font-size: 11px; font-weight: 800; border-radius: 6px; background: #1e1b4b; color: #c4b5fd; border: 1px solid #4c1d95; white-space: nowrap; }
+@media (hover: hover) { .dd-q .dd-q-act:not(.shop) { opacity: 0; transition: opacity .12s; } .dd-q:hover .dd-q-act, .dd-q .dd-q-act:focus-visible { opacity: 1; } }
+.app .main button.dd-q-act.shop:not(.link) { background: #0c2a3a; color: #7dd3fc; border-color: #075985; }
+.app .main button.dd-q-act:not(.link):hover:not(:disabled) { filter: brightness(1.25); color: #fff; }
+
+/* ---------- Phone board: one compact row per prospect ---------- */
+.app .main .dd-board.phone.panel { padding: 10px 8px; }
+.dd-filters { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: nowrap; }
+.dd-filters > * { flex: 1 1 0; min-width: 0; }
+.dd-filters .gg-select.gg-select { min-width: 0; }
+.app .main .dd-filters .gg-select-btn { padding: 6px 8px; gap: 4px; }
+.dd-filters.wrap { flex-wrap: wrap; } .dd-filters.wrap input { flex: 1 1 100%; }
+.app .main button.dd-mag:not(.link) { flex: 0 0 44px; min-height: 38px; padding: 0; font-size: 16px; }
+.dd-plist { display: flex; flex-direction: column; gap: 4px; }
+.dd-prow { display: flex; align-items: center; gap: 5px; background: #080c14; border: 1px solid #1e293b; border-radius: 8px; padding: 4px 6px 4px 4px; min-height: 46px; cursor: pointer; }
+.dd-prow.live { border-color: #22c55e66; } .dd-prow.gone { opacity: .5; }
+.dd-prow-rk { width: 26px; flex-shrink: 0; text-align: center; font-weight: 900; font-size: 14px; color: #94a3b8; }
+.app .main button.dd-star:not(.link) { flex: 0 0 28px; min-height: 36px; padding: 0; background: transparent; border: 0; font-size: 18px; color: #64748b; }
+.app .main button.dd-star.on:not(.link) { color: #eab308; }
+.dd-prow-name { flex: 1; min-width: 0; font-weight: 800; font-size: 14.5px; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-prow-v { min-width: 27px; text-align: center; line-height: 1.05; } .dd-prow-v small { display: block; font-size: 9px; color: #64748b; font-weight: 700; }
+.dd-val { font-size: 16px; font-variant-numeric: tabular-nums; } .dd-val.unk { color: #475569; } .dd-val.est { color: #cbd5e1; } .dd-val.exact { color: #22c55e; }
+.dd-val.gen.ga { color: #22c55e; } .dd-val.gen.gb { color: #60a5fa; } .dd-val.gen.gc { color: #f59e0b; } .dd-val.gen.gd { color: #ef4444; }
+.dd-prow-act { min-width: 60px; display: flex; justify-content: flex-end; }
+.app .main button.dd-arm:not(.link) { min-height: 40px; padding: 4px 10px; font-size: 14px; font-weight: 900; background: #22c55e; border-color: #22c55e; color: #fff; border-radius: 8px; }
+.app .main button.dd-arm.armed:not(.link) { background: #eab308; border-color: #eab308; color: #111; }
+.app .main button.dd-arm:not(.link):hover:not(:disabled) { background: #16a34a; color: #fff; } .app .main button.dd-arm.armed:not(.link):hover:not(:disabled) { background: #ca8a04; color: #111; }
+.app .main button.dd-scout:not(.link) { min-height: 36px; padding: 4px 8px; font-size: 13px; background: #3b82f622; color: #3b82f6; border-color: #3b82f655; white-space: nowrap; }
+
+/* ---------- Draft recap ---------- */
+.dr-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dr-title { font-size: 26px; font-weight: 900; flex: 1; font-family: var(--gg-f, system-ui); }
+.dr-sub { font-size: 14px; margin-top: -4px; }
+.dr-k { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #fcd34d; }
+.flex1 { flex: 1; }
+.app .main .dr-mine.panel { border-color: color-mix(in srgb, var(--gc) 45%, transparent); }
+.dr-mine-h { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.dr-mine-g { font-size: 40px; font-weight: 900; color: var(--gc); line-height: 1; }
+.dr-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.app .main button.dr-card:not(.link) { display: flex; flex-direction: column; align-items: stretch; gap: 4px; text-align: left; background: #080c14; border: 1px solid color-mix(in srgb, var(--vc) 35%, transparent); border-radius: 8px; padding: 10px; font-weight: 500; font-size: 13px; }
+.app .main button.dr-card:not(.link):hover:not(:disabled) { background: #0f172a; border-color: var(--vc); }
+.dr-card-h { display: flex; align-items: center; gap: 6px; } .dr-card-h b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr-card-m { font-size: 12px; color: #64748b; }
+.dr-card-r { font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dr-now { color: #eab308; }
+.dr-verdict { font-weight: 800; white-space: nowrap; }
+.dr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+.dr-counts { display: flex; gap: 6px 10px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; color: #64748b; }
+.dr-jrow, .dr-grow { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid #1e293b55; cursor: pointer; border-radius: 4px; }
+.dr-jrow:hover, .dr-grow:hover { background: #1e293b55; }
+.dr-jrow.mine, .dr-grow.mine { background: #22c55e12; } .dr-grow.on { background: #3b82f61a; box-shadow: inset 3px 0 0 #3b82f6; }
+.dr-n { width: 30px; flex-shrink: 0; font-size: 12px; color: #64748b; font-variant-numeric: tabular-nums; }
+.dr-jname, .dr-gname { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dr-gmeta { font-size: 12px; color: #64748b; white-space: nowrap; }
+.dr-gg { width: 28px; text-align: right; font-size: 15px; }
+.dr-filters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.dr-table td { vertical-align: middle; }
+.dr-team { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.dr-table tbody tr { cursor: pointer; } .dr-table tbody tr:hover { background: #1e293b55; }
+.dr-table tr.mine { background: #22c55e12; } .dr-table tr.newround td { border-top: 2px solid #334155; }
+.dr-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Layout ---------- */
+.dd-floor { gap: 10px; }
+@media (max-width: 640px) {
+  .dd-otc-t { font-size: 22px; }
+  .dd-pickin-wrap { top: 56px; }
+  .dd-pickin-body { padding: 10px 12px; gap: 10px; }
+  .dd-pickin-name { font-size: 21px; }
+  .dr-title { font-size: 21px; }
+  .dr-gmeta { display: none; }
+  .dr-table th:nth-child(4), .dr-table td:nth-child(4) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dd-pickin, .dd-call, .dd-call-ring, .dd-call-ico, .dd-bar-clock.low, .dd-sheet { animation: none !important; }
+  .dd-call-timer i { animation-duration: 20s !important; }
+}
