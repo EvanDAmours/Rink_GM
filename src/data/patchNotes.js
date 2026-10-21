@@ -272,4 +272,7 @@ export const PATCH_NOTES = [
     "Superstars no longer run away from a thinning league: goal leaders mostly land in the 50s and 60s instead of spiking toward 80.",
     "A league at today's talent level plays exactly as before, and saved games simulate the same way after loading.",
   ] },
+  { v: "1.48", date: "2026-10-21", title: "A Tidy Bracket", notes: [
+    "The playoff bracket stays lined up as games are played: every series card keeps the same size, scores no longer spill onto extra lines, and each round sits level with the series that feed it, on desktop and phone.",
+  ] },
 ];

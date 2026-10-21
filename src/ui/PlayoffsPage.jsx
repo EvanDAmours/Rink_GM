@@ -16,7 +16,7 @@ function SeriesCard({ s, compact = false }) {
     return (
       <div className={`gg-stm${won ? " won" : ""}${lost ? " lost" : ""}`}>
         <TeamBadge team={t} size={compact ? 26 : 32} decorative />
-        <span className="gg-stm-name"><b>{t.abbr}</b><small>{league.playoffs?.seeds?.[tid] || ""}{league.playoffs?.seeds?.[tid] ? " · " : ""}{t.rec.pts} pts</small></span>
+        <span className="gg-stm-name"><b>{t.abbr}</b><small>{t.rec.pts} pts</small></span>
         <span className="gg-stm-w">{w}</span>
       </div>
     );
