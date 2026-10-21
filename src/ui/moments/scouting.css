@@ -1,1 +1,54 @@
-/* Scouting beats: checkpoints that pause the sim, scouting misses revealed, a hidden gem or a red flag confirmed. */
+/* Scouting beats: the checkpoint sheet (Gridiron's ScoutCheckpoint: dark, sky-blue edge, two columns)
+   and the scouting-miss reveal on the shared moment frame. */
+@keyframes scCpIn { from { transform: translateY(16px) scale(.98); opacity: 0 } to { transform: none; opacity: 1 } }
+.sc-cp-overlay { position: fixed; inset: 0; z-index: 2600; display: flex; align-items: center; justify-content: center; padding: 14px; padding-top: max(14px, env(safe-area-inset-top, 0px)); padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); background: rgba(2, 6, 15, .86); }
+.sc-cp { position: relative; width: min(760px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto; border-radius: 16px; background: #0b1220; border: 1px solid #38bdf866; box-shadow: 0 0 60px #38bdf81f, 0 30px 80px #000c; padding: 16px 18px; color: #e2e8f0; animation: scCpIn .35s ease-out; }
+.sc-cp-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.sc-cp-titles { flex: 1 1 260px; min-width: 0; }
+.sc-cp-kicker { font-size: 11px; font-weight: 900; letter-spacing: 2px; color: #38bdf8; }
+.sc-cp-title { font-size: 23px; font-weight: 900; line-height: 1.2; }
+.sc-cp-sub { font-size: 13px; color: #cbd5e1; }
+.sc-cp-paused { font-size: 13px; color: #7dd3fc; font-weight: 700; margin-top: 4px; }
+.sc-cp-pts { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 12px; border: 2px solid #fbbf24; background: linear-gradient(135deg, #fbbf2433, #0b1220); }
+.sc-cp-pts b { font-size: 38px; font-weight: 900; line-height: 1; color: #fbbf24; font-variant-numeric: tabular-nums; }
+.sc-cp-pts span { font-size: 11.5px; font-weight: 900; letter-spacing: 1px; line-height: 1.25; color: #fde68a; }
+.sc-cp-cols { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; }
+.sc-cp-box { background: #ffffff08; border: 1px solid #ffffff14; border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.sc-cp-h { font-size: 11px; font-weight: 900; letter-spacing: 1.3px; margin-bottom: 6px; }
+.sc-cp-h.stock { color: #fbbf24; } .sc-cp-h.eyes { color: #38bdf8; }
+.sc-cp-note { font-size: 11.5px; color: #94a3b8; margin-bottom: 4px; }
+.sc-cp-news { display: flex; gap: 6px; align-items: baseline; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #ffffff0d; }
+.sc-cp-news > b { width: 14px; flex: 0 0 auto; }
+.sc-cp-news small { display: block; font-size: 12px; color: #94a3b8; }
+.sc-cp-target { display: flex; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid #ffffff0d; }
+.sc-cp-tw { flex: 1; min-width: 0; }
+.sc-cp-tn { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-weight: 800; font-size: 14px; }
+.sc-cp-tw small { display: block; font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-cp-grade { min-width: 26px; text-align: center; font-weight: 900; font-size: 13px; color: #64748b; }
+.sc-cp-grade.ga { color: #22c55e; } .sc-cp-grade.gb { color: #60a5fa; } .sc-cp-grade.gc { color: #f59e0b; } .sc-cp-grade.gd { color: #ef4444; }
+.sc-cp-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+.app .sc-cp .sc-cp-actions button { font-size: 14px; font-weight: 800; padding: 9px 14px; border-radius: 8px; min-height: 40px; }
+.app .sc-cp .sc-cp-actions button.primary { background: #22c55e; border-color: #22c55e; color: #fff; }
+.app .sc-cp .sc-cp-actions .sc-cp-stop { background: transparent; color: #fca5a5; border: 1px solid #ef444466; margin-right: auto; }
+.app .sc-cp .sc-cp-actions .sc-cp-open { background: #0369a1; border-color: #0369a1; color: #fff; }
+.sc-cp .sc-cap { margin: 0 0 10px; }
+
+/* Scouting steal / miss */
+.sc-rev-body { margin-top: 14px; }
+.sc-rev-nums { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.sc-rev-nums > span { display: flex; flex-direction: column; align-items: center; }
+.sc-rev-nums small { font-size: 10px; font-weight: 900; letter-spacing: 1.2px; color: #cbd5e1; }
+.sc-rev-nums b { font-size: 34px; font-weight: 900; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.sc-rev-nums b.good { color: #4ade80; } .sc-rev-nums b.bad { color: #f87171; }
+.sc-rev-arrow { font-size: 22px; color: var(--mm-ac); }
+.sc-rev.miss .mm-title { background: none; -webkit-text-fill-color: #fecaca; color: #fecaca; }
+
+@media (max-width: 640px) {
+  .sc-cp { padding: 12px; border-radius: 14px; }
+  .sc-cp-title { font-size: 19px; }
+  .sc-cp-cols { grid-template-columns: 1fr; }
+  .sc-cp-pts b { font-size: 30px; }
+  .app .sc-cp .sc-cp-actions button { flex: 1 1 auto; }
+  .app .sc-cp .sc-cp-actions .sc-cp-stop { margin-right: 0; }
+  .sc-rev-nums b { font-size: 28px; }
+}

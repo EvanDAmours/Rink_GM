@@ -5,9 +5,9 @@ import { isGoalie, COMBINE_INVITES } from "../engine/constants.js";
 import { makePick, currentSlot, draftDone } from "../engine/draft.js";
 import {
   prospectRead, bioStats, csRank, fmtHeight, riskLabel, skillsFor, gradeClass, COMBINE_TESTS, interviewProspect,
-  atCombine, onMyList, toggleMyList, pickTake, SCOUT_GROUPS, scoutGroup,
+  atCombine, onMyList, toggleMyList, pickTake, SCOUT_GROUPS, scoutGroup, privateWorkout,
 } from "../engine/scouting.js";
-import { Read, DevChip, CovTag, ScoutButton } from "./scoutingBits.jsx";
+import { Read, DevChip, CovTag, ScoutButton, ScoutFlags, RoleTag } from "./scoutingBits.jsx";
 
 function explain(read, p) {
   const grp = SCOUT_GROUPS[scoutGroup(p.pos)].toLowerCase();
@@ -17,6 +17,9 @@ function explain(read, p) {
     const next = read.cov === "major" ? "A full workup (2 points) gives exact ratings and his development trait." : read.cov === "minor" ? "A full workup (2 points) sharpens the estimates." : "A follow-up (2 points) sharpens the estimates a little.";
     return `Scouting report: estimates are ${pm(read.sd)}. ${next}`;
   }
+  if (read.regional) return `${read.who} have been through his region ${read.trips} time${read.trips > 1 ? "s" : ""}: a rough ${read.pot} ceiling${read.ovrV != null ? ` and about ${read.ovrV} today` : ""}. More trips sharpen every read there; a report (1 point) on him is still the way to close estimates.`;
+  if (read.cov !== "office" && read.devEarly) return `${read.who} already have a strong read on him: a ${read.pot} ceiling and a ${read.dev} development trait. A report (1 point) gives close estimates.`;
+  if (read.crew > 1 && read.cov !== "office") return `${read.who} have a sharper general idea of him: a ${read.pot} ceiling. A report (1 point) gives close estimates.`;
   if (read.cov === "major") return `Your major scout's general idea of him is a ${read.pot} ceiling. A report (1 point) gives close estimates; a full workup (2 more) gives exact ratings and his development trait.`;
   if (read.cov === "minor") return `Your minor scout's general idea of him is a ${read.pot} ceiling. A report (1 point) gives estimates and a workup (2 more) sharpens them. Minor scouts don't see development traits.`;
   return `None of your scouts covers ${grp}. Your front office can still file a rough report (1 point) and a follow-up (2 more), but never exact numbers or a development trait.`;
@@ -49,6 +52,11 @@ export default function ProspectProfile({ p }) {
     toast(r.msg);
     commit();
   };
+  const workout = () => {
+    const r = privateWorkout(league, p.id);
+    toast(r.msg);
+    commit();
+  };
 
   const statLine = !stats
     ? "The junior season hasn't started"
@@ -74,17 +82,27 @@ export default function ProspectProfile({ p }) {
       </div>
 
       <div className="panel">
-        <h3>Your read <span className="right"><CovTag read={read} /></span></h3>
+        <h3>Your read <span className="right"><CovTag read={read} flags={false} /></span></h3>
         <div className="row" style={{ gap: 12 }}>
           <Read label="OVR" txt={read.ovr} />
           <Read label="POT" txt={read.pot} />
           <DevChip dev={read.dev} />
+          <RoleTag p={p} />
           {read.tier && <span className="small">Projects as <b>{read.tier}</b></span>}
           {read.lvl > 0 && <span className="pill">{riskLabel(s.eOvr, s.ePot)}</span>}
         </div>
+        {(read.flag || read.sleeper || read.hunch || read.devEarly) && (
+          <div className="sc-why">
+            <ScoutFlags read={read} />
+            {read.flagWhy && <div className="sc-why-red">{read.flagWhy}</div>}
+            {read.gemWhy && <div className="sc-why-gem">{read.gemWhy}</div>}
+            {!read.gemWhy && read.hunch && <div className="sc-why-hunch">{read.who || "Your scouts"} think there's more to him than Central Scouting's #{csRank(p)}. A report will tell.</div>}
+          </div>
+        )}
         <div className="muted small" style={{ margin: "10px 0" }}>{explain(read, p)}</div>
         <div className="row">
           <ScoutButton p={p} read={read} className="small primary" />
+          {combine && read.lvl < 2 && <button className="small" disabled={!(d.workoutsLeft > 0)} title="Combine week: a free full workup" onClick={workout}>🏋️ Private workout ({d.workoutsLeft || 0} left)</button>}
           <span className="muted small">{user.scoutPts || 0} scouting point{user.scoutPts === 1 ? "" : "s"} left</span>
         </div>
       </div>

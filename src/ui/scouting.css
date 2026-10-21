@@ -1,0 +1,120 @@
+/* Scouting depth (Gridiron 1.73-3.23): flags, role tags, crews, your scouts' big board, Scouting HQ,
+   the visit list and Combine week. Shared by the draft screens through scoutingBits.jsx. */
+
+/* Flags: 🚩 red flag, 💎 sleeper, 👀 hunch, ⭐ a trait a crew spotted early */
+.sc-flags { display: inline-flex; gap: 3px; align-items: center; vertical-align: middle; }
+.sc-flag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 800; line-height: 17px; padding: 0 7px; border-radius: 999px; white-space: nowrap; cursor: help; }
+.sc-flag.red { color: #fee2e2; background: #991b1b; }
+.sc-flag.gem { color: #fdf2f8; background: #be185d; }
+.sc-flag.hunch { color: #f9a8d4; background: #831843; }
+.sc-flag.trait { color: #f5c542; border: 1px solid currentColor; background: transparent; }
+.sc-flag.trait.star { color: #60a5fa; }
+.pact .sc-flags .sc-flag, .sc-name .sc-flags .sc-flag, .item .sc-flags .sc-flag { padding: 0 5px; font-size: 12px; }
+
+/* Crew coverage tag: "2 scouts" */
+.cov.crew { color: #a5f3fc; border-color: #0e7490; background: #0e749022; }
+
+/* Role tag (Gridiron RoleTag): indigo, green with NEED */
+.sc-role { display: inline-block; font-size: 10px; font-weight: 900; letter-spacing: .5px; line-height: 15px; padding: 0 5px; border-radius: 4px; margin-left: 4px; vertical-align: middle; white-space: nowrap; color: #c7d2fe; background: #312e81; border: 1px solid #4338ca; }
+.sc-role.need { color: #052e16; background: #4ade80; border-color: #22c55e; }
+
+/* Use-or-lose notice */
+.sc-cap { margin: 8px 0; padding: 8px 12px; border-radius: 8px; background: #7c2d1222; border: 1px solid #f9731666; color: #fdba74; font-size: 13px; }
+
+/* Crew strength strip */
+.sc-crews { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.sc-crew { display: flex; flex-direction: column; gap: 2px; background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 7px 10px; min-width: 0; }
+.sc-crew b { font-size: 13px; color: #e2e8f0; }
+.sc-crew-n { font-size: 11px; font-weight: 800; letter-spacing: .6px; color: #93c5fd; text-transform: uppercase; }
+.sc-crew.deep { border-color: #0e7490; background: linear-gradient(135deg, #0e749022, #0b1220); }
+.sc-crew.deep .sc-crew-n { color: #67e8f9; }
+.sc-crew.none .sc-crew-n { color: #64748b; }
+.sc-crew-bar { height: 4px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+.sc-crew-bar i { display: block; height: 100%; background: linear-gradient(90deg, #38bdf8, #22c55e); border-radius: 3px; }
+.sc-crew small { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Your scouts' big board */
+.sc-board h3 { display: flex; align-items: center; gap: 8px; }
+.sc-toggle { display: inline-flex; gap: 4px; margin-left: auto; }
+.app .sc-toggle button { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; font-size: 12px; font-weight: 800; padding: 4px 12px; text-transform: none; letter-spacing: 0; min-height: 0; }
+.app .sc-toggle button.on { background: #3b82f633; color: #fff; border-color: #3b82f6; }
+.sc-board-note { margin: 0 0 8px; line-height: 1.5; }
+.sc-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+.sc-filters .search { flex: 1 1 160px; min-width: 120px; }
+.sc-rows { display: flex; flex-direction: column; }
+.sc-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 46px 52px 52px 96px 150px auto; align-items: center; gap: 8px; padding: 8px 4px; border-bottom: 1px solid #1e293b99; font-size: 13px; }
+.sc-row:hover { background: #1e293b55; }
+.sc-row.head { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #64748b; font-weight: 800; padding-top: 4px; padding-bottom: 4px; }
+.sc-row.head:hover { background: none; }
+.sc-rank { text-align: center; font-weight: 900; font-size: 18px; color: #94a3b8; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.sc-rank.mine { color: #fcd34d; }
+.sc-rank small { display: block; font-size: 9px; font-weight: 800; color: #64748b; letter-spacing: 0; white-space: nowrap; }
+.sc-rank small.up { color: #22c55e; } .sc-rank small.down { color: #ef4444; }
+.sc-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sc-name { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; min-width: 0; }
+.sc-name .player-link { font-weight: 800; font-size: 15px; }
+.sc-who > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-act { display: flex; gap: 6px; justify-content: flex-end; }
+.sc-row .rd { min-width: 46px; }
+
+/* Scouting HQ */
+.sc-hq .gg-hq-row > div > b { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.sc-hq-scouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.sc-hq-scout { display: flex; flex-direction: column; gap: 2px; background: #0b1220; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.sc-hq-scout.empty { border-style: dashed; }
+.sc-hq-scout small { font-size: 10.5px; font-weight: 900; letter-spacing: 1px; }
+.sc-hq-scout small.maj { color: #f5c542; } .sc-hq-scout small.min { color: #60a5fa; }
+.sc-hq-scout > b { font-size: 14px; }
+.sc-hq-scout > span { font-size: 12px; color: #94a3b8; }
+.sc-hq-visit > div { gap: 6px !important; }
+
+/* Visit list */
+.sc-visit-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #1e293b99; flex-wrap: wrap; }
+.sc-visit-row:first-of-type { border-top: 0; }
+.sc-visit-who { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sc-visit-who > b { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 14px; }
+.sc-visit-who > span { font-size: 12.5px; color: #94a3b8; line-height: 1.4; }
+.sc-visit-act { display: flex; gap: 6px; }
+.sc-visit { border-color: #b4530988 !important; }
+.sc-visit h3 { color: #fbbf24 !important; }
+
+/* Combine week */
+.sc-cweek { border-color: #7c3aed !important; }
+.sc-cweek h3 { color: #c4b5fd !important; }
+.sc-cweek-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sc-cweek-grid > div { display: flex; flex-direction: column; gap: 2px; background: #0b1220; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px; }
+.sc-cweek-grid b { font-size: 22px; font-weight: 900; color: #e9d5ff; }
+.sc-cweek-grid span { font-size: 13px; font-weight: 800; color: #e2e8f0; }
+.sc-cweek-grid small { font-size: 12px; color: #94a3b8; line-height: 1.4; }
+.sc-movers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sc-mover { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #1e293b99; }
+.sc-mover .nowrap { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Prospect profile: the reasons */
+.sc-why { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #0b1220; border: 1px solid #1e293b; }
+.sc-why-red { color: #fca5a5; font-weight: 800; font-size: 13px; }
+.sc-why-gem { color: #f9a8d4; font-weight: 700; font-size: 13px; }
+.sc-why-hunch { color: #f9a8d4; font-size: 13px; }
+
+/* Regional scouting */
+.sc-region-note { margin: 6px 0 0; font-weight: 700; }
+.sc-region-note.gem { color: #f9a8d4; } .sc-region-note.red { color: #fca5a5; }
+
+@media (max-width: 900px) {
+  .sc-row { grid-template-columns: 46px minmax(0, 1fr) 48px 48px auto; }
+  .sc-row .sc-hide { display: none; }
+  .sc-crews, .sc-hq-scouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .sc-row { grid-template-columns: 42px minmax(0, 1fr) 44px 44px; row-gap: 6px; padding: 8px 2px; }
+  .sc-row .sc-act { grid-column: 2 / -1; justify-content: flex-start; }
+  .sc-row.head > span:last-child { display: none; }
+  .sc-row .rd { min-width: 40px; padding: 2px 4px; }
+  .sc-rank { font-size: 15px; }
+  .sc-name .player-link { font-size: 14px; }
+  .sc-movers { grid-template-columns: 1fr; }
+  .sc-cweek-grid { gap: 6px; } .sc-cweek-grid > div { padding: 6px 8px; } .sc-cweek-grid b { font-size: 18px; } .sc-cweek-grid span { font-size: 12px; } .sc-cweek-grid small { display: none; }
+  .sc-toggle { margin-left: 0; }
+  .sc-board h3 { flex-wrap: wrap; }
+  .sc-crew small { white-space: normal; }
+}

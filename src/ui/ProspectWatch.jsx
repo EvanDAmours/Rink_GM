@@ -10,6 +10,7 @@ import { setTraining } from "../engine/franchise.js";
 import { weakestGroup, FOCUS_SLOTS } from "../engine/developmentPlan.js";
 import { DEV_TRAITS } from "../engine/players.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import { visibleRatings } from "../engine/draft.js";
 
 // A small rating line for the season: weekly points, flat until the kid moves.
 export function Sparkline({ path, color = "#22c55e", width = 120, height = 30 }) {
@@ -65,7 +66,7 @@ export default function ProspectWatch({ compact = false, limit }) {
                 <span className={`gg-watch-level ${levelTone(r.level)}`}>{r.level}</span>
               </div>
               <div className="gg-watch-mid">
-                <div className="gg-watch-ovr"><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><small>OVR</small><span style={{ color: col }}>{r.delta > 0 ? "+" : ""}{r.delta}<em>since camp</em></span><small className="dim">POT {p.pot}</small></div>
+                <div className="gg-watch-ovr"><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><small>OVR</small><span style={{ color: col }}>{r.delta > 0 ? "+" : ""}{r.delta}<em>since camp</em></span><small className="dim" title={visibleRatings(league, p).potEst ? "Your scouts' draft-day read. The development staff learn his real ceiling over his first two seasons." : undefined}>POT {visibleRatings(league, p).pot}</small></div>
                 <div className="gg-watch-trend"><Sparkline path={r.path} color={col} /><small className="dim">{r.trend === "surging" ? "Surging" : r.trend === "up" ? "Trending up" : r.trend === "down" ? "Slipping" : "Holding"} · ETA {r.eta}</small></div>
               </div>
               <div className="gg-watch-line"><span className={`gg-watch-prod ${r.prod || "none"}`}>{r.prod === "dominant" ? "Dominating" : r.prod === "solid" ? "Holding his own" : r.prod === "struggling" ? "Struggling" : "Early"}</span><span>{r.line.text}{r.farm ? ` · ${r.role} role` : ""}</span></div>
