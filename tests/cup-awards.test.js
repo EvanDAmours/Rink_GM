@@ -107,13 +107,15 @@ test("awards night: queued from the Cup paper, data kept after finishPlayoffs, n
   for (const m of lg.moments.slice()) closeMoment(lg);
   assert.equal(queueMoment(lg, night), true);
   closeMoment(lg);
+  const cupSeen = (lg.momentsSeen || []).includes(`cup-${lg.year}`);
   lg.userTid = champ; // the GM of the champions, for ring night next season
   finishPlayoffs(lg);
   const h = lg.history[0];
   assert.equal(h.year, lg.year);
   assert.equal(h.allNHL.first.length, 6, "the All-Star teams are kept in the history");
   assert.ok(h.cupFinal && h.cupFinal.wins === 4);
-  assert.ok(!lg.moments.some((m) => m.kind === "awardsNight" || m.kind === "cupWin"), "seen moments are not queued again");
+  // (cupWin is new to the champions' GM if another club won while he ran this one: that depends on the sim)
+  assert.ok(!lg.moments.some((m) => m.kind === "awardsNight" || (cupSeen && m.kind === "cupWin")), "seen moments are not queued again");
   const p = lg.players[allNHL.first[0].pid];
   assert.ok(p.allNHL?.some((x) => x.year === lg.year && x.team === "first"), "the honour is on the player's record");
   // An old save that never saw them gets both from finishPlayoffs.

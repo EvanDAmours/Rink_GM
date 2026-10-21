@@ -1,1 +1,73 @@
-/* Development beats: breakout seasons, cornerstone years, milestone rewards, a generational talent arriving. */
+/* Development beats: breakouts, cornerstone seasons, big seasons paying off, Generational arrivals.
+   Built on the shared frame (../moments.css), sized like the season beats. */
+@keyframes mmdRise { from { transform: translateY(10px); opacity: 0 } }
+@keyframes mmdGlow { 0%, 100% { box-shadow: 0 0 0 3px #f472b6aa, 0 0 18px #f472b655 } 50% { box-shadow: 0 0 0 3px #f9a8d4, 0 0 34px #f472b699 } }
+
+.mm-d-body { display: flex; align-items: center; gap: 16px; margin-top: 16px; background: #00000040; border-radius: 12px; padding: 14px 16px; }
+.mm-d-body.gold { background: linear-gradient(135deg, #78350f66, #00000040); border: 1px solid #f59e0b55; }
+.mm-d-body.gen { background: linear-gradient(135deg, #83184366, #00000040); border: 1px solid #f472b655; }
+.mm-d-face { flex: 0 0 auto; line-height: 0; border-radius: 50%; }
+.mm-d-face .gg-mug { border: 2px solid color-mix(in srgb, var(--mm-ac) 70%, #fff); }
+.mm-d-face.gold { padding: 3px; background: linear-gradient(135deg, #fde68a, #b45309); }
+.mm-d-face.gen { padding: 3px; background: linear-gradient(135deg, #f9a8d4, #9d174d); animation: mmdGlow 2.4s ease-in-out infinite; }
+.mm-d-face.gold .gg-mug, .mm-d-face.gen .gg-mug { border: 0; }
+.mm-d-climb { display: flex; align-items: baseline; gap: 10px; margin-top: 6px; font-variant-numeric: tabular-nums; animation: mmdRise .6s .3s ease-out backwards; }
+.mm-d-climb span { font-size: 28px; font-weight: 800; color: #94a3b8; }
+.mm-d-climb i { font-style: normal; font-size: 24px; color: #fde68a; font-weight: 900; }
+.mm-d-climb b { font-size: 48px; font-weight: 900; line-height: 1; color: #4ade80; }
+.mm-d-climb em { font-style: normal; font-size: 16px; font-weight: 900; color: #0b1220; background: #4ade80; border-radius: 999px; padding: 1px 8px; align-self: center; }
+.mm-d-star { color: #fde68a; font-weight: 900; font-size: 14px; }
+.mm-d-pot { font-size: 48px; font-weight: 900; line-height: 1; color: #f9a8d4; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.mm-d-pot small { display: block; font-size: 11px; letter-spacing: 1.5px; color: #cbd5e1; font-weight: 800; margin-bottom: 2px; }
+
+.mm-d-list { display: grid; gap: 8px; margin-top: 14px; }
+.mm-d-row { display: flex; align-items: center; gap: 12px; background: #00000040; border-radius: 10px; padding: 8px 12px; animation: mmdRise .45s ease-out backwards; }
+.mm-d-row:nth-child(2) { animation-delay: .1s } .mm-d-row:nth-child(3) { animation-delay: .2s } .mm-d-row:nth-child(4) { animation-delay: .3s }
+.mm-d-row-face { flex: 0 0 auto; line-height: 0; }
+.mm-d-row-text { flex: 1; min-width: 0; }
+.mm-d-row-name { font-weight: 900; font-size: 15px; }
+.mm-d-row-notes { font-size: 12.5px; color: #cbd5e1; margin-top: 2px; }
+.mm-d-row-trait { font-size: 12.5px; color: #fde68a; margin-top: 2px; }
+.mm-d-row-ovr { font-size: 26px; font-weight: 900; color: #4ade80; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mm-d-row-ovr small { font-size: 13px; color: #94a3b8; font-weight: 700; margin-right: 2px; }
+
+@media (max-width: 560px) {
+  .mm-d-body { gap: 12px; padding: 12px; }
+  .mm-d-face .gg-mug { width: 72px !important; height: 72px !important; }
+  .mm-d-climb b, .mm-d-pot { font-size: 38px; }
+  .mm-d-climb span { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-d-climb, .mm-d-row, .mm-d-face.gen { animation: none; }
+}
+
+/* The Generational development chip, wherever a trait chip is drawn (DevChip in scoutingBits.jsx,
+   the player card's tag). Lives here because this family's styles load app-wide with the moments. */
+.dev.generational { color: #f472b6; border-color: #9d174d; background: #f472b614; }
+.app .gg-pc-tag.dev-generational { background: #500724; border-color: #db2777; color: #fbcfe8; }
+.app .gg-pc-tag.dev-superstar { background: #422006; border-color: #ca8a04; color: #fde68a; }
+.app .gg-pc-tag.form-hot { background: #431407; border-color: #ea580c; color: #fdba74; }
+.app .gg-pc-tag.form-cold { background: #0c1e3a; border-color: #3b82f6; color: #bfdbfe; }
+.app .gg-pc-role { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; margin-top: 8px; }
+.app .gg-pc-role b { color: #e2e8f0; }
+.app .gg-pc-role .grew { color: #4ade80; font-weight: 900; }
+.app .gg-pc-devrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.app .gg-pc-devrow > div { background: #0b1220; border: 1px solid #ffffff10; border-radius: 8px; padding: 6px 8px; min-width: 0; }
+.app .gg-pc-devrow small { display: block; font-size: 10px; letter-spacing: 1.2px; color: #94a3b8; font-weight: 800; }
+.app .gg-pc-devrow b { font-size: 15px; font-weight: 900; }
+.app .gg-pc-devrow span { display: block; font-size: 11px; color: #94a3b8; }
+.app .gg-pc-summer { font-size: 12.5px; color: #cbd5e1; margin-top: 8px; }
+.app .gg-pc-summer b { color: #fde68a; }
+
+/* Development page: the off-season report */
+.app .gg-dev-report .gg-dev-rep-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #ffffff0d; min-width: 0; }
+.app .gg-dev-report .gg-dev-rep-row:last-child { border-bottom: 0; }
+.app .gg-dev-rep-who { flex: 1; min-width: 0; }
+.app .gg-dev-rep-who small { display: block; color: #94a3b8; font-size: 12px; overflow-wrap: anywhere; }
+.app .gg-dev-rep-ovr { font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.app .gg-dev-rep-tag { font-size: 10.5px; font-weight: 900; letter-spacing: .8px; border-radius: 999px; padding: 1px 7px; border: 1px solid; white-space: nowrap; }
+.app .gg-dev-rep-tag.cornerstone { color: #fde68a; border-color: #ca8a04; background: #42200666; }
+.app .gg-dev-rep-tag.breakout { color: #86efac; border-color: #16a34a; background: #052e1666; }
+.app .gg-dev-rep-tag.milestone, .app .gg-dev-rep-tag.trait { color: #93c5fd; border-color: #2563eb; background: #17255466; }
+.app .gg-dev-rep-tag.role { color: #c4b5fd; border-color: #7c3aed; background: #2e106566; }
+.app .gg-dev-rep-tag.wall { color: #fca5a5; border-color: #dc2626; background: #450a0a66; }
