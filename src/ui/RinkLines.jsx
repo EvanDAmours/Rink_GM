@@ -1,132 +1,304 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGame, ovrColor } from "./common.jsx";
+import Headshot from "./Headshot.jsx";
+import Select from "./Select.jsx";
+import GamePlanPicker from "./GamePlanPicker.jsx";
 import { syncLines, gameLines, healthy, lineupIds } from "../engine/lines.js";
 import { isGoalie, isDefense, isForward } from "../engine/constants.js";
-import { lineChemistry } from "../engine/development.js";
+import { lineChemistry, schemeFit } from "../engine/development.js";
+import { restShare, REST_OPTIONS } from "../engine/sim.js";
+import { gamePlan } from "../engine/teamPlanning.js";
+import { COACH_STYLES } from "../engine/franchise.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import { esSpots, esTags, esBand, stSpots, stTags, stBand, iceShare, goalieShare, lastName, nameSize, offPosition, planWords } from "./linesView.js";
 
-// The rink view of the lines, like the football game's depth-chart field: one unit on
-// the ice at a time, every unit listed at a glance on the right. Tap a spot to change
-// who plays there; tap a row to put that unit on the ice.
-const last = (name) => name.split(" ").slice(-1)[0];
-const tone = (v) => (v >= 90 ? "#4ade80" : v >= 85 ? "#a3e635" : v >= 80 ? "#facc15" : v >= 75 ? "#fb923c" : "#f87171");
-const UNITS = (L) => [
-  ...L.F.map((_, i) => ({ key: `L${i + 1}`, label: `Line ${i + 1}`, slots: [{ g: "F", i, j: 0, pos: "LW" }, { g: "F", i, j: 1, pos: "C" }, { g: "F", i, j: 2, pos: "RW" }, { g: "D", i: Math.min(i, 2), j: 0, pos: "LD" }, { g: "D", i: Math.min(i, 2), j: 1, pos: "RD" }, { g: "G", i: 0, pos: "G" }] })),
-  ...L.D.map((_, i) => ({ key: `P${i + 1}`, label: `Pair ${i + 1}`, slots: [{ g: "F", i: Math.min(i, 3), j: 0, pos: "LW" }, { g: "F", i: Math.min(i, 3), j: 1, pos: "C" }, { g: "F", i: Math.min(i, 3), j: 2, pos: "RW" }, { g: "D", i, j: 0, pos: "LD" }, { g: "D", i, j: 1, pos: "RD" }, { g: "G", i: 0, pos: "G" }] })),
-  { key: "G", label: "Goalies", slots: [{ g: "G", i: 0, pos: "G" }, { g: "G", i: 1, pos: "G2" }] },
-  ...(L.PP || []).map((u, i) => ({ key: `PP${i + 1}`, label: `Power play ${i + 1}`, slots: u.map((_, j) => ({ g: "PP", i, j, pos: "PP" })) })),
-  ...(L.PK || []).map((u, i) => ({ key: `PK${i + 1}`, label: `Penalty kill ${i + 1}`, slots: u.map((_, j) => ({ g: "PK", i, j, pos: "PK" })) })),
-];
-// Where each spot sits on a 400 x 200 rink (attacking to the right).
-const SPOT = { LW: [268, 42], C: [222, 100], RW: [268, 158], LD: [136, 58], RD: [136, 142], G: [66, 100], G2: [90, 165] };
-const stSpots = (n, pk) => (pk ? [[150, 70], [150, 130], [230, 60], [230, 140]] : [[300, 60], [300, 140], [230, 100], [170, 60], [170, 140]]).slice(0, n);
+// The rink view of the lines, like the football game's depth-chart field: the whole dressed
+// lineup on the ice at once (lines across the attacking half, pairs across the defensive half,
+// the starter in the crease), or both power-play or penalty-kill units, one per end. The list on
+// the right shows every unit with its ratings and share of the ice; tap a spot or a row to change
+// who plays there.
 
-export default function RinkLines({ team, mine, onOpen }) {
+export const UNIT_COLOR = { L: "#3b82f6", P: "#22c55e", G: "#a855f7", PP: "#f59e0b", PK: "#ef4444" };
+export const unitColor = (key) => UNIT_COLOR[/^P[PK]/.test(key) ? key.slice(0, 2) : key[0]] || "#475569";
+const F_POS = ["LW", "C", "RW"], D_POS = ["LD", "RD"];
+const KIND = { es: "ES", pp: "PP", pk: "PK" };
+const STRENGTH = { ES: "even-strength", PP: "power-play", PK: "penalty-kill" };
+const spotVars = (s) => ({ "--lx": `${s.land[0]}%`, "--ly": `${s.land[1]}%`, "--lw": `${s.land[2]}%`, "--px": `${s.port[0]}%`, "--py": `${s.port[1]}%`, "--pw": `${s.port[2]}%` });
+const tagVars = (t) => ({ "--lx": `${t.land[0]}%`, "--ly": `${t.land[1]}%`, "--px": `${t.port[0]}%`, "--py": `${t.port[1]}%` });
+const boxVars = (b) => ({ "--lx": `${b.land.x}%`, "--ly": `${b.land.y}%`, "--lw": `${b.land.w}%`, "--lh": `${b.land.h}%`, "--px": `${b.port.x}%`, "--py": `${b.port.y}%`, "--pw": `${b.port.w}%`, "--ph": `${b.port.h}%` });
+const signed = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+
+// The rink markings, drawn twice: landscape (wide screens) and portrait (phones). CSS shows one.
+function Marks() {
+  const m = (cls, style) => <i className={`lx-mk ${cls}`} style={style} aria-hidden="true" />;
+  return (
+    <>
+      <span className="lx-marks l" aria-hidden="true">
+        {m("gl v", { left: "6%" })}{m("gl v", { left: "94%" })}
+        {m("bl v", { left: "36%" })}{m("bl v", { left: "64%" })}{m("rl v", { left: "50%" })}
+        {m("cc", { left: "50%", top: "50%" })}{m("dot", { left: "50%", top: "50%" })}
+        {[[17, 24], [17, 76], [83, 24], [83, 76]].map(([x, y]) => <React.Fragment key={`${x}${y}`}>{m("fc", { left: `${x}%`, top: `${y}%` })}{m("fd", { left: `${x}%`, top: `${y}%` })}</React.Fragment>)}
+        {m("cr l", { left: "6%", top: "50%" })}{m("cr r", { left: "94%", top: "50%" })}
+        {m("net l", { left: "6%", top: "50%" })}{m("net r", { left: "94%", top: "50%" })}
+      </span>
+      <span className="lx-marks p" aria-hidden="true">
+        {m("gl h", { top: "4%" })}{m("gl h", { top: "96%" })}
+        {m("bl h", { top: "33%" })}{m("bl h", { top: "67%" })}{m("rl h", { top: "50%" })}
+        {m("cc", { left: "50%", top: "50%" })}{m("dot", { left: "50%", top: "50%" })}
+        {[[24, 13], [76, 13], [24, 87], [76, 87]].map(([x, y]) => <React.Fragment key={`${x}${y}`}>{m("fc", { left: `${x}%`, top: `${y}%` })}{m("fd", { left: `${x}%`, top: `${y}%` })}</React.Fragment>)}
+        {m("cr t", { left: "50%", top: "4%" })}{m("cr b", { left: "50%", top: "96%" })}
+        {m("net t", { left: "50%", top: "4%" })}{m("net b", { left: "50%", top: "96%" })}
+      </span>
+    </>
+  );
+}
+
+// Gridiron's GAME PLAN strip under the field, for hockey: the team identity, how many dressed
+// skaters suit it, and the plan for the next opponent. Each part opens right here.
+export function PlanStrip({ team, mine }) {
+  const { league, commit, toast, go } = useGame();
+  const [open, setOpen] = useState(null);
+  const style = COACH_STYLES[team.strategy || team.coach?.style] ? team.strategy || team.coach?.style : "balanced";
+  const lines = gameLines(league, team);
+  const dressed = [...lines.F.flat(), ...lines.D.flat()].map((id) => league.players[id]).filter(Boolean);
+  const fits = dressed.filter((p) => schemeFit(p, team) > 0).length;
+  const next = (league.schedule || []).find((g) => !g.played && (g.h === team.id || g.a === team.id));
+  const opp = next ? league.teams[next.h === team.id ? next.a : next.h] : null;
+  const plan = opp ? gamePlan(league, team, opp) : null;
+  const auto = team.autoPlan !== false;
+  const tab = (k, label) => <button type="button" key={k} className={`lx-plan-tab${open === k ? " on" : ""}`} aria-expanded={open === k} onClick={() => setOpen(open === k ? null : k)}>{label} {open === k ? "▴" : "▾"}</button>;
+  const icon = { attack: "⚡", defend: "🛡️", balanced: "⚖️" };
+  return (
+    <div className="lx-planwrap">
+      <div className="lx-plan">
+        <span className="lx-plan-k">📋 GAME PLAN</span>
+        <span>Identity <b>{COACH_STYLES[style].name}</b></span>
+        <span title={`${fits} of ${dressed.length} dressed skaters suit a ${COACH_STYLES[style].name} identity; each gets +0.7 to his game ratings.`}>System fit <b className={fits * 2 >= dressed.length ? "good" : ""}>{fits}/{dressed.length}</b></span>
+        {opp ? <span>vs {opp.abbr} <b>{planWords(plan)}</b> <em>{mine ? (auto ? "coaches' pick" : "your call") : ""}</em></span> : <span className="lx-dim">No game on the schedule</span>}
+        {mine && <span className="lx-plan-tabs">{tab("identity", "Identity")}{opp && tab("plan", "Game plan")}<button type="button" className="lx-plan-tab" onClick={() => go("coaching", "coaching")}>Coaching →</button></span>}
+      </div>
+      {mine && open === "identity" && (
+        <div className="lx-plan-open">
+          {Object.entries(COACH_STYLES).map(([k, v]) => (
+            <button type="button" key={k} className={`lx-style${style === k ? " on" : ""}`} aria-pressed={style === k} onClick={() => { team.strategy = k; commit(); toast(`Team identity: ${v.name}.`); }}>
+              <b>{icon[k]} {v.name}</b><small>{v.desc}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      {mine && open === "plan" && opp && <GamePlanPicker opp={opp} compact />}
+    </div>
+  );
+}
+
+export default function RinkLines({ team, mine, onOpen, strength = "es", top = null }) {
   const { league, commit, toast } = useGame();
-  const [unitKey, setUnitKey] = useState("L1");
   const [pick, setPick] = useState(null);
+  const [unit, setUnit] = useState("L1");
   if (!team.lines) syncLines(league, team);
   const L = team.lines, game = gameLines(league, team);
   const get = (id) => (id ? league.players[id] : null);
-  const units = UNITS(L);
-  const unit = units.find((u) => u.key === unitKey) || units[0];
-  const read = (a) => (a.g === "G" ? L.G[a.i] : L[a.g][a.i][a.j]);
+  const kind = KIND[strength] || "ES";
+  const st = kind !== "ES";
+  // The highlighted unit and the open spot belong to the strength on show.
+  const cur = (st ? unit.startsWith(kind) : /^(L\d|P\d|G)$/.test(unit)) ? unit : st ? `${kind}1` : "L1";
+  const pk = pick && (st ? pick.g === kind : ["F", "D", "G"].includes(pick.g)) ? pick : null;
+  const same = (a, b) => a && b && a.g === b.g && a.i === b.i && (a.j ?? null) === (b.j ?? null);
+
+  const read = (a) => (a.g === "G" ? L.G[a.i] : L[a.g]?.[a.i]?.[a.j]);
   const write = (a, id) => { if (a.g === "G") L.G[a.i] = id; else L[a.g][a.i][a.j] = id; };
-  const findSlot = (pid, grp) => { // where a player currently sits in the same kind of unit
+  const grpOf = (a) => (a.g === "PP" || a.g === "PK" ? a.g : a.g === "G" ? "G" : "ES");
+  const findSlot = (pid, grp) => { // where a player sits now in the same kind of unit
     if (grp === "PP" || grp === "PK") { for (let i = 0; i < L[grp].length; i++) { const j = L[grp][i].indexOf(pid); if (j >= 0) return { g: grp, i, j }; } return null; }
     if (grp === "G") { const i = L.G.indexOf(pid); return i >= 0 ? { g: "G", i } : null; }
     for (const g of ["F", "D"]) for (let i = 0; i < L[g].length; i++) { const j = L[g][i].indexOf(pid); if (j >= 0) return { g, i, j }; }
     return null;
   };
   const candidates = (a) => {
+    const grp = grpOf(a);
+    const pool = grp === "G" ? healthy(league, team).filter((p) => isGoalie(p.pos))
+      : grp === "ES" ? healthy(league, team).filter((p) => !isGoalie(p.pos) && (a.g === "D" ? isDefense(p.pos) : isForward(p.pos)))
+      : [...new Set([...L.F.flat(), ...L.D.flat()])].map(get).filter((p) => p && p.injury <= 0);
     const cur = read(a);
-    const grp = a.g === "PP" || a.g === "PK" ? a.g : a.g === "G" ? "G" : "ES";
-    const pool = grp === "G" ? healthy(league, team).filter((p) => isGoalie(p.pos)) : grp === "ES" ? healthy(league, team).filter((p) => !isGoalie(p.pos) && (a.g === "D" ? isDefense(p.pos) : isForward(p.pos))) : [...new Set([...L.F.flat(), ...L.D.flat()])].map(get).filter((p) => p && p.injury <= 0);
-    return pool.filter((p) => p.id !== cur).map((p) => ({ p, at: findSlot(p.id, grp === "ES" ? "ES" : grp) })).sort((x, y) => y.p.ovr - x.p.ovr);
+    return pool.filter((p) => p.id !== cur).map((p) => ({ p, at: findSlot(p.id, grp) })).sort((x, y) => y.p.ovr - x.p.ovr);
   };
   const place = (a, p) => {
     const cur = read(a);
-    const from = findSlot(p.id, a.g === "PP" || a.g === "PK" ? a.g : a.g === "G" ? "G" : "ES");
+    const from = findSlot(p.id, grpOf(a));
     write(a, p.id);
     if (from) write(from, cur || null);
-    syncLines(league, team); commit(); setPick(null); toast(`${p.name} takes the spot.`);
+    syncLines(league, team); commit(); toast(`${p.name} takes the spot.`);
   };
-  // The badge under a spot is the position; the goalie's role (starter or backup) goes in the name line.
-  const label = (a) => (a.g === "G" ? "G" : a.g === "PP" || a.g === "PK" ? a.g : a.pos);
-  const role = (a) => (a.g === "G" ? (a.i ? "Backup" : "Starter") : label(a));
   const chem = (ids) => { try { const v = lineChemistry(league, team, ids.filter(Boolean)); return Number.isFinite(v) ? v : null; } catch { return null; } };
-  const dressedIds = new Set(lineupIds(L));
-  const scratches = healthy(league, team).filter((p) => !dressedIds.has(p.id)).sort((a, b) => b.ovr - a.ovr);
-  const injured = team.roster.map(get).filter((p) => p && p.injury > 0);
-  const spot = (a, k) => {
-    const id = read(a), p = get(id), out = p && p.injury > 0;
-    const sub = out ? get(a.g === "G" ? game.G[a.i] : a.g === "F" || a.g === "D" ? game[a.g][a.i][a.j] : null) : null;
-    const [x, y] = a.g === "PP" || a.g === "PK" ? stSpots(unit.slots.length, a.g === "PK")[a.j] : SPOT[a.pos];
-    const picking = pick && pick.g === a.g && pick.i === a.i && pick.j === a.j;
-    return (
-      <g key={k} className={`rk-spot${picking ? " on" : ""}${out ? " out" : ""}${mine ? "" : " ro"}`} transform={`translate(${x} ${y})`} onClick={() => mine && setPick(picking ? null : a)} role={mine ? "button" : undefined} tabIndex={mine ? 0 : undefined} aria-label={p ? `${role(a)}: ${p.name}, ${p.ovr}` : `${role(a)}: empty`}>
-        <circle r="19" fill="#0b1220" stroke={out ? "#ef4444" : p ? tone(p.ovr) : "#475569"} strokeWidth={picking ? 4 : 3} />
-        <text y="5" textAnchor="middle" fill="#fff" fontSize="14" fontWeight="900">{p ? p.ovr : "—"}</text>
-        <rect x="-16" y="21" width="32" height="12" rx="4" fill={a.g === "PP" || a.g === "PK" ? "#475569" : POS_COLOR[p?.pos || a.pos] || "#64748b"} />
-        <text y="30" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="900">{a.g === "PP" || a.g === "PK" ? p?.pos || a.pos : label(a)}</text>
-        <text y="45" textAnchor="middle" fill="#0b1220" stroke="#ffffff" strokeWidth="3" paintOrder="stroke" fontSize="11" fontWeight="900">{p ? last(p.name) : "Empty"}</text>
-        {a.g === "G" && !sub && <text y="56" textAnchor="middle" fill="#6b21a8" stroke="#fff" strokeWidth="2.5" paintOrder="stroke" fontSize="9" fontWeight="800">{role(a)}</text>}
-        {sub && <text y="56" textAnchor="middle" fill="#b91c1c" stroke="#fff" strokeWidth="2.5" paintOrder="stroke" fontSize="9" fontWeight="800">{last(sub.name)} in</text>}
-      </g>
-    );
+  const rest = restShare(league, team);
+  const [gStart, gBack] = goalieShare(rest);
+
+  // Unit names, slots and shares.
+  const unitOf = (a) => (a.g === "F" ? `L${a.i + 1}` : a.g === "D" ? `P${a.i + 1}` : a.g === "G" ? "G" : `${a.g}${a.i + 1}`);
+  const unitName = (key) => (key === "G" ? "Goalies" : key[0] === "L" ? `Line ${key.slice(1)}` : key.startsWith("PP") ? `Power play ${key.slice(2)}` : key.startsWith("PK") ? `Penalty kill ${key.slice(2)}` : `Pair ${key.slice(1)}`);
+  const slotsOf = (key) => {
+    if (key === "G") return [{ g: "G", i: 0 }, { g: "G", i: 1 }];
+    const m = /^(L|P|PP|PK)(\d)$/.exec(key); if (!m) return [];
+    const i = Number(m[2]) - 1, g = m[1] === "L" ? "F" : m[1] === "P" ? "D" : m[1];
+    return (L[g]?.[i] || []).map((_, j) => ({ g, i, j }));
   };
-  const rowOf = (u) => {
-    const ids = u.key.startsWith("L") ? L.F[Number(u.key[1]) - 1] : u.key.startsWith("P") && !u.key.startsWith("PP") && !u.key.startsWith("PK") ? L.D[Number(u.key[1]) - 1] : u.key === "G" ? L.G : L[u.key.slice(0, 2)][Number(u.key[2]) - 1];
-    const c = u.key.startsWith("L") ? chem(ids) : null;
-    const tagColor = u.key.startsWith("L") ? "#3b82f6" : u.key === "G" ? "#a855f7" : u.key.startsWith("PP") ? "#f59e0b" : u.key.startsWith("PK") ? "#ef4444" : "#22c55e";
+  const slotName = (a) => (a.g === "F" ? F_POS[a.j] : a.g === "D" ? D_POS[a.j] : a.g === "G" ? (a.i ? "Backup" : "Starter") : get(read(a))?.pos || a.g);
+  const shareOf = (key) => (key === "G" ? gStart : key[0] === "L" ? iceShare("F", Number(key.slice(1)) - 1) : key.startsWith("PP") || key.startsWith("PK") ? iceShare(key.slice(0, 2), Number(key.slice(2)) - 1) : iceShare("D", Number(key.slice(1)) - 1));
+  const choose = (a) => { setUnit(unitOf(a)); setPick(same(pk, a) ? null : a); };
+  // On a phone the list sits under the rink: bring the picker into view when a spot opens.
+  const side = useRef(null);
+  const pickKey = pk ? `${pk.g}${pk.i}${pk.j ?? ""}` : "";
+  useEffect(() => { if (pickKey && typeof window !== "undefined" && window.innerWidth < 700) side.current?.scrollIntoView?.({ block: "start", behavior: "smooth" }); }, [pickKey]);
+  const showUnit = (key) => { setUnit(key); setPick(null); };
+
+  // ---- the rink ----
+  const spots = st
+    ? L[kind].flatMap((u, i) => stSpots(kind, i, u.map((id) => isDefense(get(id)?.pos || ""))))
+    : esSpots(L);
+  const tags = st ? stTags(kind) : esTags(L);
+  const band = st ? stBand(Number(cur.slice(2)) - 1) : esBand(cur);
+  const spot = (s) => {
+    const a = s.g === "G" ? { g: "G", i: s.i } : { g: s.g, i: s.i, j: s.j };
+    const p = get(read(a)), out = !!p && (p.injury > 0 || !!p.ltir), on = !!same(pk, a);
+    const stPos = s.g === "PP" || s.g === "PK";
+    const label = s.g === "G" ? (s.i ? "BACKUP" : "G") : stPos ? p?.pos || "—" : s.pos;
+    const color = POS_COLOR[stPos ? p?.pos : s.pos] || "#64748b";
+    const off = !stPos && s.g !== "G" && offPosition(p, s.pos);
+    const sub = out ? get(s.g === "G" ? game.G[s.i] : s.g === "F" || s.g === "D" ? game[s.g][s.i][s.j] : null) : null;
+    const ln = p ? lastName(p.name) : "Empty";
+    const where = s.g === "G" ? (s.i ? "Backup goalie" : "Starting goalie") : `${unitName(unitOf(a))} ${stPos ? "" : s.pos}`.trim();
+    const title = p ? `${where}: ${p.name}, ${p.pos} ${p.ovr}${off ? ` (a ${p.pos} playing ${s.pos})` : ""}${out ? ` · out ${p.injury > 0 ? `${p.injury}g` : "(LTIR)"}${sub ? `, ${sub.name} plays` : ""}` : ""}` : `${where}: empty`;
     return (
-      <button type="button" key={u.key} className={`rk-row${unit.key === u.key ? " on" : ""}`} onClick={() => { setUnitKey(u.key); setPick(null); }}>
-        <i style={{ background: tagColor }}>{u.key}</i>
-        <span className="rk-names">{ids.map((id, j) => { const p = get(id); return p ? <em key={j} className={p.injury > 0 ? "out" : ""}>{last(p.name)} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b></em> : <em key={j} className="empty">Empty</em>; })}</span>
-        {c != null && <small className={c >= 0.6 ? "good" : c < 0 ? "bad" : ""}>{c >= 0 ? "+" : ""}{c.toFixed(1)} chem</small>}
+      <button type="button" key={s.key} className={`lx-spot${on ? " on" : ""}${out ? " out" : ""}${s.small ? " sm" : ""}${mine ? "" : " ro"}${!p ? " empty" : ""}`} style={{ ...spotVars(s), "--pc": color }} onClick={() => (mine ? choose(a) : p && onOpen?.(p.id))} title={title} aria-label={title} aria-pressed={mine ? on : undefined}>
+        <span className="lx-ring" style={p ? { color: ovrColor(p.ovr) } : undefined}>{p ? p.ovr : "—"}{out && <i className="lx-out" aria-hidden="true">{p.injury > 0 ? `${p.injury}g` : "IR"}</i>}</span>
+        <span className={`lx-chip${off ? " warn" : ""}`} style={{ background: color }}>{label}</span>
+        <span className={`lx-nm${nameSize(ln) ? ` ${nameSize(ln)}` : ""}`}>{ln}</span>
       </button>
     );
   };
-  const cands = pick ? candidates(pick) : [];
+  const tag = (t) => (
+    <button type="button" key={t.key} className={`lx-tag${cur === t.key ? " on" : ""}`} style={{ ...tagVars(t), "--uc": unitColor(t.key) }} onClick={() => showUnit(t.key)} title={`${unitName(t.key)}: ${t.key === "G" ? `the starter gets about ${gStart}% of starts` : `about ${shareOf(t.key)}% of the ${STRENGTH[kind]} ice time`}`}>
+      <b>{t.key}</b><i>{shareOf(t.key)}%</i>
+    </button>
+  );
+
+  // ---- the list at a glance ----
+  const injuredNote = (ids, g, i) => ids.map((id, j) => {
+    const p = get(id); if (!p || !(p.injury > 0 || p.ltir)) return null;
+    const sub = g === "G" ? get(game.G[j]) : g === "F" || g === "D" ? get(game[g][i][j]) : null;
+    return `${lastName(p.name)} out${p.injury > 0 ? ` ${p.injury}g` : ""}${sub ? ` · ${lastName(sub.name)} plays` : ""}`;
+  }).filter(Boolean);
+  const row = (key) => {
+    const slots = slotsOf(key), ids = slots.map(read);
+    const g = slots[0]?.g, i = slots[0]?.i;
+    // Rating and chemistry of who plays tonight (an injured player's fill-in counts), as the sim sees it.
+    const tonight = g === "F" || g === "D" ? game[g][i] || ids : ids;
+    const c = g === "F" ? chem(tonight) : null;
+    const ps = tonight.map(get).filter(Boolean);
+    const avg = ps.length ? Math.round(ps.reduce((s, p) => s + p.ovr, 0) / ps.length) : null;
+    const notes = injuredNote(ids, g, i);
+    const goalies = key === "G";
+    return (
+      <button type="button" key={key} className={`lx-grow${cur === key ? " on" : ""}`} onClick={() => { setUnit(key); setPick(mine ? slots[0] || null : null); }} title={mine ? `Change ${unitName(key).toLowerCase()}` : unitName(key)}>
+        <i className="lx-gtag" style={{ background: unitColor(key) }}>{key}</i>
+        <span className="lx-gbody">
+          <span className="lx-gnames">{slots.map((a, j) => {
+            const p = get(ids[j]);
+            const lab = goalies ? (j ? "BU" : "ST") : g === "F" ? F_POS[j] : g === "D" ? D_POS[j] : p?.pos;
+            return (
+              <span key={j} className={`lx-gp${p && (p.injury > 0 || p.ltir) ? " out" : ""}`}>
+                <em>{lab}</em>{p ? lastName(p.name) : "Empty"} {p && <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>}{goalies && p && <small> {j ? gBack : gStart}%</small>}
+              </span>
+            );
+          })}</span>
+          {(c != null || notes.length > 0 || (!goalies && avg != null)) && (
+            <span className="lx-gsub">
+              {!goalies && avg != null && <span>{g === "F" ? "Line" : g === "D" ? "Pair" : "Unit"} <b style={{ color: ovrColor(avg) }}>{avg}</b></span>}
+              {c != null && <span>Chemistry <b className={c >= 0.6 ? "good" : c < 0 ? "bad" : ""}>{signed(c)}</b></span>}
+              {notes.map((n) => <span key={n} className="bad">{n}</span>)}
+            </span>
+          )}
+        </span>
+        {!goalies && <span className="lx-gshare"><b>{shareOf(key)}%</b><small>{st ? (kind === "PP" ? "of PP" : "of PK") : "TOI"}</small></span>}
+      </button>
+    );
+  };
+  const keys = st ? L[kind].map((_, i) => `${kind}${i + 1}`) : [...L.F.map((_, i) => `L${i + 1}`), ...L.D.map((_, i) => `P${i + 1}`), "G"];
+  const dressedIds = new Set(lineupIds(L));
+  const scratches = healthy(league, team).filter((p) => !dressedIds.has(p.id)).sort((a, b) => b.ovr - a.ovr);
+  const injured = team.roster.map(get).filter((p) => p && (p.injury > 0 || p.ltir)).sort((a, b) => b.injury - a.injury);
+  const gameDiffers = st && JSON.stringify(game[kind]) !== JSON.stringify(L[kind]);
+
+  // ---- the picker (Gridiron's position list) ----
+  const where = (at) => (!at ? "Scratch" : at.g === "F" ? `L${at.i + 1} ${F_POS[at.j]}` : at.g === "D" ? `P${at.i + 1} ${D_POS[at.j]}` : at.g === "G" ? (at.i ? "Backup" : "Starter") : `${at.g}${at.i + 1}`);
+  const picker = () => {
+    const key = unitOf(pk), here = get(read(pk));
+    const list = candidates(pk);
+    const noUnit = pk.g === "PP" || pk.g === "PK" ? "Not on a unit" : "Scratch";
+    return (
+      <>
+        <div className="lx-pick-h"><b>{slotName(pk)}</b><span> · {unitName(key)} · {pk.g === "G" ? `${pk.i ? gBack : gStart}% of starts` : `${shareOf(key)}% of ${STRENGTH[kind]} time`}</span></div>
+        <div className="lx-pick-nav">
+          <button type="button" className="lx-back" onClick={() => setPick(null)}>← All {st ? "units" : "lines"}</button>
+          <span className="lx-slots" role="group" aria-label={`${unitName(key)} spots`}>
+            {slotsOf(key).map((a) => { const p = get(read(a)); return <button type="button" key={`${a.i}${a.j ?? ""}`} className={same(a, pk) ? "on" : ""} aria-pressed={!!same(a, pk)} onClick={() => setPick(a)}><em>{slotName(a) === "Starter" ? "ST" : slotName(a) === "Backup" ? "BU" : slotName(a)}</em>{p ? lastName(p.name) : "Empty"}</button>; })}
+          </span>
+        </div>
+        {pk.g === "G" && (
+          <label className="lx-rest">Starter rests
+            <Select value={Math.round(rest * 100)} onChange={(e) => { team.restPct = Number(e.target.value); team.autoGoalie = team.restPct > 0; commit(); }} aria-label="How often the starter rests">
+              {REST_OPTIONS.map((r) => <option key={r} value={r}>{r === 0 ? "never" : `${r}%`} · ~{Math.round(league.schedule.filter((g) => g.h === team.id || g.a === team.id).length * (1 - r / 100))} starts{r === 20 ? " (typical)" : r >= 40 ? " (1A/1B)" : ""}</option>)}
+            </Select>
+          </label>
+        )}
+        <div className="lx-cands">
+          {here && <div className="lx-cand here"><span className="lx-cwhere on">{where(pk)}</span><span className="lx-face sm"><Headshot p={here} team={team} size={26} decorative /></span><span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(here.id)}>{here.name}</button><small>{here.pos} · Age {here.age}{here.injury > 0 ? <b className="bad"> · out {here.injury}g</b> : ""}</small></span><b className="lx-covr" style={{ color: ovrColor(here.ovr) }}>{here.ovr}</b><span className="lx-here">Here</span></div>}
+          {list.map(({ p, at }) => (
+            <div key={p.id} className="lx-cand">
+              <span className={`lx-cwhere${at ? " on" : ""}`}>{at ? where(at) : noUnit}</span>
+              <span className="lx-face sm"><Headshot p={p} team={team} size={26} decorative /></span>
+              <span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(p.id)}>{p.name}</button><small>{p.pos} · Age {p.age}</small></span>
+              <b className="lx-covr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+              <button type="button" className="lx-start" onClick={() => place(pk, p)}>{at ? "Swap" : "Start"}</button>
+            </div>
+          ))}
+          {!list.length && <div className="lx-dim">Nobody else is available for this spot.</div>}
+        </div>
+      </>
+    );
+  };
+
   return (
-    <div className="rk">
-      <div className="rk-left">
-        <div className="gg-chips rk-units">{units.filter((u) => /^L|^PP|^PK|^G$/.test(u.key)).map((u) => <button key={u.key} className={unit.key === u.key ? "on" : ""} onClick={() => { setUnitKey(u.key); setPick(null); }}>{u.key}</button>)}</div>
-        <svg className="rk-ice" viewBox="0 0 400 214" role="img" aria-label={`${unit.label} on the ice`}>
-          <defs><clipPath id="rk-clip"><rect x="4" y="4" width="392" height="192" rx="44" /></clipPath></defs>
-          <rect x="4" y="4" width="392" height="192" rx="44" fill="#e8f1f8" stroke="#94a3b8" strokeWidth="2" />
-          <g clipPath="url(#rk-clip)">
-            <rect x="198" y="4" width="4" height="192" fill="#dc2626" /><rect x="126" y="4" width="4" height="192" fill="#2563eb" /><rect x="270" y="4" width="4" height="192" fill="#2563eb" />
-            <circle cx="200" cy="100" r="28" fill="none" stroke="#2563eb" strokeWidth="1.5" /><circle cx="200" cy="100" r="2.5" fill="#2563eb" />
-            {[[70, 55], [70, 145], [330, 55], [330, 145]].map(([x, y], i) => <g key={i}><circle cx={x} cy={y} r="24" fill="none" stroke="#dc2626" strokeWidth="1.5" /><circle cx={x} cy={y} r="2" fill="#dc2626" /></g>)}
-            <path d="M28 88 a12 12 0 0 1 0 24 L18 112 L18 88 Z" fill="#bfdbfe" stroke="#2563eb" strokeWidth="1.2" /><rect x="14" y="92" width="4" height="16" fill="#dc2626" /><rect x="18" y="4" width="1.5" height="192" fill="#dc2626" />
-            <path d="M372 88 a12 12 0 0 0 0 24 L382 112 L382 88 Z" fill="#bfdbfe" stroke="#2563eb" strokeWidth="1.2" /><rect x="382" y="92" width="4" height="16" fill="#dc2626" /><rect x="380.5" y="4" width="1.5" height="192" fill="#dc2626" />
-          </g>
-          {unit.slots.map((a, k) => spot(a, k))}
-        </svg>
-        <div className="dim small rk-hint">{mine ? "Tap a spot to change who plays there. Red rings are injured players; the name under them is who dresses tonight." : `Viewing the ${team.name}' ${unit.label.toLowerCase()}.`}</div>
-        {pick && <div className="rk-picker">
-          <div className="gg-k">PUT IN AT {label(pick)} <button className="tiny ghost" style={{ marginLeft: "auto" }} onClick={() => setPick(null)}>Cancel</button></div>
-          <div className="rk-cands">{cands.map(({ p, at }) => <button type="button" key={p.id} className="rk-cand" onClick={() => place(pick, p)}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span>{p.name}<small>{at ? `now ${at.g === "F" ? `L${at.i + 1}` : at.g === "D" ? `P${at.i + 1}` : at.g === "G" ? (at.i ? "backup" : "starter") : `${at.g}${at.i + 1}`}` : "scratch"}</small></span><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b></button>)}{!cands.length && <div className="dim small">Nobody else is available for this spot.</div>}</div>
-        </div>}
+    <div className="lx-rv">
+      <div className="lx-left">
+        {top}
+        <div className={`lx-rink${st ? " st" : " es"}`} role="group" aria-label={st ? `${unitName(`${kind}1`)} and ${unitName(`${kind}2`).toLowerCase()} on the ice` : "The dressed lineup on the ice"}>
+          <Marks />
+          {band && <span className="lx-band" style={{ ...boxVars(band), "--uc": unitColor(cur) }} aria-hidden="true" />}
+          {tags.map(tag)}
+          {spots.map(spot)}
+        </div>
+        <div className="lx-hint">{mine ? `Tap a spot to change who plays there. Red rings are injured players; the list shows who fills in.${st ? " Units are drawn from the dressed skaters." : ""}` : `Viewing the ${team.name}' lines. Tap a player for his card.`}</div>
+        <PlanStrip team={team} mine={mine} />
       </div>
-      <aside className="rk-right">
-        <div className="rk-glance-h"><b>Lines at a glance</b><span className="dim small">Who plays with whom. Tap a line to see it on the ice.</span></div>
-        <div className="rk-glance">
-          {units.filter((u) => /^L/.test(u.key)).map(rowOf)}
-          <div className="rk-sep" />
-          {units.filter((u) => /^P\d/.test(u.key)).map(rowOf)}
-          <div className="rk-sep" />
-          {rowOf(units.find((u) => u.key === "G"))}
-          <div className="rk-sep" />
-          {units.filter((u) => /^PP|^PK/.test(u.key)).map(rowOf)}
-        </div>
-        <div className="rk-bench">
-          <div className="gg-k">SCRATCHES <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {scratches.length} healthy</span></div>
-          <div className="rk-chips">{scratches.map((p) => <button type="button" key={p.id} className="rk-chip" onClick={() => onOpen?.(p.id)}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i>{last(p.name)} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b></button>)}{!scratches.length && <span className="dim small">Nobody is sitting.</span>}</div>
-          {injured.length > 0 && <><div className="gg-k" style={{ marginTop: 10 }}>INJURED <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {injured.length} out</span></div>
-          <div className="rk-chips">{injured.map((p) => <button type="button" key={p.id} className="rk-chip out" onClick={() => onOpen?.(p.id)}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i>{last(p.name)} <b className="bad">{p.injury}g</b></button>)}</div></>}
-        </div>
+      <aside className="lx-glance" ref={side}>
+        {pk ? picker() : (
+          <>
+            <div className="lx-glance-h"><b>{st ? `${kind === "PP" ? "Power play" : "Penalty kill"} at a glance` : "Lines at a glance"}</b><span>Who plays and how much.{mine ? " Tap a line (or a spot on the rink) to change it." : ""}</span></div>
+            <div className="lx-glist">
+              {keys.map((k, n) => <React.Fragment key={k}>{!st && n > 0 && k[0] !== keys[n - 1][0] && <span className="lx-gsep" />}{row(k)}</React.Fragment>)}
+            </div>
+            {gameDiffers && <div className="lx-dim lx-gnote">Tonight's {kind === "PP" ? "power play" : "kill"} is re-picked from the healthy dressed skaters while an injured player holds a lineup spot.</div>}
+            <div className="lx-bench">
+              <div className="lx-k">SCRATCHES <span>· {scratches.length} healthy</span></div>
+              <div className="lx-chips">{scratches.map((p) => <button type="button" key={p.id} className="lx-pchip" onClick={() => onOpen?.(p.id)}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i>{lastName(p.name)} <b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b></button>)}{!scratches.length && <span className="lx-dim">Nobody is sitting.</span>}</div>
+              {injured.length > 0 && <>
+                <div className="lx-k">INJURED <span>· {injured.length} out</span></div>
+                <div className="lx-chips">{injured.map((p) => <button type="button" key={p.id} className="lx-pchip out" onClick={() => onOpen?.(p.id)}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i>{lastName(p.name)} <b className="bad">{p.injury > 0 ? `${p.injury}g` : "LTIR"}</b></button>)}</div>
+              </>}
+            </div>
+          </>
+        )}
       </aside>
     </div>
   );
