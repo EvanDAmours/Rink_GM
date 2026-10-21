@@ -36,7 +36,7 @@ export function MarketTag({ p }) {
   return (
     <span className={`ct-mkt${m.mine ? " mine" : ""}`} title={st?.says || ""}>
       {m.mine ? <>Your offer {money(m.mine.aav)} <span className={lead ? "lead" : "out"}>{st?.standing === "blocked" ? "✕ can't fit" : lead ? "✓ leading" : "▲ outbid"}</span></> : null}
-      {m.mine && m.others ? " · " : ""}{m.others ? `${m.others} other offer${m.others > 1 ? "s" : ""}` : ""}{` · ${m.when}`}
+      {m.mine && m.others ? " · " : ""}{m.others ? `${m.others}${m.mine ? " other" : ""} offer${m.others > 1 ? "s" : ""}` : ""}{` · ${m.when}`}
     </span>
   );
 }

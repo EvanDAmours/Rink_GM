@@ -30,7 +30,7 @@ export function extensionStatus(league, p) {
   if (league.phase === "draft" && p.yrs <= 1) return { ok: false, why: "His deal is up after this season: re-sign him in the re-sign window." };
   if (!lastYear) {
     const left = league.phase === "draft" ? p.yrs - 1 : p.yrs;
-    return { ok: false, why: `Not in his final year: ${left} years left on his deal. Extensions open on July 1 of his last season.` };
+    return { ok: false, why: `Not in his final year: ${left} years left. Extensions open July 1 of his last season.` };
   }
   if (!EXT_PHASES.has(league.phase)) return { ok: false, why: "Extensions open on July 1, when free agency starts." };
   const n = league.negotiations?.[p.id];

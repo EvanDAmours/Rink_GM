@@ -55,7 +55,7 @@ export function decisionDay(lg, p) {
 // "decides today" (at the end of today) or "decides day 4".
 export function decidesText(lg, closes) {
   const end = (closes ?? marketDay(lg) + 1) - 1;
-  return end <= marketDay(lg) ? "decides today" : `decides day ${end}`;
+  return end <= marketDay(lg) ? "decides today" : `decides on day ${end}`;
 }
 
 // How many clubs end up chasing one player: a star draws a handful, a solid regular a few.
