@@ -283,6 +283,37 @@ function ScoutsView() {
 
 // ---------- Scouting Combine ----------
 
+// Find a prospect (the football game's Combine search): any player in this class by name or
+// junior club, with his Central Scouting rank (and how it moved from the midterm) and his
+// combine results, or a note that he wasn't invited.
+function CombineSearch() {
+  const { league } = useGame();
+  const [q, setQ] = useState("");
+  const n = q.trim().toLowerCase();
+  const hits = n.length >= 2 ? (league.draftClass || []).map((id) => league.players[id]).filter((p) => p && `${p.name} ${p.bio?.team || ""}`.toLowerCase().includes(n)).sort((a, b) => csRank(a) - csRank(b)).slice(0, 8) : [];
+  return (
+    <div className="panel rk-csearch">
+      <h3>Find a prospect <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>Central Scouting rank and combine results</span></h3>
+      <input className="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or junior club…" aria-label="Search the draft class" />
+      {n.length >= 2 && !hits.length && <div className="muted small" style={{ marginTop: 6 }}>Nobody in this class matches.</div>}
+      {hits.map((p) => {
+        const mid = p.cs?.mid, fin = p.cs?.final, mv = mid && fin ? mid - fin : 0;
+        return (
+          <div key={p.id} className="rk-csearch-row">
+            <div className="rk-csearch-who">
+              <span className="posbadge">{p.pos}</span><PlayerName p={p} />
+              <span className="muted small">{p.bio?.team}{p.bio?.lg ? ` (${p.bio.lg})` : ""}{p.tid !== -2 ? " · drafted" : ""}</span>
+              {p.combine ? <span className={`grade sm ${gradeClass(p.combine.grade)}`} title="Combine grade">{p.combine.grade}</span> : <span className="pill" title="Not one of the combine invitees">No invite</span>}
+              <b className={`rk-csearch-cs${mv > 0 ? " up" : mv < 0 ? " down" : ""}`} title="Central Scouting: midterm → final">{mid && fin ? `CS #${mid} → #${fin}${mv > 0 ? ` ▲${mv}` : mv < 0 ? ` ▼${-mv}` : " ="}` : `CS #${csRank(p)}`}</b>
+            </div>
+            {p.combine && <div className="rk-csearch-tests">{COMBINE_TESTS.map((t) => <span key={t.k} className={p.combine.pcts[t.k] >= 0.9 ? "top" : ""} title={`${t.name}${t.unit ? ` (${t.unit})` : ""}: ${Math.round(p.combine.pcts[t.k] * 100)}th percentile`}>{t.short} <b>{p.combine.tests[t.k].toFixed(t.dp)}</b></span>)}{p.scout?.intv && <span title={p.scout.intv.note}>Interview <b className={`grade sm ${gradeClass(p.scout.intv.grade)}`}>{p.scout.intv.grade}</b></span>}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CombineView() {
   const { league, commit, toast } = useGame();
   const d = league.draft;
@@ -298,6 +329,7 @@ function CombineView() {
   };
   return (
     <div className="stack">
+      <CombineSearch />
       <div className="dgrid">
         <div className="panel">
           <h3>Results <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>{COMBINE_INVITES} invited · final Central Scouting order</span></h3>

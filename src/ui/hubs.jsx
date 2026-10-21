@@ -15,7 +15,6 @@ import LeaguePage from "./LeaguePage.jsx";
 import DevelopmentPage from "./DevelopmentPage.jsx";
 import PipelinePage from "./PipelinePage.jsx";
 import CapOverview, { CapGuide } from "./CapOverview.jsx";
-import TrophyRoom from "./TrophyRoom.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
@@ -94,11 +93,12 @@ export function TradeHub({ sub, onSub, seed }) {
 
 export function LeagueHub({ sub, onSub, act }) {
   const { league } = useGame();
-  const tabs = [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["legacy", "Legacy Hall"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]];
+  // The Legacy Hall is its own tab in the bar (as in the football game).
+  const tabs = [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]];
   const badges = { playoffs: league.phase === "playoffs" ? "ON" : null };
   return (
     <Hub title="League" status={`${league.year}-${String(league.year + 1).slice(2)} · 32 clubs`} tabs={tabs} sub={sub} onSub={onSub} badges={badges}>
-      {(cur) => (cur === "standings" ? <StandingsPage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : cur === "legacy" ? <TrophyRoom /> : cur === "records" ? <RecordBookPage /> : <LeaguePage view={cur} />)}
+      {(cur) => (cur === "standings" ? <StandingsPage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : cur === "records" ? <RecordBookPage /> : <LeaguePage view={cur} />)}
     </Hub>
   );
 }

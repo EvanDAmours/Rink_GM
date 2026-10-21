@@ -1,0 +1,83 @@
+/* The main menu and team picker (Gridiron 1.94). Measured from the football game's title: a dark
+   radial background, a 15px green kicker with 8px tracking over a 72px silver wordmark, 280px
+   buttons, pill options and a small byline. */
+.rkt { min-height: var(--vh, 100vh); color: #e0e6f0; font-family: var(--gg-f, "Segoe UI", system-ui, sans-serif); box-sizing: border-box; }
+.rkt button { font-family: inherit; min-height: 0; letter-spacing: 0; }
+
+/* ---------- Menu ---------- */
+.rkt-menu { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 16px; background: radial-gradient(ellipse at 50% 30%, #1b2640, #080c14 70%); }
+.rkt-cup { position: absolute; top: 18px; right: 36px; pointer-events: none; }
+.rkt .rkt-cup-img { display: block; height: 230px !important; width: auto; filter: drop-shadow(0 6px 10px #0009); }
+.rkt-main { text-align: center; width: 100%; max-width: 420px; position: relative; z-index: 1; }
+.rkt-kicker { font-size: 15px; letter-spacing: 8px; text-transform: uppercase; color: #22c55e; font-weight: 700; padding-left: 8px; }
+.rkt-gm { font-size: 72px; font-weight: 900; margin: 0; line-height: 1.05; letter-spacing: 0; background: linear-gradient(to bottom, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; font-family: inherit; }
+.rkt-tagline { font-size: 12px; color: #64748b; letter-spacing: 2px; margin-bottom: 14px; }
+.rkt .rkt-btn { display: block; width: 100%; max-width: 280px; margin: 10px auto 0; border-radius: 8px; font-weight: 800; cursor: pointer; text-align: center; box-sizing: border-box; transition: filter .12s, transform .05s; }
+.rkt .rkt-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.rkt .rkt-btn:active:not(:disabled) { transform: translateY(1px); }
+.rkt .rkt-new { background: #22c55e; border: none; color: #fff; padding: 13px 0; font-size: 16px; }
+.rkt .rkt-new:hover:not(:disabled) { background: #22c55e; border: none; }
+.rkt .rkt-import { background: #1e3a5f; color: #e0f2fe; border: 1px solid #3b82f6; padding: 12px 0; font-size: 15px; }
+.rkt .rkt-import input { display: none; }
+.rkt .rkt-continue { background: #7c3aed; border: none; color: #e9d5ff; padding: 11px 14px; font-size: 13px; text-transform: uppercase; margin-top: 14px; line-height: 1.35; }
+.rkt .rkt-continue:hover:not(:disabled) { background: #7c3aed; border: none; }
+.rkt .rkt-continue span { font-weight: 700; white-space: nowrap; }
+.rkt .rkt-continue.cloud { background: #4c1d95; margin-top: 10px; }
+.rkt-err { margin: 12px auto 0; max-width: 420px; background: #7f1d1d55; border: 1px solid #ef4444; color: #fecaca; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.rkt-opts { margin: 14px -90px 0; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.rkt-opts + .rkt-opts { margin-top: 8px; }
+.rkt .rkt-pill { border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.rkt .rkt-pill.on { background: #14532d33; color: #86efac; border: 1px solid #166534; }
+.rkt .rkt-pill.off { background: #1e293b; color: #94a3b8; border: 1px solid #1e293b; }
+.rkt .rkt-pill:hover:not(:disabled) { filter: brightness(1.15); }
+.rkt-seg { display: inline-flex; align-items: stretch; border: 1px solid #1e293b; border-radius: 8px; overflow: hidden; max-width: 100%; }
+.rkt .rkt-seg button { background: transparent; color: #64748b; border: none; border-radius: 0; padding: 7px 10px; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.rkt .rkt-seg button:hover:not(:disabled) { background: #1e293b88; color: #cbd5e1; border: none; }
+.rkt .rkt-seg button.on { background: #1e3a5f; color: #7dd3fc; }
+.rkt-seg-k { display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 700; color: #475569; border-right: 1px solid #1e293b; }
+.rkt-note { margin-top: 10px; font-size: 12px; color: #94a3b8; }
+.rkt-byline { margin-top: 18px; font-size: 11px; color: #475569; letter-spacing: 1px; }
+
+/* ---------- Choose Your Team ---------- */
+.rkt-pick { background: #080c14; padding: 24px; }
+.rkt-pick-bar { max-width: 900px; margin: 0 auto; }
+.rkt .rkt-back { background: transparent; border: 1px solid #1e293b; color: #94a3b8; border-radius: 8px; padding: 5px 12px; font-size: 13px; font-weight: 700; }
+.rkt .rkt-back:hover:not(:disabled) { background: #1e293b; color: #e0e6f0; border-color: #334155; }
+.rkt-pick h2 { text-align: center; font-size: 20px; font-weight: 800; margin: 0 0 8px; font-family: inherit; color: #e0e6f0; letter-spacing: 0; }
+.rkt-modes { display: flex; gap: 6px; justify-content: center; margin: 8px 0 14px; flex-wrap: wrap; }
+.rkt .rkt-modes button { cursor: pointer; padding: 6px 10px; border-radius: 4px; border: 1px solid #334155; background: #0d1424; min-width: 200px; text-align: left; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px; }
+.rkt .rkt-modes button b { font-size: 13px; font-weight: 700; color: #94a3b8; }
+.rkt .rkt-modes button small { font-size: 11px; color: #64748b; font-weight: 400; }
+.rkt .rkt-modes button.on { border-color: #38bdf8; background: #38bdf822; }
+.rkt .rkt-modes button.on b { color: #38bdf8; }
+.rkt .rkt-modes button:hover:not(:disabled) { border-color: #38bdf8; background: #38bdf811; }
+.rkt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; max-width: 900px; margin: 0 auto; }
+.rkt .rkt-team { background: linear-gradient(135deg, color-mix(in srgb, var(--c) 80%, transparent), var(--c)); border: 2px solid color-mix(in srgb, var(--a) 20%, transparent); border-radius: 8px; padding: 10px 8px; cursor: pointer; text-align: left; color: #fff; display: flex; align-items: center; justify-content: flex-start; gap: 10px; min-height: 0; }
+.rkt .rkt-team:hover:not(:disabled) { background: linear-gradient(135deg, color-mix(in srgb, var(--c) 80%, transparent), var(--c)); filter: brightness(1.15); border-color: color-mix(in srgb, var(--a) 55%, transparent); }
+.rkt .rkt-team:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.rkt-team-logo { display: inline-flex; flex-shrink: 0; filter: drop-shadow(0 0 6px #ffffff40) drop-shadow(0 2px 4px #0008); }
+.rkt-team-logo .teambadge { background: none; }
+.rkt-team-text { display: flex; flex-direction: column; min-width: 0; }
+.rkt-team-city { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; opacity: .7; font-weight: 400; }
+.rkt-team-name { font-size: 14px; font-weight: 800; line-height: 1.2; }
+.rkt-team-div { font-size: 11px; color: #ffffffbf; font-weight: 700; margin-top: 2px; }
+.rkt-legal { max-width: 900px; margin: 16px auto 0; font-size: 11px; color: #475569; line-height: 1.5; text-align: center; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  .rkt-menu { align-items: flex-start; }
+  .rkt-cup { top: 6px; right: 8px; }
+  .rkt .rkt-cup-img { height: 150px !important; }
+  .rkt-main { margin-top: 140px; }
+  .rkt-opts { margin-left: 0; margin-right: 0; }
+  .rkt-seg { flex-wrap: wrap; }
+  .rkt .rkt-seg button { padding: 7px 9px; }
+  .rkt-pick { padding: 16px 12px; }
+  .rkt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rkt .rkt-team { padding: 8px 7px; gap: 7px; }
+  .rkt-team-logo .teambadge { width: 38px !important; height: 38px !important; }
+  .rkt-team-logo .teambadge img { width: 38px; height: 38px; }
+  .rkt-team-city { letter-spacing: 1px; font-size: 10px; }
+  .rkt-team-name { font-size: 13px; }
+  .rkt .rkt-modes button { min-width: 0; flex: 1 1 140px; }
+}

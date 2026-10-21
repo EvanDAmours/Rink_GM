@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useCallUp } from "./CallUpFlow.jsx";
 import { useGame, Modal, TeamBadge, money, pct, signed } from "./common.jsx";
 import Headshot from "./Headshot.jsx";
 import { SKATER_ATTRS, GOALIE_ATTRS } from "../engine/ratings.js";
@@ -16,6 +17,7 @@ import { agentPreferences } from "../engine/negotiations.js";
 import { SKATER_SKILLS, GOALIE_SKILLS, fmtHeight, COMBINE_TESTS } from "../engine/scouting.js";
 import { POS_COLOR } from "./TradePage.jsx";
 import AbilityChip from "./AbilityChip.jsx";
+import { injuryReturn } from "../engine/injuryReport.js";
 
 // The player card, laid out like the football game's: hero with the face, number and an
 // OVR ring; tags; three quick tiles; attribute bars on the left, the season, scouting
@@ -50,6 +52,7 @@ function CareerChart({ points }) {
 
 export default function PlayerCard({ p }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
+  const callUpFlow = useCallUp();
   const [allAttrs, setAllAttrs] = useState(false);
   const [seasons, setSeasons] = useState("all");
   const team = league.teams[p.tid];
@@ -74,6 +77,8 @@ export default function PlayerCard({ p }) {
   const s = p.stats, ps = p.pstats;
   const tiles = (st) => goalie ? [["GP", st.gp], ["W", st.w], ["L", st.l], ["SV%", st.sa ? pct(savePct(st)) : "—"], ["GAA", st.gp ? gaa(st).toFixed(2) : "—"], ["SO", st.so]] : [["GP", st.gp], ["G", st.g], ["A", st.a], ["PTS", st.pts], ["+/-", signed(st.pm)], ["PIM", st.pim]];
   const farmLine = watch?.farm ? watch.line : null;
+  // When he's back, from the schedule and the bracket ("out 3 games", "back for game 5", "out for the series").
+  const injury = injuryReturn(league, p);
   return (
     <Modal title={p.name} onClose={closeModal} bare className="gg-pc-modal">
       <div className="gg-pc">
@@ -92,7 +97,7 @@ export default function PlayerCard({ p }) {
           <AbilityChip p={p} full />
           {p.rookie && <span className="gg-pc-tag rookie">Rookie</span>}
           {p.ratingData && <span className="gg-pc-tag ea">EA {String(p.ratingData.edition).replace(/^NHL\s*/, "NHL ")}</span>}
-          {p.injury > 0 && <span className="gg-pc-tag inj">🚑 {p.injuryNote || "Injured"} · {p.injury}g</span>}
+          {injury && <span className="gg-pc-tag inj" title={injury.when}>🚑 {p.injuryNote || "Injured"} · {injury.list ? `${injury.list} · ` : ""}{injury.text}</span>}
           {p.clause?.type && <span className="gg-pc-tag">{p.clause.type}</span>}
         </div>
         <div className="gg-pc-tiles">
@@ -151,7 +156,7 @@ export default function PlayerCard({ p }) {
             <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? buyoutSummary(p, capYear(league)) : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
             <button onClick={() => proposeTradeFor(p.id, p.tid)}>Put in a trade</button>
           </>}
-          {mine && inMinors && <button onClick={() => { if (!hasRoomFor(league, team)) return toast("Roster is full."); if (!callUp(league, team, p.id)) return toast("Recall blocked by contract, cap or assignment rules."); commit(); closeModal(); }}>Call up</button>}
+          {mine && inMinors && <button onClick={() => callUpFlow.start(p)}>Call up</button>}{callUpFlow.element}
           {!mine && p.tid >= 0 && <button className="primary" onClick={() => proposeTradeFor(p.id)}>Trade for {p.name.split(" ").slice(-1)[0]}</button>}
           {p.tid === -1 && <button className="primary" onClick={() => { closeModal(); go("freeagency"); }}>Go to free agency</button>}
           {team && <button className="ghost" onClick={() => openTeam(team.id)}>{team.abbr} roster</button>}

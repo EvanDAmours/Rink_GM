@@ -50,12 +50,22 @@ export function TeamName({ tid, short = false }) {
 
 export const money = fmtMoney;
 
-export function Modal({ title, onClose, children, head, bare = false, className = "" }) {
+// On phones (760px and narrower) a dialog is a bottom sheet that slides up; drag its grip or
+// header down to close it (sheet={false} keeps it a centred dialog, as search does).
+export function Modal({ title, onClose, children, head, bare = false, className = "", sheet = true }) {
   const ref=useRef(null),id=useId();useDialogFocus(ref,onClose);
+  const drag=useRef(null);
+  const grip=sheet?{
+    onTouchStart:(e)=>{drag.current={y:e.touches[0].clientY,dy:0};},
+    onTouchMove:(e)=>{const d=drag.current;if(!d)return;d.dy=Math.max(0,e.touches[0].clientY-d.y);if(ref.current)ref.current.style.transform=d.dy?`translateY(${d.dy}px)`:"";},
+    onTouchEnd:()=>{const d=drag.current;drag.current=null;if(ref.current)ref.current.style.transform="";if(d && d.dy>70)onClose();},
+  }:{};
   return (
-    <div className="modalbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className={`modal ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}>
-        {bare ? <><span id={id} className="sr-only">{title}</span><button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button></> : <div className="mhead">
+    <div className={`modalbg${sheet?" rk-sheetbg":""}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={ref} className={`modal${sheet?" rk-sheet":""} ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}>
+        {/* the grip (phones only) carries a bare dialog's close button, so it stays at the top of the sheet */}
+        {sheet && <div className="rk-grip" {...grip}><span aria-hidden="true"/>{bare && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</div>}
+        {bare ? <><span id={id} className="sr-only">{title}</span>{!sheet && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</> : <div className="mhead" {...grip}>
           {head}
           <div id={id} className="modal-title">{title}</div>
           <button className="close ghost" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>

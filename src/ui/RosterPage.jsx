@@ -1,4 +1,5 @@
 import {buyoutSummary} from '../engine/capAccounting.js';
+import { useCallUp } from "./CallUpFlow.jsx";
 import Select from "./Select.jsx";
 import {automaticallyHandleRoster,automaticRosterPlan} from "../engine/autoRoster.js";
 import React, { useState } from "react";
@@ -25,10 +26,32 @@ function lineSlots(team) {
   (L.G || []).forEach((id, i) => { if (id && !m[id]) m[id] = { rank: 40 + i, label: i === 0 ? "Starter" : "Backup", top: i === 0 }; });
   return m;
 }
+// Status badges beside a name (the football game's roster badges), so the whole roster reads
+// at a glance: hurt (IR or out), LTIR, on waivers, a trade request, the last year of his deal
+// (or an extension signed), a rookie, and a development focus slot.
+export function rosterBadges(league, team, p) {
+  const b = [];
+  if (p.ltir) b.push(["rb-ltir", "LTIR", `Long-term injured reserve${p.injury > 0 ? `: out ${p.injury} more game${p.injury === 1 ? "" : "s"}` : ""}. His cap hit comes off the cap while he's out.`]);
+  else if (p.injury > 0) b.push(["rb-inj", onIR(p) ? `IR ${p.injury}` : `OUT ${p.injury}`, `${p.injuryNote ? p.injuryNote[0].toUpperCase() + p.injuryNote.slice(1) : "Injured"}: out ${p.injury} game${p.injury === 1 ? "" : "s"}${onIR(p) ? ", on injured reserve (doesn't count against the 23)" : ""}.`]);
+  if (p.waiverPending) b.push(["rb-wv", "WAIVERS", "On waivers: any club can claim him until the window closes."]);
+  if (p.wantsTrade) b.push(["rb-tr", "TRADE REQ", "Has asked for a trade. Talk him down or shop him from Home."]);
+  if (p.extension) b.push(["rb-ext", "EXTENDED", `Extended: ${p.extension.yrs} more year${p.extension.yrs === 1 ? "" : "s"} at ${money(p.extension.aav)} from next season.`]);
+  else if (p.signed !== false && p.yrs <= 1 && team?.roster.includes(p.id)) b.push(["rb-exp", p.yrs === 0 ? "EXPIRED" : "EXPIRING", p.yrs === 0 ? "His contract is up: re-sign him or he reaches free agency." : "Contract year: the last season of his deal."]);
+  if (p.rookie) b.push(["rb-rook", "ROOKIE", "First NHL season: Calder-eligible."]);
+  if (team?.training?.assignments?.[p.id]) b.push(["rb-dev", "FOCUS", "Development focus: banks training work each week."]);
+  return b;
+}
+function RosterBadges({ p, team }) {
+  const { league } = useGame();
+  const b = rosterBadges(league, team, p);
+  if (!b.length) return null;
+  return <span className="rk-rbadges">{b.map(([k, l, tip]) => <span key={k} className={`rk-rb ${k}`} title={tip}>{l}</span>)}</span>;
+}
 const lineRank = (slots, p) => slots[p.id]?.rank ?? 100 + (p.injury > 0 || p.ltir ? 50 : 0) + (99 - p.ovr) / 100;
 
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
+  const callUpFlow = useCallUp();
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
   const [view, setView] = useState(league.phase === "preseason" && !(user.camp?.year === league.year && user.camp.games.length >= 4) ? "camp" : "roster");
@@ -56,24 +79,18 @@ export default function RosterPage() {
     releasePlayer(league, user, p.id);
     commit();
   };
-  const doCallUp = (p) => {
-    if (!hasRoomFor(league, user)) return toast(`Roster is full (${MAX_ROSTER} active). Send someone down first.`);
-    if(!callUp(league,user,p.id))return toast("Recall blocked by cap, eligibility or contract limits.");
-    commit();
-  };
+  const doCallUp = (p) => callUpFlow.start(p);
 
   // Name, X-Factor tag and a trade-request badge, so the whole roster reads at a glance.
   const nameCell = (p) => (
     <div className="player-cell">
       <span className="roster-sweater"><Headshot team={user} p={p} size={38} decorative /></span>
       <div>
-        <PlayerName p={p} /><AbilityChip p={p} />
-        {p.wantsTrade && <span className="gg-ro-badge" title="Has asked for a trade">🔁</span>}
+        <PlayerName p={p} showInj={false} /><AbilityChip p={p} /><RosterBadges p={p} team={user} />
         <span className="player-detail">{p.pos} · {p.age} years{p.rookie ? " · Rookie" : ""}</span>
       </div>
     </div>
   );
-  const statusCol = { key: "st", label: "", render: (p) => (p.ltir ? <span className="inj">LTIR</span> : p.injury > 0 ? <span className="inj">INJ {p.injury}</span> : p.rookie ? <span className="pill">R</span> : null) };
   const lineCol = { key: "line", label: "Line", title: "Where he plays on your line chart", render: (p) => { const s = slots[p.id]; const hurt = p.injury > 0 || p.ltir; return <span className={`gg-ro-line${hurt ? " out" : s?.top ? " top" : !s ? " off" : ""}`} title={hurt && s ? "Injured: someone else dresses in his spot" : undefined}>{s?.label || (hurt ? "Out" : "Scratch")}</span>; }, sort: (p) => lineRank(slots, p) };
   const base = [
     { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
@@ -118,6 +135,7 @@ export default function RosterPage() {
 
   return (
     <div className="stack gg-roster">
+      {callUpFlow.element}
       <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
         <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
@@ -138,13 +156,13 @@ export default function RosterPage() {
         {[["roster", `NHL Roster (${c.active}/${MAX_ROSTER})`], ["minors", `Minors & Prospects (${minors.length})`], ["injured", `Injured & LTIR (${injured.length})`], ["contracts", "Contracts"], ...(league.phase === "preseason" ? [["camp", "🏕️ Training Camp"]] : [])].map(([k, l]) => <button key={k} role="tab" aria-selected={shown === k} className={shown === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
       </div>
 
-      {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor ability · 🔁 asked for a trade</span></div>}
+      {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small rk-rlegend">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor · <span className="rk-rb rb-inj">OUT</span> injured · <span className="rk-rb rb-ltir">LTIR</span> · <span className="rk-rb rb-wv">WAIVERS</span> · <span className="rk-rb rb-tr">TRADE REQ</span> · <span className="rk-rb rb-exp">EXPIRING</span> · <span className="rk-rb rb-rook">ROOKIE</span></span></div>}
       {shown === "camp" && <TrainingCamp />}
       {shown === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
             <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>LINE ORDER · CONTRACT · SEASON</em></div>
-            <Table columns={[...base, statusCol, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} />
+            <Table columns={[...base, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} />
           </div>
         ))}
 
