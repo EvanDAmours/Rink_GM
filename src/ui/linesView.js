@@ -2,17 +2,20 @@
 // where every spot sits on the rink, how much ice each line gets, and names that fit under a
 // spot. No React here, so the tests can check the layout without a browser.
 import { isDefense, isGoalie } from "../engine/constants.js";
+import { DEFAULT_SHARES, iceShares } from "../engine/situations.js";
 
 // ---- Ice time ------------------------------------------------------------------------------
-// The bench's even-strength rotation (sim.js F_SHARE / D_SHARE; tests keep these in step), the
-// power-play split (PP1 takes 65 of every 115 seconds while it's fresh) and the penalty kill's
-// even rotation every 38 seconds.
-export const ES_SHARE = { F: [0.32, 0.28, 0.23, 0.17], D: [0.39, 0.34, 0.27] };
+// The bench's even-strength rotation comes from the engine (situations.js: the club's sliders,
+// or its identity's defaults; sim.js keeps the same default), the power-play split (PP1 takes 65
+// of every 115 seconds while it's fresh) and the penalty kill's even rotation every 38 seconds.
+export const ES_SHARE = { F: DEFAULT_SHARES.F.map((v) => v / 100), D: DEFAULT_SHARES.D.map((v) => v / 100) };
 export const PP_SHARE = [65 / 115, 50 / 115];
 export const PK_SHARE = [0.5, 0.5];
 
-// Share of ice time (whole percent) a unit gets: kind "F" | "D" | "PP" | "PK", index i.
-export function iceShare(kind, i) {
+// Share of ice time (whole percent) a unit gets: kind "F" | "D" | "PP" | "PK", index i. With a
+// team, the even-strength shares are that club's own.
+export function iceShare(kind, i, team) {
+  if (team && (kind === "F" || kind === "D")) { const v = iceShares(team)[kind][i]; return v ?? 0; }
   const list = kind === "PP" ? PP_SHARE : kind === "PK" ? PK_SHARE : ES_SHARE[kind];
   return list && list[i] != null ? Math.round(list[i] * 100) : 0;
 }

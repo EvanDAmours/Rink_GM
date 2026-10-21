@@ -11,6 +11,8 @@ import RinkLines, { unitColor } from "./RinkLines.jsx";
 import { DevChip } from "./scoutingBits.jsx";
 import AbilityChip from "./AbilityChip.jsx";
 import { iceShare, goalieShare, listName, lastName, firstName, offPosition } from "./linesView.js";
+import { slotRating, slotRole, roleFit, ROLES, lineRoles, LINE_ROLES, PAIR_ROLES } from "../engine/roles.js";
+import { IdentityPanel, IceTimeSliders, SpotPreview, SituationsPanel } from "./LinesTactics.jsx";
 import "./lines.css";
 
 // The lines, laid out like the football game's depth chart: a quiet LINES header with the
@@ -27,7 +29,7 @@ const sameLines = (a, b) => !!a && !!b && JSON.stringify([a.F, a.D, a.G]) === JS
 const devTrait = (p) => (p && p.age <= 25 && p.dev && p.dev !== "normal" ? p.dev : null);
 const Dev = ({ p }) => { const d = devTrait(p); return d ? <em className="lx-dev"><DevChip dev={d} /></em> : null; };
 const signed = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
-const STRENGTHS = [["es", "Even strength"], ["pp", "Power play"], ["pk", "Penalty kill"]];
+const STRENGTHS = [["es", "Even strength"], ["pp", "Power play"], ["pk", "Penalty kill"], ["sit", "Situations"]];
 
 export default function LinesPage({ onRoster }) {
   const { league, commit, openPlayer, toast } = useGame();
@@ -66,6 +68,8 @@ export default function LinesPage({ onRoster }) {
     setSel(null); syncLines(league, team); commit();
   };
 
+  const selKind = sel ? kind(sel) : null;
+  const selPlayer = sel ? get(read(sel)) : null;
   // One player row in a unit card: slot chip, face, full name (first initial if it's long),
   // position and age with the dev and X-Factor chips, and the rating.
   const row = (a, slot) => {
@@ -77,6 +81,13 @@ export default function LinesPage({ onRoster }) {
     const st = a.g === "PP" || a.g === "PK";
     const chip = st ? p?.pos || "—" : slot;
     const nm = p ? listName(p.name) : "";
+    // Role fit (roles.js): the role this spot asks for and how well he fits it. ES spots show his
+    // slot rating; with a player selected, each target spot previews what he would rate there.
+    const es = a.g === "F" || a.g === "D";
+    const rk = slotRole(team, a.g, a.i, a.j, p);
+    const fit = p && rk ? roleFit(p, rk, es ? slot : null) : null;
+    const shown = p ? (es ? slotRating(p, slot) : p.ovr) : null;
+    const proj = target && selPlayer && es && !isGoalie(selPlayer.pos) ? slotRating(selPlayer, slot) : null;
     const ln = p ? lastName(nm) : "Empty", fn = p ? firstName(nm) : "";
     return (
       <button type="button" key={`${a.g}${a.i}${a.j ?? ""}`} className={`lx-row${isSel ? " sel" : ""}${target ? " target" : ""}${out ? " out" : ""}${mine ? "" : " ro"}${!p ? " empty" : ""}`} onClick={() => act(a)} aria-pressed={mine ? !!isSel : undefined} title={p ? `${p.name} · ${p.pos} · ${p.ovr} OVR${off ? ` · playing ${slot}` : ""}` : "Empty slot"}>
@@ -84,16 +95,23 @@ export default function LinesPage({ onRoster }) {
         <span className="lx-face">{p && <Headshot p={p} team={team} size={30} decorative />}</span>
         <span className="lx-who">
           <span className="lx-nmrow">{fn && <span className="lx-fn">{fn}&nbsp;</span>}<span className="lx-ln">{ln}</span></span>
-          <span className="lx-meta">{out ? <b className="bad">{p.injury > 0 ? `Out ${p.injury}g` : "LTIR"}{sub ? ` · ${lastName(sub.name)} plays` : ""}</b> : p ? <span>{p.pos}{off ? ` at ${slot}` : ""} · {p.age}</span> : <span>Tap to fill</span>}<Dev p={p} /><AbilityChip p={p} /></span>
+          <span className="lx-meta">{out ? <b className="bad">{p.injury > 0 ? `Out ${p.injury}g` : "LTIR"}{sub ? ` · ${lastName(sub.name)} plays` : ""}</b> : p ? <span>{p.pos}{off ? ` at ${slot}` : ""} · {p.age}</span> : <span>Tap to fill</span>}{fit != null && !out && <span className="lx-fit" title={`${ROLES[rk].name}: ${ROLES[rk].wants} His fit: ${fit}.`}>{ROLES[rk].name} <b style={{ color: ovrColor(fit) }}>{fit}</b></span>}<Dev p={p} /><AbilityChip p={p} /></span>
         </span>
-        {p && <b className="lx-ovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>}
+        {proj != null && <span className="lx-proj" title={`${selPlayer.name} would rate ${proj} here`}>→ <b style={{ color: ovrColor(proj) }}>{proj}</b></span>}
+        {p && <b className="lx-ovr" style={{ color: ovrColor(shown) }} title={shown !== p.ovr ? `${p.ovr} OVR, ${shown} at ${slot}` : undefined}>{shown}{shown !== p.ovr && <small className="lx-was">{p.ovr}</small>}</b>}
       </button>
     );
   };
   const chem = (ids) => { try { const v = lineChemistry(league, team, ids.filter(Boolean)); return Number.isFinite(v) ? v : null; } catch { return null; } };
-  const card = (key, title, meta, rows, extra) => (
+  const roles = lineRoles(team);
+  const roleSel = (g, i) => {
+    const table = g === "F" ? LINE_ROLES : PAIR_ROLES, cur = roles[g][i];
+    if (!mine) return <span className="lx-role">{table[cur].name}</span>;
+    return <Select className="lx-role" value={cur} aria-label={`${g === "F" ? "Line" : "Pair"} ${i + 1} role`} onChange={(e) => { team.lineRoles = { ...roles, [g]: roles[g].map((r, k) => (k === i ? e.target.value : r)) }; commit(); }}>{Object.entries(table).map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</Select>;
+  };
+  const card = (key, title, meta, rows, extra, role) => (
     <section key={key} className="lx-card">
-      <div className="lx-card-h"><i className="lx-gtag" style={{ background: unitColor(key) }}>{key}</i><b>{title}</b><span className="lx-card-m">{meta}</span></div>
+      <div className="lx-card-h"><i className="lx-gtag" style={{ background: unitColor(key) }}>{key}</i><b>{title}</b>{role}<span className="lx-card-m">{meta}</span></div>
       <div className="lx-rows">{rows}</div>
       {extra}
     </section>
@@ -106,8 +124,6 @@ export default function LinesPage({ onRoster }) {
   const injured = roster.filter((p) => p.injury > 0 || p.ltir).sort((a, b) => b.injury - a.injury);
   const scratches = healthy(league, team).filter((p) => !inLineup.has(p.id)).sort((a, b) => b.ovr - a.ovr);
   const stBench = (k) => [...dressedIds].map(get).filter((p) => p && p.injury <= 0 && !L[k].flat().includes(p.id)).sort((a, b) => b.ovr - a.ovr);
-  const selKind = sel ? kind(sel) : null;
-  const selPlayer = sel ? get(read(sel)) : null;
   const scratchRow = (p, k) => {
     const a = { g: "X", id: p.id, k }; const hot = mine && sel && sel.g !== "X" && selKind === k; const nm = listName(p.name);
     return (
@@ -169,20 +185,22 @@ export default function LinesPage({ onRoster }) {
         </div>
       </div>
 
-      {view === "rink" && <RinkLines key={viewTid} team={team} mine={mine} onOpen={openPlayer} strength={strength} top={ratings} />}
+      {view === "rink" && strength !== "sit" && <RinkLines key={viewTid} team={team} mine={mine} onOpen={openPlayer} strength={strength} top={ratings} />}
+      {view === "rink" && strength === "sit" && <div className="lx-list">{ratings}<div className="lx-sec"><div className="lx-sec-h">SITUATIONS <small>units the coach uses in those moments; drawn from the dressed skaters</small></div><SituationsPanel team={team} mine={mine} /></div></div>}
       {view === "list" && (
         <div className="lx-list">
           {ratings}
+          {mine && selPlayer && (selKind === "ES") && <SpotPreview p={selPlayer} team={team} mine={mine} onMoved={() => setSel(null)} />}
           <div className="lx-sec">
             <div className="lx-sec-h">FORWARDS <small>line rating, chemistry and share of even-strength ice time on each card</small></div>
             <div className="lx-cards">
-              {L.F.map((line, i) => card(`L${i + 1}`, `Line ${i + 1}`, metaOf(game.F[i], iceShare("F", i), "TOI", chem(line)), line.map((_, j) => row({ g: "F", i, j }, F_POS[j]))))}
+              {L.F.map((line, i) => card(`L${i + 1}`, `Line ${i + 1}`, metaOf(game.F[i], iceShare("F", i, team), "TOI", chem(line)), line.map((_, j) => row({ g: "F", i, j }, F_POS[j])), null, roleSel("F", i)))}
             </div>
           </div>
           <div className="lx-sec">
             <div className="lx-sec-h">DEFENCE &amp; GOALIES</div>
             <div className="lx-cards">
-              {L.D.map((pair, i) => card(`P${i + 1}`, `Pair ${i + 1}`, metaOf(game.D[i], iceShare("D", i), "TOI", null), pair.map((_, j) => row({ g: "D", i, j }, D_POS[j]))))}
+              {L.D.map((pair, i) => card(`P${i + 1}`, `Pair ${i + 1}`, metaOf(game.D[i], iceShare("D", i, team), "TOI", null), pair.map((_, j) => row({ g: "D", i, j }, D_POS[j])), null, roleSel("D", i)))}
               {card("G", "Goalies", <span><b>{gStart}%</b> / {gBack}% of starts</span>, [row({ g: "G", i: 0 }, "ST"), row({ g: "G", i: 1 }, "BU")],
                 <div className="lx-card-f">
                   {mine ? <label className="lx-rest">Starter rests <Select value={Math.round(rest * 100)} onChange={(e) => { team.restPct = Number(e.target.value); team.autoGoalie = team.restPct > 0; commit(); }} aria-label="How often the starter rests">{REST_OPTIONS.map((r) => <option key={r} value={r}>{r === 0 ? "never" : `${r}%`} · ~{starts(r)} starts{r === 20 ? " (typical)" : r >= 40 ? " (1A/1B)" : ""}</option>)}</Select></label>
@@ -197,6 +215,17 @@ export default function LinesPage({ onRoster }) {
                 mine && sel && sel.g === k && sel.i === i && (
                   <div className="lx-card-f lx-instead"><span className="lx-k">PUT IN INSTEAD</span><div className="lx-rows">{stBench(k).slice(0, 8).map((p) => scratchRow(p, k))}</div></div>
                 ))))}
+            </div>
+          </div>
+          <div className="lx-sec">
+            <div className="lx-sec-h">SITUATIONS <small>OT 3-on-3, extra attacker, lead protection, D-zone draws and the shootout order</small></div>
+            <SituationsPanel team={team} mine={mine} />
+          </div>
+          <div className="lx-sec">
+            <div className="lx-sec-h">IDENTITY &amp; ICE TIME</div>
+            <div className="lx-cards lx-cards2">
+              <section className="lx-card"><IdentityPanel team={team} mine={mine} /></section>
+              <section className="lx-card"><IceTimeSliders team={team} mine={mine} /></section>
             </div>
           </div>
           <div className="lx-sec">

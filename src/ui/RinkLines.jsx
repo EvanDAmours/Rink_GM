@@ -10,6 +10,8 @@ import { restShare, REST_OPTIONS } from "../engine/sim.js";
 import { gamePlan } from "../engine/teamPlanning.js";
 import { COACH_STYLES } from "../engine/franchise.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import { slotRating, slotRole, roleFit, ROLES, IDENTITIES, identityOf } from "../engine/roles.js";
+import { IdentityPanel, IceTimeSliders, SpotPreview, TacticUsage } from "./LinesTactics.jsx";
 import { esSpots, esTags, esBand, stSpots, stTags, stBand, iceShare, goalieShare, lastName, nameSize, offPosition, planWords } from "./linesView.js";
 
 // The rink view of the lines, like the football game's depth-chart field: the whole dressed
@@ -72,15 +74,18 @@ export function PlanStrip({ team, mine }) {
     <div className="lx-planwrap">
       <div className="lx-plan">
         <span className="lx-plan-k">📋 GAME PLAN</span>
-        <span>Identity <b>{COACH_STYLES[style].name}</b></span>
+        <span>System <b>{COACH_STYLES[style].name}</b></span>
+        <span>Identity <b>{IDENTITIES[identityOf(team)].icon} {IDENTITIES[identityOf(team)].name}</b></span>
         <span title={`${fits} of ${dressed.length} dressed skaters suit a ${COACH_STYLES[style].name} identity; each gets +0.7 to his game ratings.`}>System fit <b className={fits * 2 >= dressed.length ? "good" : ""}>{fits}/{dressed.length}</b></span>
         {opp ? <span>vs {opp.abbr} <b>{planWords(plan)}</b> <em>{mine ? (auto ? "coaches' pick" : "your call") : ""}</em></span> : <span className="lx-dim">No game on the schedule</span>}
-        {mine && <span className="lx-plan-tabs">{tab("identity", "Identity")}{opp && tab("plan", "Game plan")}<button type="button" className="lx-plan-tab" onClick={() => go("coaching", "coaching")}>Coaching →</button></span>}
+        {mine && <span className="lx-plan-tabs">{tab("system", "System")}{tab("identity", "Identity")}{tab("ice", "Ice time")}{opp && tab("plan", "Game plan")}<button type="button" className="lx-plan-tab" onClick={() => go("coaching", "coaching")}>Coaching →</button></span>}
       </div>
-      {mine && open === "identity" && (
+      {mine && open === "identity" && <div className="lx-plan-box"><IdentityPanel team={team} mine={mine} /></div>}
+      {mine && open === "ice" && <div className="lx-plan-box"><IceTimeSliders team={team} mine={mine} /></div>}
+      {mine && open === "system" && (
         <div className="lx-plan-open">
           {Object.entries(COACH_STYLES).map(([k, v]) => (
-            <button type="button" key={k} className={`lx-style${style === k ? " on" : ""}`} aria-pressed={style === k} onClick={() => { team.strategy = k; commit(); toast(`Team identity: ${v.name}.`); }}>
+            <button type="button" key={k} className={`lx-style${style === k ? " on" : ""}`} aria-pressed={style === k} onClick={() => { team.strategy = k; commit(); toast(`System: ${v.name}.`); }}>
               <b>{icon[k]} {v.name}</b><small>{v.desc}</small>
             </button>
           ))}
@@ -120,7 +125,8 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
       : grp === "ES" ? healthy(league, team).filter((p) => !isGoalie(p.pos) && (a.g === "D" ? isDefense(p.pos) : isForward(p.pos)))
       : [...new Set([...L.F.flat(), ...L.D.flat()])].map(get).filter((p) => p && p.injury <= 0);
     const cur = read(a);
-    return pool.filter((p) => p.id !== cur).map((p) => ({ p, at: findSlot(p.id, grp) })).sort((x, y) => y.p.ovr - x.p.ovr);
+    const val = (p) => (a.g === "F" ? slotRating(p, F_POS[a.j]) : a.g === "D" ? slotRating(p, D_POS[a.j]) : p.ovr);
+    return pool.filter((p) => p.id !== cur).map((p) => ({ p, at: findSlot(p.id, grp) })).sort((x, y) => val(y.p) - val(x.p) || y.p.ovr - x.p.ovr);
   };
   const place = (a, p) => {
     const cur = read(a);
@@ -143,7 +149,7 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
     return (L[g]?.[i] || []).map((_, j) => ({ g, i, j }));
   };
   const slotName = (a) => (a.g === "F" ? F_POS[a.j] : a.g === "D" ? D_POS[a.j] : a.g === "G" ? (a.i ? "Backup" : "Starter") : get(read(a))?.pos || a.g);
-  const shareOf = (key) => (key === "G" ? gStart : key[0] === "L" ? iceShare("F", Number(key.slice(1)) - 1) : key.startsWith("PP") || key.startsWith("PK") ? iceShare(key.slice(0, 2), Number(key.slice(2)) - 1) : iceShare("D", Number(key.slice(1)) - 1));
+  const shareOf = (key) => (key === "G" ? gStart : key[0] === "L" ? iceShare("F", Number(key.slice(1)) - 1, team) : key.startsWith("PP") || key.startsWith("PK") ? iceShare(key.slice(0, 2), Number(key.slice(2)) - 1) : iceShare("D", Number(key.slice(1)) - 1, team));
   const choose = (a) => { setUnit(unitOf(a)); setPick(same(pk, a) ? null : a); };
   // On a phone the list sits under the rink: bring the picker into view when a spot opens.
   const side = useRef(null);
@@ -166,11 +172,12 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
     const off = !stPos && s.g !== "G" && offPosition(p, s.pos);
     const sub = out ? get(s.g === "G" ? game.G[s.i] : s.g === "F" || s.g === "D" ? game[s.g][s.i][s.j] : null) : null;
     const ln = p ? lastName(p.name) : "Empty";
+    const r = p ? (stPos ? p.ovr : slotRating(p, s.g === "G" ? "G" : s.pos)) : null;
     const where = s.g === "G" ? (s.i ? "Backup goalie" : "Starting goalie") : `${unitName(unitOf(a))} ${stPos ? "" : s.pos}`.trim();
-    const title = p ? `${where}: ${p.name}, ${p.pos} ${p.ovr}${off ? ` (a ${p.pos} playing ${s.pos})` : ""}${out ? ` · out ${p.injury > 0 ? `${p.injury}g` : "(LTIR)"}${sub ? `, ${sub.name} plays` : ""}` : ""}` : `${where}: empty`;
+    const title = p ? `${where}: ${p.name}, ${p.pos} ${p.ovr}${off || r !== p.ovr ? ` (rates ${r} at ${s.pos})` : ""}${out ? ` · out ${p.injury > 0 ? `${p.injury}g` : "(LTIR)"}${sub ? `, ${sub.name} plays` : ""}` : ""}` : `${where}: empty`;
     return (
       <button type="button" key={s.key} className={`lx-spot${on ? " on" : ""}${out ? " out" : ""}${s.small ? " sm" : ""}${mine ? "" : " ro"}${!p ? " empty" : ""}`} style={{ ...spotVars(s), "--pc": color }} onClick={() => (mine ? choose(a) : p && onOpen?.(p.id))} title={title} aria-label={title} aria-pressed={mine ? on : undefined}>
-        <span className="lx-ring" style={p ? { color: ovrColor(p.ovr) } : undefined}>{p ? p.ovr : "—"}{out && <i className="lx-out" aria-hidden="true">{p.injury > 0 ? `${p.injury}g` : "IR"}</i>}</span>
+        <span className="lx-ring" style={p ? { color: ovrColor(r) } : undefined}>{p ? r : "—"}{out && <i className="lx-out" aria-hidden="true">{p.injury > 0 ? `${p.injury}g` : "IR"}</i>}</span>
         <span className={`lx-chip${off ? " warn" : ""}`} style={{ background: color }}>{label}</span>
         <span className={`lx-nm${nameSize(ln) ? ` ${nameSize(ln)}` : ""}`}>{ln}</span>
       </button>
@@ -233,6 +240,10 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
   const where = (at) => (!at ? "Scratch" : at.g === "F" ? `L${at.i + 1} ${F_POS[at.j]}` : at.g === "D" ? `P${at.i + 1} ${D_POS[at.j]}` : at.g === "G" ? (at.i ? "Backup" : "Starter") : `${at.g}${at.i + 1}`);
   const picker = () => {
     const key = unitOf(pk), here = get(read(pk));
+    const esSpot = pk.g === "F" || pk.g === "D", slot = esSpot ? slotName(pk) : null;
+    const rk = slotRole(team, pk.g, pk.i, pk.j, here);
+    const atSpot = (p) => (esSpot ? slotRating(p, slot) : p.ovr);
+    const fitAt = (p) => { const k2 = slotRole(team, pk.g, pk.i, pk.j, p); return k2 ? roleFit(p, k2, slot) : null; };
     const list = candidates(pk);
     const noUnit = pk.g === "PP" || pk.g === "PK" ? "Not on a unit" : "Scratch";
     return (
@@ -252,13 +263,15 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
           </label>
         )}
         <div className="lx-cands">
-          {here && <div className="lx-cand here"><span className="lx-cwhere on">{where(pk)}</span><span className="lx-face sm"><Headshot p={here} team={team} size={26} decorative /></span><span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(here.id)}>{here.name}</button><small>{here.pos} · Age {here.age}{here.injury > 0 ? <b className="bad"> · out {here.injury}g</b> : ""}</small></span><b className="lx-covr" style={{ color: ovrColor(here.ovr) }}>{here.ovr}</b><span className="lx-here">Here</span></div>}
+          {here && <div className="lx-cand here"><span className="lx-cwhere on">{where(pk)}</span><span className="lx-face sm"><Headshot p={here} team={team} size={26} decorative /></span><span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(here.id)}>{here.name}</button><small>{here.pos} · Age {here.age}{fitAt(here) != null ? <> · {ROLES[slotRole(team, pk.g, pk.i, pk.j, here)].name} <b style={{ color: ovrColor(fitAt(here)) }}>{fitAt(here)}</b></> : ""}{here.injury > 0 ? <b className="bad"> · out {here.injury}g</b> : ""}</small></span><b className="lx-covr" style={{ color: ovrColor(atSpot(here)) }}>{atSpot(here)}</b><span className="lx-here">Here</span></div>}
+          {here && esSpot && <SpotPreview p={here} team={team} mine={mine} />}
+          {rk && <div className="lx-dim lx-rolewant">{ROLES[rk].name}: {ROLES[rk].wants}</div>}
           {list.map(({ p, at }) => (
             <div key={p.id} className="lx-cand">
               <span className={`lx-cwhere${at ? " on" : ""}`}>{at ? where(at) : noUnit}</span>
               <span className="lx-face sm"><Headshot p={p} team={team} size={26} decorative /></span>
-              <span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(p.id)}>{p.name}</button><small>{p.pos} · Age {p.age}</small></span>
-              <b className="lx-covr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+              <span className="lx-cwho"><button type="button" className="link lx-pname" onClick={() => onOpen?.(p.id)}>{p.name}</button><small>{p.pos} · Age {p.age}{fitAt(p) != null ? <> · fit <b style={{ color: ovrColor(fitAt(p)) }}>{fitAt(p)}</b></> : ""}</small></span>
+              <b className="lx-covr" style={{ color: ovrColor(atSpot(p)) }} title={esSpot && atSpot(p) !== p.ovr ? `${p.ovr} OVR; ${atSpot(p)} at ${slot}` : undefined}>{atSpot(p)}</b>
               <button type="button" className="lx-start" onClick={() => place(pk, p)}>{at ? "Swap" : "Start"}</button>
             </div>
           ))}
