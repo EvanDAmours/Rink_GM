@@ -47,7 +47,7 @@ export function takeJob(lg,tid){
 export function archiveRetirement(lg,p,tot){
   const tid=p.tid>=0?p.tid:lg.teams.find(t=>t.abbr===p.career.at(-1)?.t)?.id;
   const L=legacyOf(p,{startYear:lg.startYear || 2026});
-  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,age:p.age,tid,from:lg.teams[tid]?.abbr || null,number:p.number,player:structuredClone(p),...tot,peak:p.peak || p.ovr,awards:p.honours || [],legacy:L.legacy,pre:L.pre,hof:hofWorthy(L)};
+  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,age:p.age,tid,from:lg.teams[tid]?.abbr || null,number:p.number,player:structuredClone(p),...tot,peak:p.peak || p.ovr,awards:p.honours || [],legacy:L.legacy,pre:L.pre,hof:hofWorthy(L) || (p.pos==="G"?tot.w>=250:tot.g+tot.a>=700)};
   (lg.retirementArchive ||= []).push(entry);
   // A star retiring from your club: raise his number to the rafters? (Gridiron 2.50's Ring of Honor prompt.)
   if(tid===lg.userTid && p.number!=null && (L.legacy>=30 || entry.hof) && !(lg.numberRetirements || []).some(x=>x.tid===tid && x.number===p.number)){
