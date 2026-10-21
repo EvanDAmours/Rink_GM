@@ -1,0 +1,184 @@
+/* ===== Phone mode (ui/mobile.js, ui/MobileShell.jsx): the football game's phone shell =====
+   Everything here is scoped to .rk-phone-app (the app in phone mode: the /mobile/ page, ?mobile,
+   or a screen 760px wide or less) or to html.rk-mobile-entry (the /mobile/ page itself), so the
+   desktop layout is untouched. Imported last from main.jsx so it wins. */
+
+html.rk-mobile-entry, html.rk-mobile-entry body { -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; }
+html.rk-mobile-entry button, html.rk-mobile-entry select { touch-action: manipulation; }
+/* 16px+ once drawn at 90%: iOS doesn't zoom in when a field gets focus */
+html.rk-mobile-entry input:not([type=checkbox]):not([type=radio]):not([type=range]), html.rk-mobile-entry select, html.rk-mobile-entry textarea { font-size: 18px !important; }
+.rk-phone-app button { touch-action: manipulation; }
+
+/* ---------- Slim header: club, season line, search and news ---------- */
+.rk-phead { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 8px; padding: calc(6px + env(safe-area-inset-top, 0px)) calc(10px + env(safe-area-inset-right, 0px)) 6px calc(10px + env(safe-area-inset-left, 0px)); background: #0b1220; background-image: linear-gradient(90deg, color-mix(in srgb, var(--team) 40%, transparent) 0%, #0f172a 40%, #1e293b 100%); box-shadow: inset 0 -3px 0 var(--team); border-bottom: 1px solid #1e293b; }
+.rk-phead-badge { flex: 0 0 auto; filter: drop-shadow(0 0 6px #ffffff33); }
+.rk-phead-id { flex: 1 1 auto; min-width: 0; }
+.rk-phead-name { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: #fff; line-height: 1.2; }
+.rk-phead-name > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.rk-phead-sub { font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-phead-sub b { color: #22c55e; font-weight: 800; } .rk-phead-sub b.neg { color: #ef4444; }
+.app .rk-phead .rk-phead-btn { position: relative; flex: 0 0 auto; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 22px; background: #ffffff14; border: 1px solid #ffffff26; color: #fff; font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.app .rk-phead .rk-phead-btn:disabled { opacity: .45; }
+.rk-phead-dot { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 2px #0f172a; }
+.rk-offchip { font-size: 12px; font-weight: 800; color: #fde68a; background: #78350f66; border: 1px solid #b45309; border-radius: 999px; padding: 2px 9px; white-space: nowrap; flex: 0 0 auto; }
+.gg-right > .rk-offchip { align-self: center; font-size: 11px; padding: 1px 8px; }
+
+/* ---------- Content: clear of the action button and the tab bar ---------- */
+/* hub screens: the chips are enough of a heading on a phone (the football game's group tabs) */
+.app.rk-phone-app .gg-hub-head > .gg-pagelabel { display: none; }
+.app.rk-phone-app .main { padding: 8px 10px calc(150px + env(safe-area-inset-bottom, 0px)); font-size: 15px; }
+.app.rk-phone-app .body { flex-direction: column; }
+
+/* ---------- Bottom tab bar ---------- */
+.rk-mnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 47; display: flex; background: #0b1220f7; border-top: 1px solid #1e293b; padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.app .rk-mnav button { position: relative; flex: 1 1 0; min-width: 0; min-height: 56px; background: transparent; border: 0; border-radius: 0; padding: 8px 2px 6px; color: #94a3b8; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; box-shadow: none; }
+.app .rk-mnav button:hover { background: transparent; color: #fff; }
+.rk-mnav-ico { font-size: 20px; line-height: 1; filter: grayscale(0.4); opacity: .85; }
+.rk-mnav-lbl { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rk-mnav-bar { width: 18px; height: 3px; border-radius: 2px; background: transparent; margin-top: 1px; }
+.app .rk-mnav button.on { color: #fff; }
+.rk-mnav button.on .rk-mnav-ico { filter: none; opacity: 1; }
+.rk-mnav button.on .rk-mnav-lbl { font-weight: 800; }
+.rk-mnav button.on .rk-mnav-bar { background: #22c55e; }
+.rk-mnav-badge { position: absolute; top: 4px; left: calc(50% + 8px); font-size: 8.5px; font-weight: 900; letter-spacing: .4px; line-height: 13px; padding: 0 4px; border-radius: 6px; background: #ef4444; color: #fff; }
+
+/* ---------- The day's action, above the tab bar ---------- */
+.rk-abar { position: fixed; left: 0; right: 0; bottom: calc(57px + env(safe-area-inset-bottom, 0px)); z-index: 44; display: flex; gap: 8px; padding: 8px calc(10px + env(safe-area-inset-right, 0px)) 10px calc(10px + env(safe-area-inset-left, 0px)); background: linear-gradient(180deg, #0b122000, #0b1220f2 35%); }
+.rk-abar.small { background: transparent; pointer-events: none; }
+.app .rk-abar button { pointer-events: auto; border: 0; cursor: pointer; color: #fff; font-weight: 900; box-shadow: 0 6px 20px #0008; }
+.app .rk-abar .rk-abar-main { flex: 1 1 auto; min-height: 48px; border-radius: 12px; background: #22c55e; font-size: 17px; padding: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .rk-abar.small .rk-abar-main { flex: 0 1 auto; min-height: 40px; height: 40px; align-self: flex-end; padding: 0 18px; border-radius: 999px; font-size: 15px; }
+.app .rk-abar .rk-abar-more { flex: 0 0 56px; min-height: 48px; border-radius: 12px; border: 1px solid #1e293b; background: #111827; font-size: 18px; }
+.app .rk-abar.small .rk-abar-more { flex-basis: 48px; min-height: 40px; height: 40px; margin-left: auto; align-self: flex-end; border-radius: 999px; }
+.app .rk-abar .rk-abar-more.on { background: #3b82f6; border-color: #3b82f6; }
+.rk-abar-scrim { position: fixed; inset: 0; z-index: 45; background: #0007; }
+.rk-abar-menu { position: absolute; left: 10px; right: 10px; bottom: calc(122px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #111827; border: 1px solid #1e293b; border-radius: 14px; box-shadow: 0 -10px 40px #000a; animation: rkSheetUp .18s ease-out; }
+.app .rk-abar-menu button { min-height: 48px; border-radius: 10px; border: 0; background: #1e293b; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; }
+.app .rk-abar button.t-blue, .app .rk-abar-menu button.t-blue { background: #3b82f6; }
+.app .rk-abar button.t-red, .app .rk-abar-menu button.t-red { background: #b91c1c; }
+.app .rk-abar button.t-violet, .app .rk-abar-menu button.t-violet { background: #6366f1; }
+.app .rk-abar button.t-gold, .app .rk-abar-menu button.t-gold { background: #f59e0b; color: #000; }
+/* no hover colour change: a phone "hovers" wherever the last tap was */
+.app .rk-abar .rk-abar-main:hover:not(:disabled) { background: #22c55e; }
+.app .rk-abar .rk-abar-more:hover:not(:disabled) { background: #111827; } .app .rk-abar .rk-abar-more.on:hover { background: #3b82f6; }
+.app .rk-abar-menu button:hover:not(:disabled) { background: #1e293b; }
+.app .rk-abar button.t-blue:hover, .app .rk-abar-menu button.t-blue:hover { background: #3b82f6; }
+.app .rk-abar button.t-red:hover, .app .rk-abar-menu button.t-red:hover { background: #b91c1c; }
+.app .rk-abar button.t-violet:hover, .app .rk-abar-menu button.t-violet:hover { background: #6366f1; }
+.app .rk-abar button.t-gold:hover, .app .rk-abar-menu button.t-gold:hover { background: #f59e0b; }
+.app .rk-abar button:active, .app .rk-abar-menu button:active { filter: brightness(1.15); }
+
+/* ---------- More: every other screen ---------- */
+.rk-msheet { position: fixed; inset: 0; z-index: 46; background: #0f172a; overflow-y: auto; overscroll-behavior: contain; padding: calc(14px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-right, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) calc(14px + env(safe-area-inset-left, 0px)); outline: none; animation: rkSheetUp .2s ease-out; }
+.rk-msheet-head { display: flex; align-items: center; margin-bottom: 12px; }
+.rk-msheet-head > span { font-size: 22px; font-weight: 900; color: #fff; }
+.app .rk-msheet .rk-msheet-x { margin-left: auto; width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: 20px; background: #000; border: 1px solid #334155; color: #fff; font-size: 18px; }
+.rk-msheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.app .rk-msheet-grid button { display: flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; padding: 12px; min-height: 52px; border-radius: 10px; font-size: 15px; font-weight: 700; background: #111827; color: #e2e8f0; border: 1px solid #1e293b; line-height: 1.25; }
+.app .rk-msheet-grid button.on { background: #3b82f633; color: #fff; border-color: #3b82f6; }
+.rk-msheet-grid .badge { font-size: 9px; font-weight: 900; padding: 1px 5px; border-radius: 6px; background: #22c55e; color: #052e16; }
+.rk-msheet-k { font-size: 12px; font-weight: 900; letter-spacing: 1px; color: #64748b; margin: 4px 0 8px; }
+.rk-msheet-jumps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.rk-msheet-jump > b { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; }
+.rk-msheet-jump > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.app .rk-msheet-jump button { min-height: 40px; padding: 6px 12px; border-radius: 999px; font-size: 13.5px; font-weight: 700; background: transparent; color: #cbd5e1; border: 1px solid #1e293b; }
+.app .rk-msheet-jump button.on { background: #3b82f633; border-color: #3b82f6; color: #fff; }
+.rk-msheet-acts { display: flex; flex-direction: column; gap: 8px; }
+.app .rk-msheet-acts button { display: flex; align-items: center; justify-content: flex-start; text-align: left; padding: 12px; min-height: 48px; border-radius: 10px; font-size: 15px; font-weight: 700; background: #111827; color: #e2e8f0; border: 1px solid #1e293b; }
+
+/* ---------- Tap-to-explain popover ---------- */
+.rk-taptip { position: fixed; z-index: 5000; background: #0f172af7; border: 1px solid #3b82f6; border-radius: 10px; padding: 9px 12px; color: #e2e8f0; font-size: 14px; line-height: 1.4; font-weight: 600; box-shadow: 0 10px 30px #000c; pointer-events: none; white-space: pre-line; }
+
+/* ---------- Things that float at the bottom move up, clear of the bars ---------- */
+.app.rk-phone-app .rk-toasts { top: calc(8px + env(safe-area-inset-top, 0px)); bottom: auto; left: 12px; right: 12px; max-width: none; align-items: stretch; }
+.app.rk-phone-app .rk-injcard { left: 10px; right: 10px; width: auto; bottom: calc(126px + env(safe-area-inset-bottom, 0px)); max-height: 55vh; }
+.app.rk-phone-app .lselbar, .app.rk-phone-app .gg-sheet { bottom: calc(126px + env(safe-area-inset-bottom, 0px)); }
+
+/* ---------- Home: a status row you swipe sideways (the football game's franchise strip) ---------- */
+.app.rk-phone-app .rk-home .gg-status-row { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 -10px 10px; padding: 0 10px 2px; scroll-padding: 0 10px; }
+.app.rk-phone-app .rk-home .gg-status-row::-webkit-scrollbar { display: none; }
+.app.rk-phone-app .rk-home .gg-status-row .gg-stat { flex: 0 0 136px; grid-column: auto; scroll-snap-align: start; min-width: 0; padding: 8px 10px; border-radius: 10px; border-top-width: 3px; }
+.app.rk-phone-app .rk-home .gg-status-row .gg-stat.rk-attn { flex-basis: 210px; }
+.app.rk-phone-app .rk-home .gg-status-row .gg-stat-line { display: block; }
+.app.rk-phone-app .rk-home .gg-status-row .gg-stat-line b { display: block; font-size: 18px; line-height: 1.15; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.rk-phone-app .rk-home .gg-status-row .gg-stat-line span { display: block; font-size: 11.5px; color: #94a3b8; margin-top: 1px; }
+
+/* ---------- Home: the compact matchup card (logos, records and ratings side by side) ----------
+   The card's own parts are laid out again on one grid: the logos over each club's name, record
+   and OVR/OFF/DEF/G, AT between them, then the puck drop. The big portraits stay on a computer. */
+.app.rk-phone-app .rk-mx { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "label label label" "alogo at hlogo" "away at home" "kick kick kick"; align-items: start; column-gap: 4px; padding-bottom: 10px; }
+.app.rk-phone-app .rk-mx-label { grid-area: label; }
+.app.rk-phone-app .rk-mx-field, .app.rk-phone-app .rk-mx-matchup, .app.rk-phone-app .rk-mx-logos, .app.rk-phone-app .rk-mx-teams { display: contents; }
+.app.rk-phone-app .rk-mx-field::before, .app.rk-phone-app .rk-mx-field::after, .app.rk-phone-app .rk-mx-player { display: none; }
+.app.rk-phone-app .rk-mx-logos .teambadge { width: 48px !important; height: 48px !important; justify-self: center; margin-top: 4px; filter: drop-shadow(0 0 1px #ffffffd9) drop-shadow(0 2px 6px #0008); }
+.app.rk-phone-app .rk-mx-logos .teambadge:first-child { grid-area: alogo; }
+.app.rk-phone-app .rk-mx-logos .teambadge:last-child { grid-area: hlogo; }
+.app.rk-phone-app .rk-mx-logos > b { grid-area: at; align-self: center; font-size: 14px; color: #94a3b8; padding: 0 2px; }
+.app.rk-phone-app .rk-mx-team { grid-area: away; text-align: center; padding: 0 4px; border: 0; }
+.app.rk-phone-app .rk-mx-team:last-child { grid-area: home; padding: 0 4px; }
+.app.rk-phone-app .rk-mx-team:first-child { padding: 0 4px; border-right: 0; }
+.app.rk-phone-app .rk-mx-city { display: none; }
+.app.rk-phone-app .rk-mx-team h3 { justify-content: center; height: auto; font-size: 15px; margin-top: 2px; text-transform: none; }
+.app.rk-phone-app .rk-mx-team h3.long { font-size: 14px; }
+.app.rk-phone-app .rk-mx-rec { margin: 0 0 4px; font-size: 12px; }
+.app.rk-phone-app .rk-mx-ratings { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+.app.rk-phone-app .rk-mx-rating { border-width: 1px; border-radius: 6px; }
+.app.rk-phone-app .rk-mx-rating strong { font-size: 15px; padding: 3px 0 2px; }
+.app.rk-phone-app .rk-mx-rating span { font-size: 9px; padding: 1px 0; }
+.app.rk-phone-app .rk-mx-kickoff { grid-area: kick; padding: 8px 10px 0; font-size: 12px; gap: 0; color: #94a3b8; }
+.app.rk-phone-app .rk-mx-kickoff strong { font-weight: 600; color: #cbd5e1; }
+
+/* ---------- Deadline Day on a phone (DeadlinePage) ---------- */
+.rk-dlp { display: flex; flex-direction: column; gap: 10px; }
+.rk-dlp-clock { position: sticky; top: calc(57px + env(safe-area-inset-top, 0px)); z-index: 20; background: linear-gradient(120deg, #450a0a, #0b0f19 70%); border: 1px solid #ef444466; border-radius: 12px; padding: 8px 12px; box-shadow: 0 6px 16px #0008; }
+.app.rk-phone-app .rk-dlp-clock { margin-top: -2px; }
+.rk-dlp-row { display: flex; align-items: center; gap: 10px; }
+.rk-dlp-live { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: #fca5a5; flex: 0 0 auto; }
+.rk-dlp-time { font-family: ui-monospace, Menlo, monospace; font-size: 22px; font-weight: 900; color: #fff; flex: 0 0 auto; }
+.rk-dlp.done .rk-dlp-time { color: #94a3b8; }
+.rk-dlp-left { font-size: 12px; font-weight: 800; color: #fecaca; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .main .rk-dlp-clock button.rk-dlp-run:not(.link):not(.player-link):not(.team-link) { flex: 0 0 auto; min-height: 40px; height: 40px; padding: 4px 12px; border-radius: 8px; border: 1px solid #ef444455; background: #1e293b; color: #fecaca; font-size: 13px; font-weight: 800; }
+.app .main .rk-dlp-clock button.rk-dlp-run.on:not(.link) { background: #7f1d1d; }
+.rk-dlp-bar { height: 4px; border-radius: 2px; background: #ffffff22; margin-top: 6px; overflow: hidden; }
+.rk-dlp-bar > i { display: block; height: 100%; background: #ef4444; border-radius: 2px; }
+.rk-dlp-tabs { display: flex; gap: 6px; }
+.app .main .rk-dlp-tabs button:not(.link) { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 6px 4px; border-radius: 8px; font-size: 13px; font-weight: 800; background: #111827; border: 1px solid #1e293b; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app .main .rk-dlp-tabs button.on:not(.link) { background: #3b82f633; border-color: #3b82f6; color: #bfdbfe; }
+.rk-dlp .panel { padding: 12px; }
+.rk-dlp .offergrid { grid-template-columns: 1fr; }
+.rk-dlp .stance { grid-template-columns: 1fr; }
+.rk-dlp-phone { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: #fca5a5; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+.rk-dlp-phone > i { font-style: normal; background: #dc2626; color: #fff; border-radius: 10px; padding: 0 7px; letter-spacing: 0; }
+
+/* ---------- Offline Play (Settings) ---------- */
+.rk-offline { scroll-margin-top: calc(64px + env(safe-area-inset-top, 0px)); }
+.rk-offline .rk-off-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rk-off-ico { font-size: 22px; }
+.rk-off-txt { flex: 1 1 180px; min-width: 0; }
+.rk-off-k { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 900; letter-spacing: 1.3px; color: #fbbf24; }
+.rk-off-status { font-size: 15px; font-weight: 800; color: #e2e8f0; }
+.rk-off-status.ok { color: #22c55e; }
+.rk-off-bar { height: 6px; background: #ffffff14; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.rk-off-bar > i { display: block; height: 100%; background: #22c55e; border-radius: 3px; transition: width .3s; }
+.rk-off-steps { margin: 10px 0 0; padding: 0; list-style: none; counter-reset: rkoff; color: #cbd5e1; }
+.rk-off-steps li { counter-increment: rkoff; display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; margin-top: 8px; }
+.rk-off-steps li::before { content: counter(rkoff); flex: 0 0 22px; height: 22px; border-radius: 11px; background: #1e3a5f; color: #93c5fd; font-weight: 900; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.rk-off-steps li button { margin-left: 4px; }
+.rk-off-note { margin: 10px 0 0; }
+.app button.rk-off-link { background: none; border: 0; padding: 0; min-height: 0; color: #93c5fd; text-decoration: underline; font: inherit; cursor: pointer; }
+.rk-off-done { color: #22c55e; }
+
+/* ---------- Tap targets: 40px or more on a phone ---------- */
+.app.rk-phone-app .main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), .app.rk-phone-app .main select, .app.rk-phone-app .modal input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), .app.rk-phone-app .modal select { min-height: 40px; }
+.app.rk-phone-app .main .rk-home button.rk-b:not(.link):not(.player-link), .app.rk-phone-app .main .rk-home .rk-sort button:not(.link) { min-height: 40px; }
+/* the small pills keep their look; an invisible margin makes the finger target 40px tall */
+.app.rk-phone-app .main .rk-home button.rk-b.rk-prep:not(.link):not(.player-link) { min-height: 0; position: relative; }
+.app.rk-phone-app .main .rk-home button.rk-b.rk-prep:not(.link):not(.player-link)::after { content: ""; position: absolute; inset: -9px -4px; }
+.app.rk-phone-app .main .rk-home button.rk-b.rk-more:not(.link):not(.player-link) { display: inline-flex; align-items: center; }
+.app.rk-phone-app .modal button.close, .app.rk-phone-app .modal .mhead button.close { min-width: 40px; min-height: 40px; }
+.app.rk-phone-app .modal .mbody button:not(.link):not(.player-link):not(.team-link):not(.tiny) { min-height: 40px; }
+.app.rk-phone-app .rk-injcard .rk-injcard-x:not(.link) { width: 40px; min-height: 40px; }
+.app.rk-phone-app button.ticker { min-height: 40px; }
+.app.rk-phone-app .an-card .an-x, .app.rk-phone-app .an-x { width: 40px; height: 40px; min-height: 40px; }
+.app.rk-phone-app .main .rk-inbox-x:not(.link):not(.player-link):not(.team-link), .app.rk-phone-app .rk-inbox-x { width: 40px; min-height: 40px; }
+.app.rk-phone-app button.gg-paper-btn { min-height: 40px; }

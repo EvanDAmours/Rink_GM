@@ -1,5 +1,5 @@
-// Every change to Rink GM, oldest first, one entry per merged update (pull requests #1-#35 on
-// EvanDAmours/Rink_GM). The Game Updates screen shows them newest first.
+// Every change to Rink GM, oldest first, one entry per update merged to main on
+// EvanDAmours/Rink_GM (pull requests #1-#35, then direct updates). The Game Updates screen shows them newest first.
 // { v: version, date, title, notes: [what changed, in plain words] }
 export const PATCH_NOTES = [
   { v: "1.1", date: "2026-10-12", title: "Rink GM", notes: [
@@ -188,5 +188,45 @@ export const PATCH_NOTES = [
     "A championship ring for ring night at the home opener.",
     "A result card after every game (compact, full or off), and record ceremonies.",
     "Standings show p, z, y, x and e clinch marks.",
+  ] },
+  { v: "1.36", date: "2026-10-21", title: "Call-ups That Work", notes: [
+    "Training camp can carry more than 23 players. Cut down to 23 when you start the season.",
+    "Calling someone up with a full roster opens Make room: send a waiver-exempt player down and the call-up happens in one move, or place someone on waivers.",
+    "Every blocked call-up says why: just sent down, the cap, or the 50-contract limit.",
+  ] },
+  { v: "1.37", date: "2026-10-21", title: "A Real Lines Screen", notes: [
+    "The rink view shows your whole lineup at once with compact rating rings, like the football game's depth chart.",
+    "Even strength, Power play and Penalty kill tabs, with every line's ice-time share.",
+    "Lines at a glance: ratings, chemistry and who fills in for the injured.",
+    "Full names in the list view, readable special teams, and a game plan strip under the rink.",
+  ] },
+  { v: "1.38", date: "2026-10-21", title: "Home, Game Prep and Injuries", notes: [
+    "A new title screen and team picker.",
+    "Home matches the football game: matchup portraits, a smarter Needs Attention list with one-tap fixes, and an off-season board.",
+    "Game Prep before every game: the opponent report, your plan and a Ready Check.",
+    "A weekly injury report with a replacement picker rated for each spot. Playoff returns read by round and game.",
+    "The Legacy Hall has its own tab, the Combine has a search, and Game Updates lists every change.",
+  ] },
+  { v: "1.39", date: "2026-10-21", title: "Broadcast Night", notes: [
+    "A TV view with a broadcast situation line and a momentum meter.",
+    "Live win probability, a shot map and a live box score.",
+    "Big callouts for goals, penalties, power plays, fights, pulled goalies and the shootout.",
+    "Play-by-play names who got beaten and which units were on the ice.",
+    "A real rink: the home logo at centre ice, road whites, boards and glass, and Stanley Cup Final ice with the arena on the walkout.",
+  ] },
+  { v: "1.40", date: "2026-10-21", title: "Draft Night", notes: [
+    "A real draft clock: two minutes a pick, round 1 in real seconds, then Slow, Normal or Fast, with Pause, Sim this pick and Sim to my pick at the top.",
+    "The club on the clock gets the broadcast treatment, every first-round pick gets The pick is in, and a ticker calls out steals and reaches.",
+    "Clubs call while you're on the clock: accept, ask for more or hang up. Trade up for any pick before yours or shop your later picks.",
+    "Your pick walks on stage in your sweater, then you see his real development trait.",
+    "Draft Recap: true ratings for every pick, a verdict on each, and all 32 classes graded.",
+    "Drafting on your phone: one compact row per prospect and Draft then Confirm.",
+  ] },
+  { v: "1.41", date: "2026-10-21", title: "Built for Phones", notes: [
+    "A bottom tab bar (Home, Lines, Scouting, the season's screen, More), a big button for the day's main action with a ▾ for every sim option, and a More sheet with every screen.",
+    "Standings, stats, the schedule and the playoffs share one screen on your phone, and the Home matchup is a compact side-by-side card.",
+    "Tap a badge or chip to see what it means; press and hold a button to see what it does.",
+    "Deadline Day on your phone: the clock pinned at the top, tabs for the feed, the block and buyers & sellers, and controls at the bottom.",
+    "Offline play: the game saves itself to your device and installs as an app. Settings has an Offline Play panel.",
   ] },
 ];
