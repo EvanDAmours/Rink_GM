@@ -3,6 +3,8 @@ import { TeamBadge } from "./common.jsx";
 import { trophyUrl } from "./trophies.js";
 import { momentColors } from "./MomentFrame.jsx";
 import "./moments/cup.css";
+import "./live-rink.css";
+import { arenaLabel } from "../data/arenas.js";
 
 const ROUND_TITLE = ["FIRST ROUND", "SECOND ROUND", "CONFERENCE FINAL", "STANLEY CUP FINAL"];
 const season = (y) => `${y}–${String(y + 1).slice(2)}`;
@@ -23,9 +25,10 @@ export function walkoutLines({ round, series, userTid, home, away }) {
   return { game, status, tag };
 }
 
-// The walkout before a playoff game you play live: the round, the clubs, the series and what's at
-// stake (Gridiron's playoff intros). The Stanley Cup Final keeps its own curtain with the Cup.
-export default function CupFinalSplash({ home, away, game, round = 3, series = null, userTid = null, year = null, onStart }) {
+// The walkout before a playoff game you play live: the round, the clubs, the series, where it's
+// played and what's at stake (Gridiron's playoff intros). The Stanley Cup Final keeps its own curtain
+// with the Cup. venue: the game's building when it isn't the home club's own arena.
+export default function CupFinalSplash({ home, away, game, round = 3, series = null, userTid = null, year = null, venue = null, onStart }) {
   const final = round === 3;
   const w = walkoutLines({ round, series, userTid, home, away });
   const n = series ? w.game : game;
@@ -35,6 +38,7 @@ export default function CupFinalSplash({ home, away, game, round = 3, series = n
   const title = round === 2 ? `${conf === "West" ? "WESTERN" : "EASTERN"} CONFERENCE FINAL` : ROUND_TITLE[round];
   const mine = userTid === home.id ? home : userTid === away.id ? away : null;
   const { clr } = momentColors(mine || home);
+  const where = arenaLabel(home, venue);
   return (
     <div className={`gg-splash${final ? "" : " walkout"}`} role="dialog" aria-label={title} style={final ? undefined : { "--wo-clr": clr }}>
       <div className="gg-splash-inner">
@@ -42,6 +46,7 @@ export default function CupFinalSplash({ home, away, game, round = 3, series = n
         {trophy && trophyUrl(trophy) && <img className={`gg-splash-cup${final ? "" : " small"}`} src={trophyUrl(trophy)} alt="" />}
         <div className="gg-splash-title">{title}</div>
         <div className="gg-splash-sub">GAME {n}{series ? ` · ${w.status}` : ""}</div>
+        {where && <div className="gg-splash-venue">{where}</div>}
         <div className="gg-splash-teams"><TeamBadge team={away} size={54} decorative /><b>{away.name}</b><span>AT</span><b>{home.name}</b><TeamBadge team={home} size={54} decorative /></div>
         <div className="gg-splash-line">{series ? w.tag : "FOUR WINS FOR EVERYTHING"}</div>
         <button className="primary big" onClick={onStart} autoFocus>Drop the puck ▶</button>
