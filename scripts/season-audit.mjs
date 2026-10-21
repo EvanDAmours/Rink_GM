@@ -53,3 +53,31 @@ if (process.argv[2]) writeFileSync(process.argv[2], JSON.stringify(report, null,
 const {teams: _, leaders: __, ...summary} = report;
 console.log(JSON.stringify({...summary, leaders: leaders.slice(0, 5).map(p => ({name: p.name, g: p.stats.g, a: p.stats.a, pts: p.stats.pts}))}));
 if (Object.values(report.checks).some(x => !x)) process.exitCode = 1;
+
+// Multi-season check (Gridiron 1.88): NHL_CAREER_SEASONS=8 plays full franchise seasons with
+// development, drafts and free agency, and reports each season's Art Ross and Rocket Richard
+// leaders and the league's 90+/95+ counts, so star scoring and ratings can be seen not to run away.
+if (Number(process.env.NHL_CAREER_SEASONS) > 0) {
+  const L = await import('../src/engine/league.js');
+  const {simPlayoffDay} = await import('../src/engine/playoffs.js');
+  const {simDraftToUser} = await import('../src/engine/draft.js');
+  const {simFADay, ratingLevel} = await import('../src/engine/offseason.js');
+  seed(Number(process.env.NHL_CAREER_SEED || 4242));
+  const lg = L.createLeague({userAbbr: 'EDM', seed: 151});
+  const count = f => Object.values(lg.players).filter(p => p.tid >= 0 && f(p)).length;
+  const seasons = [];
+  for (let n = 0; n < Number(process.env.NHL_CAREER_SEASONS); n++) {
+    L.startRegularSeason(lg); L.simRestOfSeason(lg);
+    const sk = Object.values(lg.players).filter(p => p.pos !== 'G' && p.stats.gp);
+    const byP = [...sk].sort((a, b) => b.stats.pts - a.stats.pts), byG = [...sk].sort((a, b) => b.stats.g - a.stats.g);
+    const row = {year: lg.year, artRoss: {name: byP[0].name, ovr: byP[0].ovr, g: byP[0].stats.g, a: byP[0].stats.a, pts: byP[0].stats.pts}, second: byP[1].stats.pts, tenth: byP[9].stats.pts,
+      rocket: {name: byG[0].name, g: byG[0].stats.g}, hundredPoint: byP.filter(p => p.stats.pts >= 100).length, fortyGoal: byG.filter(p => p.stats.g >= 40).length};
+    L.endRegularSeason(lg); while (lg.playoffs.champion == null) simPlayoffDay(lg);
+    L.finishPlayoffs(lg); simDraftToUser(lg, {all: true}); L.completeDraft(lg);
+    L.goToFreeAgency(lg); while (!simFADay(lg)) {} L.beginNextSeason(lg);
+    Object.assign(row, {after: {n90: count(p => p.ovr >= 90), n95: count(p => p.ovr >= 95), n99: count(p => p.ovr >= 99), generational: count(p => p.dev === 'generational'), level: +ratingLevel(lg).toFixed(2)},
+      cornerstones: (lg.devReport?.rows || []).filter(r => r.kinds.includes('cornerstone')).map(r => r.name), breakouts: (lg.devReport?.rows || []).filter(r => r.kinds.includes('breakout')).length});
+    seasons.push(row); console.log(JSON.stringify(row));
+  }
+  if (process.env.NHL_CAREER_OUT) writeFileSync(process.env.NHL_CAREER_OUT, JSON.stringify({date: new Date().toISOString(), seed: Number(process.env.NHL_CAREER_SEED || 4242), seasons}, null, 2) + '\n');
+}

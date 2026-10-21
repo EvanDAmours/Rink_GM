@@ -68,8 +68,8 @@ export default function DevelopmentPage() {
         <div><small>ON THE FARM</small><b>{t.prospects.length}</b></div>
         <div><small>RISING</small><b style={{ color: "#22c55e" }}>{rising}</b></div>
       </div>
-      <ProspectWatch />
       <SummerReport />
+      <ProspectWatch />
       <section className="gg-card gg-dev-plan">
         <div className="gg-k">THE PLAN <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· your staff gives {FOCUS_SLOTS} players individual attention each week; banked work pays out at season rollover</span>
           {used < FOCUS_SLOTS && <button className="small primary" style={{ marginLeft: "auto" }} onClick={() => act(autoFocus(league))}>Auto-fill {FOCUS_SLOTS - used} slot{FOCUS_SLOTS - used === 1 ? "" : "s"}</button>}</div>

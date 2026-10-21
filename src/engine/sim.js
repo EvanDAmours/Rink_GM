@@ -26,9 +26,8 @@ export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality:
   breakout: .003, carry: .012, execution: .0032, passing: .006,
   // Star share (Gridiron 1.88): an elite puck handler (control composite above eliteAt) draws the
   // puck far more often, convexly (e-fold every `elite` points), and as a carrier he creates more for
-  // his linemates than he shoots himself (`distribute` per point, at most .12). The power play's
-  // first unit takes the first pp1 seconds of each 115.
-  eliteAt: 91.5, elite: 2.75, eliteCap: 6, eliteRef: 94.5, distribute: .012, pp1: 85});
+  // his linemates than he shoots himself (`distribute` per point, at most .12).
+  eliteAt: 91.5, elite: 2.4, eliteCap: 6, eliteRef: 94.5, distribute: .012});
 // The elite threshold follows the league's own top end: when the ten best puck handlers' control
 // rises above the 2026 league's (eliteRef), the bar rises with it, so the star share stays the same
 // share instead of compounding as ratings drift. Fixed per season and kept on the league (like the
@@ -68,9 +67,11 @@ function makeSide(league, team, opts) {
   syncLines(league, team);
   const lines = gameLines(league, team);
   const dressed = [...new Set([...lines.F.flat(), ...lines.D.flat(), ...lines.G].filter(Boolean))];
-  const pl = {}, comp = {}, fatigue = {}, form = {};
+  const pl = {}, comp = {}, fatigue = {}, form = {}, star = {}, bar = eliteBar(league);
   for (const id of dressed) {
     pl[id] = league.players[id]; comp[id] = composites(pl[id]); fatigue[id] = 0;
+    // His star pull, from his own puck control (form doesn't compound it).
+    star[id] = Math.exp(clamp(comp[id].ctrl - bar, 0, EDGE.eliteCap) / EDGE.elite);
     // Season form (Gridiron 1.61): a career year or a slump moves every composite and his finishing.
     const f = opts.exhibition ? 0 : seasonForm(id, league.year);
     if (f) { form[id] = f; for (const k of FORM_KEYS) if (k in comp[id]) comp[id][k] += f; }
@@ -86,7 +87,7 @@ function makeSide(league, team, opts) {
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
     chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
     pref: defaultStyle(league, team), tactic: defaultStyle(league, team),
-    lines, dressed, form, eliteAt: eliteBar(league), unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
+    lines, dressed, form, star, eliteAt: bar, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
     fShiftLength: 45, dShiftLength: 55, pulledReason: null};
@@ -120,7 +121,7 @@ export function createGame(league, home, away, opts = {}) {
 }
 
 function decision(s, k, action) { s.decisions[k][action] = (s.decisions[k][action] || 0) + 1; }
-const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2 * Math.exp(clamp(side.comp[id].ctrl - (side.eliteAt ?? EDGE.eliteAt), 0, EDGE.eliteCap) / EDGE.elite);
+const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2 * (side.star?.[id] ?? Math.exp(clamp(side.comp[id].ctrl - (side.eliteAt ?? EDGE.eliteAt), 0, EDGE.eliteCap) / EDGE.elite));
 function touch(s, k, id) {
   if (!id) return;
   if (s.poss !== k) s.touches = [];
@@ -178,7 +179,7 @@ function onIce(s, k) {
   let ids;
   if (type === 'PP') {
     const first = side.lines.PP[0].filter(free);
-    const unit = s.ppTime[k] % 115 < EDGE.pp1 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
+    const unit = s.ppTime[k] % 115 < 65 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
     ids = side.lines.PP[unit].filter(free);
     if (n === 4) ids = [...ids.filter(id => isForward(side.pl[id].pos)).slice(0, 3), ...ids.filter(id => isDefense(side.pl[id].pos)).slice(0, 1)];
   } else if (type === 'SH') {
@@ -390,7 +391,7 @@ function hockeyEvent(s, ice, R) {
   const carrier = att.pl[s.carrier];
   if (carrier?.type === 'PLY') shoot -= .07;
   if (carrier?.type === 'SNP') shoot += .06;
-  const cs = att.comp[s.carrier], over = cs ? cs.ctrl - (att.eliteAt ?? EDGE.eliteAt) : 0;
+  const cs = att.comp[s.carrier], over = cs ? Math.log(att.star?.[s.carrier] ?? 1) * EDGE.elite : 0;
   if (over > 0) shoot -= Math.min(.12, over * EDGE.distribute) * (cs.pass >= cs.shoot ? 1 : .5);
   if (chance(shoot)) {
     decision(s, k, 'shoot'); shotAttempt(s, k, ice, R); return;
