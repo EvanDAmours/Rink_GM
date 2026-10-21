@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><clipPath id="r"><rect width="512" height="512" rx="96"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <rect width="512" height="512" fill="#0a0f1a"/>
+    <rect x="0" y="0" width="512" height="12" fill="#4ea1ff"/>
+    <rect x="0" y="500" width="512" height="12" fill="#4ea1ff"/>
+  </g>
+  <g transform="translate(256 256) scale(1) translate(-256 -256)">
+  <circle cx="256" cy="236" r="178" fill="#0f1f3d"/>
+  <circle cx="256" cy="236" r="178" fill="none" stroke="#ef4444" stroke-width="10"/>
+  <g stroke="#ef4444" stroke-width="10" stroke-linecap="square">
+    <line x1="76" y1="196" x2="50" y2="196"/><line x1="76" y1="276" x2="50" y2="276"/>
+    <line x1="436" y1="196" x2="462" y2="196"/><line x1="436" y1="276" x2="462" y2="276"/>
+  </g>
+  <ellipse cx="256" cy="262" rx="112" ry="40" fill="#020617"/>
+  <rect x="144" y="222" width="224" height="40" fill="#020617"/>
+  <ellipse cx="256" cy="222" rx="112" ry="40" fill="#1e293b"/>
+  <ellipse cx="256" cy="222" rx="112" ry="40" fill="none" stroke="#475569" stroke-width="4"/>
+  <ellipse cx="256" cy="222" rx="72" ry="24" fill="none" stroke="#334155" stroke-width="3"/>
+  <text x="256" y="388" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="64" font-weight="900" fill="#4ea1ff" letter-spacing="6">GM</text>
+</g>
+</svg>

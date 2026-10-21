@@ -4,6 +4,8 @@ import { useGame, PlayerName, TeamBadge, money } from "./common.jsx";
 import { startDeadline, deadlineTick, deadlinePending, userOffers, toggleUserBlock, onBlock, fmtClock, marketStance, DEADLINE_START, DEADLINE_END } from "../engine/market.js";
 import { dayToDate } from "../engine/schedule.js";
 import { OfferCard, WireItem, BlockList } from "./TradeBlockPage.jsx";
+import { usePhone } from "./mobile.js";
+import { MobileActionBar } from "./MobileShell.jsx";
 
 // Trade Deadline Day: a broadcast-style desk with a running clock, a breaking-news
 // feed of deals and rumours, offers for your players, buyers and sellers, and the best
@@ -52,9 +54,11 @@ function Stance({ league }) {
 
 export default function DeadlinePage() {
   const { league, commit, go, toast, save } = useGame();
+  const phone = usePhone();
   const [running, setRunning] = useState(false);
   const [tradesOnly, setTradesOnly] = useState(false);
   const [shopAll, setShopAll] = useState(false);
+  const [view, setView] = useState("feed"); // phones: the feed, the block, or buyers & sellers
   const timer = useRef(null);
   const dl = league.deadline && league.deadline.year === league.year ? league.deadline : null;
   const done = !dl || dl.done;
@@ -122,6 +126,92 @@ export default function DeadlinePage() {
   const total = dl.total ?? dl.feed.filter((f) => f.kind === "trade").length;
   const feed = tradesOnly ? dl.feed.filter((f) => f.kind === "trade" || f.kind === "done") : dl.feed;
 
+  const feedPanel = (
+    <div className="panel">
+      <h3>
+        {tradesOnly ? "Trade tracker" : "Breaking"}
+        <span className="right row" style={{ gap: 4 }}>
+          <button className={`tiny${!tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(false)}>Everything</button>
+          <button className={`tiny${tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(true)}>Trades only</button>
+        </span>
+      </h3>
+      <div className="stack dlfeed" style={{ gap: 8 }}>
+        {feed.map((w) => (
+          <div key={`${dl.feed.length - dl.feed.indexOf(w)}`}>
+            <WireItem w={w} />
+          </div>
+        ))}
+        {!feed.length && <div className="dim small">{dl.synthetic ? "This deadline passed before the deadline desk existed, so there's no feed for it." : "Nothing yet."}</div>}
+      </div>
+    </div>
+  );
+  const bestPanel = (
+    <div className="panel">
+      <h3>Best available</h3>
+      <BlockList entries={available} limit={12} />
+    </div>
+  );
+  const shopPanel = (
+    <div className="panel">
+      <h3>Shop your players</h3>
+      <div className="muted small" style={{ marginBottom: 6 }}>List a player and interested teams will call with offers as the day goes on.</div>
+      <div className="list">
+        {(shopAll ? sellable : sellable.slice(0, 12)).map((p) => (
+          <div className="item small" key={p.id}>
+            <span className="posbadge">{p.pos}</span>
+            <PlayerName p={p} />
+            <span className="muted">{visibleRatings(league,p).ovr} · {p.age}y · {p.yrs <= 1 ? "expiring" : `${p.yrs} yrs`}</span>
+            <button className={`tiny${onBlock(league, p.id) ? " primary" : ""}`} style={{ marginLeft: "auto" }} onClick={() => { toggleUserBlock(league, p.id); commit(); }} title={onBlock(league, p.id) ? "Take him off the block" : "Put him on the block"}>
+              {onBlock(league, p.id) ? "Listed ✓" : "List"}
+            </button>
+          </div>
+        ))}
+      </div>
+      {sellable.length > 12 && <button className="small ghost" style={{ marginTop: 6 }} onClick={() => setShopAll(!shopAll)}>{shopAll ? "Show fewer" : `Show all ${sellable.length}`}</button>}
+    </div>
+  );
+
+  // Phones (the football game's deadline on a phone): a slim clock bar pinned under the header,
+  // your offers first, then the feed, the block and the buyers & sellers as tabs, and the
+  // clock's controls in the action bar at the bottom of the screen.
+  if (phone) {
+    const stop = (fn) => () => { setRunning(false); fn(); };
+    const bar = done
+      ? [{ label: "Back to the season ▸", onClick: () => go("dashboard") }]
+      : [
+          { label: "Advance 1 hour ▸", onClick: stop(() => advance(Math.min(60, DEADLINE_END - dl.minute))), tone: "red" },
+          { label: "+10 minutes", onClick: stop(() => advance(10)) },
+          { label: "📞 Open the Trade Center", onClick: stop(() => go("trade")), tone: "blue" },
+          { label: "Skip to 3:00 PM", onClick: stop(() => advance(DEADLINE_END - dl.minute)) },
+        ];
+    return (
+      <div className={`rk-dlp${done ? " done" : ""}`}>
+        <div className="rk-dlp-clock" role="timer" aria-label={`Deadline clock ${fmtClock(dl.minute)} ET`}>
+          <div className="rk-dlp-row">
+            <span className="rk-dlp-live">{done ? "FINAL" : "● LIVE"}</span>
+            <span className="rk-dlp-time">{fmtClock(dl.minute)}</span>
+            <span className="rk-dlp-left">{done ? `Deadline passed · ${total} trade${total === 1 ? "" : "s"}` : left <= 60 ? "Final hour" : `${Math.floor(left / 60)}h ${String(left % 60).padStart(2, "0")}m left`}</span>
+            {!done && <button className={`rk-dlp-run${running ? " on" : ""}`} onClick={() => setRunning((r) => !r)}>{running ? "❚❚ Pause" : "▶ Run clock"}</button>}
+          </div>
+          <div className="rk-dlp-bar"><i style={{ width: `${Math.min(100, pct)}%` }} /></div>
+        </div>
+        <div className={`panel${offers.length ? " hot" : ""}`}>
+          <div className="rk-dlp-phone">📞 OFFERS FOR YOU{offers.length > 0 && <i>{offers.length}</i>}</div>
+          {offers.length > 0
+            ? <div className="offergrid">{offers.map((o) => <OfferCard key={o.id} o={o} compact />)}</div>
+            : <div className="muted small">{done ? "The phones have gone quiet. Trading is closed until after the playoffs." : `No offers on the table right now. Calls come in through the day: list players under Trade block to draw interest, or make a call from the Trade Center.${running ? " The clock pauses when a team calls." : ""}`}</div>}
+        </div>
+        <div className="rk-dlp-tabs" role="tablist">
+          {[["feed", "Feed"], ["block", "Trade block"], ["market", "Buyers & sellers"]].map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
+        </div>
+        {view === "feed" && feedPanel}
+        {view === "block" && (done ? <div className="panel muted small">The deadline has passed: the block reopens after the playoffs.</div> : <>{bestPanel}{shopPanel}</>)}
+        {view === "market" && (done ? <div className="panel muted small">The deadline has passed.</div> : <Stance league={league} />)}
+        <MobileActionBar key={done ? "done" : "live"} actions={bar} />
+      </div>
+    );
+  }
+
   return (
     <div className="stack">
       <div className={`dlhero${done ? " done" : ""}`}>
@@ -163,50 +253,11 @@ export default function DeadlinePage() {
       )}
 
       <div className="dlgrid">
-        <div className="panel">
-          <h3>
-            {tradesOnly ? "Trade tracker" : "Breaking"}
-            <span className="right row" style={{ gap: 4 }}>
-              <button className={`tiny${!tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(false)}>Everything</button>
-              <button className={`tiny${tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(true)}>Trades only</button>
-            </span>
-          </h3>
-          <div className="stack dlfeed" style={{ gap: 8 }}>
-            {feed.map((w) => (
-              <div key={`${dl.feed.length - dl.feed.indexOf(w)}`}>
-                <WireItem w={w} />
-              </div>
-            ))}
-            {!feed.length && <div className="dim small">{dl.synthetic ? "This deadline passed before the deadline desk existed, so there's no feed for it." : "Nothing yet."}</div>}
-          </div>
-        </div>
+        {feedPanel}
         <div className="stack">
-          {!done && (
-            <div className="panel">
-              <h3>Best available</h3>
-              <BlockList entries={available} limit={12} />
-            </div>
-          )}
+          {!done && bestPanel}
           {!done && <Stance league={league} />}
-          {!done && (
-            <div className="panel">
-              <h3>Shop your players</h3>
-              <div className="muted small" style={{ marginBottom: 6 }}>List a player and interested teams will call with offers as the day goes on.</div>
-              <div className="list">
-                {(shopAll ? sellable : sellable.slice(0, 12)).map((p) => (
-                  <div className="item small" key={p.id}>
-                    <span className="posbadge">{p.pos}</span>
-                    <PlayerName p={p} />
-                    <span className="muted">{visibleRatings(league,p).ovr} · {p.age}y · {p.yrs <= 1 ? "expiring" : `${p.yrs} yrs`}</span>
-                    <button className={`tiny${onBlock(league, p.id) ? " primary" : ""}`} style={{ marginLeft: "auto" }} onClick={() => { toggleUserBlock(league, p.id); commit(); }} title={onBlock(league, p.id) ? "Take him off the block" : "Put him on the block"}>
-                      {onBlock(league, p.id) ? "Listed ✓" : "List"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {sellable.length > 12 && <button className="small ghost" style={{ marginTop: 6 }} onClick={() => setShopAll(!shopAll)}>{shopAll ? "Show fewer" : `Show all ${sellable.length}`}</button>}
-            </div>
-          )}
+          {!done && shopPanel}
         </div>
       </div>
     </div>
