@@ -1,0 +1,47 @@
+/* Legacy batch: rafters, Hall, accolade chips, record cards (Gridiron 2.0 / 2.51 / 3.21). */
+.lg-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+.lg-h span{font-size:18px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.lg-h small{color:var(--muted,#94a3b8);font-size:13px}
+.lg-wall{background:linear-gradient(180deg,#0b0f19,#111827);border:1px solid #1f2937;border-radius:12px;padding:0 12px 14px;color:#e2e8f0}
+.lg-wall::before{content:"";display:block;height:8px;margin:0 -12px;background:repeating-linear-gradient(90deg,#374151 0 14px,#1f2937 14px 28px);border-radius:12px 12px 0 0}
+.lg-wall-k{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#94a3b8;padding:6px 2px 0}
+.lg-wall-row{display:flex;flex-wrap:wrap;gap:12px;padding-top:2px;min-height:120px;align-items:flex-start}
+.lg-banner{position:relative;width:92px;padding-top:10px;flex:0 0 auto;filter:drop-shadow(0 8px 10px #000b)}
+.lg-bar{position:absolute;top:0;left:10px;right:10px;height:6px;border-radius:3px;background:linear-gradient(180deg,#e5e7eb,#6b7280)}
+.lg-cloth{clip-path:polygon(0 0,100% 0,100% 88%,50% 100%,0 88%);background:linear-gradient(100deg,var(--bg) 0%,var(--bg) 42%,color-mix(in srgb,var(--bg) 80%,#fff) 50%,var(--bg) 58%,var(--bg) 100%);border-top:3px solid var(--ac);min-height:160px;display:flex;flex-direction:column;align-items:center;padding:8px 6px 22px;box-sizing:border-box;color:#fff;text-shadow:0 1px 2px #0009;text-align:center}
+.lg-banner.gold .lg-cloth{border-top-color:#e8c45a}
+.lg-logo{width:40px;height:40px;border-radius:20px;background:#ffffffee;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--ac)}
+.lg-cloth b{font-size:9.5px;font-weight:900;letter-spacing:.8px;line-height:1.2;margin-top:4px}
+.lg-banner.gold .lg-cloth b{color:#fde68a}
+.lg-cloth em{font-style:normal;font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:900;margin-top:6px}
+.lg-cloth em.big{font-size:44px;margin:4px 0 2px}
+.lg-star{color:#fde68a;font-size:13px}
+.lg-banner.num .lg-cloth{min-height:140px}
+.lg-banner.num.yours .lg-cloth{border-top-color:#e8c45a}
+.lg-hof{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;background:radial-gradient(ellipse at 50% 0%,#3b2f2455,transparent 70%),#0f0c0a;border:1px solid #2b211b;border-radius:12px;padding:12px;color:#f5f5f4}
+.lg-hof-card{display:flex;flex-direction:column;gap:2px;text-align:left;background:#1c1714;border:1px solid #3a2e24;border-radius:10px;padding:8px 10px;color:inherit;font:inherit}
+.lg-hof-card b{font-size:13px}
+.lg-hof-card span{font-size:11px;color:#d6c7a1}
+.lg-hof-card em{font-style:normal;font-size:10px;font-weight:900;color:#f59e0b}
+.lg-hof-card.yours{border-color:#b45309;cursor:pointer}
+.lg-prompt{display:flex;flex-direction:column;gap:6px;border-left:4px solid #e8c45a}
+.lg-doc summary{cursor:pointer}
+.lg-doc p{margin:6px 0}
+.lg-acc{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}
+.lg-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:#1e293b;color:#e2e8f0;border:1px solid #334155}
+.lg-chip.k-stanley,.lg-chip.k-hart,.lg-chip.k-connSmythe{background:#3b2f0b;border-color:#a16207;color:#fde68a}
+.lg-chip.rank{background:#0f2a1d;border-color:#166534;color:#bbf7d0}
+.lg-chip.retired{background:#3f0d12;border-color:#9f1239;color:#fecdd3}
+/* Record cards: themed, a big number, gold edge for marks set in your league, green for active leaders. */
+.gg-records .gg-rec.light,.gg-records .gg-rec.gold{background:var(--panel,#111827);color:var(--text,#e2e8f0);border:1px solid var(--line,#1f2937);border-left:4px solid #475569;box-shadow:none}
+.gg-records .gg-rec b{font-size:30px}
+.gg-records .gg-rec.yours{border-left-color:#eab308}
+.gg-records .gg-rec.active-lead{border-left-color:#22c55e}
+.gg-records .gg-rec-pct{font-size:11px;font-weight:800;color:#94a3b8}
+.lg-watch{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.lg-watch-card{border-left:4px solid #f97316}
+.lg-tx-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.lg-tx-season{font-size:12px;font-weight:900;letter-spacing:1px;color:#94a3b8;margin:10px 0 4px}
+.lg-hist-champ{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.lg-hist-card{display:flex;gap:10px;align-items:center}
+@media (max-width:600px){.lg-banner{width:76px}.lg-cloth{min-height:136px}.lg-cloth em.big{font-size:34px}.lg-acc{padding:0 10px 8px}}

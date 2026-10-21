@@ -20,6 +20,8 @@ import { POS_COLOR } from "./TradePage.jsx";
 import AbilityChip from "./AbilityChip.jsx";
 import { injuryReturn } from "../engine/injuryReport.js";
 import PlayerContract from "./PlayerContract.jsx";
+import { accoladesOf, accoladeText, franchiseRanks } from "../engine/legacy.js";
+import "./legacy.css";
 import { bestRoles } from "../engine/roles.js";
 
 // The player card, laid out like the football game's: hero with the face, number and an
@@ -53,14 +55,14 @@ function CareerChart({ points }) {
   return <svg className="gg-pc-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"><path d={`${d} L${xs.at(-1)} ${H - 22} L${xs[0]} ${H - 22} Z`} fill="#1d4ed822" /><path d={d} fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinejoin="round" />{points.map((x, i) => <g key={i}><circle cx={xs[i]} cy={ys[i]} r="4" fill="#a3e635" /><text x={xs[i]} y={ys[i] - 9} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="800">{x.ovr}</text><text x={xs[i]} y={H - 6} textAnchor="middle" fill="#94a3b8" fontSize="11">{x.year}</text></g>)}</svg>;
 }
 
-export default function PlayerCard({ p }) {
+export default function PlayerCard({ p, retired = null }) {
   const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
   const callUpFlow = useCallUp();
   const [allAttrs, setAllAttrs] = useState(false);
   const [seasons, setSeasons] = useState("all");
-  const team = league.teams[p.tid];
-  const mine = p.tid === league.userTid;
-  const inMinors = team && team.prospects.includes(p.id);
+  const team = retired ? league.teams[retired.tid] : league.teams[p.tid];
+  const mine = !retired && p.tid === league.userTid;
+  const inMinors = !retired && team && team.prospects.includes(p.id);
   const hidden = inMinors && !mine;
   const r = hidden ? shownRatings(p) : { ovr: p.ovr, pot: p.pot, exact: true };
   const goalie = isGoalie(p.pos);
@@ -68,14 +70,16 @@ export default function PlayerCard({ p }) {
   const groupKeys = Object.keys(groups);
   const shownGroups = allAttrs ? groupKeys : groupKeys.slice(0, 2);
   const totals = careerTotals(p), milestones = careerMilestones(p);
-  const watch = team && isProspectWatch(league, team, p) ? prospectReport(league, team, p) : null;
+  const watch = !retired && team && isProspectWatch(league, team, p) ? prospectReport(league, team, p) : null;
   const prefs = agentPreferences(p);
-  const value = p.tid >= 0 || p.tid === -1 ? Math.max(1, Math.round(assetValue(league, p.id, league.teams[league.userTid]))) : null;
+  const value = retired ? null : p.tid >= 0 || p.tid === -1 ? Math.max(1, Math.round(assetValue(league, p.id, league.teams[league.userTid]))) : null;
   const rep = hidden ? { plus: [], minus: [] } : report(p);
   const career = [...p.career].reverse();
   const shownCareer = seasons === "all" ? career : career.slice(0, 3);
-  const ratingPoints = [...(p.ratingHistory || []).map((h) => ({ year: h.year, ovr: h.ovr })), { year: league.year, ovr: p.ovr }];
-  const eyebrow = team ? `${team.city} ${team.name}${inMinors ? " · MINORS" : ""}` : p.tid === -2 ? `${league.draftClassYear} DRAFT CLASS` : "FREE AGENT";
+  const ratingPoints = [...(p.ratingHistory || []).map((h) => ({ year: h.year, ovr: h.ovr })), ...(retired ? [] : [{ year: league.year, ovr: p.ovr }])];
+  const accolades = accoladesOf(league, p);
+  const ranks = retired ? [] : franchiseRanks(league, p);
+  const eyebrow = retired ? `RETIRED ${retired.year} · ${team ? `${team.city} ${team.name}` : "unsigned free agent"}${retired.age ? ` · age ${retired.age}` : ""}` : team ? `${team.city} ${team.name}${inMinors ? " · MINORS" : ""}` : p.tid === -2 ? `${league.draftClassYear} DRAFT CLASS` : "FREE AGENT";
   // The development trait shows at every age (Gridiron 1.5); another club's prospect shows what your scouts found.
   const devShown = p.dev && DEV_TRAITS[p.dev] ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
   const form = hidden ? null : formLabel(p, league.year);
@@ -110,25 +114,35 @@ export default function PlayerCard({ p }) {
           {injury && <span className="gg-pc-tag inj" title={injury.when}>🚑 {p.injuryNote || "Injured"} · {injury.list ? `${injury.list} · ` : ""}{injury.text}</span>}
           {p.clause?.type && <span className="gg-pc-tag">{p.clause.type}</span>}
         </div>
-        <div className="gg-pc-tiles">
+        {(accolades.length > 0 || ranks.length > 0 || retired) && <div className="lg-acc">
+          {retired && <span className="lg-chip retired">RETIRED{retired.hof || (league.hallOfFame || []).some((h) => h.pid === retired.pid) ? " · HALL OF FAME" : ""}</span>}
+          {accolades.map((a) => <span key={a.k} className={`lg-chip k-${a.k}`} title={a.years.map((y) => `${y}-${String(y + 1).slice(2)}`).join(", ")}>{a.icon} {accoladeText(a)}</span>)}
+          {ranks.map((r) => <span key={r.key} className="lg-chip rank" title={`${r.value.toLocaleString("en-US")} with the club`}>#{r.rank} in {r.club} {r.label.toLowerCase()}</span>)}
+        </div>}
+        {retired && <div className="gg-pc-tiles">
+          <div><small>CAREER</small><b>{goalie ? `${totals.w} W` : `${totals.pts} PTS`}</b><span>{totals.gp} GP{goalie ? ` · ${totals.so} SO` : ` · ${totals.g} G · ${totals.a} A`}</span></div>
+          <div><small>PEAK</small><b>{retired.peak}</b><span>best overall rating</span></div>
+          <div><small>LEGACY</small><b>{retired.legacy ?? "—"}</b><span>{retired.pre ? `incl. ${retired.pre} from his pre-league career` : "Hall of Fame score"}</span></div>
+        </div>}
+        {!retired && <div className="gg-pc-tiles">
           <div><small>TRADE VALUE</small><b>{value == null ? "—" : value}</b><span>what clubs see</span></div>
           <div><small>WANTS</small><b className="want">{WANTS[prefs.priority][0]}</b><span>{WANTS[prefs.priority][1]}</span></div>
           <div><small>AGENT</small><b className="agent">{prefs.personality}</b><span>{AGENT[prefs.personality]}</span></div>
-        </div>
+        </div>}
         <div className="gg-pc-cols">
           <div className="gg-pc-col">
             {shownGroups.map((g) => <section key={g} className="gg-pc-panel"><div className="gg-pc-k">{g}</div><Bars attrs={groups[g]} p={p} hide={hidden} /></section>)}
             <button className="link gg-pc-more" onClick={() => setAllAttrs((v) => !v)}>{allAttrs ? "Fewer skills ▴" : `All ${Object.values(groups).reduce((n, g) => n + Object.keys(g).length, 0)} skills ▾`}</button>
-            <PlayerContract p={p} hidden={hidden} />
+            {!retired && <PlayerContract p={p} hidden={hidden} />}
             <section className="gg-pc-panel"><div className="gg-pc-k draft">DRAFT PEDIGREE</div><div className="gg-pc-big">{p.draft ? `${p.draft.year} · Round ${p.draft.round}, #${p.draft.pick}${league.teams[p.draft.tid] ? ` by ${league.teams[p.draft.tid].abbr}` : ""}` : p.src === "gen" ? "Undrafted" : "Pre-franchise"}</div></section>
             {p.combine && <section className="gg-pc-panel"><div className="gg-pc-k combine">SCOUTING COMBINE{p.combine.grade ? ` · ${p.combine.grade}` : ""}</div><div className="gg-pc-combine">{COMBINE_TESTS.filter((t) => Number.isFinite(p.combine.tests?.[t.k])).map((t) => <div key={t.k}><small>{t.short.toUpperCase()}</small><b>{p.combine.tests[t.k].toFixed(t.dp)}{t.unit === "in" ? '"' : ""}</b><span>{t.unit !== "in" ? t.unit : ""}</span></div>)}</div></section>}
             <div className="dim small gg-pc-src">{p.ratingData ? `EA SPORTS NHL ${p.ratingData.edition}: ${p.ratingData.keys.length} published attributes; the rest are estimates.` : p.src === "ea27" ? "Official EA SPORTS NHL 27 overall; attributes are estimates." : "Generated player; attributes are gameplay estimates."}</div>
           </div>
           <div className="gg-pc-col">
-            <section className="gg-pc-panel"><div className="gg-pc-k season">{farmLine ? `${watch.level} (this season)` : `${league.year}-${String(league.year + 1).slice(2)} NHL`}</div>
+            {!retired && <section className="gg-pc-panel"><div className="gg-pc-k season">{farmLine ? `${watch.level} (this season)` : `${league.year}-${String(league.year + 1).slice(2)} NHL`}</div>
               <div className="gg-pc-tilesm">{(farmLine ? (goalie ? [["GP", farmLine.gp], ["W", farmLine.w], ["SV%", farmLine.svpct == null ? "—" : pct(farmLine.svpct)]] : [["GP", farmLine.gp], ["G", farmLine.g], ["A", farmLine.a], ["PTS", farmLine.pts]]) : tiles(s)).map(([k, v]) => <div key={k}><small>{k}</small><b>{v}</b></div>)}</div>
               {!farmLine && ps.gp > 0 && <><div className="dim small" style={{ margin: "8px 0 4px" }}>Playoffs</div><div className="gg-pc-tilesm">{tiles(ps).map(([k, v]) => <div key={k}><small>{k}</small><b>{v}</b></div>)}</div></>}
-            </section>
+            </section>}
             <section className="gg-pc-panel"><div className="gg-pc-k report">SCOUTING REPORT</div>
               {hidden ? <div className="dim small">Scout him for a read on his game.</div> : <>
                 {rep.plus.map((t, i) => <div key={"p" + i} className="gg-pc-line plus"><b>+</b> {t}</div>)}
@@ -168,7 +182,7 @@ export default function PlayerCard({ p }) {
             <section className="gg-pc-panel"><div className="gg-pc-k chart">CAREER OVR</div><CareerChart points={hidden ? [] : ratingPoints} /></section>
           </div>
         </div>
-        <div className="gg-pc-actions">
+        {!retired && <div className="gg-pc-actions">
           {mine && !inMinors && <>
             <button disabled={!canSendDown(p)} onClick={() => { sendDown(league, team, p.id); commit(); closeModal(); }}>Send to minors</button>
             <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? buyoutSummary(p, capYear(league)) : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
@@ -178,7 +192,7 @@ export default function PlayerCard({ p }) {
           {!mine && p.tid >= 0 && <button className="primary" onClick={() => proposeTradeFor(p.id)}>Trade for {p.name.split(" ").slice(-1)[0]}</button>}
           {p.tid === -1 && <button className="primary" onClick={() => { closeModal(); go("freeagency"); }}>Go to free agency</button>}
           {team && <button className="ghost" onClick={() => openTeam(team.id)}>{team.abbr} roster</button>}
-        </div>
+        </div>}
         <button className="gg-pc-close" onClick={closeModal}>Close</button>
       </div>
     </Modal>

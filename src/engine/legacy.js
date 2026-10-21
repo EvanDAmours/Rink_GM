@@ -98,7 +98,7 @@ export function franchiseBoard(league, abbr, key, n = 10) {
 export function franchiseRanks(league, p) {
   const t = league.teams[p.tid]; if (!t) return [];
   const out = [];
-  for (const [key, label] of isGoalie(p.pos) ? GOALIE_BOARDS : CAREER_BOARDS.slice(0, 4)) {
+  for (const [key, label] of isGoalie(p.pos) ? GOALIE_BOARDS : CAREER_BOARDS.slice(0, 3)) {
     const b = franchiseBoard(league, t.abbr, key, 10);
     const i = b.findIndex((r) => normName(r.name) === normName(p.name));
     if (i >= 0) out.push({ key, label, rank: i + 1, value: b[i].value, club: t.name });

@@ -7,6 +7,7 @@ import { AWARD_NAMES, AWARD_BLURB, ALL_STAR_LABEL, computeAwards, conferenceTrop
 import { titleMeaning } from "../engine/momentsCup.js";
 import { trophyUrl, TROPHY_ORDER, TROPHY_NAMESAKE } from "./trophies.js";
 import Ring from "./Ring.jsx";
+import { Rafters, GmLegacy } from "./LegacyRafters.jsx";
 import "./moments/cup.css";
 
 export function Trophy({ kind, size = 110, className = "" }) {
@@ -35,7 +36,7 @@ const season = (y) => `${y}–${String(y + 1).slice(2)}`;
 // every individual award its players have won, and a case showing which trophies it still chases.
 export default function TrophyRoom() {
   const { league, commit } = useGame();
-  const [view, setView] = useState("club");
+  const [view, setView] = useState("hall");
   const team = league.userTid;
   const club = league.teams[team];
   const seasons = [...league.history];
@@ -86,9 +87,11 @@ export default function TrophyRoom() {
     <div className="stack gg-trophyroom">
       <div className="gg-pagehead">
         <div><h2>Legacy Hall · {club.name}</h2><div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
-        <div className="gg-chips"><button className={view === "club" ? "on" : ""} onClick={() => setView("club")}>Our trophies</button><button className={view === "case" ? "on" : ""} onClick={() => setView("case")}>Trophy case</button><button className={view === "awards" ? "on" : ""} onClick={() => setView("awards")}>League awards</button></div>
+        <div className="gg-chips"><button className={view === "hall" ? "on" : ""} onClick={() => setView("hall")}>Rafters & Hall</button><button className={view === "club" ? "on" : ""} onClick={() => setView("club")}>Our trophies</button><button className={view === "case" ? "on" : ""} onClick={() => setView("case")}>Trophy case</button><button className={view === "awards" ? "on" : ""} onClick={() => setView("awards")}>League awards</button><button className={view === "gm" ? "on" : ""} onClick={() => setView("gm")}>GM legacy</button></div>
       </div>
 
+      {view === "hall" && <Rafters />}
+      {view === "gm" && <GmLegacy />}
       {view === "club" && (
         <>
           <div className="gg-legacy-hero" style={{ "--c1": club.colors[0] }}>
