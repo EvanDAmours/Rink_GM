@@ -1,0 +1,208 @@
+/* The live game, broadcast style (Gridiron GM's live game, for hockey): a team-coloured score
+   bug with the controls beside it, a one-line situation with momentum, the rink with callouts
+   over it, the play-by-play beside it and the charts and box score under it. Full desk or TV
+   view; on a phone it stacks and the controls dock at the bottom. */
+
+/* .main clips sideways overflow; clip (not hidden) keeps the rink able to stick on a phone. */
+.app .main:has(.lv-game) { overflow-x: clip; }
+
+.lv-game { display: flex; flex-direction: column; gap: 6px; }
+.lv-top { display: flex; align-items: center; gap: 10px; min-height: 22px; }
+.app .lv-top h2 { font-size: 17px; margin: 0; line-height: 1.2; }
+.lv-game .gg-final-banner { margin: 0; }
+
+/* Score bug and controls */
+.lv-headrow { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; }
+.lv-bug { flex: 1 1 380px; min-width: 0; display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; border: 1px solid #ffffff22; box-shadow: 0 6px 20px #0008; }
+.lv-bside { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #0b1220) 70%, #0b1220 100%); }
+.lv-bside .ab { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: 1px; text-shadow: 0 1px 3px #0009; }
+.lv-bside .sog { font-size: 11px; font-weight: 800; color: #ffffffcc; white-space: nowrap; text-shadow: 0 1px 2px #0009; }
+.lv-bside .sc { margin-left: auto; font-size: 26px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 2px 4px #0008; line-height: 1; }
+.lv-pill { font-size: 10px; font-weight: 900; padding: 1px 5px; border-radius: 3px; letter-spacing: .5px; line-height: 1.4; }
+.lv-pill.pp { background: #facc15; color: #111827; }
+.lv-pill.en { background: #c084fc; color: #1e1b4b; }
+.lv-bug .lv-bclock { background: #020617; color: #fff; padding: 4px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 96px; border: 0; }
+.lv-bug .lv-bclock b { font-size: 14px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lv-bug .lv-bclock .t { font-size: 14px; font-weight: 800; font-family: inherit; }
+.lv-bug .lv-bclock .p { font-size: 11px; font-weight: 800; color: #fbbf24; white-space: nowrap; letter-spacing: 0; text-transform: none; }
+
+.lv-ctrls { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.app .lv-ctrls button { padding: 3px 10px; font-size: 12px; white-space: nowrap; }
+.app .lv-ctrls .lv-tvbtn.on { background: #7c3aed; border-color: #7c3aed; color: #e9d5ff; }
+.app .lv-ctrls .lv-play.go { background: #22c55e; border-color: #22c55e; color: #fff; }
+.app .lv-ctrls .lv-play.stop { background: #f97316; border-color: #f97316; color: #fff; }
+.app .lv-ctrls .lv-continue { padding: 6px 16px; font-size: 13px; }
+
+/* Situation line */
+.lv-sit { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; font-size: 13.5px; color: #cbd5e1; }
+.lv-sit-main { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lv-sit-main b { color: #fff; font-weight: 800; }
+.lv-sit-main > span:not(.teambadge) { margin-left: -2px; }
+.lv-sit-puck { color: var(--gg-sl); font-size: 12.5px; }
+.lv-mom { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12px; color: var(--gg-mt); white-space: nowrap; }
+.lv-mom-bar { width: 110px; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; display: inline-block; }
+.lv-mom-bar i { display: block; height: 100%; border-radius: 3px; transition: width .3s ease; }
+.lv-mom b { min-width: 52px; }
+
+/* Layout: full desk (rink and play-by-play, charts and box score) or TV view (rink full width,
+   caption, then play-by-play and charts). */
+.lv-grid { display: grid; grid-template-columns: minmax(0, 2.05fr) minmax(320px, 1fr); grid-template-areas: "stage pbp" "charts box"; column-gap: 12px; row-gap: 8px; align-items: start; }
+.lv-game.tv .lv-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "stage stage" "pbp charts" "box box"; }
+.lv-stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.lv-game.tv .lv-rinkbox { width: 100%; max-width: max(560px, calc((100vh - 470px) * 2.236 + 20px)); margin: 0 auto; }
+.lv-rinkpos { position: relative; }
+.lv-mini { display: none; }
+.lv-pbpcell { grid-area: pbp; position: relative; align-self: stretch; min-height: 260px; min-width: 0; }
+.lv-game.tv .lv-pbpcell { min-height: 214px; }
+.lv-pbp { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--gg-cd); border-radius: 10px; padding: 10px; box-sizing: border-box; }
+.lv-charts { grid-area: charts; min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; align-items: start; }
+.lv-boxcell { grid-area: box; min-width: 0; }
+
+/* Callouts over the rink */
+.lv-callwrap { position: absolute; inset: 0; pointer-events: none; display: grid; place-items: center; z-index: 3; }
+.lv-callout { pointer-events: none; max-width: 88%; text-align: center; padding: 10px 26px 12px; border-radius: 14px; background: rgba(6, 11, 24, .84); border: 3px solid var(--cc); box-shadow: 0 12px 40px #000a; animation: lvCallIn .45s ease-out; }
+.lv-callout.k-goal, .lv-callout.k-hat, .lv-callout.k-so-goal { background: linear-gradient(180deg, color-mix(in srgb, var(--tc) 38%, #060b18), rgba(6, 11, 24, .9)); }
+.lv-co-top { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.lv-co-t { font-family: "Arial Black", "Segoe UI", system-ui, sans-serif; font-weight: 900; font-size: clamp(24px, 3.6vw, 50px); line-height: 1.05; color: var(--cc); letter-spacing: 1px; text-shadow: 0 3px 12px #000c; white-space: nowrap; }
+.lv-co-tag { font-size: clamp(12px, 1.3vw, 16px); font-weight: 900; padding: 3px 8px; border-radius: 6px; background: var(--tc); color: #fff; letter-spacing: 1px; border: 1px solid #ffffff66; text-shadow: 0 1px 2px #0009; }
+.lv-co-s { margin-top: 4px; font-size: clamp(12px, 1.25vw, 17px); font-weight: 700; color: #e2e8f0; text-wrap: balance; }
+@keyframes lvCallIn { 0% { opacity: 0; transform: scale(.85); } 100% { opacity: 1; transform: none; } }
+
+/* TV caption: the last play as a lower third */
+.lv-cap { display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px #0008; background: linear-gradient(90deg, #0b1222, #111a30); border: 1px solid #ffffff1a; min-height: 62px; animation: lvCap .35s ease-out; }
+.lv-cap-bar { width: 8px; flex-shrink: 0; background: var(--cc); }
+.lv-cap-logo { display: flex; align-items: center; padding: 0 12px; background: color-mix(in srgb, var(--tc) 80%, transparent); }
+.lv-cap-body { padding: 8px 16px; min-width: 0; }
+.lv-cap-h { font-size: 11px; font-weight: 900; letter-spacing: 1.6px; color: #94a3b8; text-transform: uppercase; }
+.lv-cap.big .lv-cap-h { color: var(--cc); }
+.lv-cap-t { font-size: 21px; font-weight: 800; color: #fff; line-height: 1.25; }
+@keyframes lvCap { 0% { transform: translateY(5px); filter: brightness(1.5); } 100% { transform: none; filter: none; } }
+
+/* Play-by-play */
+.lv-last { font-size: 17px; font-weight: 800; line-height: 1.35; color: #fff; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--gg-bd); }
+.lv-last.t-goal, .lv-last.t-so-goal { color: var(--gg-gn); }
+.lv-last.t-pen { color: #fcd34d; }
+.lv-last.t-fight { color: #fca5a5; }
+.lv-last-h { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--gg-mt); text-transform: uppercase; }
+.lv-units { margin-left: 8px; color: #a5b4fc; letter-spacing: .5px; text-transform: none; }
+.lv-pbp-h { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--gg-mt); margin-bottom: 3px; }
+.lv-feed { flex: 1; min-height: 0; overflow-y: auto; }
+.lv-ev { padding: 2px 4px; margin-bottom: 1px; font-size: 12px; line-height: 1.4; color: #94a3b8; border-left: 3px solid transparent; }
+.lv-ev.mine { color: #cbd5e1; }
+.lv-ev .when { color: #475569; font-size: 10px; margin-right: 4px; font-variant-numeric: tabular-nums; }
+.lv-ev.chance { border-left-color: #38bdf8; }
+.lv-ev.t-goal { border-left-color: var(--gg-gn); color: var(--gg-gn); font-weight: 800; background: #22c55e11; }
+.lv-ev.t-pen { border-left-color: var(--gg-gd); }
+.lv-ev.t-fight { border-left-color: var(--gg-rd); color: #fca5a5; background: #ef444411; }
+.lv-ev.t-pull, .lv-ev.t-goalie, .lv-ev.t-timeout { border-left-color: #a855f7; }
+.lv-ev.t-period, .lv-ev.t-final { color: #a5b4fc; font-weight: 700; }
+.lv-ev.t-so-goal { color: var(--gg-gn); font-weight: 700; }
+.lv-ev.t-so-miss { color: #fdba74; }
+
+/* Bench controls, at the foot of the play-by-play */
+.lv-bench { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--gg-bd); }
+.lv-lbl { font-size: 11px; font-weight: 800; letter-spacing: 1.2px; color: var(--gg-mt); text-transform: uppercase; }
+.lv-seg { display: inline-flex; }
+.app .lv-bench button { font-size: 11px; padding: 3px 8px; }
+.app .lv-seg button { border-radius: 0; margin-left: -1px; }
+.app .lv-seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.app .lv-seg button:last-child { border-radius: 0 4px 4px 0; }
+.app .lv-bench button.on { background: var(--gg-gn); border-color: var(--gg-gn); color: #fff; }
+.lv-auto { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--gg-sl); white-space: nowrap; }
+
+/* Charts */
+.lv-chart { background: var(--gg-bg); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.lv-chart-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: var(--gg-mt); margin-bottom: 4px; }
+.lv-chart-h > span:first-child { white-space: nowrap; }
+.lv-chart-h i { font-style: normal; }
+.lv-wp { position: relative; }
+.lv-wp svg { display: block; }
+.lv-wp-top, .lv-wp-bot { position: absolute; left: 4px; font-size: 10px; color: #fffa; }
+.lv-wp-top { top: 2px; }
+.lv-wp-bot { bottom: 2px; }
+.lv-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--gg-mt); margin-top: 2px; }
+.lv-sm { display: block; width: 100%; height: auto; max-height: 176px; }
+.lv-sm-key { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; letter-spacing: 0; white-space: nowrap; }
+.lv-sm-key i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; font-style: normal; margin-left: 4px; }
+.lv-sm-key .k-goal { background: #e2e8f0; box-shadow: 0 0 0 2px #64748b; }
+.lv-sm-key .k-sog { background: #94a3b8; }
+.lv-sm-key .k-miss { border: 1px solid #94a3b8; }
+.lv-sm-key .k-blk { width: auto; height: auto; line-height: 1; color: #94a3b8; }
+.lv-sm-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--gg-sl); margin-top: 3px; }
+.lv-sm-team b { color: var(--tc); }
+
+/* Live box score */
+.lv-box { display: flex; flex-direction: column; gap: 8px; background: var(--gg-cd); border-radius: 10px; padding: 8px 10px; box-sizing: border-box; }
+.lv-box-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; font-size: 11px; font-weight: 900; letter-spacing: 1px; color: var(--gg-mt); margin-bottom: 2px; }
+.lv-box-head > span { display: inline-flex; align-items: center; gap: 5px; color: #e2e8f0; }
+.lv-box-head > span:nth-child(2) { color: var(--gg-mt); }
+.lv-box-head > span:last-child { justify-content: flex-end; }
+.lv-stat { display: grid; grid-template-columns: 70px 1fr 70px; align-items: center; padding: 2px 0; border-bottom: 1px solid #1e293b66; font-size: 12px; }
+.lv-stat b { color: #94a3b8; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lv-stat b:last-child { text-align: right; }
+.lv-stat b.up { color: #fff; font-weight: 900; }
+.lv-stat .lbl { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gg-sl); font-size: 11px; }
+.lv-statbar { display: flex; width: 100%; max-width: 150px; height: 3px; border-radius: 2px; overflow: hidden; background: #1e293b; }
+.lv-statbar i { display: block; height: 100%; }
+.lv-box-players { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.lv-box-team { min-width: 0; }
+.lv-box-name { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: #e2e8f0; margin-bottom: 3px; }
+.lv-box-name i { width: 8px; height: 8px; border-radius: 4px; }
+.lv-box-row { display: flex; align-items: center; gap: 4px; padding: 1px 3px; font-size: 12px; border-bottom: 1px solid #1e293b44; min-width: 0; }
+.lv-pos { flex-shrink: 0; min-width: 20px; padding: 1px 3px; border-radius: 3px; font-size: 9px; font-weight: 900; color: #fff; text-align: center; }
+.lv-pos.f { background: #2563eb; }
+.lv-pos.d { background: #0d9488; }
+.lv-pos.g { background: #b45309; }
+.lv-box-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.app .lv-box-row .nm .player-link { font-size: 12px !important; font-weight: 600; }
+.lv-box-row .st { display: inline-flex; gap: 4px; color: #94a3b8; font-size: 11px; white-space: nowrap; }
+.lv-box-row .st b { color: #e2e8f0; }
+.lv-box-row .st b.g { color: var(--gg-gn); }
+.lv-box-none { font-size: 11px; color: var(--gg-mt); padding: 2px 3px; }
+
+/* Motion: the callouts and caption appear without moving when motion is reduced. */
+@media (prefers-reduced-motion: reduce) { .lv-callout, .lv-cap, .lv-mom-bar i { animation: none !important; transition: none !important; } }
+.app[data-motion=reduced] .lv-callout, .app[data-motion=reduced] .lv-cap, .app[data-motion=reduced] .lv-mom-bar i { animation: none !important; transition: none !important; }
+
+/* A narrow browser window: rink, play-by-play, charts, box score, one under the other. */
+@media (max-width: 1000px) {
+  .lv-grid, .lv-game.tv .lv-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "pbp" "charts" "box"; }
+  .lv-pbpcell, .lv-game.tv .lv-pbpcell { min-height: 320px; }
+}
+
+/* Phone: the header already says Live Game; the rink sticks to the top with a mini score and
+   the controls dock at the bottom, big enough for a thumb. */
+@media (max-width: 640px) {
+  .lv-top h2 { display: none; }
+  .lv-headrow { flex-direction: column; align-items: stretch; }
+  .lv-bug { flex: none; }
+  .lv-bside { padding: 5px 8px; gap: 6px; }
+  .lv-bside .ab { font-size: 16px; }
+  .lv-bside .sc { font-size: 22px; }
+  .lv-bside .sog { font-size: 10px; }
+  .lv-bug .lv-bclock { min-width: 76px; padding: 4px 6px; }
+  .lv-bug .lv-bclock b, .lv-bug .lv-bclock .t { font-size: 13px; }
+  .lv-ctrls { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; flex-wrap: nowrap; gap: 8px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, #080c1400, #080c14f2 35%); }
+  .app .lv-ctrls button { min-height: 50px; border-radius: 12px; font-size: 15px; font-weight: 900; }
+  .app .lv-ctrls .lv-tvbtn, .app .lv-ctrls .lv-step { display: none; }
+  .app .lv-ctrls .lv-play { order: -1; width: 104px; flex: none; }
+  .app .lv-ctrls .lv-speed, .app .lv-ctrls .lv-sim, .app .lv-ctrls .lv-continue { flex: 1; }
+  .app .lv-ctrls .lv-continue { font-size: 17px; }
+  .lv-sit { font-size: 13px; gap: 2px 10px; }
+  .lv-sit-puck { display: none; }
+  .lv-mom { margin-left: 0; }
+  .lv-mom-bar { width: 90px; }
+  .lv-stage { position: sticky; top: var(--gg-head-h, 41px); z-index: 6; background: var(--gg-bg); padding-bottom: 4px; } /* under the sticky header */
+  .lv-mini { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; padding: 2px 2px 4px; }
+  .lv-mini b { font-size: 17px; }
+  .lv-mini .dash { color: var(--gg-mt); }
+  .lv-mini-r { margin-left: auto; font-size: 12px; color: var(--gg-sl); font-weight: 700; }
+  .lv-pbpcell, .lv-game.tv .lv-pbpcell { min-height: 0; }
+  .lv-pbp { position: static; max-height: min(46vh, 420px); min-height: 220px; }
+  .lv-last { font-size: 15px; }
+  .lv-units { display: block; margin: 1px 0 0; }
+  .lv-callout { padding: 6px 14px 8px; border-width: 2px; }
+  .lv-callout .teambadge { display: none; }
+  .lv-co-s { font-size: 11px; }
+  .lv-box-players { grid-template-columns: minmax(0, 1fr); }
+}
