@@ -10,7 +10,7 @@ import { restShare, REST_OPTIONS } from "../engine/sim.js";
 import { gamePlan } from "../engine/teamPlanning.js";
 import { COACH_STYLES } from "../engine/franchise.js";
 import { POS_COLOR } from "./TradePage.jsx";
-import { slotRating, slotRole, roleFit, ROLES, IDENTITIES, identityOf } from "../engine/roles.js";
+import { slotRating, slotRole, roleFit, ROLES, IDENTITIES, identityOf, lineRoles, LINE_ROLES, PAIR_ROLES } from "../engine/roles.js";
 import { IdentityPanel, IceTimeSliders, SpotPreview, TacticUsage } from "./LinesTactics.jsx";
 import { esSpots, esTags, esBand, stSpots, stTags, stBand, iceShare, goalieShare, lastName, nameSize, offPosition, planWords } from "./linesView.js";
 
@@ -221,6 +221,7 @@ export default function RinkLines({ team, mine, onOpen, strength = "es", top = n
           {(c != null || notes.length > 0 || (!goalies && avg != null)) && (
             <span className="lx-gsub">
               {!goalies && avg != null && <span>{g === "F" ? "Line" : g === "D" ? "Pair" : "Unit"} <b style={{ color: ovrColor(avg) }}>{avg}</b></span>}
+              {(g === "F" || g === "D") && <span>{(g === "F" ? LINE_ROLES[lineRoles(team).F[i]] : PAIR_ROLES[lineRoles(team).D[i]])?.name}</span>}
               {c != null && <span>Chemistry <b className={c >= 0.6 ? "good" : c < 0 ? "bad" : ""}>{signed(c)}</b></span>}
               {notes.map((n) => <span key={n} className="bad">{n}</span>)}
             </span>

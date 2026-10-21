@@ -14,6 +14,9 @@ import { savePct, gaa } from "../engine/players.js";
 import Icon from "./Icon.jsx";
 import { shownRatings } from "../engine/draft.js";
 import TrainingCamp from "./TrainingCamp.jsx";
+import { DevChip } from "./scoutingBits.jsx";
+import { ovrColor } from "./common.jsx";
+import "./lines.css";
 
 // Where each player sits on the line chart, so the roster reads in line order like the
 // football depth chart: L1 LW, L1 C, L1 RW … P1 LD … the starter, then scratches by OVR.
@@ -49,8 +52,38 @@ function RosterBadges({ p, team }) {
 }
 const lineRank = (slots, p) => slots[p.id]?.rank ?? 100 + (p.injury > 0 || p.ltir ? 50 : 0) + (99 - p.ovr) / 100;
 
+// Phones get Gridiron's roster cards instead of the wide table: face, name and badges, his line
+// spot (green in the top six / top four), age and contract, OVR with POT under it. One sort menu
+// covers what the table's column headers do.
+const DEV_RANK = { superstar: 3, star: 2, normal: 1, late: 0 };
+const CARD_SORTS = [["line", "Line order"], ["ovr", "Overall"], ["pot", "Potential"], ["age", "Age"], ["cap", "Cap hit"], ["name", "Name"]];
+function RosterCards({ rows, slots, team, sort }) {
+  const { openPlayer } = useGame();
+  const key = { line: (p) => lineRank(slots, p), ovr: (p) => -p.ovr, pot: (p) => -(p.pot || p.ovr), age: (p) => p.age, cap: (p) => -p.cap, name: (p) => p.name };
+  const list = [...rows].sort((a, b) => { const x = key[sort](a), y = key[sort](b); return (typeof x === "string" ? x.localeCompare(y) : x - y) || b.ovr - a.ovr; });
+  return (
+    <div className="rk-rcards">
+      {list.map((p) => {
+        const s = slots[p.id], hurt = p.injury > 0 || p.ltir;
+        return (
+          <button type="button" key={p.id} className={`rk-rcard${s?.top && !hurt ? " top" : ""}${hurt ? " out" : ""}`} onClick={() => openPlayer(p.id)}>
+            <span className="rk-rc-face"><Headshot team={team} p={p} size={36} decorative /></span>
+            <span className="rk-rc-who">
+              <span className="rk-rc-nm">{p.name}<AbilityChip p={p} /><RosterBadges p={p} team={team} /></span>
+              <span className="rk-rc-meta"><span className="posbadge">{p.pos}</span><b className={`gg-ro-line${hurt ? " out" : s?.top ? " top" : !s ? " off" : ""}`}>{s?.label || (hurt ? "Out" : "Scratch")}</b><span>Age {p.age}</span><span>{money(p.cap)} · {p.yrs}y</span>{p.age <= 25 && p.dev && p.dev !== "normal" && <DevChip dev={p.dev} />}</span>
+            </span>
+            <span className="rk-rc-r"><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b><small>POT {p.pot}</small></span>
+          </button>
+        );
+      })}
+      {!list.length && <div className="dim small" style={{ padding: 12 }}>Nobody matches.</div>}
+    </div>
+  );
+}
+
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
+  const [cardSort, setCardSort] = useState("line");
   const callUpFlow = useCallUp();
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
@@ -100,6 +133,7 @@ export default function RosterPage() {
     { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} src={p.src} />, sort: (p) => p.ovr },
     { key: "pot", label: "POT", num: true, sort: (p) => p.pot },
     { key: "type", label: "Type", render: (p) => <span className="small muted">{ARCHETYPES[p.type]?.name}</span>, sort: (p) => p.type },
+    { key: "dev", label: "Dev", title: "Development trait (shown through age 25)", render: (p) => (p.age <= 25 && p.dev ? <DevChip dev={p.dev} /> : <span className="dim">—</span>), sort: (p) => (p.age <= 25 ? DEV_RANK[p.dev] ?? 1 : -1) },
     { key: "cap", label: "Cap Hit", num: true, render: (p) => money(p.cap), sort: (p) => p.cap },
     { key: "yrs", label: "Yrs", num: true, sort: (p) => p.yrs, title: "Contract years remaining (including this season)" },
   ];
@@ -158,11 +192,13 @@ export default function RosterPage() {
 
       {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small rk-rlegend">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor · <span className="rk-rb rb-inj">OUT</span> injured · <span className="rk-rb rb-ltir">LTIR</span> · <span className="rk-rb rb-wv">WAIVERS</span> · <span className="rk-rb rb-tr">TRADE REQ</span> · <span className="rk-rb rb-exp">EXPIRING</span> · <span className="rk-rb rb-rook">ROOKIE</span></span></div>}
       {shown === "camp" && <TrainingCamp />}
+      {shown === "roster" && <label className="rk-rc-sort">Sort <Select value={cardSort} onChange={(e) => setCardSort(e.target.value)} aria-label="Sort roster">{CARD_SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select></label>}
       {shown === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
             <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>LINE ORDER · CONTRACT · SEASON</em></div>
-            <Table columns={[...base, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} />
+            <div className="rk-rtable"><Table columns={[...base, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} /></div>
+            <RosterCards rows={rows.filter(fits)} slots={slots} team={user} sort={cardSort} />
           </div>
         ))}
 

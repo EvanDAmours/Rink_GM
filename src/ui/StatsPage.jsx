@@ -126,7 +126,7 @@ function UnitStats({ league }) {
   const avg = leagueUnitAverages(league);
   const roles = lineRoles(team);
   const mark = (v, ref, higher = true) => (v == null || ref == null || Math.abs(v - ref) < 0.05 ? "" : (v > ref) === higher ? "good" : "bad");
-  const cell = (v, ref, higher, digits = 1) => <td className="num"><b className={mark(v, ref, higher)}>{v == null ? "—" : v.toFixed(digits)}</b>{ref != null && <small className="dim"> {ref.toFixed(digits)}</small>}</td>;
+  const cell = (v, ref, higher, digits = 1) => <span><b className={mark(v, ref, higher)}>{v == null ? "—" : v.toFixed(digits)}</b>{ref != null && <small className="dim"> {ref.toFixed(digits)}</small>}</span>;
   const st = specialTeamsTable(league);
   const rank = (key, dir) => { const xs = st.filter((r) => r[key] != null).sort((a, b) => (b[key] - a[key]) * dir); return (r) => (r[key] == null ? "—" : xs.indexOf(r) + 1); };
   const ppRank = rank("ppPct", 1), pkRank = rank("pkPct", 1);
@@ -145,26 +145,22 @@ function UnitStats({ league }) {
         <div><small>PENALTY KILL</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
         <div><small>LEAGUE PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
       </div>
-      <div className="table-wrap">
-        <table className="table dense">
-          <thead><tr><th>Unit</th><th className="num">Min</th><th className="num" title="Share of shot attempts">CF%</th><th className="num" title="Share of chance quality (model goals)">xGF%</th><th className="num">GF/60</th><th className="num">GA/60</th><th className="num">SF/60</th><th className="num">SA/60</th><th className="num">GF</th><th className="num">GA</th></tr></thead>
-          <tbody>
-            {UNIT_ROWS.map(([k, label], i) => {
-              const U = S.units[k], r = unitRates(U), a = avg.units[k] || {};
-              const sh = k === "SH";
-              return (
-                <tr key={k} className={tid === league.userTid ? "me" : ""}>
-                  <td><b>{label}</b> <span className="muted small">{i < 4 ? LINE_ROLES[roles.F[i]]?.name : sh ? "Penalty kill" : "Power play"}</span></td>
-                  <td className="num">{r ? Math.round(r.min) : "—"}</td>
-                  {cell(r?.cfPct, a?.cfPct, true)}{cell(r?.xgfPct, a?.xgfPct, true)}
-                  {cell(r?.gf60, a?.gf60, true, 2)}{cell(r?.ga60, a?.ga60, false, 2)}{cell(r?.sf60, a?.sf60, true)}{cell(r?.sa60, a?.sa60, false)}
-                  <td className="num">{U?.gf ?? 0}</td><td className="num">{U?.ga ?? 0}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Table
+        columns={[
+          { key: "unit", label: "Unit", render: (r) => <span><b>{r.label}</b> <span className="muted small">{r.name}</span></span> },
+          { key: "min", label: "Min", num: true, render: (r) => (r.r ? Math.round(r.r.min) : "—") },
+          { key: "cf", label: "CF%", num: true, title: "Share of shot attempts", render: (r) => cell(r.r?.cfPct, r.a?.cfPct, true) },
+          { key: "xgf", label: "xGF%", num: true, title: "Share of chance quality (model goals)", render: (r) => cell(r.r?.xgfPct, r.a?.xgfPct, true) },
+          { key: "gf60", label: "GF/60", num: true, render: (r) => cell(r.r?.gf60, r.a?.gf60, true, 2) },
+          { key: "ga60", label: "GA/60", num: true, render: (r) => cell(r.r?.ga60, r.a?.ga60, false, 2) },
+          { key: "sf60", label: "SF/60", num: true, render: (r) => cell(r.r?.sf60, r.a?.sf60, true) },
+          { key: "sa60", label: "SA/60", num: true, render: (r) => cell(r.r?.sa60, r.a?.sa60, false) },
+          { key: "gf", label: "GF", num: true, render: (r) => r.U?.gf ?? 0 },
+          { key: "ga", label: "GA", num: true, render: (r) => r.U?.ga ?? 0 },
+        ]}
+        rows={UNIT_ROWS.map(([k, label], i) => ({ id: k, label, name: i < 4 ? LINE_ROLES[roles.F[i]]?.name : k === "SH" ? "Penalty kill" : "Power play", U: S.units[k], r: unitRates(S.units[k]), a: avg.units[k] || null }))}
+        dense
+      />
       <h3 style={{ margin: "6px 0 0" }}>Special teams</h3>
       <Table
         columns={[
