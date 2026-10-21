@@ -179,7 +179,8 @@ export function awardGrowth(p, award, age = p.age) {
     if (age <= 29 && NEXT_TRAIT[p.dev]) dev = NEXT_TRAIT[p.dev]; else boost += 1;
   } else if (award.leads.length) {
     notes.push(...award.leads);
-    if (age <= 26 && NEXT_TRAIT[p.dev]) dev = NEXT_TRAIT[p.dev]; else ovr += 1;
+    // A league lead lifts a young player as far as Star; Superstar takes a landslide.
+    if (age <= 26 && NEXT_TRAIT[p.dev] && NEXT_TRAIT[p.dev] !== "superstar") dev = NEXT_TRAIT[p.dev]; else ovr += 1;
   }
   return notes.length ? { ovr, boost, pot, dev, notes } : null;
 }

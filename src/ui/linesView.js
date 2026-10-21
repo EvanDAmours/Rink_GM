@@ -3,13 +3,14 @@
 // spot. No React here, so the tests can check the layout without a browser.
 import { isDefense, isGoalie } from "../engine/constants.js";
 import { DEFAULT_SHARES, iceShares } from "../engine/situations.js";
+import { PP_SPLIT } from "../engine/sim.js";
 
 // ---- Ice time ------------------------------------------------------------------------------
 // The bench's even-strength rotation comes from the engine (situations.js: the club's sliders,
-// or its identity's defaults; sim.js keeps the same default), the power-play split (PP1 takes 65
-// of every 115 seconds while it's fresh) and the penalty kill's even rotation every 38 seconds.
+// or its identity's defaults; sim.js keeps the same default), the power-play split (sim.js PP_SPLIT:
+// PP1 takes 80 of every 115 seconds while it's fresh) and the penalty kill's even rotation every 38 seconds.
 export const ES_SHARE = { F: DEFAULT_SHARES.F.map((v) => v / 100), D: DEFAULT_SHARES.D.map((v) => v / 100) };
-export const PP_SHARE = [65 / 115, 50 / 115];
+export const PP_SHARE = [PP_SPLIT.first / PP_SPLIT.cycle, (PP_SPLIT.cycle - PP_SPLIT.first) / PP_SPLIT.cycle];
 export const PK_SHARE = [0.5, 0.5];
 
 // Share of ice time (whole percent) a unit gets: kind "F" | "D" | "PP" | "PK", index i. With a

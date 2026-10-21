@@ -212,8 +212,11 @@ export function applyAllStarGains(league, rec = league.allNHL) {
     if (gain > 0) {
       progressAttributes(p, gain);
       // Attribute noise can drift OVR; pull it back to the intended gain (as development does).
-      const drift = p.ovr - (before + gain);
-      if (Math.abs(drift) >= 1) progressAttributes(p, -drift);
+      for (let g = 0; g < 4; g++) {
+        const drift = p.ovr - (before + gain);
+        if (Math.abs(drift) < 1) break;
+        progressAttributes(p, -drift);
+      }
       if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
       p.peak = Math.max(p.peak || 0, p.ovr);
     }

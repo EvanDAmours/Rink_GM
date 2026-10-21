@@ -335,6 +335,7 @@ test("contracts look like the NHL's, and the goalie rest setting is honoured", (
   // Goalie rest: the user's choice drives starts; AI tandems split more evenly.
   const user = lg.teams[lg.userTid];
   user.restPct = 40;
+  lg.settings.injuries = false; // an injured goalie would swamp the rest setting being measured
   assert.equal(restShare(lg, user), 0.4);
   L.startRegularSeason(lg);
   L.simRestOfSeason(lg);

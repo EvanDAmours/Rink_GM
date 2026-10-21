@@ -1,236 +1,267 @@
 {
-  "date": "2026-10-21T05:37:16.133Z",
+  "date": "2026-10-21T12:20:16.782Z",
   "seed": 4242,
   "seasons": [
     {
       "year": 2026,
       "artRoss": {
-        "name": "Jack Eichel",
-        "ovr": 94,
-        "g": 41,
-        "a": 75,
-        "pts": 116
+        "name": "Nathan MacKinnon",
+        "ovr": 97,
+        "g": 50,
+        "a": 68,
+        "pts": 118
       },
-      "second": 115,
-      "tenth": 95,
+      "second": 109,
+      "tenth": 91,
       "rocket": {
-        "name": "Pavel Dorofeyev",
-        "g": 55
+        "name": "Kirill Kaprizov",
+        "g": 57
       },
-      "hundredPoint": 8,
-      "fortyGoal": 16,
+      "gpg": 3.03,
+      "svPct": 0.897,
+      "hundredPoint": 3,
+      "fortyGoal": 15,
       "after": {
-        "n90": 56,
-        "n95": 14,
-        "n99": 0,
-        "generational": 9,
-        "level": 82.76
+        "n90": 60,
+        "n95": 13,
+        "n99": 1,
+        "generational": 8,
+        "superstar": 16,
+        "star": 156,
+        "level": 82.68
       },
-      "cornerstones": [
-        "Quinn Hughes"
-      ],
-      "breakouts": 10
+      "cornerstones": [],
+      "breakouts": 14
     },
     {
       "year": 2027,
       "artRoss": {
-        "name": "Jack Eichel",
-        "ovr": 95,
-        "g": 46,
-        "a": 76,
-        "pts": 122
-      },
-      "second": 119,
-      "tenth": 97,
-      "rocket": {
         "name": "Connor Bedard",
-        "g": 65
+        "ovr": 94,
+        "g": 57,
+        "a": 62,
+        "pts": 119
       },
-      "hundredPoint": 7,
-      "fortyGoal": 30,
+      "second": 115,
+      "tenth": 103,
+      "rocket": {
+        "name": "Aleksander Barkov",
+        "g": 57
+      },
+      "gpg": 3.09,
+      "svPct": 0.895,
+      "hundredPoint": 12,
+      "fortyGoal": 27,
       "after": {
-        "n90": 60,
-        "n95": 8,
-        "n99": 2,
-        "generational": 9,
-        "level": 82.63
+        "n90": 54,
+        "n95": 12,
+        "n99": 0,
+        "generational": 7,
+        "superstar": 20,
+        "star": 191,
+        "level": 82.75
       },
-      "cornerstones": [
-        "Quinn Hughes"
-      ],
-      "breakouts": 13
+      "cornerstones": [],
+      "breakouts": 19
     },
     {
       "year": 2028,
       "artRoss": {
-        "name": "Connor Bedard",
-        "ovr": 95,
-        "g": 75,
-        "a": 52,
-        "pts": 127
+        "name": "Connor McDavid",
+        "ovr": 98,
+        "g": 47,
+        "a": 85,
+        "pts": 132
       },
-      "second": 123,
-      "tenth": 105,
+      "second": 124,
+      "tenth": 98,
       "rocket": {
         "name": "Connor Bedard",
-        "g": 75
+        "g": 69
       },
-      "hundredPoint": 11,
-      "fortyGoal": 22,
+      "gpg": 2.95,
+      "svPct": 0.898,
+      "hundredPoint": 8,
+      "fortyGoal": 21,
       "after": {
-        "n90": 48,
-        "n95": 10,
-        "n99": 3,
-        "generational": 8,
-        "level": 82.87
+        "n90": 61,
+        "n95": 8,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 23,
+        "star": 217,
+        "level": 82.98
       },
-      "cornerstones": [],
-      "breakouts": 15
+      "cornerstones": [
+        "Quinn Hughes",
+        "Theo Hedlund"
+      ],
+      "breakouts": 17
     },
     {
       "year": 2029,
       "artRoss": {
-        "name": "Connor McDavid",
-        "ovr": 97,
-        "g": 54,
-        "a": 92,
-        "pts": 146
+        "name": "Tim Stutzle",
+        "ovr": 93,
+        "g": 57,
+        "a": 67,
+        "pts": 124
       },
-      "second": 134,
-      "tenth": 110,
+      "second": 118,
+      "tenth": 97,
       "rocket": {
-        "name": "Matvei Michkov",
-        "g": 81
+        "name": "Cole Caufield",
+        "g": 59
       },
-      "hundredPoint": 13,
-      "fortyGoal": 25,
+      "gpg": 2.93,
+      "svPct": 0.897,
+      "hundredPoint": 8,
+      "fortyGoal": 22,
       "after": {
-        "n90": 64,
-        "n95": 12,
-        "n99": 4,
-        "generational": 11,
-        "level": 83.39
+        "n90": 43,
+        "n95": 8,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 23,
+        "star": 253,
+        "level": 83.08
       },
       "cornerstones": [
-        "Connor McDavid"
+        "Quinn Hughes"
       ],
-      "breakouts": 21
+      "breakouts": 11
     },
     {
       "year": 2030,
       "artRoss": {
         "name": "Connor McDavid",
-        "ovr": 99,
-        "g": 51,
-        "a": 94,
-        "pts": 145
+        "ovr": 98,
+        "g": 68,
+        "a": 69,
+        "pts": 137
       },
-      "second": 120,
-      "tenth": 100,
+      "second": 119,
+      "tenth": 97,
       "rocket": {
-        "name": "Matt Coronato",
-        "g": 66
+        "name": "Connor McDavid",
+        "g": 68
       },
-      "hundredPoint": 12,
-      "fortyGoal": 24,
+      "gpg": 2.87,
+      "svPct": 0.898,
+      "hundredPoint": 9,
+      "fortyGoal": 18,
       "after": {
-        "n90": 43,
-        "n95": 7,
-        "n99": 4,
-        "generational": 11,
-        "level": 83.36
+        "n90": 57,
+        "n95": 11,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 25,
+        "star": 274,
+        "level": 83.42
       },
       "cornerstones": [
-        "Connor McDavid",
-        "Quinn Hughes"
+        "Connor McDavid"
       ],
-      "breakouts": 29
+      "breakouts": 18
     },
     {
       "year": 2031,
       "artRoss": {
         "name": "Matt Boldy",
-        "ovr": 95,
-        "g": 82,
-        "a": 56,
-        "pts": 138
+        "ovr": 93,
+        "g": 68,
+        "a": 53,
+        "pts": 121
       },
-      "second": 118,
-      "tenth": 95,
+      "second": 119,
+      "tenth": 93,
       "rocket": {
         "name": "Matt Boldy",
-        "g": 82
+        "g": 68
       },
-      "hundredPoint": 5,
-      "fortyGoal": 20,
+      "gpg": 2.77,
+      "svPct": 0.901,
+      "hundredPoint": 6,
+      "fortyGoal": 14,
       "after": {
-        "n90": 49,
-        "n95": 10,
-        "n99": 3,
-        "generational": 10,
-        "level": 83.67
+        "n90": 44,
+        "n95": 4,
+        "n99": 0,
+        "generational": 8,
+        "superstar": 26,
+        "star": 269,
+        "level": 83.5
       },
-      "cornerstones": [
-        "Connor McDavid",
-        "Matt Boldy"
-      ],
-      "breakouts": 32
+      "cornerstones": [],
+      "breakouts": 17
     },
     {
       "year": 2032,
       "artRoss": {
-        "name": "Topi Lehtonen",
+        "name": "Connor Bedard",
         "ovr": 94,
-        "g": 59,
-        "a": 77,
-        "pts": 136
+        "g": 78,
+        "a": 68,
+        "pts": 146
       },
-      "second": 133,
-      "tenth": 104,
+      "second": 127,
+      "tenth": 96,
       "rocket": {
-        "name": "Matt Boldy",
-        "g": 77
+        "name": "Connor Bedard",
+        "g": 78
       },
-      "hundredPoint": 14,
-      "fortyGoal": 23,
+      "gpg": 2.79,
+      "svPct": 0.901,
+      "hundredPoint": 7,
+      "fortyGoal": 18,
       "after": {
-        "n90": 59,
-        "n95": 11,
-        "n99": 2,
-        "generational": 11,
+        "n90": 54,
+        "n95": 7,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 27,
+        "star": 289,
         "level": 83.88
       },
       "cornerstones": [
-        "Quinn Hughes"
+        "Connor McDavid",
+        "Connor Bedard",
+        "Luke Hughes"
       ],
-      "breakouts": 28
+      "breakouts": 17
     },
     {
       "year": 2033,
       "artRoss": {
         "name": "Matt Boldy",
-        "ovr": 95,
-        "g": 64,
-        "a": 68,
-        "pts": 132
+        "ovr": 93,
+        "g": 66,
+        "a": 52,
+        "pts": 118
       },
-      "second": 118,
-      "tenth": 98,
+      "second": 117,
+      "tenth": 94,
       "rocket": {
         "name": "Matt Boldy",
-        "g": 64
+        "g": 66
       },
-      "hundredPoint": 9,
-      "fortyGoal": 24,
+      "gpg": 2.66,
+      "svPct": 0.902,
+      "hundredPoint": 7,
+      "fortyGoal": 13,
       "after": {
-        "n90": 52,
+        "n90": 45,
         "n95": 7,
-        "n99": 2,
-        "generational": 11,
-        "level": 83.8
+        "n99": 1,
+        "generational": 7,
+        "superstar": 26,
+        "star": 297,
+        "level": 83.98
       },
-      "cornerstones": [],
-      "breakouts": 27
+      "cornerstones": [
+        "Luke Hughes"
+      ],
+      "breakouts": 25
     }
   ]
 }

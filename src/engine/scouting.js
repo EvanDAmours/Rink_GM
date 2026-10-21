@@ -459,7 +459,7 @@ export function prospectRead(league, p) {
 // Everyone ranked on what your scouts think of him: their estimates (reports, a crew's general
 // idea, area reads) and the development traits they've seen. Where they have no read, they go
 // with Central Scouting. Returns Map id -> your rank (1 = best).
-const DEV_BUMP = { superstar: 2, star: 1, late: 0, normal: 0 };
+const DEV_BUMP = { generational: 3, superstar: 2, star: 1, late: 0, normal: 0 };
 export function myScore(league, p, read = prospectRead(league, p)) {
   if (read.potV == null) return csScore(p);
   const extra = (DEV_BUMP[read.dev] || 0) - (read.flag ? 3 : 0);
@@ -1043,7 +1043,7 @@ export function interviewProspect(league, pid) {
   const r = stream(`${p.id}|intv`);
   // A work-ethic red flag shows in the room; so does a workout warrior who can't talk the game.
   const ethic = p.bust?.kind === "ethic", warrior = p.bust?.kind === "combine";
-  const v = ({ superstar: 90, star: 85, normal: 77, late: 73 }[p.dev] ?? 77) + r.gauss(0, 3.5) - (ethic ? 14 : 0);
+  const v = ({ generational: 94, superstar: 90, star: 85, normal: 77, late: 73 }[p.dev] ?? 77) + r.gauss(0, 3.5) - (ethic ? 14 : 0);
   const flag = ethic || warrior ? `🚩 Red flag from the interview: ${p.bust.why}.` : null;
   (p.scout ||= { lvl: 0 }).intv = { grade: potGrade(v), note: ethic ? r.pick(INTERVIEW_NOTES.low) : warrior ? "Couldn't walk us through his own shifts on video. The testing is real; the hockey sense isn't." : r.pick(INTERVIEW_NOTES[v >= 85 ? "high" : v >= 77 ? "mid" : "low"]), ...(flag ? { flag } : {}) };
   return { ok: true, msg: `Interview with ${p.name}: work ethic ${p.scout.intv.grade}.${flag ? " 🚩 Red flag raised: see his profile." : ""}` };

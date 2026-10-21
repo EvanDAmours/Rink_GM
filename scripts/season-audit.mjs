@@ -71,11 +71,12 @@ if (Number(process.env.NHL_CAREER_SEASONS) > 0) {
     const sk = Object.values(lg.players).filter(p => p.pos !== 'G' && p.stats.gp);
     const byP = [...sk].sort((a, b) => b.stats.pts - a.stats.pts), byG = [...sk].sort((a, b) => b.stats.g - a.stats.g);
     const row = {year: lg.year, artRoss: {name: byP[0].name, ovr: byP[0].ovr, g: byP[0].stats.g, a: byP[0].stats.a, pts: byP[0].stats.pts}, second: byP[1].stats.pts, tenth: byP[9].stats.pts,
-      rocket: {name: byG[0].name, g: byG[0].stats.g}, hundredPoint: byP.filter(p => p.stats.pts >= 100).length, fortyGoal: byG.filter(p => p.stats.g >= 40).length};
+      rocket: {name: byG[0].name, g: byG[0].stats.g}, gpg: +(sk.reduce((t, p) => t + p.stats.g, 0) / (Object.keys(lg.teams).length * 82)).toFixed(2), svPct: +(1 - sk.reduce((t, p) => t + p.stats.g, 0) / sk.reduce((t, p) => t + (p.stats.sog || 0), 0)).toFixed(3),
+      hundredPoint: byP.filter(p => p.stats.pts >= 100).length, fortyGoal: byG.filter(p => p.stats.g >= 40).length};
     L.endRegularSeason(lg); while (lg.playoffs.champion == null) simPlayoffDay(lg);
     L.finishPlayoffs(lg); simDraftToUser(lg, {all: true}); L.completeDraft(lg);
     L.goToFreeAgency(lg); while (!simFADay(lg)) {} L.beginNextSeason(lg);
-    Object.assign(row, {after: {n90: count(p => p.ovr >= 90), n95: count(p => p.ovr >= 95), n99: count(p => p.ovr >= 99), generational: count(p => p.dev === 'generational'), level: +ratingLevel(lg).toFixed(2)},
+    Object.assign(row, {after: {n90: count(p => p.ovr >= 90), n95: count(p => p.ovr >= 95), n99: count(p => p.ovr >= 99), generational: count(p => p.dev === 'generational'), superstar: count(p => p.dev === 'superstar'), star: count(p => p.dev === 'star'), level: +ratingLevel(lg).toFixed(2)},
       cornerstones: (lg.devReport?.rows || []).filter(r => r.kinds.includes('cornerstone')).map(r => r.name), breakouts: (lg.devReport?.rows || []).filter(r => r.kinds.includes('breakout')).length});
     seasons.push(row); console.log(JSON.stringify(row));
   }

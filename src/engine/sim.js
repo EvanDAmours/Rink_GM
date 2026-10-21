@@ -125,6 +125,12 @@ export function createGame(league, home, away, opts = {}) {
   return s;
 }
 
+// Elite finishing pays off less per point above FINISH.knee (Rink 1.x tuning): the best snipers
+// still lead the league, but in the 55-65 goal range real seasons show rather than 70-80.
+// Power play: PP1 takes `first` of every `cycle` seconds while it's fresh (the Lines screen shows the same split).
+export const PP_SPLIT = Object.freeze({cycle: 115, first: 80});
+export const FINISH = Object.freeze({knee: 83, slope: .15});
+export const finishCurve = (f) => (f > FINISH.knee ? FINISH.knee + (f - FINISH.knee) * FINISH.slope : f);
 function decision(s, k, action) { s.decisions[k][action] = (s.decisions[k][action] || 0) + 1; }
 const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2 * (side.star?.[id] ?? Math.exp(clamp(side.comp[id].ctrl - (side.eliteAt ?? EDGE.eliteAt), 0, EDGE.eliteCap) / EDGE.elite));
 // Who gets the puck: weighted by skill, but no one player takes more than touchCap of a unit's
@@ -194,7 +200,7 @@ function onIce(s, k) {
   side.unitOn = null;
   if (type === 'PP') {
     const first = side.lines.PP[0].filter(free);
-    const unit = s.ppTime[k] % 115 < 65 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
+    const unit = s.ppTime[k] % PP_SPLIT.cycle < PP_SPLIT.first && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
     ids = side.lines.PP[unit].filter(free);
     if (n === 4) ids = [...ids.filter(id => isForward(side.pl[id].pos)).slice(0, 3), ...ids.filter(id => isDefense(side.pl[id].pos)).slice(0, 1)];
   } else if (type === 'SH') {
@@ -574,7 +580,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   // Shot quality also follows the units on the ice: a star-driven unit against a
   // weak defending unit creates better looks than its shot location alone says.
   const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
-  const xg = expectedGoal({...geometry, finishing: (skill.finishing + (att.form?.[shooter] || 0)) * efficiency, goalie: goalieSkill, quality,
+  const xg = expectedGoal({...geometry, finishing: finishCurve((skill.finishing + (att.form?.[shooter] || 0)) * efficiency), goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;

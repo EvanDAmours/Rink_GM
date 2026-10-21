@@ -225,7 +225,7 @@ export function startDraft(league) {
 //  - organizational depth (roster + prospects): a young starting goalie with a goalie prospect
 //    behind him means no early goalie; a deep pipeline at a position counts it down;
 //  - team needs (teamPlanning.teamNeeds, the one needs model) and role holes in the lineup.
-const DEV_EYE = { superstar: 1.2, star: 0.6, late: -0.3 };
+const DEV_EYE = { generational: 1.8, superstar: 1.2, star: 0.6, late: -0.3 };
 const POS_VALUE = { C: [0.8, 0.5, 0.2], RD: [0.5, 0.3, 0.1], LD: [0.2, 0.1, 0], LW: [0, 0, 0], RW: [0, 0, 0], G: [-3, -1.5, -0.4] };
 export function aiPickContext(league, tid) {
   const t = league.teams[tid];

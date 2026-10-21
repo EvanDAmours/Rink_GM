@@ -46,10 +46,11 @@ export function rollDev(id, pot = 80) {
   const q = clamp((pot - 92) / 5, 0, 1), gen = 0.35 * q ** 2.3;
   if (x < gen) return "generational";
   // The rest follow the ceiling, as real classes do (Gridiron's odds): a 90-ceiling prospect is a
-  // Superstar about 1 time in 16 and a Star about 1 in 5; a 75 about 1 in 60 and 1 in 10.
+  // Superstar about 1 time in 50 and a Star about 1 in 5; a 75 about 1 in 500 and 1 in 10 (tightened so
+  // the league's Superstar count holds steady: about one new Superstar per draft class).
   const y = (x - gen) / (1 - gen);
   const r = clamp((pot - 65) / 25, 0, 1);
-  const sup = 0.004 + 0.06 * r * r, star = sup + 0.05 + 0.17 * r;
+  const sup = 0.0005 + 0.02 * r ** 4, star = sup + 0.05 + 0.17 * r;
   if (y < sup) return "superstar";
   if (y < star) return "star";
   if (y < star + 0.18) return "late";

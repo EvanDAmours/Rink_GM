@@ -20,6 +20,7 @@ import { POS_COLOR } from "./TradePage.jsx";
 import AbilityChip from "./AbilityChip.jsx";
 import { injuryReturn } from "../engine/injuryReport.js";
 import PlayerContract from "./PlayerContract.jsx";
+import { bestRoles } from "../engine/roles.js";
 
 // The player card, laid out like the football game's: hero with the face, number and an
 // OVR ring; tags; three quick tiles; attribute bars on the left, the season, scouting
@@ -136,6 +137,9 @@ export default function PlayerCard({ p }) {
                 {(p.bio?.lg || p.bio?.town) && <div className="gg-pc-note">📝 {p.bio.town ? `From ${p.bio.town}. ` : ""}{p.bio.lg ? `Played ${p.bio.lg} hockey${p.bio.team ? ` for ${p.bio.team}` : ""}.` : ""}</div>}
               </>}
             </section>
+            {!goalie && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k report">ROLE FIT</div>
+              {bestRoles(p).map((x) => <div key={x.role} className="gg-pc-line"><b style={{ width: 28 }}>{x.fit}</b> {x.name}</div>)}
+            </section>}
             {watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">DEVELOPMENT</div>
               <div className="gg-pc-devgrid">
                 <div><small>RATING</small><b style={{ color: watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span>{watch.delta > 0 ? "+" : ""}{watch.delta} since camp</span></div>

@@ -53,7 +53,7 @@ export default function PlayerModal({ pid }) {
   if (!league.settings?.classicCard) return <PlayerCard p={p} />;
   // Development traits matter while a player is still growing. Other teams' prospects
   // show what your scouts found out (if anything).
-  const devShown = p.age <= 25 && p.dev ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
+  const devShown = (p.age <= 25 || p.dev === "generational") && p.dev ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
 
   return (
     <Modal

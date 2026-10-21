@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { PP_SPLIT } from "../src/engine/sim.js";
 import fs from "node:fs";
 import { ES_SHARE, PP_SHARE, PK_SHARE, iceShare, goalieShare, lastName, firstName, listName, nameSize, RINK, FOOT, esSpots, esTags, esBand, stSpots, stTags, offPosition, planWords } from "../src/ui/linesView.js";
 
@@ -11,9 +12,8 @@ test("ice-time shares match the bench rotation in the sim and add up", () => {
   assert.ok(m, "sim.js still defines F_SHARE and D_SHARE");
   assert.deepEqual(m[1].split(",").map(Number), ES_SHARE.F);
   assert.deepEqual(m[2].split(",").map(Number), ES_SHARE.D);
-  const pp = /ppTime\[k\] % (\d+) < (\d+)/.exec(sim);
-  assert.ok(pp, "sim.js still splits the power play by ppTime");
-  assert.equal(PP_SHARE[0], Number(pp[2]) / Number(pp[1]));
+  assert.match(sim, /ppTime\[k\] % PP_SPLIT\.cycle < PP_SPLIT\.first/, "sim.js still splits the power play by ppTime");
+  assert.equal(PP_SHARE[0], PP_SPLIT.first / PP_SPLIT.cycle);
   assert.match(sim, /Math\.floor\(s\.ppTime\[other\(k\)\] \/ \d+\) % 2/, "the kill still alternates two units evenly");
   assert.deepEqual(PK_SHARE, [0.5, 0.5]);
   for (const k of ["F", "D", "PP", "PK"]) {
@@ -23,7 +23,7 @@ test("ice-time shares match the bench rotation in the sim and add up", () => {
     assert.ok(shares.every((x, i) => i === 0 || x <= shares[i - 1]), `${k}: the top unit plays the most`);
   }
   assert.equal(iceShare("F", 0), 32);
-  assert.equal(iceShare("PP", 0), 57);
+  assert.equal(iceShare("PP", 0), Math.round(100 * PP_SPLIT.first / PP_SPLIT.cycle));
   assert.equal(iceShare("F", 9), 0);
   assert.deepEqual(goalieShare(0.2), [80, 20]);
   assert.deepEqual(goalieShare(0), [100, 0]);

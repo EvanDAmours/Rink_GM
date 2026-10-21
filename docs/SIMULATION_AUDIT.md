@@ -117,7 +117,20 @@ Before → after (same seeds):
 
 Every simulation-audit and season-audit check passes (`simulation-audit-results.json`, `season-audit-results.json`, `season-audit-holdout-results.json`).
 
-**Multi-season check** (`NHL_CAREER_SEASONS=8 NHL_CAREER_OUT=docs/career-leaders-audit.json npm run test:season`): eight full franchise seasons with development, drafts and free agency. Art Ross 116, 122, 127, 146, 145, 138, 136, 132; Rocket 55, 65, 75, 81, 66, 82, 77, 64; the league's 95+ players after each summer 14, 8, 10, 12, 7, 10, 11, 7 (11 at the start) and 90+ 43-64 (50 at the start), with the rating level anchored (82.6-83.7). Before this change the same franchise run already drifted upward (Art Ross 114 → 150 by year five, one 91-goal season); a lone star on a weak club is the source of the high goal totals, which the touch cap now limits. Goal leaders in long careers still run high (65-82); a real Rocket is usually 55-65.
+**Multi-season check** (`NHL_CAREER_SEASONS=8 NHL_CAREER_OUT=docs/career-leaders-audit.json npm run test:season`): eight full franchise seasons with development, drafts and free agency. Each row now also records league goals/team/game, skater-shot save % (empty nets included) and the Superstar/Star trait counts.
+
+| Season | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Art Ross (before) | 141 | 153 | 135 | 161 | 172 | 149 | 152 | 163 |
+| Art Ross (after) | 118 | 119 | 132 | 124 | 137 | 121 | 146 | 118 |
+| Rocket Richard (before) | 63 | 73 | 71 | 87 | 84 | 84 | 89 | 79 |
+| Rocket Richard (after) | 57 | 57 | 69 | 59 | 68 | 68 | 78 | 66 |
+| Goals/team/game (after) | 3.03 | 3.09 | 2.95 | 2.93 | 2.87 | 2.77 | 2.79 | 2.66 |
+| Save % (after) | .897 | .895 | .898 | .897 | .898 | .901 | .901 | .902 |
+| Superstars (before) | 27 | 38 | 44 | 51 | 61 | 63 | 69 | 78 |
+| Superstars (after) | 16 | 20 | 23 | 23 | 25 | 26 | 27 | 26 |
+
+Changes: finishing above 83 counts at 15% per point (`FINISH` in sim.js), so elite snipers convert less of their volume; PP1 takes 80 of every 115 power-play seconds (`PP_SPLIT`, shared with the Lines screen); draft Superstar odds fall to about one per class (`rollDev`), and leading the league lifts a young player only as far as Star (Superstar still comes from a landslide). Open items: the leader still reaches 68-78 goals in some later seasons when a grown star (97-99) faces a thinner league, and league scoring drifts down after year five (pre-existing: the old run went 3.19 to 2.80).
 
 ## Development depth (Gridiron 1.5, 1.34, 1.75, 2.76, 2.77, 2.80, 3.27)
 
