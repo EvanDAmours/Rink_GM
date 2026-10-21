@@ -214,4 +214,12 @@ export const PATCH_NOTES = [
     "Play-by-play names who got beaten and which units were on the ice.",
     "A real rink: the home logo at centre ice, road whites, boards and glass, and Stanley Cup Final ice with the arena on the walkout.",
   ] },
+  { v: "1.40", date: "2026-10-21", title: "Draft Night", notes: [
+    "A real draft clock: two minutes a pick, round 1 in real seconds, then Slow, Normal or Fast, with Pause, Sim this pick and Sim to my pick at the top.",
+    "The club on the clock gets the broadcast treatment, every first-round pick gets The pick is in, and a ticker calls out steals and reaches.",
+    "Clubs call while you're on the clock: accept, ask for more or hang up. Trade up for any pick before yours or shop your later picks.",
+    "Your pick walks on stage in your sweater, then you see his real development trait.",
+    "Draft Recap: true ratings for every pick, a verdict on each, and all 32 classes graded.",
+    "Drafting on your phone: one compact row per prospect and Draft then Confirm.",
+  ] },
 ];
