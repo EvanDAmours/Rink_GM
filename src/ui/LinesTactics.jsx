@@ -9,7 +9,11 @@ import { gameLines } from "../engine/lines.js";
 import { isGoalie, isDefense, isForward } from "../engine/constants.js";
 import { IDENTITIES, identityOf, lineRoles, LINE_ROLES, PAIR_ROLES, ROLES, SKATER_SLOTS, slotRating, moveCost, movePreview, movePosition, bestRoles } from "../engine/roles.js";
 import { iceShares, setShare, resetShares, matchLine, UNIT_KINDS, gameUnits, setUnitSlot, resetUnit, SHARE_MIN, SHARE_MAX } from "../engine/situations.js";
-import { lastName, listName } from "./linesView.js";
+import { lastName, listName, planWords } from "./linesView.js";
+import GamePlanPicker from "./GamePlanPicker.jsx";
+import { schemeFit } from "../engine/development.js";
+import { gamePlan } from "../engine/teamPlanning.js";
+import { COACH_STYLES } from "../engine/franchise.js";
 
 const fitColor = (v) => ovrColor(v);
 
@@ -172,3 +176,43 @@ export function TacticUsage({ team }) {
 
 // The role a slot asks for and this player's fit there, for a Lines row.
 export function roleWord(roleKey) { return ROLES[roleKey]?.name || ""; }
+
+// ---- The game plan: system, identity, ice time and the next game's plan (in Line settings) ----
+export function PlanStrip({ team, mine, inDrawer = false }) {
+  const { league, commit, toast, go } = useGame();
+  const [open, setOpen] = useState(null);
+  const style = COACH_STYLES[team.strategy || team.coach?.style] ? team.strategy || team.coach?.style : "balanced";
+  const lines = gameLines(league, team);
+  const dressed = [...lines.F.flat(), ...lines.D.flat()].map((id) => league.players[id]).filter(Boolean);
+  const fits = dressed.filter((p) => schemeFit(p, team) > 0).length;
+  const next = (league.schedule || []).find((g) => !g.played && (g.h === team.id || g.a === team.id));
+  const opp = next ? league.teams[next.h === team.id ? next.a : next.h] : null;
+  const plan = opp ? gamePlan(league, team, opp) : null;
+  const auto = team.autoPlan !== false;
+  const tab = (k, label) => <button type="button" key={k} className={`lx-plan-tab${open === k ? " on" : ""}`} aria-expanded={open === k} onClick={() => setOpen(open === k ? null : k)}>{label} {open === k ? "▴" : "▾"}</button>;
+  const icon = { attack: "⚡", defend: "🛡️", balanced: "⚖️" };
+  return (
+    <div className="lx-planwrap">
+      <div className="lx-plan">
+        <span className="lx-plan-k">📋 GAME PLAN</span>
+        <span>System <b>{COACH_STYLES[style].name}</b></span>
+        <span>Identity <b>{IDENTITIES[identityOf(team)].icon} {IDENTITIES[identityOf(team)].name}</b></span>
+        <span title={`${fits} of ${dressed.length} dressed skaters suit a ${COACH_STYLES[style].name} identity; each gets +0.7 to his game ratings.`}>System fit <b className={fits * 2 >= dressed.length ? "good" : ""}>{fits}/{dressed.length}</b></span>
+        {opp ? <span>vs {opp.abbr} <b>{planWords(plan)}</b> <em>{mine ? (auto ? "coaches' pick" : "your call") : ""}</em></span> : <span className="lx-dim">No game on the schedule</span>}
+        {mine && <span className="lx-plan-tabs">{tab("system", "System")}{!inDrawer && tab("identity", "Identity")}{!inDrawer && tab("ice", "Ice time")}{opp && tab("plan", "Game plan")}<button type="button" className="lx-plan-tab" onClick={() => go("coaching", "coaching")}>Coaching →</button></span>}
+      </div>
+      {mine && open === "identity" && <div className="lx-plan-box"><IdentityPanel team={team} mine={mine} /></div>}
+      {mine && open === "ice" && <div className="lx-plan-box"><IceTimeSliders team={team} mine={mine} /></div>}
+      {mine && open === "system" && (
+        <div className="lx-plan-open">
+          {Object.entries(COACH_STYLES).map(([k, v]) => (
+            <button type="button" key={k} className={`lx-style${style === k ? " on" : ""}`} aria-pressed={style === k} onClick={() => { team.strategy = k; commit(); toast(`System: ${v.name}.`); }}>
+              <b>{icon[k]} {v.name}</b><small>{v.desc}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      {mine && open === "plan" && opp && <GamePlanPicker opp={opp} compact />}
+    </div>
+  );
+}
