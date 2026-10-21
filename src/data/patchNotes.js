@@ -284,4 +284,11 @@ export const PATCH_NOTES = [
     "Each line shows its rating, role, chemistry and ice time in one small tag. Off-position players are flagged with a small \"!\".",
     "Identity, line matching, ice time, roles, goalie rest and the game plan now sit in a Line settings drawer. The rink view is gone.",
   ] },
+  { v: "1.51", date: "2026-10-21", title: "Raise the Banners", notes: [
+    "The Legacy Hall now has rafters: your club's Stanley Cup banners in team colours, its retired numbers and its Hockey Hall of Famers. When a star retires from your club, you can raise his number.",
+    "The Hall of Fame counts real careers: Crosby, Ovechkin and McDavid bring what they did before 2026, and players are inducted three years after retiring.",
+    "Player cards show Cups, trophies and All-Star selections, plus where a player ranks in club history (\"#2 in Oilers points\"). Retired players keep their full card.",
+    "Real all-time club leaders for 21 clubs in the Record Book. Passing a club legend or breaking a record makes the news, and Record Watch tracks who's on pace.",
+    "New GM Legacy page ranks you against great NHL general managers, every five seasons a documentary tells your era's story, and League History and Transactions are easier to browse.",
+  ] },
 ];
