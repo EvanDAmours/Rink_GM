@@ -1,14 +1,15 @@
 import React,{useId} from 'react';
 import {teamLogoUrl} from './logos.js';
+import {sweaterFor,ROAD_WHITE} from '../engine/uniforms.js';
 
 // Original SVG hockey sweater artwork. Player sweaters show the name/number on
 // the back; a club-only sweater shows the chest crest, as on a real uniform.
-const HOME={BOS:'#111111',PIT:'#111111',LAK:'#151719',EDM:'#003876',VAN:'#00205b',SEA:'#001628',VGK:'#333f42',ANA:'#f47a38'};
 const BODY='M49 15 L63 10 Q80 16 97 10 L111 15 Q125 19 137 34 L155 75 L132 88 L118 63 L123 157 Q80 167 37 157 L42 63 L28 88 L5 75 L23 34 Q35 19 49 15 Z';
 export default function Jersey({team,player,size=105,decorative=false}){
   const uid=useId().replace(/:/g,''),home=team.uniform?.home!==false;
-  const main=HOME[team.abbr] || team.colors[0],trim=team.abbr==='EDM'?'#ff4c00':team.colors[1];
-  const body=home?main:'#f4f6f8',ink=home?'#fff':main,style=team.uniform?.style || 0;
+  // Colours shared with the live rink (engine/uniforms.js): home in the club's colour, road in white.
+  const H=sweaterFor(team),R=home?H:sweaterFor(team,{away:true}),main=H.body,trim=H.trim;
+  const body=home?main:ROAD_WHITE,ink=R.number,edge=R.edge,style=team.uniform?.style || 0;
   const surname=player?.name?.split(' ').slice(1).join(' ').toUpperCase() || team.abbr;
   const number=player?.number,crest=teamLogoUrl(team.abbr),back=Boolean(player);
   return <svg className="hockey-sweater" width={size} height={size*1.1} viewBox="0 0 160 176" aria-hidden={decorative || undefined} role={decorative?undefined:'img'} aria-label={decorative?undefined:`${team.abbr} ${home?'home':'away'} jersey${player?` · ${player.name} · ${number?`number ${number}`:player.pos}`:''}`}>
@@ -33,7 +34,7 @@ export default function Jersey({team,player,size=105,decorative=false}){
     {back?<>
       <path d="M48 37 Q80 32 112 37 L110 49 Q80 44 50 49 Z" fill={body} stroke="#ffffff18" strokeWidth=".6"/>
       <text x="80" y="44" textAnchor="middle" fill={ink} fontFamily="var(--display),sans-serif" fontSize={surname.length>13?8:10} fontWeight="700" letterSpacing="1" textLength={surname.length>10?59:undefined} lengthAdjust="spacingAndGlyphs">{surname}</text>
-      <text x="80" y="115" textAnchor="middle" fill={ink} stroke={trim} strokeWidth="2.3" paintOrder="stroke" fontFamily="var(--display),sans-serif" fontSize="66" fontWeight="800" letterSpacing="1">{number || player.pos}</text>
+      <text x="80" y="115" textAnchor="middle" fill={ink} stroke={edge} strokeWidth="2.3" paintOrder="stroke" fontFamily="var(--display),sans-serif" fontSize="66" fontWeight="800" letterSpacing="1">{number || player.pos}</text>
       {number && <><text transform="translate(25 57) rotate(24)" textAnchor="middle" fill={ink} fontFamily="var(--display),sans-serif" fontSize="14" fontWeight="800">{number}</text><text transform="translate(135 57) rotate(-24)" textAnchor="middle" fill={ink} fontFamily="var(--display),sans-serif" fontSize="14" fontWeight="800">{number}</text></>}
     </>:crest?<image href={crest} x="48" y="51" width="64" height="63"/>:<text x="80" y="92" textAnchor="middle" fill={ink} fontSize="20">{team.abbr}</text>}
   </svg>;

@@ -1,0 +1,28 @@
+/* The live rink (LiveRink.jsx): the painted ice and the players over it, one frame at a fixed aspect
+   ratio (211 x 103, RINK_ASPECT) that fills whatever width it's given, phone to TV. */
+.rinkwrap.lr { padding: 0; border: 1px solid #0f1a2b; border-radius: 12px; background: #070b14; overflow: hidden; container-type: inline-size;
+  box-shadow: 0 22px 44px -26px #000, inset 0 1px 0 #ffffff0f; }
+.rinkwrap.lr.final { border-color: #b8860b; box-shadow: 0 0 0 2px #b8860b, 0 0 30px #eab30844; }
+.rinkwrap.lr.lr-tv { border: 0; border-radius: 0; box-shadow: none; }
+.rinkwrap.lr .lr-stage { position: relative; width: 100%; aspect-ratio: 211 / 103; }
+.rinkwrap.lr .lr-stage > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* the ice and the players each get their own layer: the painted ice is drawn once and never repaints
+   under the moving players or the banners */
+.rinkwrap.lr .lr-ice { will-change: transform; }
+.rinkwrap.lr .lr-play { pointer-events: none; will-change: transform; }
+.lr text { font-family: var(--display), "Arial Narrow", sans-serif; }
+.lr .lr-num { font-family: var(--display), "Arial Narrow", sans-serif; }
+/* players a touch bigger where the rink is small, a touch smaller on a big TV */
+@container (max-width: 640px) { .lr-play .lr-art { transform: scale(1.3); } }
+@container (max-width: 430px) { .lr-play .lr-art { transform: scale(1.42); } }
+@container (min-width: 1300px) { .lr-play .lr-art { transform: scale(.92); } }
+/* the goal light: pulses while the goal banner is up (steady with reduced motion) */
+.lr-goallight { animation: lrLamp .42s ease-in-out infinite alternate; }
+@keyframes lrLamp { from { opacity: .5; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .lr-goallight { animation: none; } }
+
+/* The playoff walkout (CupFinalSplash.jsx): where tonight's game is played. */
+.gg-splash-venue { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+.gg-splash-venue::before, .gg-splash-venue::after { content: ""; width: 18px; height: 1px; background: currentColor; opacity: .5; }
+.gg-splash:not(.walkout) .gg-splash-venue { color: #e7cf8a; }
+@media (max-width: 640px) { .gg-splash-venue { font-size: 10px; letter-spacing: 2px; text-align: center; } }
