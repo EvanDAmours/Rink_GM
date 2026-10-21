@@ -1,6 +1,6 @@
 import {gamePlan} from './teamPlanning.js';
 import {snapshotRng, restoreRng} from './rng.js';
-import {coachingEffects, schemeFit, lineChemistry} from './development.js';
+import {coachingEffects, schemeFit, lineChemistry, seasonForm, recordRoles} from './development.js';
 import {recordGame} from './records.js';
 import {rand, chance, weighted, randInt, randFloat, pick, clamp, stream} from './rng.js';
 import {composites} from './ratings.js';
@@ -23,7 +23,28 @@ const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
 // starWeight lets the best player on the ice pull a unit's offence toward him.
 export const EDGE = Object.freeze({pace: .003, entry: .002, pass: .001, quality: .0135, unitQuality: .0135, unitNorm: 5, starWeight: .85, starNorm: 4,
   // Skill steepness of possession play: breakouts, controlled-entry choice, entry and cycle execution.
-  breakout: .003, carry: .012, execution: .0032, passing: .006});
+  breakout: .003, carry: .012, execution: .0032, passing: .006,
+  // Star share (Gridiron 1.88): an elite puck handler (control composite above eliteAt) draws the
+  // puck far more often, convexly (e-fold every `elite` points), and as a carrier he creates more for
+  // his linemates than he shoots himself (`distribute` per point, at most .12). The power play's
+  // first unit takes the first pp1 seconds of each 115.
+  eliteAt: 91.5, elite: 2.75, eliteCap: 6, eliteRef: 94.5, distribute: .012, pp1: 85});
+// The elite threshold follows the league's own top end: when the ten best puck handlers' control
+// rises above the 2026 league's (eliteRef), the bar rises with it, so the star share stays the same
+// share instead of compounding as ratings drift. Fixed per season and kept on the league (like the
+// matchup means) so a loaded save plays the same.
+export function eliteBar(league) {
+  const hit = league?.eliteBar;
+  if (hit && hit.year === league.year) return hit.at;
+  const ctrl = [];
+  for (const t of league?.teams || []) for (const id of t.roster || []) { const p = league.players[id]; if (p?.attrs && !isGoalie(p.pos)) ctrl.push(composites(p).ctrl); }
+  ctrl.sort((a, b) => b - a);
+  const top = ctrl.slice(0, 10), mean = top.length ? top.reduce((a, b) => a + b, 0) / top.length : EDGE.eliteRef;
+  const at = EDGE.eliteAt + Math.max(0, mean - EDGE.eliteRef);
+  if (league?.teams) league.eliteBar = {year: league.year, at};
+  return at;
+}
+const FORM_KEYS = ['skate', 'shoot', 'hands', 'pass', 'def', 'off', 'ctrl', 'goalie'];
 const visualStreams = new WeakMap();
 const visual = s => visualStreams.get(s);
 const avg = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
@@ -47,9 +68,12 @@ function makeSide(league, team, opts) {
   syncLines(league, team);
   const lines = gameLines(league, team);
   const dressed = [...new Set([...lines.F.flat(), ...lines.D.flat(), ...lines.G].filter(Boolean))];
-  const pl = {}, comp = {}, fatigue = {};
+  const pl = {}, comp = {}, fatigue = {}, form = {};
   for (const id of dressed) {
     pl[id] = league.players[id]; comp[id] = composites(pl[id]); fatigue[id] = 0;
+    // Season form (Gridiron 1.61): a career year or a slump moves every composite and his finishing.
+    const f = opts.exhibition ? 0 : seasonForm(id, league.year);
+    if (f) { form[id] = f; for (const k of FORM_KEYS) if (k in comp[id]) comp[id][k] += f; }
     const fit = schemeFit(pl[id], team);
     if (comp[id].off) { comp[id].off += fit; comp[id].def += fit; }
   }
@@ -62,7 +86,7 @@ function makeSide(league, team, opts) {
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
     chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
     pref: defaultStyle(league, team), tactic: defaultStyle(league, team),
-    lines, dressed, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
+    lines, dressed, form, eliteAt: eliteBar(league), unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
     fShiftLength: 45, dShiftLength: 55, pulledReason: null};
@@ -96,7 +120,7 @@ export function createGame(league, home, away, opts = {}) {
 }
 
 function decision(s, k, action) { s.decisions[k][action] = (s.decisions[k][action] || 0) + 1; }
-const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2;
+const puckWeight = (side, id) => (side.comp[id].ctrl / 82) ** 3 * (side.comp[id].pass / 82) ** 2 * Math.exp(clamp(side.comp[id].ctrl - (side.eliteAt ?? EDGE.eliteAt), 0, EDGE.eliteCap) / EDGE.elite);
 function touch(s, k, id) {
   if (!id) return;
   if (s.poss !== k) s.touches = [];
@@ -154,7 +178,7 @@ function onIce(s, k) {
   let ids;
   if (type === 'PP') {
     const first = side.lines.PP[0].filter(free);
-    const unit = s.ppTime[k] % 115 < 65 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
+    const unit = s.ppTime[k] % 115 < EDGE.pp1 && avg(first.map(id => side.fatigue[id])) < 65 ? 0 : 1;
     ids = side.lines.PP[unit].filter(free);
     if (n === 4) ids = [...ids.filter(id => isForward(side.pl[id].pos)).slice(0, 3), ...ids.filter(id => isDefense(side.pl[id].pos)).slice(0, 1)];
   } else if (type === 'SH') {
@@ -366,6 +390,8 @@ function hockeyEvent(s, ice, R) {
   const carrier = att.pl[s.carrier];
   if (carrier?.type === 'PLY') shoot -= .07;
   if (carrier?.type === 'SNP') shoot += .06;
+  const cs = att.comp[s.carrier], over = cs ? cs.ctrl - (att.eliteAt ?? EDGE.eliteAt) : 0;
+  if (over > 0) shoot -= Math.min(.12, over * EDGE.distribute) * (cs.pass >= cs.shoot ? 1 : .5);
   if (chance(shoot)) {
     decision(s, k, 'shoot'); shotAttempt(s, k, ice, R); return;
   }
@@ -475,7 +501,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   // Shot quality also follows the units on the ice: a star-driven unit against a
   // weak defending unit creates better looks than its shot location alone says.
   const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
-  const xg = expectedGoal({...geometry, finishing: skill.finishing * efficiency, goalie: goalieSkill, quality,
+  const xg = expectedGoal({...geometry, finishing: (skill.finishing + (att.form?.[shooter] || 0)) * efficiency, goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
@@ -732,7 +758,7 @@ export function applyResult(league, s, { playoff = false } = {}) {
       }
     }
   }
-  if (!playoff) recordGame(league, s);
+  if (!playoff) { recordGame(league, s); recordRoles(league, s); }
   return s.appliedResult = {
     hs: s.score.h,
     as: s.score.a,

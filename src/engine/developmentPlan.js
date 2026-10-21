@@ -5,23 +5,15 @@
 import { isGoalie, isDefense } from "./constants.js";
 import { TRAINING, setTraining } from "./franchise.js";
 import { usageGrowth } from "./development.js";
-import { DEV_TRAITS } from "./players.js";
+import { DEV_TRAITS, DEV_RANK, ageCurve as baseCurve, expectedWall } from "./players.js";
 
 export const FOCUS_SLOTS = 3;
-const DEV_GROWTH = { superstar: 0.9, star: 0.45, normal: 0, late: 0 };
 
-// Mirrors the age curve in developPlayer (mean change per summer).
+// The age curve developPlayer uses (players.js), for the age he plays next season, less the
+// wall's average toll.
 export function ageCurve(p) {
-  const age = isGoalie(p.pos) ? p.age - 3 : isDefense(p.pos) ? p.age - 1 : p.age;
-  let mean = age <= 19 ? 3 : age <= 21 ? 2.2 : age <= 23 ? 1.4 : age <= 25 ? 0.6 : age <= 27 ? 0 : age <= 29 ? -0.6 : age <= 31 ? -1.3 : age <= 33 ? -2.2 : -3.2;
-  if (p.age <= 25) {
-    const gap = p.pot - p.ovr;
-    mean += gap > 0 ? Math.min(1.5, gap * 0.12) : gap * 0.3;
-    mean += DEV_GROWTH[p.dev] || 0;
-    if (p.dev === "late") mean += age <= 21 ? -0.7 : 0.8;
-  }
-  if (p.ovr >= 88 && mean > 0) mean = Math.max(0, mean - (p.ovr - 86) * 0.3);
-  return mean;
+  const next = { ...p, age: p.age + 1 };
+  return baseCurve(next) - expectedWall(next);
 }
 export function focusWork(league, t, p) {
   const e = t.training?.earned?.[p.id] || {};
@@ -42,7 +34,7 @@ export function outlook(league, t, p) {
 }
 export function focusCandidates(league, t) {
   return [...t.roster, ...t.prospects].map((id) => league.players[id]).filter((p) => p && p.injury <= 0)
-    .map((p) => ({ p, score: (p.age <= 25 ? 3 : p.age <= 28 ? 1 : 0) + Math.max(0, p.pot - p.ovr) * 0.4 + (p.dev === "superstar" ? 2 : p.dev === "star" ? 1 : 0) + (t.roster.includes(p.id) ? 0.5 : 0) }))
+    .map((p) => ({ p, score: (p.age <= 25 ? 3 : p.age <= 28 ? 1 : 0) + Math.max(0, p.pot - p.ovr) * 0.4 + Math.max(0, (DEV_RANK[p.dev] || 1) - 1) + (t.roster.includes(p.id) ? 0.5 : 0) }))
     .sort((a, b) => b.score - a.score || b.p.ovr - a.p.ovr);
 }
 // Fill every open focus slot with the best young candidates, each on his weakest group.

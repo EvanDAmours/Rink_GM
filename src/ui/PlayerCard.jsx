@@ -4,7 +4,8 @@ import { useGame, Modal, TeamBadge, money, pct, signed } from "./common.jsx";
 import Headshot from "./Headshot.jsx";
 import { SKATER_ATTRS, GOALIE_ATTRS } from "../engine/ratings.js";
 import { isGoalie, isDefense, ARCHETYPES } from "../engine/constants.js";
-import { fullPosName, savePct, gaa, marketValue, isRFA, DEV_TRAITS } from "../engine/players.js";
+import { fullPosName, savePct, gaa, marketValue, isRFA, DEV_TRAITS, primeEnd } from "../engine/players.js";
+import { formLabel, seasonRole, ROLE_NAME } from "../engine/development.js";
 import { DevChip } from "./scoutingBits.jsx";
 import { shownRatings } from "../engine/draft.js";
 import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } from "../engine/roster.js";
@@ -73,7 +74,13 @@ export default function PlayerCard({ p }) {
   const shownCareer = seasons === "all" ? career : career.slice(0, 3);
   const ratingPoints = [...(p.ratingHistory || []).map((h) => ({ year: h.year, ovr: h.ovr })), { year: league.year, ovr: p.ovr }];
   const eyebrow = team ? `${team.city} ${team.name}${inMinors ? " · MINORS" : ""}` : p.tid === -2 ? `${league.draftClassYear} DRAFT CLASS` : "FREE AGENT";
-  const devShown = p.age <= 25 && p.dev ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
+  // The development trait shows at every age (Gridiron 1.5); another club's prospect shows what your scouts found.
+  const devShown = p.dev && DEV_TRAITS[p.dev] ? (hidden ? p.scout?.dev || null : p.dev) : undefined;
+  const form = hidden ? null : formLabel(p, league.year);
+  const role = hidden ? null : seasonRole(p, league.year);
+  const grew = p.grewAs && p.grewAs.year === league.year ? p.grewAs.role : null;
+  const summer = !hidden && league.devReport?.year === league.year ? league.devReport.rows.find((x) => x.pid === p.id) : null;
+  const prime = primeEnd(p);
   const s = p.stats, ps = p.pstats;
   const tiles = (st) => goalie ? [["GP", st.gp], ["W", st.w], ["L", st.l], ["SV%", st.sa ? pct(savePct(st)) : "—"], ["GAA", st.gp ? gaa(st).toFixed(2) : "—"], ["SO", st.so]] : [["GP", st.gp], ["G", st.g], ["A", st.a], ["PTS", st.pts], ["+/-", signed(st.pm)], ["PIM", st.pim]];
   const farmLine = watch?.farm ? watch.line : null;
@@ -95,6 +102,7 @@ export default function PlayerCard({ p }) {
           {devShown !== undefined && (devShown ? <span className={`gg-pc-tag dev-${devShown}`}>{DEV_TRAITS[devShown].name}</span> : <span className="gg-pc-tag"><DevChip dev={null} /></span>)}
           <span className="gg-pc-tag">{ARCHETYPES[p.type]?.name || p.type}</span>
           <AbilityChip p={p} full />
+          {form && <span className={`gg-pc-tag form-${form.kind}`} title={`Playing ${form.f > 0 ? "well above" : "below"} his rating this season (${form.f > 0 ? "+" : ""}${form.f}).`}>{form.kind === "hot" ? "🔥" : "🧊"} {form.text}</span>}
           {p.rookie && <span className="gg-pc-tag rookie">Rookie</span>}
           {p.ratingData && <span className="gg-pc-tag ea">EA {String(p.ratingData.edition).replace(/^NHL\s*/, "NHL ")}</span>}
           {injury && <span className="gg-pc-tag inj" title={injury.when}>🚑 {p.injuryNote || "Injured"} · {injury.list ? `${injury.list} · ` : ""}{injury.text}</span>}
@@ -138,6 +146,15 @@ export default function PlayerCard({ p }) {
                 <div className="spark"><Sparkline path={watch.path} width={140} height={36} color={watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#94a3b8"} /><span>{watch.prod === "dominant" ? "Dominating his level" : watch.prod === "solid" ? "Holding his own" : watch.prod === "struggling" ? "Struggling at this level" : "Early in the season"}{watch.next ? ` · ${watch.next.label}` : ""}</span></div>
               </div>
               {(p.farmHistory || []).length > 0 && <table className="gg-pc-table"><thead><tr><th>Year</th><th>League</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th></>}</tr></thead><tbody>{[...p.farmHistory].reverse().map((h, i) => <tr key={i}><td>{h.year}</td><td>{h.lg}</td><td className="num">{h.gp}</td>{goalie ? <><td className="num">{h.w}</td><td className="num">{h.sa ? pct((h.sa - h.ga) / h.sa) : "—"}</td></> : <><td className="num">{h.g}</td><td className="num">{h.a}</td><td className="num">{h.g + h.a}</td></>}</tr>)}</tbody></table>}
+            </section>}
+            {!watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">DEVELOPMENT</div>
+              <div className="gg-pc-devrow">
+                <div><small>TRAIT</small><b>{DEV_TRAITS[p.dev]?.name || "—"}</b><span>{p.dev === "generational" ? "ages slowest" : p.dev === "superstar" ? "longer prime" : p.dev === "late" ? "surges at 22-25" : p.age <= 25 ? "still growing" : "set"}</span></div>
+                <div><small>CEILING</small><b>{p.pot}</b><span>{p.pot > p.ovr ? `${p.pot - p.ovr} to go` : "at his ceiling"}</span></div>
+                <div><small>PRIME</small><b>{p.age <= prime ? `to ${prime}` : "past it"}</b><span>{p.age > prime ? `since ${prime + 1}` : `${prime - p.age} yr${prime - p.age === 1 ? "" : "s"} left`}</span></div>
+              </div>
+              {(role || grew) && <div className="gg-pc-role">{role && <span>Role: <b>{ROLE_NAME[role.role]}</b>{role.pp >= 0.5 ? " · power play" : ""}{role.pk >= 0.5 ? " · penalty kill" : ""}</span>}{grew && <span className="grew" title="He played this role all last season and grew into it over the summer: its skills came along faster.">↗ grew into {ROLE_NAME[grew].toLowerCase()} role</span>}</div>}
+              {summer && summer.notes.length > 0 && <div className="gg-pc-summer"><b>This summer:</b> {summer.from} → {summer.to} · {summer.notes.join(" · ")}</div>}
             </section>}
             <section className="gg-pc-panel"><div className="gg-pc-k season">SEASON BY SEASON {career.length > 3 && <button className="gg-pc-pill" onClick={() => setSeasons((v) => (v === "all" ? "recent" : "all"))}>{seasons === "all" ? `All ${career.length} seasons ▾` : "Last 3 ▾"}</button>}</div>
               {career.length ? <table className="gg-pc-table"><thead><tr><th>Year</th><th>TM</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th><th className="num">GAA</th><th className="num">SO</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th><th className="num">+/-</th></>}</tr></thead><tbody>

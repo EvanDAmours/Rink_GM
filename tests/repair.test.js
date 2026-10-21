@@ -45,7 +45,7 @@ test("repairLeague fixes dangling ids, duplicates, broken ratings and unknown tr
   t.prospects.push(c);                         // on the roster and the prospect list
   lg.players[d].ovr = NaN;
   lg.players[d].age = "old";
-  lg.players[a].dev = "generational";          // a trait the game doesn't know
+  lg.players[a].dev = "legendary";             // a trait the game doesn't know
   lg.freeAgents.push(b, "ghost-2", lg.freeAgents[0]);
   lg.players.broken = null;
   lg.players.nopos = { id: "nopos", name: "Mystery", pos: "QB" };
@@ -60,7 +60,7 @@ test("repairLeague fixes dangling ids, duplicates, broken ratings and unknown tr
   assert.ok(!t.prospects.includes(c));
   assert.ok(Number.isFinite(lg.players[d].ovr) && lg.players[d].ovr >= 40 && lg.players[d].ovr <= 99);
   assert.equal(typeof lg.players[d].age, "number");
-  assert.ok(["superstar", "star", "normal", "late"].includes(lg.players[a].dev));
+  assert.ok(["generational", "superstar", "star", "normal", "late"].includes(lg.players[a].dev));
   assert.ok(!lg.freeAgents.includes(b) && !lg.freeAgents.includes("ghost-2"));
   assert.equal(new Set(lg.freeAgents).size, lg.freeAgents.length);
   assert.ok(!("broken" in lg.players) && !("nopos" in lg.players));
