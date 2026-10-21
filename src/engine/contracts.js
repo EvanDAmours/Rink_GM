@@ -6,12 +6,15 @@
 // players like it (interest up, floor a little lower), the club has to have the cash.
 import { faAsk, resignAsk } from "./offseason.js";
 import { agentPreferences, negotiate, keepPendingOnShortOffer } from "./negotiations.js";
-import { capSpace, signPlayer, counts, logTx, hasRoomFor } from "./roster.js";
+import { capSpace, signPlayer, counts, logTx, hasRoomFor, capYear } from "./roster.js";
 import { contractCount } from "./hockeyRules.js";
 import { capForYear, minSalaryForYear, maxSalaryForYear, MAX_ROSTER } from "./constants.js";
 import { teamRatings } from "./lines.js";
-import { futurePayroll, extendPlayer } from "./extensions.js";
-import { projectedRole } from "./teamPlanning.js";
+import { futurePayroll, extendPlayer, extStart } from "./extensions.js";
+import { MARKET_MIN, OVERPAY, marketOn } from "./faMarket.js";
+import { holdoutAsk, holdoutSigned } from "./contractYear.js";
+import { isLoyal, tenure, LOYAL_SEASONS, perfNote } from "./contractValue.js";
+import { projectedRole, ROLE_LABELS } from "./teamPlanning.js";
 import { roleUtility, promiseRole } from "./playerCommitments.js";
 import { clamp } from "./rng.js";
 import { queueMoment } from "./moments.js";
@@ -23,20 +26,26 @@ const OFFSEASON = new Set(["resign", "freeagency", "draft"]);
 
 export function dealKind(league, p) {
   if (p.tid === -1) return "fa";
-  if (league.phase === "resign" && p.yrs === 0) return "resign";
+  if (p.holdout) return "holdout";
+  // Your own unsigned player: re-sign week, or a qualified RFA through the summer.
+  if (p.yrs === 0 && p.signed !== false && (league.phase === "resign" || league.phase === "freeagency")) return "resign";
   return "extension";
 }
 // First season the new deal covers.
 export function dealStart(league, kind) {
-  return kind === "fa" && !OFFSEASON.has(league.phase) && league.phase !== "preseason" ? league.year : league.year + 1;
+  if (kind === "extension") return extStart(league);
+  if (kind === "holdout") return capYear(league);
+  return kind === "fa" && !OFFSEASON.has(league.phase) ? league.year : league.year + 1;
 }
 export function askFor(league, p, yrs, kind) {
+  if (kind === "holdout") return holdoutAsk(league, p, yrs);
   return kind === "fa" ? faAsk(league, p, yrs) : resignAsk(league, p, yrs);
 }
 // The term a player will even discuss: veterans stop at two or three years, young stars
 // want a real commitment.
 export function termWindow(p, kind) {
   const max = kind === "fa" ? 6 : 7;
+  // (A holdout's deal and a re-signing are with his own club: up to seven years.)
   const age = p.age + (kind === "fa" ? 0 : 1);
   let lo = 1, hi = max;
   if (age >= 35) hi = 1; else if (age >= 33) hi = 2; else if (age >= 31) hi = 3; else if (age >= 29) hi = 5;
@@ -79,16 +88,18 @@ export function evaluateOffer(league, p, { aav, yrs, bonusPct = 0, kind }) {
   interest = clamp(interest, 0, 1);
   const bonusCash = round2(aav * yrs * (bonusPct / 100));
   const cash = round2(t.arena?.cash ?? 0);
-  const capOk = kind === "extension" ? futurePayroll(league, t) + aav <= capForYear(league.year + 1) + 1e-6 : aav <= capSpace(league, t) + 1e-6;
+  const capOk = kind === "extension" ? futurePayroll(league, t) + aav <= capForYear(start) + 1e-6 : aav <= capSpace(league, t) + 1e-6;
   // The 23-man limit is an in-season rule; over the summer the reserve list (90) and contract count (50) are the limits.
-  const inSeason = league.phase === "regular" || league.phase === "playoffs";
-  const roomOk = kind !== "fa" || !inSeason || hasRoomFor(league, t);
-  const slotOk = contractCount(league, t) < 50 || (kind !== "fa" && p.tid === t.id);
+  const inSeason = league.phase === "regular" || league.phase === "playoffs" || (kind === "holdout" && league.phase === "preseason");
+  const roomOk = (kind !== "fa" && kind !== "holdout") || !inSeason || hasRoomFor(league, t);
+  // A new deal for one of your rostered players reuses his slot; an unsigned RFA needs a free one.
+  const reserveOnly = kind === "holdout" || (t.rfaRights || []).includes(p.id);
+  const slotOk = contractCount(league, t) < 50 || (kind !== "fa" && p.tid === t.id && !reserveOnly);
   const cashOk = bonusCash <= cash + 1e-6;
   const n = league.negotiations?.[p.id];
   const rounds = n?.year === league.year ? n.rounds || 0 : 0;
   const walked = n?.year === league.year && n.status === "walked";
-  if (!capOk) reasons.push(kind === "extension" ? "This would exceed next season's projected cap." : "This would put you over the cap.");
+  if (!capOk) reasons.push(kind === "extension" ? `This would exceed the ${start}-${String(start + 1).slice(2)} projected cap.` : "This would put you over the cap.");
   if (!roomOk) reasons.push(`Roster is full (${MAX_ROSTER}).`);
   if (!slotOk) reasons.push("No contract slot available (50).");
   if (!cashOk) reasons.push(`The club can't cover a ${bonusPct}% bonus in cash.`);
@@ -97,7 +108,11 @@ export function evaluateOffer(league, p, { aav, yrs, bonusPct = 0, kind }) {
   const cAsk = askFor(league, p, counterYrs, kind);
   const counter = { aav: round2(Math.max(cAsk.aav * priorityModifier(league, t, p, counterYrs, prefs) * bonusDiscount, p.qualified?.aav || 0, minSalaryForYear(start))), yrs: counterYrs };
   const accept = termOk && !testing && aav + 1e-6 >= floor;
-  return { interest, accept: accept && capOk && roomOk && slotOk && cashOk && !walked, agree: accept, floor, counter, reasons, termWindow: win, capOk, cashOk, roomOk, slotOk, bonusCash, cash, prefs, ask, rounds, walked, start, lowball: ratio < 0.9, kind };
+  // In July a depth player takes the first fair deal and a 20% overpay ends the bidding: either way
+  // he signs now (faMarket.js). Everyone else's offer goes on the table until his decision day.
+  const market = kind === "fa" && league.phase === "freeagency";
+  const onSpot = market && accept && (p.ovr < MARKET_MIN || aav + 1e-6 >= faAsk(league, p, yrs).aav * OVERPAY);
+  return { interest, accept: accept && capOk && roomOk && slotOk && cashOk && !walked, agree: accept, floor, counter, reasons, termWindow: win, capOk, cashOk, roomOk, slotOk, bonusCash, cash, prefs, ask, rounds, walked, start, lowball: ratio < 0.9, kind, market, onSpot, overpayAt: market ? faAsk(league, p, yrs).aav * OVERPAY : null };
 }
 
 // Cap room for the next four seasons with (or without) a deal in place.
@@ -153,6 +168,16 @@ export function submitOffer(league, pid, { aav, yrs, bonusPct = 0, kind }) {
     if (r.ok) { pay(); league.negotiations ||= {}; league.negotiations[pid] = { pid, year: league.year, rounds: ev.rounds + 1, status: "signed", aav, yrs, preferences: ev.prefs }; }
     return { ...r, ev };
   }
+  if (kind === "holdout" || (kind === "resign" && (t.rfaRights || []).includes(p.id))) {
+    // An unsigned RFA on your reserve list (in July, or holding out): he signs and joins the roster.
+    if (p.offerSheetPending) return { ok: false, msg: "Resolve the pending offer sheet first." };
+    if (!signPlayer(league, t, p, aav, yrs)) return { ok: false, msg: "No contract or roster slot available.", ev };
+    pay();
+    promiseRole(league, p, t.id, projectedRole(league, t, p));
+    holdoutSigned(league, p);
+    league.negotiations ||= {}; league.negotiations[pid] = { pid, year: league.year, rounds: ev.rounds + 1, status: "signed", aav, yrs, preferences: ev.prefs };
+    return { ok: true, msg: `${p.name} agreed: $${aav.toFixed(2)}M × ${yrs}.`, ev };
+  }
   if (kind === "resign") {
     if (p.offerSheetPending) return { ok: false, msg: "Resolve the pending offer sheet first." };
     p.cap = aav; p.yrs = yrs; delete p.qualified; delete p.clause; p.contractSigningAge = p.age; delete p.salarySchedule;
@@ -164,7 +189,7 @@ export function submitOffer(league, pid, { aav, yrs, bonusPct = 0, kind }) {
   }
   // Free agent: in the offseason the agent collects competing bids; in season he signs now.
   if (["freeagency", "resign", "preseason"].includes(league.phase)) {
-    const r = negotiate(league, pid, aav, yrs, "", "", { floor: ev.floor, bonusCash: bonus });
+    const r = negotiate(league, pid, aav, yrs, "", "", { floor: ev.floor, bonusCash: bonus, onSpot: true });
     if (r.ok && bonus > 0) { t.arena.cash = round2(t.arena.cash - bonus); }
     return { ...r, ev };
   }
@@ -175,4 +200,38 @@ export function submitOffer(league, pid, { aav, yrs, bonusPct = 0, kind }) {
   try { queueMoment(league, signingMoment(league, p, t, { aav, yrs })); } catch (e) { console.error("Signing moment failed", e); }
   promiseRole(league, p, t.id, projectedRole(league, t, p));
   return { ok: true, msg: `${p.name} signs with the ${t.name}!`, ev };
+}
+
+// How your club looks to him (Gridiron 2.4): would you be a contender, what role he'd have, the
+// familiar faces, and what his agent says he wants most. [{ k, v, good }] for the contract table.
+export function clubLook(league, p, t = league.teams[league.userTid]) {
+  const prefs = agentPreferences(p);
+  const all = league.teams.map((q) => teamRatings(league, q).ovr).sort((a, b) => b - a);
+  const mine = teamRatings(league, t).ovr;
+  const rank = all.indexOf(mine) + 1;
+  const role = projectedRole(league, t, p);
+  const seasons = p.tid === t.id ? tenure(league, p) : 0;
+  const rows = [
+    { k: "Contender", v: rank <= 8 ? `Yes: the ${ordinal(rank)}-best roster in the league` : rank <= 20 ? `In the middle: ${ordinal(rank)} of 32 on paper` : `No: ${ordinal(rank)} of 32 on paper`, good: rank <= 8, bad: rank > 20, key: "winning" },
+    { k: "Role", v: `${ROLE_LABELS[role] || role}${role === "depth" || role === "backup" ? "" : " with you"}`, good: role !== "depth" && role !== "backup", bad: role === "depth", key: "role" },
+    { k: "Term", v: `He'd like about ${prefs.preferredTerm} year${prefs.preferredTerm === 1 ? "" : "s"}`, key: "security" },
+    { k: "Familiar faces", v: seasons ? `${seasons} season${seasons === 1 ? "" : "s"} with you${isLoyal(league, p) ? ": loyal, 10% off" : seasons < LOYAL_SEASONS ? ` · loyal after ${LOYAL_SEASONS}` : ""}` : p.tid === t.id ? "New to your club" : "None: he'd be new here", good: isLoyal(league, p), key: "loyalty" },
+  ];
+  const wants = { winning: "a contender", role: "a real role", security: "term and security", loyalty: "familiar faces" }[prefs.priority];
+  return { rows: rows.map((r) => ({ ...r, wants: r.key === prefs.priority })), wants, priority: prefs.priority };
+}
+const ordinal = (n) => `${n}${n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"}`;
+
+// Plain-words notes for the table: his last season, loyalty, and the market on him.
+export function dealNotes(league, p, kind) {
+  const notes = [];
+  const perf = perfNote(league, p, kind === "holdout" ? "resign" : kind);
+  if (perf) notes.push({ tone: perf.tone, text: perf.text });
+  if (kind !== "fa" && isLoyal(league, p)) notes.push({ tone: "loyal", text: `Loyal: ${tenure(league, p)} seasons with you. He takes about 10% less to stay.` });
+  if (kind === "fa" && league.phase === "freeagency") {
+    const m = marketOn(league, p);
+    notes.push({ tone: "market", text: p.ovr < MARKET_MIN ? "A depth player takes the first fair deal: a fair offer signs him now." : `${m.others ? `${m.others} club${m.others === 1 ? " has" : "s have"} made him an offer.` : "No other offers yet."} He ${m.when || "decides when the first offer goes in"}. He takes the best offer for him: more money, or a club with what he wants. Only a big overpay (20%+ over his ask) signs him on the spot.` });
+  }
+  if (kind === "holdout") notes.push({ tone: "down", text: `Holding out: he won't sign his $${(p.holdout?.qo || 0).toFixed(2)}M qualifying offer. Meet his market ask and he reports today.` });
+  return notes;
 }

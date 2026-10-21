@@ -12,6 +12,7 @@ import { headCoachLines } from "./lines.js";
 import { automaticallyHandleRoster } from "./autoRoster.js";
 import { dayToDate } from "./schedule.js";
 import { AREA_START, TRIP_COST } from "./regions.js";
+import { contractYearAsks, holdouts, playItOut, holdFirm } from "./contractYear.js";
 
 // Urgent first, then decisions, then news; the order items are added in breaks ties.
 export const TONE_RANK = { urgent: 0, action: 1, info: 2 };
@@ -90,7 +91,13 @@ export function needsAttention(lg) {
     cta: "Lines", to: ["lines"], fixes: covered || !games ? [] : [{ label: "Auto-set lines", fix: "autoLines" }] }));
 
   if (t.autoPlan !== false && lg.phase === "preseason") add({ key: "plan", icon: "📋", tone: "action", title: "Set your systems and game plan", sub: "Check that your systems and lines fit the roster before opening night.", cta: "Game plan", to: ["analysis"] });
-  roster.filter((p) => p.yrs === 1 && p.ovr >= 80 && !p.extension).sort((a, b) => b.ovr - a.ovr).slice(0, 3).forEach((p) => add({ key: `cy${p.id}`, icon: "✍️", tone: "action", title: `Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`, sub: "Extend him now at today's price, or let him play it out and pay the market rate.", cta: "Contracts", to: ["frontoffice", "contracts"] }));
+  // Contract years and holdouts (contractYear.js): talk now, or let him bet on himself.
+  holdouts(lg).forEach((p) => add({ key: `ho${p.id}`, icon: "✋", tone: "urgent", title: `${p.name} (${p.pos} ${p.ovr}) is holding out`,
+    sub: `He won't sign his $${p.holdout.qo.toFixed(2)}M qualifying offer and sits until he gets a market deal (about $${p.holdout.ask.toFixed(2)}M × ${p.holdout.yrs}). ${p.holdout.firm ? "You're holding firm: he may give in any week." : "Meet his ask, or hold firm and wait him out."} December 1 is the signing deadline.`,
+    cta: "Talk contract", to: { player: p.id }, fixes: p.holdout.firm ? [] : [{ label: "✋ Hold firm", fix: `holdFirm:${p.id}` }] }));
+  contractYearAsks(lg).slice(0, 3).forEach((p) => add({ key: `cy${p.id}`, icon: "✍️", tone: "action", title: `Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`,
+    sub: `Extend him now at today's price, or let him bet on himself: he'll push harder, but a big year raises his price${p.ovr >= 85 ? " (and a star on a losing team may ask out)" : ""}.`,
+    cta: "Talk extension", to: { player: p.id }, fixes: [{ label: "🎲 Let him play it out", fix: `playItOut:${p.id}` }] }));
   const sheets = lg.offerSheets?.filter((s) => !s.done && s.from === t.id).length || 0;
   if (sheets) add({ key: "sheets", icon: "📝", tone: "action", title: `${plural(sheets, "offer sheet")} awaiting a decision`, sub: "Match it or take the compensation.", cta: "Review", to: ["operations"] });
   const expiring = roster.filter((p) => p.yrs <= 1).length;
@@ -124,6 +131,8 @@ export function runFix(lg, fix) {
   if (kind === "hireCoach") return hireCoach(lg, arg);
   if (kind === "talkDown") return talkDown(lg, arg);
   if (kind === "shop") return shopPlayer(lg, arg);
+  if (kind === "playItOut") return playItOut(lg, arg);
+  if (kind === "holdFirm") return holdFirm(lg, arg);
   if (kind === "paper") { const p = (lg.papers || []).find((x) => String(x.id) === arg); if (p) p.seen = true; return { ok: !!p, msg: "" }; }
   return { ok: false, msg: "Nothing to do." };
 }

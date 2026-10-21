@@ -11,6 +11,9 @@ import { capSpace, counts, capYear } from "../engine/roster.js";
 import { MAX_ROSTER, FA_DAYS, ARCHETYPES, capForYear } from "../engine/constants.js";
 import { isRFA } from "../engine/players.js";
 import { POS_COLOR } from "./TradePage.jsx";
+import { RoleTag, MarketTag, BuildYour23, faStart } from "./ContractBits.jsx";
+import { decidingToday } from "../engine/faMarket.js";
+import { isLoyal, tenure, perfNote } from "../engine/contractValue.js";
 
 const PosBadge = ({ pos }) => <span className="gg-pos" style={{ background: POS_COLOR[pos] || "#64748b" }}>{pos}</span>;
 const MugPos = ({ p, team }) => <span className="gg-mugpos"><Headshot p={p} team={team} size={36} decorative fallback="none" /><PosBadge pos={p.pos} /></span>;
@@ -27,38 +30,24 @@ function urgentNeeds(league, team) {
   return urgent.length ? urgent : list.slice(0, 2);
 }
 
-// Where a free agent's market stands, as Gridiron's market tags it: your bid and how it is
-// going, other clubs' offers, or nobody in yet.
-function MarketTag({ p }) {
-  const { league } = useGame();
-  const st = bidStanding(league, p.id);
-  if (st?.status === "pending") return <span className={`gg-bid ${st.standing}`} title={st.says}>{st.label} · {st.daysLeft === 0 ? "decides today" : `${st.daysLeft}d`}</span>;
-  if (st?.status === "counter") return <span className="gg-bid counter" title={st.says}>Countered</span>;
-  if (st?.status === "walked") return <span className="gg-bid walked" title={st.says}>Talks over</span>;
-  if (league.phase !== "freeagency") return null;
-  const n = league.negotiations?.[p.id];
-  const bids = n?.status === "pending" && n.year === league.year ? n.bids.length : 0;
-  if (bids) {
-    const d = Math.max(0, (n.closes ?? 0) - (league.fa?.day || 0));
-    return <span className="gg-nobids has">{bids} offer{bids > 1 ? "s" : ""} · {d === 0 ? "decides today" : `${d}d`}</span>;
-  }
-  return <span className="gg-nobids">No offers yet</span>;
-}
-
-// The free-agency calendar, like Gridiron's market bar: what day it is, what happened on the
-// last one, and the button to move on.
+// The free-agency calendar, like Gridiron's market bar: what day of July it is, what happened on the
+// last one (who signed, your wins and losses), who decides at the end of today, and the button on.
+const julyDate = (day) => `July ${1 + day}`;
 function FaDayBar() {
   const { league, commit, toast } = useGame();
   if (league.phase !== "freeagency" || !league.fa) return null;
   const day = league.fa.day || 0;
   const s = league.fa.summary?.day === day ? league.fa.summary : null;
-  const next = () => { simFADay(league); commit(); const sum = league.fa?.summary; if (sum) toast(sum.mine?.length ? `${sum.text} You signed ${sum.mine.join(", ")}.` : sum.text, 4500); };
+  const next = () => { simFADay(league); commit(); const sum = league.fa?.summary; if (sum) toast(sum.text, 5000); };
+  const due = decidingToday(league);
   return (
     <section className="gg-faday">
-      <span className="gg-faday-k">📅 Day {day} of {FA_DAYS}</span>
+      <span className="gg-faday-k">📅 {day === 0 ? "Opening day" : `Day ${day} of ${FA_DAYS}`} · {julyDate(day)}</span>
       <span className="gg-faday-txt">
         {s ? <b>{s.signed ? <>{s.signed} signed{s.top ? <>, led by {s.top.name} ({s.top.abbr})</> : null}.</> : "Nobody signed."} </b> : null}
-        Clubs sign players every day. Each agent collects offers for two days, then takes the best one for his client: the money, plus the role, the winning or the term he cares about.
+        Clubs make offers every day. Each player takes the best one on his day: the money, plus the role, the winning or the term he wants. Depth players take the first fair deal; only a big overpay (20% over his ask) signs anyone else on the spot.
+        {s && (s.won.length > 0 || s.lost.length > 0) && <span className="ct-faday-res">{s.won.map((w) => <span key={w.pid}><b className="won">✅ {w.name}</b> signed with you ({money(w.aav)} × {w.yrs}). </span>)}{s.lost.map((x) => <span key={x.pid}><b className="lost">❌ {x.name}</b> chose {x.abbr} ({money(x.aav)} × {x.yrs}) over your {money(x.mineAav)} × {x.mineYrs}. </span>)}</span>}
+        {day < FA_DAYS && <span className="ct-faday-sub">{due.count ? `${due.count} player${due.count === 1 ? "" : "s"} decide${due.count === 1 ? "s" : ""} at the end of today${due.mine ? `, ${due.mine} with your offer on the table` : ""}.` : "Nobody is due to decide today."}</span>}
       </span>
       {day < FA_DAYS ? <button className="primary gg-faday-btn" onClick={next}>Next day →</button> : <span className="gg-faday-last">Last day: start the season when you are ready.</span>}
     </section>
@@ -85,7 +74,7 @@ function ResignView() {
           return (
             <div key={p.id} className="gg-farow resign">
               <MugPos p={p} team={user} />
-              <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age + 1} next season · POT {p.pot} · was {money(p.prevCap)} · {isRFA(p) ? "RFA" : "UFA"}</small></span>
+              <span className="gg-faname"><b><PlayerName p={p} />{isLoyal(league, p) && <span className="ct-tag loyal" title={`${tenure(league, p)} seasons with you: he takes about 10% less to stay.`}>LOYAL −10%</span>}{(() => { const n = perfNote(league, p, "resign"); return n ? <span className={`ct-tag ${n.tone}`} title={n.text}>{n.tone === "up" ? "📈 BIG YEAR" : "📉 DOWN YEAR"}</span> : null; })()}</b><small>{p.age + 1} next season · POT {p.pot} · was {money(p.prevCap)} · {isRFA(p) ? "RFA" : "UFA"}</small></span>
               <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
               <span className={`gg-famood ${p.willing ? (p.mood > 0.6 ? "good" : p.mood > 0.35 ? "" : "warn") : "bad"}`}>{p.willing ? (p.mood > 0.6 ? "Happy" : p.mood > 0.35 ? "Open" : "Lukewarm") : "Testing FA"}</span>
               <Select value={termFor(p)} onChange={(e) => setTerms({ ...terms, [p.id]: Number(e.target.value) })} disabled={!p.willing} aria-label={`Term for ${p.name}`} style={{ minWidth: 90 }}>
@@ -109,7 +98,8 @@ function ResignView() {
 export default function FreeAgencyPage() {
   const { league } = useGame();
   const [offerFor, setOfferFor] = useState(null);
-  const [pos, setPos] = useState("all");
+  // Build your 23 on Home opens this screen at one position.
+  const [pos, setPos] = useState(() => { const p = faStart.pos; faStart.pos = null; return p || "all"; });
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("ovr");
   const [needOnly, setNeedOnly] = useState(false);
@@ -126,9 +116,10 @@ export default function FreeAgencyPage() {
   return (
     <div className="stack gg-fa">
       <div className="gg-pagehead">
-        <div><h2>{league.phase === "resign" ? "Re-sign Players" : "Free Agency"}</h2><div className="gg-status">{league.phase === "freeagency" ? `Day ${league.fa.day} of ${FA_DAYS} · ` : ""}{league.freeAgents.length} available · cap space <b style={{ color: "#22c55e" }}>{money(capSpace(league, user))}</b> · roster {counts(league, user).active}/{MAX_ROSTER}</div></div>
+        <div><h2>{league.phase === "resign" ? "Re-sign Players" : "Free Agency"}</h2><div className="gg-status">{league.phase === "freeagency" ? `${league.fa.day ? `Day ${league.fa.day} of ${FA_DAYS}` : "Opening day"} · ` : ""}{league.freeAgents.length} available · cap space <b style={{ color: capSpace(league, user) >= 0 ? "#22c55e" : "#ef4444" }}>{money(capSpace(league, user))}</b>{pendingSpend(league, user.id) > 0 && league.phase === "freeagency" ? <> ({money(pendingSpend(league, user.id))} in open offers)</> : null} · roster {counts(league, user).active}/{MAX_ROSTER}</div></div>
         {!open && <span className="gg-phase">Market opens after the draft and re-sign period</span>}
       </div>
+      <BuildYour23 onPick={(x) => { setPos(x); setNeedOnly(false); }} foot={false} />
       {league.phase === "resign" && <ResignView />}
       <FaDayBar />
       <MyOffers onRaise={(id) => setOfferFor(id)} />
@@ -149,7 +140,7 @@ export default function FreeAgencyPage() {
             return (
               <div key={p.id} className={`gg-farow${p === best ? " top" : ""}`}>
                 <MugPos p={p} team={null} />
-                <span className="gg-faname"><b><PlayerName p={p} /><AbilityChip p={p} /></b><small>{p.age} yrs · POT {p.pot} · {ARCHETYPES[p.type]?.name}{p.rookie ? " · Rookie" : ""}</small></span>
+                <span className="gg-faname"><b><PlayerName p={p} /><AbilityChip p={p} /><RoleTag p={p} /></b><small>{p.age} yrs · POT {p.pot}{p.rookie ? " · Rookie" : ""}{p.moveHistory?.at(-1)?.from === league.userTid && p.moveHistory.at(-1).year === league.year ? " · your former player" : ""}</small></span>
                 <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
                 <span className="gg-faask"><b>{money(ask.aav)}</b><small>× {ask.yrs} yr{ask.yrs > 1 ? "s" : ""}</small><MarketTag p={p} /></span>
                 <button className="small primary" disabled={!open} onClick={() => setOfferFor(p.id)}>{bidStanding(league, p.id)?.status === "pending" ? "Raise" : "Offer"}</button>
@@ -174,14 +165,14 @@ function MyOffers({ onRaise }) {
   const committed = pendingSpend(league, user.id), room = capSpace(league, user);
   return (
     <section className="gg-card gg-myoffers">
-      <div className="gg-k">YOUR OFFERS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · agents decide after two free-agency days</span></div>
+      <div className="gg-k">YOUR OFFERS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · each player decides on his own day; your tabled offer always counts</span></div>
       {committed > room + 1e-6 && <div className="gg-offer-warn">Offers out total {money(committed)} against {money(room)} of cap room. Talk to as many agents as you like; if more accept than you can fit, the earliest offers sign first and the rest fall through.</div>}
       <div className="gg-offers">
         {offers.map(({ p, standing: st, n }) => (
           <div key={p.id} className={`gg-offer ${st.status} ${st.standing || ""}`}>
             <MugPos p={p} team={null} />
             <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age} yrs · <span style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span> OVR{st.mine ? ` · your offer ${money(st.mine.aav)} × ${st.mine.yrs}` : n.mineAav ? ` · your offer ${money(n.mineAav)} × ${n.mineYrs}` : ""}</small></span>
-            <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.daysLeft === 0 ? "decides today" : `${st.daysLeft}d`}` : ""}</span>
+            <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.when}` : ""}</span>
             <span className="gg-offer-says">{st.says}</span>
             <span className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
               {(st.status === "pending" || st.status === "counter") && <button className="small primary" onClick={() => onRaise(p.id)}>{st.status === "counter" ? "Reply" : "Raise"}</button>}
