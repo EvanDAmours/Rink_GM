@@ -3,6 +3,7 @@ import {createAssistant} from "./development.js";
 import {logTx} from "./roster.js";
 import {queueMoment} from "./moments.js";
 import {hallMoments} from "./momentsSeason.js";
+import {legacyOf,hofWorthy,HOF_WAIT,filmDocumentaries} from "./legacy.js";
 
 export const ARENA_UPGRADES={training:{name:"Training complex",cost:8,effect:"Improves prospect development"},fan:{name:"Fan experience",cost:6,effect:"Improves attendance and fan support"},medical:{name:"Medical facilities",cost:7,effect:"Reduces simulated injury risk"}};
 export function ensureDynasty(lg){
@@ -30,6 +31,7 @@ export function careerReview(lg){
   }
   const t=lg.teams[lg.userTid];
   if(lg.settings.firing && t.owner.trust<=25){lg.career.fired=true;lg.career.offers=lg.teams.filter(o=>o.id!==t.id).sort((a,b)=>a.owner.trust-b.owner.trust || a.rec.pts-b.rec.pts).slice(0,5).map(o=>({tid:o.id,year:lg.year+1,goal:o.owner.goal.label}));lg.inbox.push({year:lg.year,day:lg.day,text:`You were dismissed by ${t.abbr}. Select your next GM job under Front Office → Operations.`});}
+  try{filmDocumentaries(lg);}catch(e){console.error("Documentary failed",e);}
   const champ=lg.playoffs?.champion;if(champ!=null && !lg.celebrations.some(c=>c.year===lg.year)){
     const h=lg.history.find(h=>h.year===lg.year);lg.celebrations.unshift({year:lg.year,tid:champ,runnerUp:h?.runnerUp,headline:`${lg.teams[champ].name.toUpperCase()} LIFT THE STANLEY CUP`,mvp:lg.awards.connSmythe?.name,rec:{...lg.teams[champ].rec},roster:lg.teams[champ].roster.map(id=>({pid:id,name:lg.players[id]?.name,number:lg.players[id]?.number}))});
   }
@@ -43,14 +45,23 @@ export function takeJob(lg,tid){
   logTx(lg,`GM accepts the ${lg.teams[tid].abbr} job`,[old,tid]);return {ok:true,msg:`You now manage the ${lg.teams[tid].name}. The league's history carries on.`};
 }
 export function archiveRetirement(lg,p,tot){
-  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,tid:p.tid>=0?p.tid:lg.teams.find(t=>t.abbr===p.career.at(-1)?.t)?.id,number:p.number,player:structuredClone(p),...tot,peak:p.peak || p.ovr,awards:p.honours || []};
+  const tid=p.tid>=0?p.tid:lg.teams.find(t=>t.abbr===p.career.at(-1)?.t)?.id;
+  const L=legacyOf(p,{startYear:lg.startYear || 2026});
+  const entry={pid:p.id,name:p.name,pos:p.pos,year:lg.year,age:p.age,tid,from:lg.teams[tid]?.abbr || null,number:p.number,player:structuredClone(p),...tot,peak:p.peak || p.ovr,awards:p.honours || [],legacy:L.legacy,pre:L.pre,hof:hofWorthy(L)};
   (lg.retirementArchive ||= []).push(entry);
+  // A star retiring from your club: raise his number to the rafters? (Gridiron 2.50's Ring of Honor prompt.)
+  if(tid===lg.userTid && p.number!=null && (L.legacy>=30 || entry.hof) && !(lg.numberRetirements || []).some(x=>x.tid===tid && x.number===p.number)){
+    (lg.numberPrompts ||= []).push({pid:p.id,year:lg.year});
+    (lg.inbox ||= []).push({year:lg.year,day:lg.day,text:`🎽 ${p.name} has retired. Raise his #${p.number} to the rafters? Decide in the Legacy Hall.`,open:{tab:"legacy",label:"Open the Legacy Hall"}});
+  }
 }
 export function inductHall(lg){
   ensureDynasty(lg);
   const inducted=[];
   for(const r of lg.retirementArchive || [])if(lg.year-r.year>=3 && !lg.hallOfFame.some(h=>h.pid===r.pid)){
-    const eligible=r.pos==="G"?r.w>=250 || r.w>=100 && r.awards.length>=2:r.g+r.a>=700 || r.gp>=400 && r.awards.length>=2;
+    // The legacy score (real pre-league careers count); older entries are scored from their card.
+    if(r.legacy==null && r.player){const L=legacyOf(r.player,{startYear:lg.startYear || 2026});r.legacy=L.legacy;r.pre=L.pre;r.hof=hofWorthy(L);}
+    const eligible=lg.year-r.year>=HOF_WAIT && (r.hof ?? (r.pos==="G"?r.w>=250:r.g+r.a>=700));
     if(eligible){const h={...r,inducted:lg.year};lg.hallOfFame.push(h);inducted.push(h);}
   }
   // One of yours in the Class: the induction ceremony (Gridiron 3.2's Canton, in Toronto).
@@ -60,10 +71,15 @@ export function inductHall(lg){
 export function retireNumber(lg,pid){
   const r=(lg.retirementArchive || []).find(r=>r.pid===pid),t=lg.teams[lg.userTid];
   if(!r || r.tid!==t.id || r.number==null || lg.numberRetirements.some(x=>x.tid===t.id && x.number===r.number))return {ok:false,msg:"Choose a retired player whose last team was your club and whose number is available."};
-  if(r.gp<300 && r.awards.length<2)return {ok:false,msg:"Franchise honours need 300 simulated games or two awards."};
+  if(r.gp<300 && r.awards.length<2 && !((r.legacy || 0)>=30))return {ok:false,msg:"Franchise honours need 300 simulated games or two awards."};
   if(t.roster.some(id=>lg.players[id]?.number===r.number))return {ok:false,msg:"Reassign that number on the active roster first."};
-  lg.numberRetirements.push({pid,tid:t.id,name:r.name,number:r.number,year:lg.year});return {ok:true,msg:`Number ${r.number} retired for ${r.name}.`};
+  lg.numberRetirements.push({pid,tid:t.id,name:r.name,number:r.number,year:lg.year});lg.numberPrompts=(lg.numberPrompts || []).filter(x=>x.pid!==pid);return {ok:true,msg:`Number ${r.number} retired for ${r.name}.`};
 }
+export function declineNumber(lg,pid){lg.numberPrompts=(lg.numberPrompts || []).filter(x=>x.pid!==pid);}
 export function stampHonours(lg){
+  // All-Star Teams and the All-Star Game count as honours too (accolade chips, legacy score).
+  const add=(id,kind,tid)=>{const p=lg.players[id];if(p){p.honours ||= [];if(!p.honours.some(h=>h.year===lg.year && h.kind===kind))p.honours.push({year:lg.year,kind,tid:tid ?? p.tid});}};
+  if(lg.allNHL?.year===lg.year){for(const e of lg.allNHL.first || [])add(e.pid,"allNHL1",e.tid);for(const e of lg.allNHL.second || [])add(e.pid,"allNHL2",e.tid);}
+  if(lg.allStar?.year===lg.year)for(const r of lg.allStar.rosters || [])for(const x of r.players || [])add(x.pid,"asg",x.tid);
   for(const [kind,a] of Object.entries(lg.awards || {}))if(a?.pid)for(const id of a.pids || [a.pid]){const p=lg.players[id];if(p){p.honours ||= [];if(!p.honours.some(h=>h.year===lg.year && h.kind===kind))p.honours.push({year:lg.year,kind,tid:a.tid});}}
 }
