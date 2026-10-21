@@ -301,10 +301,11 @@ function hockeyEvent(s, ice, R) {
     if (pid) {
       const type = pick(['Tripping', 'Hooking', 'Holding', 'Slashing', 'Interference', 'High-sticking', 'Cross-checking']);
       const minutes = type === 'High-sticking' && chance(.15) ? 4 : chance(.006) ? 5 : 2;
+      const tag = s.live ? onIceTag(s, ice) : null; // the units on the ice when the call was made
       if (penalized === o) delayPenalty(s, penalized, pid, {type, minutes});
       else assessPenalty(s, penalized, pid, {type, minutes});
       decision(s, penalized, 'penalty');
-      if (s.live) push(s, {t: 'pen', side: penalized, text: `Penalty: ${nameOf(s[penalized], pid)} — ${minutes} minutes for ${type.toLowerCase()}.`});
+      if (s.live) push(s, {t: 'pen', side: penalized, pid, minutes, call: type, delayed: penalized === o, ...tag, text: `Penalty: ${nameOf(s[penalized], pid)} — ${minutes} minutes for ${type.toLowerCase()}.`});
       return;
     }
   }
@@ -313,7 +314,7 @@ function hockeyEvent(s, ice, R) {
     if (h && a) {
       assessPenalty(s, 'h', h, {type: 'Fighting', minutes: 5, offset: true});
       assessPenalty(s, 'a', a, {type: 'Fighting', minutes: 5, offset: true});
-      if (s.live) push(s, {t: 'fight', text: `${nameOf(s.h, h)} and ${nameOf(s.a, a)} — five each for fighting.`});
+      if (s.live) push(s, {t: 'fight', pids: [h, a], text: `${nameOf(s.h, h)} and ${nameOf(s.a, a)} — five each for fighting.`});
       return;
     }
   }
@@ -382,6 +383,49 @@ function hockeyEvent(s, ice, R) {
   } else changePossession(s, o, ice);
 }
 
+// ---------- Commentary (live games only) ----------
+// Who beat whom, read off the game state at the moment of the play: the units on the ice,
+// the defenceman on the side the chance came from, how it was made. Pure reads: nothing here
+// draws from the game's random stream, so a live game and a quick sim stay identical.
+const LINE_WORD = ['first', 'second', 'third', 'fourth'];
+function unitOf(s, k, ids) {
+  const side = s[k], type = strengthType(s, k);
+  const share = row => (row || []).filter(id => ids.includes(id)).length;
+  if (type !== 'EV') {
+    const tag = type === 'PP' ? 'PP' : 'PK', rows = side.lines[tag] || [];
+    return `${tag}${share(rows[1]) > share(rows[0]) ? 2 : 1}`;
+  }
+  return `L${side.fIdx + 1} + Pair ${side.dIdx + 1}`;
+}
+function onIceTag(s, ice) {
+  return {on: {h: unitOf(s, 'h', ice.h), a: unitOf(s, 'a', ice.a)}, str: {h: ice.h.length, a: ice.a.length}};
+}
+function beatenDefender(s, k, ice, y) {
+  const o = other(k), def = s[o];
+  const ds = ice[o].filter(id => isDefense(def.pl[id]?.pos));
+  if (ds.length < 2) return ds[0] || null;
+  // Defending its net, a club faces up ice, so its left defenceman has the side of the rink
+  // on his left. The shot's side of the rink says whose side the chance came from.
+  const netRight = zoneX(s, k, 89) > 100;
+  const left = Number.isFinite(y) ? (netRight ? y > 42.5 : y < 42.5) : false;
+  return ds.find(id => def.pl[id].pos === (left ? 'LD' : 'RD')) || ds[left ? 0 : 1];
+}
+function chanceCall(s, k, ice, {shooter, type, rebound = false, depth, y, xg = 0, goal = false}) {
+  const o = other(k), att = s[k], def = s[o];
+  if (!(goal || rebound || s.rush || s.lateral || xg >= .12)) return null;
+  const pos = att.pl[shooter]?.pos;
+  if (isForward(pos)) {
+    const d = beatenDefender(s, k, ice, y);
+    if (d) return {beat: d, name: lastName(def, d), how: rebound ? 'to the rebound' : type === 'tip-in' ? 'in front'
+      : s.rush ? 'on the rush' : s.lateral ? 'on the backdoor' : depth >= 70 ? 'in the slot' : 'off the cycle'};
+  }
+  // A point shot, or no defenceman back: name the line matchup instead, at even strength.
+  if (goal && !def.pulled && strengthType(s, k) === 'EV') {
+    return {matchup: `${isDefense(pos) ? 'from the point ' : ''}against ${def.abbr}'s ${LINE_WORD[def.fIdx] || 'fourth'} line`};
+  }
+  return null;
+}
+
 function shotAttempt(s, k, ice, R, rebound = false) {
   const o = other(k), att = s[k], def = s[o];
   let shooter = s.carrier;
@@ -408,13 +452,13 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     attempt.result = 'block';
     const blocker = weighted(ice[o], id => def.comp[id].blk ** 2 * (isDefense(def.pl[id].pos) ? 1.5 : 1));
     addBox(s, blocker, 'blk');
-    if (s.live) push(s, {t: 'block', side: o, text: `${lastName(att, shooter)} fires — blocked by ${lastName(def, blocker)}.`, x, y});
+    if (s.live) push(s, {t: 'block', side: o, att: k, ...onIceTag(s, ice), text: `${lastName(att, shooter)} fires — blocked by ${lastName(def, blocker)}.`, x, y});
     if (chance(.55)) changePossession(s, o, ice);
     return;
   }
   const pMiss = clamp(.245 - (skill.accuracy * efficiency - 82) * .0035 + geometry.angle * .035, .10, .42);
   if (chance(pMiss)) {
-    if (s.live && visual(s).chance(.5)) push(s, {t: 'miss', side: k, text: `${lastName(att, shooter)} fires wide.`, x, y});
+    if (s.live && visual(s).chance(.5)) push(s, {t: 'miss', side: k, att: k, ...onIceTag(s, ice), text: `${lastName(att, shooter)} fires wide.`, x, y});
     if (chance(.56)) changePossession(s, o, ice);
     return;
   }
@@ -423,7 +467,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     // attempts are misses, never phantom saves or shots faced by a goalie.
     addBox(s, shooter, 'sog'); s.shots[k]++; s.xg[k] += 1;
     attempt.result = 'goal'; attempt.chance = 1;
-    creditGoal(s, k, shooter, ice, {empty: true, shotType: type, x, y, xg: 1}); return;
+    creditGoal(s, k, shooter, ice, {empty: true, shotType: type, x, y, xg: 1, depth, rebound}); return;
   }
   addBox(s, shooter, 'sog'); s.shots[k]++;
   const goalie = def.pl[def.goalie], saveKey = pick(['glh', 'gll', 'sth', 'stl', 'fiv']);
@@ -435,8 +479,14 @@ function shotAttempt(s, k, ice, R, rebound = false) {
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';
   if (s.gbox[def.goalie]) s.gbox[def.goalie].sa++;
-  if (chance(xg)) { attempt.result = 'goal'; creditGoal(s, k, shooter, ice, {shotType: type, x, y, xg}); return; }
-  if (s.live) push(s, {t: 'save', side: o, text: `${lastName(att, shooter)} with a ${type} — save ${lastName(def, def.goalie)}.`, x: zoneX(s, k, 89), y: 42.5});
+  if (chance(xg)) { attempt.result = 'goal'; creditGoal(s, k, shooter, ice, {shotType: type, x, y, xg, depth, rebound}); return; }
+  if (s.live) {
+    const call = chanceCall(s, k, ice, {shooter, type, rebound, depth, y, xg});
+    const keeper = lastName(def, def.goalie);
+    push(s, {t: 'save', side: o, att: k, chance: !!call, beat: call?.beat || null, ...onIceTag(s, ice),
+      text: call?.beat ? `${lastName(att, shooter)} beats ${call.name} ${call.how} — ${type}, save ${keeper}.`
+        : `${lastName(att, shooter)} with a ${type} — save ${keeper}.`, x: zoneX(s, k, 89), y: 42.5});
+  }
   const reb = def.comp[def.goalie]?.reb ?? 75;
   if (!rebound && chance(clamp(.11 + (82 - reb) * .002 + (82 - (goalie?.attrs.rec ?? 82)) * .001, .04, .24))) {
     decision(s, k, 'rebound'); shotAttempt(s, k, ice, R, true);
@@ -446,8 +496,11 @@ function shotAttempt(s, k, ice, R, rebound = false) {
 
 // Scoring is shared by every game mode. Assist order is the last two distinct
 // teammates who actually touched the puck, with no intervening opposing control.
-export function creditGoal(s, k, shooter, ice, {empty = false, shotType = 'wrist shot', x, y, xg = 0} = {}) {
+export function creditGoal(s, k, shooter, ice, {empty = false, shotType = 'wrist shot', x, y, xg = 0, depth, rebound = false} = {}) {
   const o = other(k), att = s[k], def = s[o], strength = strengthType(s, k);
+  // Commentary is read off the ice before the goal resets the strength (live games only).
+  const tag = s.live ? onIceTag(s, ice) : null;
+  const call = s.live && !empty ? chanceCall(s, k, ice, {shooter, type: shotType, rebound, depth, y, xg, goal: true}) : null;
   const assists = [];
   for (const id of [...s.touches].reverse()) {
     if (id !== shooter && !assists.includes(id) && att.pl[id]) assists.push(id);
@@ -477,8 +530,8 @@ export function creditGoal(s, k, shooter, ice, {empty = false, shotType = 'wrist
   releaseOnGoal(s, k);
   settleDelayedPenalty(s, {goal: true, minorReleased});
   setStoppage(s, 'goal');
-  if (s.live) push(s, {t: 'goal', side: k, scorer: shooter, x: zoneX(s, k, 89), y: 42.5,
-    text: `GOAL! ${nameOf(att, shooter)} scores on a ${shotType}${assists.length ? ' (' + assists.map(id => lastName(att, id)).join(', ') + ')' : ' (unassisted)'}${empty ? ' — empty net' : strength === 'PP' ? ' — power play' : strength === 'SH' ? ' — shorthanded' : ''}. ${s.h.abbr} ${s.score.h}, ${s.a.abbr} ${s.score.a}`});
+  if (s.live) push(s, {t: 'goal', side: k, att: k, scorer: shooter, assists: [...assists], strength, empty, beat: call?.beat || null, ...tag, x: zoneX(s, k, 89), y: 42.5,
+    text: `GOAL! ${nameOf(att, shooter)} scores on a ${shotType}${call?.beat ? `, beating ${call.name} ${call.how}` : call?.matchup ? `, ${call.matchup}` : ''}${assists.length ? ' (' + assists.map(id => lastName(att, id)).join(', ') + ')' : ' (unassisted)'}${empty ? ' — empty net' : strength === 'PP' ? ' — power play' : strength === 'SH' ? ' — shorthanded' : ''}. ${s.h.abbr} ${s.score.h}, ${s.a.abbr} ${s.score.a}`});
   if (s.phase === 'ot') endGame(s, k);
 }
 
@@ -516,7 +569,7 @@ function shootoutStep(s) {
   const p = clamp(.32 * Math.exp(.022 * ((sc.dek + sc.shoot) / 2 - 82) - .027 * (((g?.goalie ?? 75) + (g?.brk ?? 75)) / 2 - 82)), .10, .65);
   const scored = chance(p); so.taken[k]++; if (scored) so[k]++;
   so.attempts ||= []; so.attempts.push({side: k, shooter, scored});
-  if (s.live) push(s, {t: scored ? 'so-goal' : 'so-miss', side: k, x: zoneX(s, k, 89), y: 42.5,
+  if (s.live) push(s, {t: scored ? 'so-goal' : 'so-miss', side: k, pid: shooter, round: so.taken[k], x: zoneX(s, k, 89), y: 42.5,
     text: `${nameOf(s[k], shooter)} ${scored ? 'scores!' : 'is stopped by ' + lastName(s[o], s[o].goalie) + '.'} (${s.a.abbr} ${so.a} – ${s.h.abbr} ${so.h})`});
   so.turn = o;
   const {h, a} = so.taken;
@@ -755,4 +808,275 @@ export function playGame(league, home, away, opts = {}) {
   const s = createGame(league, home, away, opts);
   simToEnd(s);
   return { state: s, result: applyResult(league, s, opts) };
+}
+
+// ---------- Broadcast display helpers ----------
+// Read-only views of a game in progress for the live screen: the situation line, momentum,
+// live win probability, team stats and the callouts over the rink. None of them change the
+// game or draw from its random stream.
+
+// Game seconds played at a period and clock.
+export function elapsedAt(s, period, clock) {
+  if (period <= 3) return (period - 1) * PERIOD + (PERIOD - clock);
+  return 3 * PERIOD + (s.playoff ? (period - 4) * PERIOD + (PERIOD - clock) : REG_OT - clock);
+}
+
+// Skaters each side has by rule, who has pulled the goalie for an extra attacker (not for a
+// delayed penalty) and who is on the power play.
+export function manpowerState(s) {
+  const n = {h: skaterCount(s, 'h'), a: skaterCount(s, 'a')};
+  const pulled = k => !!s[k].pulled && s[k].pulledReason !== 'delayed-penalty';
+  return {phase: s.phase, n, pulled: {h: pulled('h'), a: pulled('a')}, pp: n.h > n.a ? 'h' : n.a > n.h ? 'a' : null};
+}
+
+// Seconds until the shorthanded side gets a skater back (the end of this power play's edge).
+export function ppTimeLeft(s, k) {
+  const times = activePenalties(s, other(k)).map(p => (!p.major && p.left > 120 ? p.left - 120 : p.left));
+  return times.length ? Math.min(...times) : 0;
+}
+
+// One broadcast line for the moment: 'EDM power play · 5-on-4 · 1:12 left', 'Empty net · VAN 6-on-5',
+// '3-on-3 overtime', 'Shootout · round 2'. side: the team the line is about (for its logo).
+export function situationLine(s) {
+  const A = k => s[k].abbr;
+  const mk = (side, lead, parts = []) => ({side, lead, parts, text: [lead, ...parts].join(' · '), puck: puckLine(s)});
+  if (s.phase === 'final') return {...mk(s.winner, 'Final', s.endedIn ? [s.endedIn] : []), puck: null};
+  if (s.phase === 'so') {
+    const t = s.so?.taken || {h: 0, a: 0};
+    return {...mk(null, 'Shootout', [`round ${Math.min(t.h, t.a) + 1}`]), puck: null};
+  }
+  const m = manpowerState(s), n = m.n;
+  const on = k => n[k] + (s[k].pulled ? 1 : 0);
+  const vs = k => `${on(k)}-on-${on(other(k))}`;
+  const ot = s.phase === 'ot';
+  if (s.delayedPenalty) { const k = other(s.delayedPenalty.k); return mk(k, `Delayed penalty on ${A(s.delayedPenalty.k)}`, [`${A(k)} ${vs(k)}`]); }
+  const pulled = ['h', 'a'].find(k => m.pulled[k]);
+  if (pulled) return mk(pulled, 'Empty net', [`${A(pulled)} ${vs(pulled)}`]);
+  if (m.pp) {
+    const left = ppTimeLeft(s, m.pp);
+    return mk(m.pp, `${A(m.pp)} power play`, [vs(m.pp), ...(left > 0 ? [`${clockLabel(left)} left`] : []), ...(ot ? ['overtime'] : [])]);
+  }
+  if (ot && !s.playoff) return mk(null, `${n.h}-on-${n.a} overtime`);
+  if (ot) return mk(null, 'Playoff overtime', [`${n.h}-on-${n.a}`, 'next goal wins']);
+  if (n.h < 5) return mk(null, `${n.h}-on-${n.a}`, ['even strength']);
+  return mk(null, 'Even strength', ['5-on-5']);
+}
+function puckLine(s) {
+  const k = s.poss;
+  if (!k || s.faceoffNext) return s.stoppage?.reason === 'period' ? null : 'Faceoff coming up';
+  const o = other(k);
+  return s.zone === 1 ? `${s[k].abbr} in the ${s[o].abbr} zone` : s.zone === -1 ? `${s[k].abbr} breaking out` : `${s[k].abbr} through neutral ice`;
+}
+
+// How a club is rolling: its share of the last five minutes of shot attempts, with goals and
+// shots on goal counting for more. 50 is even; Hot from 65, Cold at 35 and under.
+export function momentumOf(s, k, windowSec = 300) {
+  const now = s.elapsed || 0, W = {goal: 3, save: 1.5, miss: 1, block: .8};
+  let us = 0, them = 0;
+  const log = s.shotLog || [];
+  for (let i = log.length - 1; i >= 0; i--) {
+    const a = log[i];
+    if (now - elapsedAt(s, a.period, a.clock) > windowSec) break;
+    if (a.side === k) us += W[a.result] ?? 1; else them += W[a.result] ?? 1;
+  }
+  const value = Math.round(100 * (us + 2) / (us + them + 4));
+  return {value, label: value >= 65 ? 'Hot' : value <= 35 ? 'Cold' : 'Even'};
+}
+
+// Live win probability for the home side. Goals come as Poisson streams for the time left:
+// about three a team per sixty minutes, scaled by the clubs' pre-game edge (pre: the home
+// win chance before puck drop), faster on the power play while it lasts. A tie after
+// regulation goes to overtime (and the shootout in the regular season). Simple by design:
+// a bigger lead, less time for the trailing team, a better club and an extra skater each
+// move it the way you'd expect.
+const WP = {base: 3 / 3600, pp1: 6.6 / 3600, pp2: 12 / 3600, sh: .8 / 3600, ot: -Math.log(.45) / REG_OT, max: 16};
+function poisson(lam) {
+  const p = [Math.exp(-lam)];
+  for (let i = 1; i <= WP.max; i++) p.push(p[i - 1] * lam / i);
+  return p;
+}
+function finishProb(diff, lh, la, tie) {
+  const ph = poisson(lh), pa = poisson(la);
+  let win = 0, draw = 0, mass = 0;
+  for (let i = 0; i <= WP.max; i++) for (let j = 0; j <= WP.max; j++) {
+    const p = ph[i] * pa[j], d = diff + i - j;
+    mass += p; if (d > 0) win += p; else if (d === 0) draw += p;
+  }
+  return (win + draw * tie) / mass;
+}
+const soEdge = sh => .5 + (sh - .5) * .3;
+function tieValue(mh, ma, playoff) {
+  const sh = mh / (mh + ma);
+  if (playoff) return sh;
+  const noGoal = Math.exp(-WP.ot * REG_OT);
+  return sh * (1 - noGoal) + noGoal * soEdge(sh);
+}
+function windowRates(mh, ma, pp, base) {
+  if (!pp) return [mh * base, ma * base];
+  const r = pp.adv >= 2 ? WP.pp2 : WP.pp1;
+  return pp.side === 'h' ? [mh * r, ma * WP.sh] : [mh * WP.sh, ma * r];
+}
+function regulationProb(diff, T, mh, ma, pp, w, playoff) {
+  w = pp ? Math.max(0, Math.min(w, T)) : 0;
+  const [wh, wa] = windowRates(mh, ma, pp, WP.base);
+  return finishProb(diff, mh * WP.base * (T - w) + wh * w, ma * WP.base * (T - w) + wa * w, tieValue(mh, ma, playoff));
+}
+const strengthCache = new Map();
+function strengthFor(pre, playoff) {
+  const key = `${Math.round(pre * 1000)}|${playoff ? 1 : 0}`;
+  if (strengthCache.has(key)) return strengthCache.get(key);
+  let lo = -1.5, hi = 1.5;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (regulationProb(0, 3 * PERIOD, Math.exp(mid), Math.exp(-mid), null, 0, playoff) < pre) lo = mid; else hi = mid;
+  }
+  const k = (lo + hi) / 2;
+  if (strengthCache.size > 500) strengthCache.clear();
+  strengthCache.set(key, k);
+  return k;
+}
+export function liveWinProb({diff = 0, secsLeft = 3 * PERIOD, phase = 'reg', playoff = false, pp = null, ppSecs = 0, pre = .5, so = null, winner = null} = {}) {
+  if (winner) return winner === 'h' ? 1 : 0;
+  const k = strengthFor(clamp(pre, .05, .95), playoff), mh = Math.exp(k), ma = Math.exp(-k), sh = mh / (mh + ma);
+  const T = Math.max(0, secsLeft);
+  let p;
+  if (phase === 'so') {
+    p = soEdge(sh) + ((so?.h || 0) - (so?.a || 0)) * .22;
+  } else if (phase === 'ot') {
+    if (diff) return diff > 0 ? 1 : 0;
+    // Sudden death: who scores first during any power play left, then at the overtime rate.
+    const base = playoff ? WP.base : WP.ot / 2, w = pp ? Math.min(Math.max(0, ppSecs), T) : 0;
+    let [rh, ra] = windowRates(mh, ma, pp, base);
+    if (pp && !playoff) { rh = mh * base * (pp.side === 'h' ? 1.8 : .5); ra = ma * base * (pp.side === 'h' ? .5 : 1.8); }
+    const inWindow = rh + ra > 0 ? rh / (rh + ra) * (1 - Math.exp(-(rh + ra) * w)) : 0;
+    const after = playoff ? sh : sh * (1 - Math.exp(-WP.ot * (T - w))) + Math.exp(-WP.ot * (T - w)) * soEdge(sh);
+    p = inWindow + Math.exp(-(rh + ra) * w) * after;
+  } else {
+    p = regulationProb(diff, T, mh, ma, pp, ppSecs, playoff);
+  }
+  return clamp(p, .01, .99);
+}
+function regulationLeft(s) {
+  if (s.phase === 'reg') return (3 - s.period) * PERIOD + s.clock;
+  return s.clock;
+}
+// The home side's chance right now.
+export function winProbNow(s, pre = .5) {
+  if (s.phase === 'final') return s.winner === 'h' ? 1 : 0;
+  const m = manpowerState(s);
+  const pp = m.pp ? {side: m.pp, adv: Math.abs(m.n.h - m.n.a)} : null;
+  return liveWinProb({diff: s.score.h - s.score.a, secsLeft: regulationLeft(s), phase: s.phase, playoff: s.playoff,
+    pp, ppSecs: pp ? ppTimeLeft(s, pp.side) : 0, pre, so: s.so});
+}
+// The line so far, one point every `step` seconds of game time: the score from the goals,
+// the power plays from the shot log, then the live value now.
+export function winProbSeries(s, pre = .5, step = 30) {
+  const total = s.elapsed || 0;
+  const goals = (s.goals || []).map(g => [g.elapsed, g.side]).sort((x, y) => x[0] - y[0]);
+  const pp = new Map();
+  for (const a of s.shotLog || []) {
+    if (!a.strength || a.strength === 'EV') continue;
+    pp.set(Math.floor(elapsedAt(s, a.period, a.clock) / step), a.strength === 'PP' ? a.side : other(a.side));
+  }
+  const out = [];
+  for (let t = 0, gi = 0, d = 0; t < total; t += step) {
+    while (gi < goals.length && goals[gi][0] <= t) { d += goals[gi][1] === 'h' ? 1 : -1; gi++; }
+    const ot = t >= 3 * PERIOD, side = pp.get(Math.floor(t / step));
+    const left = ot ? (s.playoff ? PERIOD - (t - 3 * PERIOD) % PERIOD : Math.max(0, REG_OT - (t - 3 * PERIOD))) : 3 * PERIOD - t;
+    out.push({t, wp: liveWinProb({diff: ot ? 0 : d, secsLeft: left, phase: ot ? 'ot' : 'reg', playoff: s.playoff,
+      pp: side ? {side, adv: 1} : null, ppSecs: side ? 60 : 0, pre})});
+  }
+  out.push({t: total, wp: winProbNow(s, pre)});
+  return out;
+}
+
+// Team totals for the live box score.
+export function liveTeamStats(s, k) {
+  const sum = (side, f) => s[side].dressed.reduce((n, id) => n + (s.box[id]?.[f] || 0), 0);
+  const fow = sum(k, 'fow'), oppFow = sum(other(k), 'fow');
+  let saves = 0, against = 0;
+  for (const id in s.gbox) if (s[k].pl[id]) { saves += s.gbox[id].sa - s.gbox[id].ga; against += s.gbox[id].sa; }
+  return {goals: s.score[k], sog: s.shots[k], attempts: s.attempts?.[k] || 0, xg: s.xg?.[k] || 0,
+    ppg: s.special[k].goals, ppo: s.special[k].opportunities, fow, foPct: fow + oppFow ? fow / (fow + oppFow) : null,
+    hits: sum(k, 'hit'), blocks: sum(k, 'blk'), pim: sum(k, 'pim'), saves, shotsAgainst: against};
+}
+
+// The units on the ice for a play, as the broadcast header shows them:
+// 'EDM L1 + Pair 2 vs VAN PK1 · 5v4' (the attacking club first).
+export function unitsLine(e, s) {
+  if (!e?.on) return null;
+  const k = e.att || (e.side === 'h' || e.side === 'a' ? e.side : 'h'), o = other(k);
+  return `${s[k].abbr} ${e.on[k]} vs ${s[o].abbr} ${e.on[o]} · ${e.str?.[k] ?? '?'}v${e.str?.[o] ?? '?'}`;
+}
+
+// The banner a single play earns over the rink, or null. kind picks the colour; block: the
+// live game holds on it for a moment (a whistle), instead of playing on underneath.
+const CALL_HOLD = {goal: 2600, hat: 2200, pen: 1500, pp: 1600, killed: 1400, fight: 1900, pull: 1500, goalie: 1500, timeout: 1200, 'so-goal': 1300, 'so-miss': 1100, period: 2200, final: 3200};
+const mkCall = (kind, side, title, sub, extra = {}) => ({kind, side, title, sub, hold: CALL_HOLD[kind], block: !['killed', 'pull', 'goalie', 'timeout'].includes(kind), ...extra});
+function goalTag(e) {
+  if (e.empty || / — empty net/.test(e.text || '')) return 'EN';
+  const st = e.strength || (/ — power play/.test(e.text || '') ? 'PP' : / — shorthanded/.test(e.text || '') ? 'SH' : 'EV');
+  return st === 'PP' || st === 'SH' ? st : null;
+}
+export function eventCallout(e, s) {
+  if (!e) return null;
+  const k = e.side, team = k === 'h' || k === 'a' ? s[k] : null, A = side => s[side].abbr;
+  const score = `${A('a')} ${s.score.a}, ${A('h')} ${s.score.h}`;
+  const who = id => (team && id && team.pl[id]?.name) || null;
+  switch (e.t) {
+    case 'goal': {
+      const tag = goalTag(e);
+      const assists = e.assists ? (e.assists.length ? ` (${e.assists.map(id => lastName(team, id)).join(', ')})` : ' (unassisted)') : '';
+      const sub = who(e.scorer) ? `${who(e.scorer)}${assists}` : String(e.text || '').replace(/^GOAL! /, '').split('. ')[0];
+      return mkCall('goal', k, 'GOAL!', sub, {tag, tagText: {PP: 'Power-play goal', SH: 'Shorthanded goal', EN: 'Empty-net goal'}[tag] || null});
+    }
+    case 'pen': {
+      const name = who(e.pid);
+      return mkCall('pen', k, 'PENALTY', name ? `${A(k)} · ${name} · ${e.minutes} min, ${String(e.call || '').toLowerCase()}` : String(e.text || '').replace(/^Penalty: /, ''));
+    }
+    case 'fight': return mkCall('fight', null, 'FIGHT!', String(e.text || '').replace(/ — five each for fighting\.$/, '') + ' · five minutes each');
+    case 'pull': return mkCall('pull', k, 'GOALIE PULLED', `${A(k)} add an extra attacker`);
+    case 'goalie': return mkCall('goalie', k, 'GOALIE CHANGE', String(e.text || '').replace(/\.$/, ''));
+    case 'timeout': return mkCall('timeout', k, 'TIMEOUT', `${A(k)} rest the unit`);
+    case 'so-goal': return mkCall('so-goal', k, 'GOAL!', `${who(e.pid) || A(k)} scores${e.round ? ` · round ${e.round}` : ''}`, {tag: 'SO', tagText: 'Shootout'});
+    case 'so-miss': return mkCall('so-miss', k, 'NO GOAL', `${who(e.pid) || A(k)} is stopped${e.round ? ` · round ${e.round}` : ''}`);
+    case 'period': {
+      if (e.phase === 'so') return mkCall('period', null, 'SHOOTOUT', 'Still tied after overtime');
+      if (e.period <= 1) return null;
+      if (e.phase === 'ot' && e.period === 4) return mkCall('period', null, 'END OF REGULATION', `Tied ${s.score.h}-${s.score.a} · overtime next`);
+      if (e.phase === 'ot') return mkCall('period', null, `END OF ${e.period - 4 > 1 ? `${e.period - 4}OT` : 'OT'}`, `Still tied · ${e.period - 3}OT next`);
+      return mkCall('period', null, `END OF THE ${ordinal(e.period - 1).toUpperCase()}`, `${score} · ${ordinal(e.period)} period next`);
+    }
+    case 'final': {
+      const w = s.winner, l = w ? other(w) : null;
+      return mkCall('final', w, `FINAL${s.endedIn ? `/${s.endedIn}` : ''}`, w ? `${A(w)} win ${s.score[w]}-${s.score[l]}` : score);
+    }
+    default: return null;
+  }
+}
+// Every callout a step earns, in order: its plays, then what changed on the ice (a power play
+// starting or killed off, a goalie pulled). before/after: manpowerState around the step.
+export function liveCallouts(fresh, before, after, s) {
+  const out = [];
+  for (const e of fresh) {
+    const c = eventCallout(e, s);
+    if (!c || c.kind === 'pull') continue; // goalie pulls are read from the ice below, user pulls included
+    out.push(c);
+    if (e.t === 'goal' && e.scorer && s.goals.filter(g => g.scorer === e.scorer).length === 3 && s.goals.at(-1)?.scorer === e.scorer) {
+      out.push(mkCall('hat', e.side, 'HAT TRICK!', `${s[e.side].pl[e.scorer]?.name || ''} · three goals`.trim()));
+    }
+  }
+  if (!before || !after || after.phase === 'final' || after.phase === 'so') return out;
+  for (const k of ['h', 'a']) {
+    if (after.pulled[k] && !before.pulled[k]) out.push(mkCall('pull', k, 'GOALIE PULLED', `${s[k].abbr} go ${after.n[k] + 1}-on-${after.n[other(k)]}`));
+  }
+  const edge = m => Math.abs(m.n.h - m.n.a);
+  if (after.pp && (after.pp !== before.pp || edge(after) > edge(before))) {
+    const left = ppTimeLeft(s, after.pp);
+    out.push(mkCall('pp', after.pp, 'POWER PLAY', `${s[after.pp].abbr} · ${after.n[after.pp]}-on-${after.n[other(after.pp)]}${left > 0 ? ` · ${clockLabel(left)}` : ''}`));
+  } else if (before.pp && after.pp !== before.pp) {
+    const scored = fresh.some(e => e.t === 'goal' && e.side === before.pp), called = fresh.some(e => e.t === 'pen' || e.t === 'fight');
+    if (!scored && !called) out.push(mkCall('killed', other(before.pp), 'PP KILLED', `${s[other(before.pp)].abbr} kill off the ${s[before.pp].abbr} power play`));
+  }
+  return out;
 }
