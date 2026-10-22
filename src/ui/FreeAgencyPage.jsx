@@ -34,7 +34,7 @@ function urgentNeeds(league, team) {
 // last one (who signed, your wins and losses), who decides at the end of today, and the button on.
 const julyDate = (day) => `July ${1 + day}`;
 function FaDayBar() {
-  const { league, commit, toast } = useGame();
+  const { league, commit, toast, go } = useGame();
   if (league.phase !== "freeagency" || !league.fa) return null;
   const day = league.fa.day || 0;
   const s = league.fa.summary?.day === day ? league.fa.summary : null;
@@ -47,6 +47,7 @@ function FaDayBar() {
         {s ? <b>{s.signed ? <>{s.signed} signed{s.top ? <>, led by {s.top.name} ({s.top.abbr})</> : null}.</> : "Nobody signed."} </b> : null}
         Clubs make offers every day. Each player takes the best one on his day: the money, plus the role, the winning or the term he wants. Depth players take the first fair deal; only a big overpay (20% over his ask) signs anyone else on the spot.
         {s && (s.won.length > 0 || s.lost.length > 0) && <span className="ct-faday-res">{s.won.map((w) => <span key={w.pid}><b className="won">✅ {w.name}</b> signed with you ({money(w.aav)} × {w.yrs}). </span>)}{s.lost.map((x) => <span key={x.pid}><b className="lost">❌ {x.name}</b> chose {x.abbr} ({money(x.aav)} × {x.yrs}) over your {money(x.mineAav)} × {x.mineYrs}. </span>)}</span>}
+        {day === 0 && <span className="ct-faday-sub"><span className="link" onClick={() => go("frenzy")}>🔥 Watch July 1 live on the Free Agent Frenzy desk →</span> </span>}
         {day < FA_DAYS && <span className="ct-faday-sub">{due.count ? `${due.count} player${due.count === 1 ? "" : "s"} decide${due.count === 1 ? "s" : ""} at the end of today${due.mine ? `, ${due.mine} with your offer on the table` : ""}.` : "Nobody is due to decide today."}</span>}
       </span>
       {day < FA_DAYS ? <button className="primary gg-faday-btn" onClick={next}>Next day →</button> : <span className="gg-faday-last">Last day: start the season when you are ready.</span>}

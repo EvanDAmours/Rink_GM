@@ -19,6 +19,8 @@ import { projectedRole } from "./teamPlanning.js";
 import { promiseRole } from "./playerCommitments.js";
 import { depthValue, veteranTerm } from "./contractValue.js";
 import { queueMoment } from "./moments.js";
+import { isContending } from "./trade.js";
+import { teamRatings } from "./lines.js";
 import { signingMoment } from "./momentsSeason.js";
 
 // Below this the market doesn't bid: the first fair offer signs him.
@@ -144,21 +146,32 @@ function lineupBar(lg, t) {
   return (g) => (by[g].length < TARGET[g] ? 0 : by[g][LINEUP[g] - 1] ?? 0);
 }
 
+// Where a club is headed this summer: "contend" (one of the best eight in its conference by
+// rating and last season), "rebuild" (bottom five) or "middle".
+export function clubPlan(lg, t) {
+  if (isContending(lg, t)) return "contend";
+  const conf = lg.teams.filter((x) => x.conf === t.conf && !isContending(lg, x));
+  const rate = (x) => teamRatings(lg, x).ovr + (x.rec?.gp ? (x.rec.pts / (2 * x.rec.gp) - 0.5) * 20 : 0);
+  conf.sort((a, b) => rate(a) - rate(b) || a.id - b.id);
+  return conf.slice(0, 5).includes(t) ? "rebuild" : "middle";
+}
+
 // One day of AI offers: each club goes after the free agents who would improve it most (they'd
 // crack its lineup, and by how much) that it can still pay after its open offers, up to `perTeam`
 // new offers a day (one more for a club with lots of room or under the cap floor). Not every club
 // chases every player, and a player only draws so many suitors. Returns the number of offers made.
-export function aiMarketDay(lg, { perTeam = 1 } = {}) {
+export function aiMarketDay(lg, { perTeam = 1, salt = "", only = null } = {}) {
   if (!marketOpen(lg)) return 0;
   const day = marketDay(lg), yr = lg.year, cy = capYear(lg);
   lg.fa.marketYear = yr;
   const pool = lg.freeAgents.map((id) => lg.players[id]).filter((p) => p && p.tid === -1 && p.signed !== false && p.ovr >= MARKET_MIN);
   for (const p of pool) if (p.faSince?.year !== yr) p.faSince = { year: yr, day };
   if (!pool.length) return 0;
-  const r = stream(`${yr}|fa-market|${day}`);
+  const r = stream(`${yr}|fa-market|${day}${salt}`);
   const order = lg.teams.filter((t) => t.id !== lg.userTid).map((t) => [t, r.next()]).sort((a, b) => a[1] - b[1]).map(([t]) => t);
   let made = 0;
   for (const t of order) {
+    if (only && !only(t)) continue;
     if (contractCount(lg, t) >= 50 || reserveCount(lg, t) >= 90) continue;
     let room = capSpace(lg, t) - pendingSpend(lg, t.id);
     if (room < minSalaryForYear(cy)) continue;
@@ -166,7 +179,11 @@ export function aiMarketDay(lg, { perTeam = 1 } = {}) {
     const floorGap = capFloorForYear(cy) - payroll(lg, t);
     const flush = capSpace(lg, t) > capForYear(cy) * 0.12;
     const most = perTeam + (floorGap > 0 || flush ? 1 : 0);
-    const wants = pool.filter((p) => p.tid === -1).map((p) => [p, depthValue(p) - bar(groupOf(p))]).filter(([, g]) => g >= 2).sort((a, b) => b[1] - a[1]);
+    // Contenders chase proven veterans on short deals; rebuilding clubs chase young players and
+    // give them term, and mostly pass on players past 31.
+    const plan = clubPlan(lg, t);
+    const wants = pool.filter((p) => p.tid === -1 && (plan !== "rebuild" || p.age <= 31 || p.ovr >= 86)).map((p) => [p, depthValue(p) - bar(groupOf(p))]).filter(([, g]) => g >= 2)
+      .map(([p, g]) => [p, g + (plan === "contend" ? (p.age >= 28 ? 1.5 : 0) : plan === "rebuild" ? (p.age <= 26 ? 2 : p.age >= 30 ? -2 : 0) : 0)]).sort((a, b) => b[1] - a[1]);
     let placed = 0;
     for (const [p] of wants) {
       if (placed >= most) break;
@@ -177,7 +194,8 @@ export function aiMarketDay(lg, { perTeam = 1 } = {}) {
       if (r.next() < 0.4) continue;
       const win = termWindow(p, "fa");
       const pref = faAsk(lg, p).prefYrs;
-      const yrs = clamp(veteranTerm(p, pref + (r.next() < 0.25 ? 1 : 0) - (r.next() < 0.25 ? 1 : 0)), win.lo, win.hi);
+      const lean = plan === "contend" && p.age >= 29 ? -1 : plan === "rebuild" && p.age <= 27 ? 1 : 0;
+      const yrs = clamp(veteranTerm(p, pref + lean + (r.next() < 0.25 ? 1 : 0) - (r.next() < 0.25 ? 1 : 0)), win.lo, win.hi);
       const aav = r2(clamp(faAsk(lg, p, yrs).aav * (0.9 + r.next() * 0.22) * (floorGap > 0 ? 1.08 : 1), minSalaryForYear(cy), maxSalaryForYear(cy)));
       if (aav > room) continue;
       (open || marketEntry(lg, p)).bids.push({ tid: t.id, aav, yrs, ai: true, day, role: projectedRole(lg, t, p) });
@@ -215,9 +233,16 @@ export function settleMarket(lg, { last = false } = {}) {
   const day = marketDay(lg), out = { signed: [], won: [], lost: [], fell: [] };
   const due = Object.values(lg.negotiations || {}).filter((n) => n.status === "pending" && (last || (n.closes ?? 0) <= day))
     .map((n) => [n, lg.players[n.pid]]).sort((a, b) => (b[1]?.ovr || 0) - (a[1]?.ovr || 0));
-  for (const [n, p] of due) {
-    if (n.status !== "pending") continue;
-    if (!p || p.tid !== -1) { n.status = "unavailable"; if (p) delete p.negotiationPending; continue; }
+  for (const [n, p] of due) decideOne(lg, n, p, { last, out, day });
+  return out;
+}
+
+// One player makes up his mind (end of his day, or his hour on July 1): the best offer he'd take,
+// or he waits (or, on the last day, stays unsigned). Fills `out` like settleMarket.
+export function decideOne(lg, n, p, { last = false, out = { signed: [], won: [], lost: [], fell: [] }, day = marketDay(lg), wait = 1 } = {}) {
+  {
+    if (n.status !== "pending") return out;
+    if (!p || p.tid !== -1) { n.status = "unavailable"; if (p) delete p.negotiationPending; return out; }
     const mine = n.bids.find((x) => x.tid === lg.userTid);
     const mineOut = !!mine && !canSign(lg, mine, p);
     const ranked = acceptableBids(lg, n, p, { last });
@@ -231,15 +256,15 @@ export function settleMarket(lg, { last = false } = {}) {
         out.fell.push({ pid: p.id, name: p.name, aav: mine.aav, yrs: mine.yrs });
         lg.inbox.push({ year: lg.year, day: lg.day, pid: p.id, text: `❌ ${p.name}: your earlier signings left no cap or roster room for your $${mine.aav.toFixed(2)}M × ${mine.yrs} offer. He stays on the market.` });
       }
-      if (n.bids.length && !last) { n.closes = day + 1; continue; }
+      if (n.bids.length && !last) { n.closes = day + wait; return out; }
       closeEntry(n, p);
       if (mineOut && n.status === "lapsed") n.status = "failed";
-      continue;
+      return out;
     }
     const t = lg.teams[b.tid];
     if (b.tid !== lg.userTid && !hasRoomFor(lg, t)) makeRoom(lg, t, p);
     delete p.negotiationPending;
-    if (!signPlayer(lg, t, p, b.aav, b.yrs)) { n.status = "failed"; continue; }
+    if (!signPlayer(lg, t, p, b.aav, b.yrs)) { n.status = "failed"; return out; }
     promiseRole(lg, p, b.tid, b.role || projectedRole(lg, t, p));
     if (b.clause && p.age >= 27) p.clause = { type: b.clause, blocked: [] };
     n.status = "signed"; n.winner = b.tid; n.aav = b.aav; n.yrs = b.yrs; n.rivals = n.bids.filter((x) => x.tid !== b.tid).length;

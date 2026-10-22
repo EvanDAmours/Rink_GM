@@ -9,6 +9,8 @@ import TradePage from "./TradePage.jsx";
 import TradeBlockPage from "./TradeBlockPage.jsx";
 import FreeAgencyPage from "./FreeAgencyPage.jsx";
 import DeadlinePage from "./DeadlinePage.jsx";
+import FrenzyPage from "./FrenzyPage.jsx";
+import { frenzyFor } from "../engine/frenzy.js";
 import StandingsPage from "./StandingsPage.jsx";
 import PlayoffsPage from "./PlayoffsPage.jsx";
 import LeaguePage from "./LeaguePage.jsx";
@@ -81,12 +83,12 @@ export function DevelopmentHub({ sub, onSub }) {
 export function TradeHub({ sub, onSub, seed }) {
   const { league } = useGame();
   const dl = (league.phase === "regular" || league.phase === "playoffs") && (deadlinePending(league) || (league.deadline?.year === league.year && !league.deadline.synthetic));
-  const tabs = [["trade", "Trade Center"], ["block", "Trade Block"], ["fa", league.phase === "resign" ? "Re-sign" : "Free Agency"], ...(dl ? [["deadline", "Deadline Day"]] : [])];
+  const tabs = [["trade", "Trade Center"], ["block", "Trade Block"], ["fa", league.phase === "resign" ? "Re-sign" : "Free Agency"], ...(dl ? [["deadline", "Deadline Day"]] : []), ...(league.phase === "freeagency" && (frenzyFor(league) || (league.fa?.day || 0) === 0) ? [["frenzy", "July 1 Frenzy"]] : [])];
   const offers = userOffers(league).length;
-  const badges = { block: offers ? String(offers) : null, fa: league.phase === "resign" || league.phase === "freeagency" ? "OPEN" : null, deadline: deadlinePending(league) || deadlineActive(league) ? "LIVE" : null };
+  const badges = { block: offers ? String(offers) : null, fa: league.phase === "resign" || league.phase === "freeagency" ? "OPEN" : null, deadline: deadlinePending(league) || deadlineActive(league) ? "LIVE" : null, frenzy: league.phase === "freeagency" && !frenzyFor(league)?.done && (league.fa?.day || 0) === 0 ? "LIVE" : null };
   return (
     <Hub title="Trade & Market" status="Trades, the league-wide block, free agency and the deadline" tabs={tabs} sub={sub} onSub={onSub} badges={badges}>
-      {(cur) => (cur === "block" ? <TradeBlockPage /> : cur === "fa" ? <FreeAgencyPage /> : cur === "deadline" ? <DeadlinePage /> : <TradePage seed={seed} />)}
+      {(cur) => (cur === "block" ? <TradeBlockPage /> : cur === "fa" ? <FreeAgencyPage /> : cur === "deadline" ? <DeadlinePage /> : cur === "frenzy" ? <FrenzyPage /> : <TradePage seed={seed} />)}
     </Hub>
   );
 }
