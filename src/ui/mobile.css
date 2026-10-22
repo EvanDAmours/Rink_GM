@@ -182,3 +182,7 @@ html.rk-mobile-entry input:not([type=checkbox]):not([type=radio]):not([type=rang
 .app.rk-phone-app .an-card .an-x, .app.rk-phone-app .an-x { width: 40px; height: 40px; min-height: 40px; }
 .app.rk-phone-app .main .rk-inbox-x:not(.link):not(.player-link):not(.team-link), .app.rk-phone-app .rk-inbox-x { width: 40px; min-height: 40px; }
 .app.rk-phone-app button.gg-paper-btn { min-height: 40px; }
+
+/* Live games on phones: the rink and score stay pinned under the header while the feed scrolls. */
+.app.rk-phone-app .main:has(.lv-game) { overflow-x: clip; }
+.app.rk-phone-app .lv-game .lv-rinkbox { position: sticky; top: calc(54px + env(safe-area-inset-top, 0px)); z-index: 15; background: var(--gg-bg, #080c14); padding-bottom: 4px; }

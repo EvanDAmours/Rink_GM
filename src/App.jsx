@@ -66,7 +66,7 @@ import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
-import { usePhone, desktopUrl, phoneUrl } from "./ui/mobile.js";
+import { usePhone, desktopUrl, phoneUrl, swipeHandlers } from "./ui/mobile.js";
 import { applyTheme, getTheme } from "./ui/theme.js";
 import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
@@ -724,6 +724,13 @@ export default function App({ resume = false }) {
     { label: "Development", items: [jump("development", "development", "Development", sub.development || "development"), jump("development", "pipeline", "Pipeline", sub.development || "development")] },
     { label: "League", items: [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]].map(([k, l]) => jump("league", k, l, sub.league || "standings")) },
   ];
+  // phones: swipe sideways to the next or previous section of the hub you're in
+  const swipeHub = (dir) => {
+    const g = moreJumps.find((x) => x.items.some((it) => it.on));
+    if (!g) return;
+    const i = g.items.findIndex((it) => it.on), next = g.items[i + dir];
+    if (next) next.onClick();
+  };
   const moreActions = [
     { label: "💾 Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
     { label: injOn ? "🩹 Injuries: on (tap to turn off)" : "🩹 Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
@@ -774,7 +781,7 @@ export default function App({ resume = false }) {
         </header>)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
-          <div className="main"><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className="main" {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (

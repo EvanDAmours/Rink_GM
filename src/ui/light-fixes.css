@@ -1,2 +1,4 @@
 /* Hand-made light-mode touches that the generated light.css cannot infer. */
 html.light .app button.gg-advice:not(.keep-dark *) b { color: #0f172a; }
+html.light .app .rk-mnav button.on { color: #0f172a; }
+html.light .app .rk-mnav button.on .rk-mnav-bar { background: #15803d; }

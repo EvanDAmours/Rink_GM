@@ -71,3 +71,20 @@ export function usePhone() {
   }, []);
   return on;
 }
+
+// Swipe between a hub's sections on phones, as in the football game. A clear sideways swipe
+// (long, mostly horizontal, not starting in something that scrolls sideways or a form control)
+// calls onSwipe(+1) for the next section or onSwipe(-1) for the previous one.
+export function swipeHandlers(onSwipe) {
+  let x0 = null, y0 = 0, t0 = 0;
+  const scrollsX = (el) => { for (let e = el; e && e !== document.body; e = e.parentElement) { if (e.matches?.("input, select, textarea, [data-noswipe]")) return true; if (e.scrollWidth > e.clientWidth + 4 && /auto|scroll/.test(getComputedStyle(e).overflowX)) return true; } return false; };
+  return {
+    onTouchStart: (e) => { const t = e.touches[0]; x0 = e.touches.length === 1 && !scrollsX(e.target) ? t.clientX : null; y0 = t.clientY; t0 = Date.now(); },
+    onTouchEnd: (e) => {
+      if (x0 == null) return;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2 && Date.now() - t0 < 700) onSwipe(dx < 0 ? 1 : -1);
+    },
+  };
+}
