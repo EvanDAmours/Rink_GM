@@ -59,14 +59,14 @@ const HOURS = [9, 10, 11, 12, 13, 14, 15];
 const hourLabel = (h) => `${((h + 11) % 12) + 1} ${h >= 12 ? "PM" : "AM"}`;
 const full = (t) => (t ? `${t.city} ${t.name}` : "?");
 const recOf = (t) => `${t.rec.w}-${t.rec.l}-${t.rec.otl ?? 0}`;
-const TAGS = { trade: ["TRADE", "trade"], rumor: ["RUMOR", "rumor"], offer: ["YOUR PHONE", "phone"], mine: ["YOUR PHONE", "phone"], info: ["NEWS", "news"], done: ["FINAL", "news"] };
+const TAGS = { trade: ["TRADE", "trade"], rumor: ["RUMOR", "rumor"], offer: ["YOUR PHONE", "phone"], mine: ["YOUR PHONE", "phone"], info: ["NEWS", "news"], done: ["FINAL", "news"], sign: ["SIGNED", "trade"] };
 const POSF = ["All positions", "C", "LW", "RW", "LD", "RD", "G"];
 
 // The hour-by-hour track: past hours red, the current one white, the rest dim.
-function HourTrack({ minute }) {
+export function HourTrack({ minute, hours = HOURS }) {
   return (
     <div className="dd-track">
-      {HOURS.map((h) => {
+      {hours.map((h) => {
         const st = minute >= (h + 1) * 60 ? "past" : minute >= h * 60 ? "now" : "";
         return (
           <div key={h} className={`dd-seg ${st}`}>
@@ -91,10 +91,10 @@ function Asset({ league, id, pick }) {
   );
 }
 
-function PhoneOffer({ o, minute }) {
+export function PhoneOffer({ o, minute, end = DEADLINE_END }) {
   const { league, commit, toast } = useGame();
   const t = league.teams[o.tid];
-  const hrs = o.expMin != null ? Math.max(1, Math.ceil((Math.min(o.expMin, DEADLINE_END) - minute) / 60)) : null;
+  const hrs = o.expMin != null && minute != null ? Math.max(1, Math.ceil((Math.min(o.expMin, end) - minute) / 60)) : null;
   const fair = fairLabel(o.fair);
   return (
     <div className="dd-offer">
@@ -118,12 +118,12 @@ function PhoneOffer({ o, minute }) {
   );
 }
 
-function FeedRow({ league, w }) {
-  const [tag, cls] = w.big && w.kind === "trade" ? ["BREAKING", "big"] : TAGS[w.kind] || TAGS.info;
+export function FeedRow({ league, w }) {
+  const [tag, cls] = w.big && (w.kind === "trade" || w.kind === "sign") ? ["BREAKING", "big"] : TAGS[w.kind] || TAGS.info;
   const tid = w.a ?? w.tids?.[0];
   const t = tid != null ? league.teams[tid] : null;
   return (
-    <div className={`dd-feed-row${w.kind === "trade" ? " trade" : ""}${w.big ? " big" : ""}`}>
+    <div className={`dd-feed-row${w.kind === "trade" || w.kind === "sign" ? " trade" : ""}${w.big ? " big" : ""}`}>
       <div className="dd-feed-t">{w.min != null ? fmtClock(w.min).replace(":00", "") : ""}</div>
       {t ? <TeamBadge team={t} size={24} /> : <span style={{ width: 24, flex: "none" }} />}
       <div className="dd-feed-x"><span className={`dd-tag ${cls}`}>{tag}</span>{w.text}</div>

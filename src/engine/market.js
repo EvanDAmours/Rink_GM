@@ -23,7 +23,7 @@ const groupOf = (p) => (isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F");
 const players = (league, ids) => ids.map((id) => league.players[id]).filter(Boolean);
 
 export function fmtClock(min) {
-  const h = Math.floor(min / 60);
+  const h = Math.floor(min / 60) % 24;
   const m = min % 60;
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }
@@ -785,8 +785,8 @@ export function userStance(league) {
 // veterans (most of all your pending free agents if you're out of the race), and selling clubs
 // call a contender with a veteran who fills one of its needs, asking for picks and prospects.
 // Returns the new offer or null.
-export function pitchUser(league, { expMin = null } = {}) {
-  if (league.phase !== "regular" || tradingClosed(league)) return null;
+export function pitchUser(league, { expMin = null, offseason = false } = {}) {
+  if ((league.phase !== "regular" && !(offseason && league.phase === "freeagency")) || tradingClosed(league)) return null;
   const user = league.teams[league.userTid];
   const live = userOffers(league);
   if (live.length >= 4) return null;

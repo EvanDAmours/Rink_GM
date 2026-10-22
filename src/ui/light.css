@@ -531,6 +531,9 @@ button.star:hover { color: #b45309; }
 .dd-filters select { background: #f4f6fa; color: #1e293b; border: 1px solid #cbd2dc; }
 .dd-bovr { color: #15803d; }
 .dd-mini i { background: #0f172a22; }
+.ff-hero { background: linear-gradient(135deg, #ffffff 0%, #12263f 60%, #1f3b2a 100%); }
+.ff-stats > div { background: #f4f6fa; border: 1px solid #d3d9e2; }
+.ff-stats span { color: #475569; }
 
 /* src/ui/premium.css */
 body { background: radial-gradient(ellipse at 75% 0,#e7ebf188,transparent 50%),var(--bg); }

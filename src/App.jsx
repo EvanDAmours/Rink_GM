@@ -45,6 +45,8 @@ import { expiringPlayers } from "./engine/offseason.js";
 import { counts } from "./engine/roster.js";
 import { myOffers } from "./engine/negotiations.js";
 import * as L from "./engine/league.js";
+import { startResign as DBG_startResign } from "./engine/offseason.js";
+import { frenzyTick as DBG_frenzyTick } from "./engine/frenzy.js";
 import { PHASES, FA_DAYS, SAVE_KEY } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
 import { capSpace, rosterIssues } from "./engine/roster.js";
@@ -82,7 +84,7 @@ const NAV = [
 const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:"Game updates"},{id:"settings",label:"Settings"}];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], frenzy:["trade","frenzy"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
 // Phones keep the standings, stats, schedule and playoffs on one screen with a chip for each.
 const PHONE_ALIAS = { standings:["season","standings"], stats:["season","stats"], schedule:["season","schedule"], playoffs:["season","playoffs"] };
 
@@ -283,7 +285,7 @@ export default function App({ resume = false }) {
 
   // Test hook for browser checks: open the game with ?debug to reach the live league from the console.
   useEffect(() => {
-    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab, go }; } catch { /* no window */ }
+    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab, go, engine: { ...L, startResign: DBG_startResign, frenzyTick: DBG_frenzyTick } }; } catch { /* no window */ }
   });
 
   const ctx = useMemo(
@@ -529,7 +531,7 @@ export default function App({ resume = false }) {
       setModal(null);
       backup(`the ${league.year + 1} re-sign window`);
       L.goToFreeAgency(league);
-      setTab("dashboard");
+      go("frenzy");
       commit();
     },
     faDay: () => {

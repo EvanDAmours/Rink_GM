@@ -29,6 +29,7 @@ import { applyAllStarGains, seasonMilestones } from "./awards.js";
 import { rolePay, perfFactor, loyalDiscount, veteranTerm, isFranchisePlayer, depthValue as youthEdge, stampPerformance } from "./contractValue.js";
 import { retireChance } from "./retirement.js";
 import { aiMarketDay, aiDepthDay, decidingToday } from "./faMarket.js";
+import { runFrenzy } from "./frenzy.js";
 import { settleRFARights } from "./contractYear.js";
 import { termWindow } from "./contracts.js";
 
@@ -279,7 +280,9 @@ export function simFADay(league) {
   league.fa ||= { day: 0 };
   // A market opened before this version (or a hand-built test league): AI clubs bid first.
   if (league.phase === "freeagency" && league.fa.marketYear !== league.year) aiMarketDay(league, { perTeam: 2 });
+  // July 1 plays out hour by hour first (frenzy.js), whether or not you watched it live.
   const before = [...league.freeAgents];
+  if (league.phase === "freeagency" && (league.fa.day || 0) === 0) runFrenzy(league);
   league.fa.day++;
   const last = league.fa.day >= FA_DAYS;
   const res = settleNegotiations(league, { last }) || {};
