@@ -20,24 +20,130 @@ export function estimatePotential(ovr, age) {
   return clamp(Math.round(ovr + bump + gauss(0, bump * 0.3)), ovr, 99);
 }
 
-// Development traits: how quickly a young player grows into (or past) his ceiling.
+// Development traits: how quickly a young player grows into (or past) his ceiling, and how
+// long he lasts. Generational (Gridiron 1.5) is the once-a-decade tier above Superstar.
 export const DEV_TRAITS = {
-  superstar: { name: "Superstar", desc: "Develops very fast and often blows past his projected ceiling." },
+  generational: { name: "Generational", desc: "A once-in-a-generation talent: grows the fastest, keeps raising his ceiling and ages the slowest." },
+  superstar: { name: "Superstar", desc: "Develops very fast and often blows past his projected ceiling. Stays in his prime longer." },
   star: { name: "Star", desc: "Develops faster than most and tends to beat his projection." },
   normal: { name: "Normal", desc: "Develops on a typical curve." },
   late: { name: "Late bloomer", desc: "Slow as a teenager, then catches up fast in his early twenties." },
 };
-const DEV_GROWTH = { superstar: 0.9, star: 0.45, normal: 0, late: 0 };
-const DEV_POT_DRIFT = { superstar: 0.55, star: 0.25, normal: 0, late: 0.1 };
+// Best first, for sorting and comparing traits.
+export const DEV_RANK = { generational: 4, superstar: 3, star: 2, normal: 1, late: 0 };
+export const DEV_GROWTH = { generational: 1.4, superstar: 0.9, star: 0.45, normal: 0, late: 0 };
+const DEV_POT_DRIFT = { generational: 0.9, superstar: 0.55, star: 0.25, normal: 0, late: 0.1 };
 
-// A player's trait is fixed by who he is (his id), not by the main random stream.
+// Draft projections (Gridiron 1.997): a ceiling of 96 or more is a Generational talent.
+export const GENERATIONAL_POT = 96;
+export const isGenerationalPot = (pot) => Number(pot) >= GENERATIONAL_POT;
+export const potTier = (pot) => (isGenerationalPot(pot) ? "Generational talent" : null);
+
+// A player's trait is fixed by who he is (his id), not by the main random stream. A Generational
+// talent turns up only at the very top of a class (ceilings of 93 and up): about one draft in five.
 export function rollDev(id, pot = 80) {
   const x = stream(`${id}|dev`).next();
-  const lift = clamp((pot - 82) / 100, -0.06, 0.1);
-  if (x < 0.04 + lift * 0.4) return "superstar";
-  if (x < 0.2 + lift) return "star";
-  if (x < 0.38 + lift) return "late";
+  const q = clamp((pot - 92) / 5, 0, 1), gen = 0.35 * q ** 2.3;
+  if (x < gen) return "generational";
+  // The rest follow the ceiling, as real classes do (Gridiron's odds): a 90-ceiling prospect is a
+  // Superstar about 1 time in 50 and a Star about 1 in 5; a 75 about 1 in 500 and 1 in 10 (tightened so
+  // the league's Superstar count holds steady: about one new Superstar per draft class).
+  const y = (x - gen) / (1 - gen);
+  const r = clamp((pot - 65) / 25, 0, 1);
+  const sup = 0.0005 + 0.02 * r ** 4, star = sup + 0.05 + 0.17 * r;
+  if (y < sup) return "superstar";
+  if (y < star) return "star";
+  if (y < star + 0.18) return "late";
   return "normal";
+}
+
+// ---------- Aging (Gridiron 2.80) ----------
+// Goalies peak about three years later than forwards, defensemen about one.
+export const ageShift = (p) => (isGoalie(p.pos) ? 3 : isDefense(p.pos) ? 1 : 0);
+// The great ones last: a Generational talent keeps his prime three years longer and declines at
+// half the usual pace; a Superstar two years longer, at 85%. Both play on longer before retiring.
+export const PRIME_BONUS = { generational: 3, superstar: 2 };
+export const DECLINE_PACE = { generational: 0.5, superstar: 0.85 };
+export const LONGEVITY = { generational: 4, superstar: 2 };
+// The wall: from 33 (34 for defensemen, 36 for goalies) most players lose an extra point or two
+// a year, two or three from two years later. Generational talents and elite goalies (88+) escape
+// it; a Superstar meets a softer one a year later.
+export const WALL_AGE = 33;
+const spared = (p, trait) => trait === "generational" || (isGoalie(p.pos) && (p.ovr || 0) >= 88);
+export const hitsTheWall = (p, trait = p.dev) => !spared(p, trait) && trait !== "superstar";
+// The wall's toll this summer. p.age: the age he plays next season.
+export function wallToll(p, trait = p.dev, r = rand) {
+  const eff = p.age - ageShift(p);
+  if (hitsTheWall(p, trait) && eff >= WALL_AGE) return eff >= WALL_AGE + 2 ? 1 + Math.floor(r() * 3) : 1 + Math.floor(r() * 2);
+  if (trait === "superstar" && !spared(p, trait) && eff >= WALL_AGE + 1) return Math.floor(r() * 2);
+  return 0;
+}
+// The average toll, for projections.
+export const expectedWall = (p, trait = p.dev) => {
+  const eff = p.age - ageShift(p);
+  return hitsTheWall(p, trait) && eff >= WALL_AGE ? (eff >= WALL_AGE + 2 ? 2 : 1.5) : trait === "superstar" && !spared(p, trait) && eff >= WALL_AGE + 1 ? 0.5 : 0;
+};
+// The last age of his prime (the age he can still hold his level), for the card.
+export const primeEnd = (p, trait = p.dev) => 27 + ageShift(p) + (PRIME_BONUS[trait] || 0);
+
+// Mean OVR change from age and trait this summer (p.age: the age he plays next season), before
+// usage, training, the wall and the league anchors. developmentPlan.js reads the same curve.
+export function ageCurve(p) {
+  const trait = p.dev;
+  let age = p.age - ageShift(p);
+  // A longer prime: the decline starts later.
+  if (age >= 26) age = Math.max(26, age - (PRIME_BONUS[trait] || 0));
+  let mean = age <= 19 ? 3 : age <= 21 ? 2.2 : age <= 23 ? 1.4 : age <= 25 ? 0.6 : age <= 27 ? 0 : age <= 29 ? -0.6 : age <= 31 ? -1.3 : age <= 33 ? -2 : -2.6;
+  if (p.age <= 25) {
+    const gap = p.pot - p.ovr;
+    mean += gap > 0 ? Math.min(1.5, gap * 0.12) : gap * 0.3;
+    mean += DEV_GROWTH[trait] || 0;
+    // Late bloomers trade teenage growth for a surge at 22-25.
+    if (trait === "late") mean += age <= 21 ? -0.7 : 0.8;
+  }
+  if (mean < 0 && DECLINE_PACE[trait]) mean *= DECLINE_PACE[trait];
+  // The air is thin at the top: elite ratings are hard to climb further.
+  if (p.ovr >= 88 && mean > 0) mean = Math.max(0, mean - (p.ovr - 86) * 0.3);
+  return mean;
+}
+function ageSpread(p) {
+  const age = p.age - ageShift(p);
+  return age <= 19 ? 2.2 : age <= 21 ? 2 : age <= 23 ? 1.8 : age <= 25 ? 1.5 : age <= 29 ? 1.3 : age <= 31 ? 1.5 : age <= 33 ? 1.7 : 2;
+}
+
+// ---------- Work ethic and breakouts (Gridiron 2.77) ----------
+// His work ethic, as a Combine interview grades it (the interview's own number when you have it).
+const ETHIC_BASE = { generational: 94, superstar: 90, star: 85, normal: 77, late: 73 };
+export function workEthic(p) {
+  const g = p.scout?.intv?.grade;
+  if (g) return g[0] === "A" ? 90 : g[0] === "B" ? 80 : 70;
+  return (ETHIC_BASE[p.dev] ?? 77) + stream(`${p.id}|intv`).gauss(0, 3.5);
+}
+export const highWorkEthic = (p) => workEthic(p) >= 86;
+// Breakout seasons are rare: 3% for a young Star or better (+3), 1.5% for a young Normal developer
+// (+2), and 3% for a hard worker 28 or younger (+1). p.age: the age he plays next season.
+export function breakoutRoll(p, r = rand) {
+  if (p.age > 28) return 0;
+  const d = p.dev;
+  if (p.age <= 25) {
+    const odds = d === "generational" || d === "superstar" || d === "star" ? 0.03 : d === "normal" ? 0.015 : 0;
+    if (odds && r() < odds) return d === "normal" ? 2 : 3;
+  }
+  return highWorkEthic(p) && r() < 0.03 ? 1 : 0;
+}
+
+// Move a player's rating by exactly n OVR through his attributes (honours, milestones, breakouts):
+// attribute noise is pulled back so the overall lands where it should. Returns the change.
+export function growBy(p, n) {
+  const before = p.ovr;
+  const want = clamp(before + n, 40, 99);
+  if (want === before) return 0;
+  progressAttributes(p, want - before);
+  const drift = p.ovr - want;
+  if (Math.abs(drift) >= 1) progressAttributes(p, -drift);
+  if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
+  p.peak = Math.max(p.peak || 0, p.ovr);
+  return p.ovr - before;
 }
 
 export function createPlayer(opts, year) {
@@ -140,32 +246,23 @@ function randIntSeeded(p, a, b) {
   return a + (h % (b - a + 1));
 }
 
-// Yearly development. Returns the OVR change.
+// Yearly development (p.age: the age he plays next season). Returns the OVR change; the wall's
+// toll this summer is left on p.wallToll for the off-season report.
 export function developPlayer(p, bonus = 0) {
   const before = p.ovr;
-  const age = isGoalie(p.pos) ? p.age - 3 : isDefense(p.pos) ? p.age - 1 : p.age;
-  let mean;
-  let sd;
-  if (age <= 19) [mean, sd] = [3, 2.2];
-  else if (age <= 21) [mean, sd] = [2.2, 2];
-  else if (age <= 23) [mean, sd] = [1.4, 1.8];
-  else if (age <= 25) [mean, sd] = [0.6, 1.5];
-  else if (age <= 27) [mean, sd] = [0, 1.3];
-  else if (age <= 29) [mean, sd] = [-0.6, 1.3];
-  else if (age <= 31) [mean, sd] = [-1.3, 1.5];
-  else if (age <= 33) [mean, sd] = [-2.2, 1.7];
-  else [mean, sd] = [-3.2, 2.2];
-  if (p.age <= 25) {
-    const gap = p.pot - p.ovr;
-    mean += gap > 0 ? Math.min(1.5, gap * 0.12) : gap * 0.3;
-    mean += DEV_GROWTH[p.dev] || 0;
-    // Late bloomers trade teenage growth for a surge at 22-25.
-    if (p.dev === "late") mean += age <= 21 ? -0.7 : 0.8;
+  const mean = ageCurve(p) + bonus;
+  let delta = gauss(mean, ageSpread(p));
+  // Past the wall nobody improves, and the toll comes on top.
+  const toll = wallToll(p);
+  if (toll) delta = Math.min(delta, 0) - toll;
+  p.wallToll = toll || undefined;
+  // Ceilings (Gridiron 1.75): a young player at his ceiling only creeps past it now and then.
+  // Superstars and Generational talents outgrow theirs; honours and big seasons (applied after
+  // this) are the other way through.
+  if (p.age <= 25 && delta > 0 && p.dev !== "generational" && p.dev !== "superstar") {
+    const room = Math.max(0, (p.pot || before) - before);
+    if (delta > room) delta = room + (rand() < (p.dev === "star" ? 0.4 : 0.25) ? Math.min(1, delta - room) : 0);
   }
-  // The air is thin at the top: elite ratings are hard to climb further.
-  if (before >= 88 && mean > 0) mean = Math.max(0, mean - (before - 86) * 0.3);
-  mean += bonus;
-  let delta = gauss(mean, sd);
   if (before + delta > 99) delta = 99 - before;
   progressAttributes(p, delta);
   // Attribute noise can drift OVR; pull it back toward the intended change.
@@ -177,11 +274,13 @@ export function developPlayer(p, bonus = 0) {
   return p.ovr - before;
 }
 
+// p.age: the age he would play next season. Generational talents and Superstars retire later.
 export function retirementChance(p) {
   if (p.age >= 45) return 0.95;
+  const age = p.age - (LONGEVITY[p.dev] || 0);
   let c = 0;
-  if (p.age >= 34) c = 0.1 + 0.12 * (p.age - 34);
-  if (p.ovr < 78 && p.age >= 32) c += 0.2;
+  if (age >= 34) c = 0.1 + 0.12 * (age - 34);
+  if (p.ovr < 78 && age >= 32) c += 0.2;
   if (p.tid < 0 && p.age >= 30 && p.ovr < 76) c += 0.35;
   if (p.ovr >= 85) c *= 0.35;
   else if (p.ovr >= 80) c *= 0.65;

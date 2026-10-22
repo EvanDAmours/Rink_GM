@@ -212,12 +212,51 @@ export function applyAllStarGains(league, rec = league.allNHL) {
     if (gain > 0) {
       progressAttributes(p, gain);
       // Attribute noise can drift OVR; pull it back to the intended gain (as development does).
-      const drift = p.ovr - (before + gain);
-      if (Math.abs(drift) >= 1) progressAttributes(p, -drift);
+      for (let g = 0; g < 4; g++) {
+        const drift = p.ovr - (before + gain);
+        if (Math.abs(drift) < 1) break;
+        progressAttributes(p, -drift);
+      }
       if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
       p.peak = Math.max(p.peak || 0, p.ovr);
     }
     out.push({ pid: p.id, name: p.name, tid: p.tid, team, gain: p.ovr - before });
+  }
+  return out;
+}
+
+// ---------- Season milestones and league leaders (Gridiron 1.34 / 2.76) ----------
+// Found at rollover from the regular season just played; development.js turns them into growth.
+// at: the milestone; gap/ratio: how far ahead of the next man a lead must be to be a landslide.
+export const SEASON_MILESTONES = [
+  { key: "g", at: 40, label: "40 goals", of: (p) => !isGoalie(p.pos) },
+  { key: "pts", at: 100, label: "100 points", of: (p) => !isGoalie(p.pos) },
+  { key: "a", at: 60, label: "60 assists", of: (p) => !isGoalie(p.pos) },
+  { key: "pts", at: 60, label: "60 points by a defenseman", of: (p) => isDefense(p.pos) },
+  { key: "w", at: 35, label: "35 wins", of: (p) => isGoalie(p.pos) },
+];
+export const SEASON_LEADERS = [
+  { key: "pts", label: "points", gap: 15, ratio: 1.12, of: (p) => !isGoalie(p.pos) },
+  { key: "g", label: "goals", gap: 8, ratio: 1.15, of: (p) => !isGoalie(p.pos) },
+  { key: "a", label: "assists", gap: 12, ratio: 1.15, of: (p) => !isGoalie(p.pos) },
+  { key: "pts", label: "points by a defenseman", gap: 12, ratio: 1.15, of: (p) => isDefense(p.pos) },
+  { key: "svp", label: "save percentage", gap: 0.007, ratio: 1, of: (p) => isGoalie(p.pos), fmt: (v) => v.toFixed(3).slice(1) },
+];
+export const isLandslide = (l, best, next) => best - next >= l.gap - 1e-9 && best >= next * l.ratio;
+// id -> { hits: [labels], leads: [labels], landslides: [labels] } for everyone who earned something.
+export function seasonMilestones(league) {
+  const all = Object.values(league.players || {}).filter((p) => p && p.tid !== -2 && p.stats?.gp > 0);
+  const teamGp = Math.max(1, ...league.teams.map((t) => t.rec?.gp || 0));
+  const val = (p, k) => (k === "svp" ? (p.stats.gp >= Math.max(20, teamGp * 0.4) && p.stats.sa ? savePct(p.stats) : 0) : p.stats[k] || 0);
+  const out = {};
+  const get = (p) => (out[p.id] ||= { hits: [], leads: [], landslides: [] });
+  for (const m of SEASON_MILESTONES) for (const p of all) if (m.of(p) && val(p, m.key) >= m.at) get(p).hits.push(m.label);
+  for (const l of SEASON_LEADERS) {
+    const ranked = all.filter(l.of).map((p) => [p, val(p, l.key)]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (!ranked.length || (ranked[1] && ranked[1][1] === ranked[0][1])) continue; // a tie leads nobody
+    const [p, v] = ranked[0], next = ranked[1]?.[1] ?? 0, f = l.fmt || ((x) => x);
+    if (isLandslide(l, v, next)) get(p).landslides.push(`led the league in ${l.label} by a landslide (${f(v)}, next best ${f(next)})`);
+    else get(p).leads.push(`led the league in ${l.label} (${f(v)})`);
   }
   return out;
 }

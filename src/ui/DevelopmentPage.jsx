@@ -15,6 +15,32 @@ const tone = (n) => (n >= 1 ? "#22c55e" : n > -0.5 ? "#eab308" : "#ef4444");
 const FILTERS = [["all", "Everyone"], ["young", "Under 25"], ["nhl", "NHL"], ["farm", "Farm"], ["focus", "In the plan"]];
 const SORTS = [["outlook", "Sort: outlook"], ["ovr", "Sort: overall"], ["pot", "Sort: ceiling"], ["age", "Sort: youngest"]];
 
+const TAG = { cornerstone: "★ CORNERSTONE", breakout: "BREAKOUT", trait: "TRAIT UP", milestone: "BIG SEASON", role: "ROLE ↗", wall: "THE WALL" };
+// The off-season report (Gridiron's off-season log): your players' summers first, then the league's
+// cornerstone seasons and breakouts.
+function SummerReport() {
+  const { league, openPlayer } = useGame();
+  const [all, setAll] = useState(false);
+  const rep = league.devReport;
+  if (!rep || rep.year !== league.year || !rep.rows?.length) return null;
+  const mine = rep.rows.filter((r) => r.tid === league.userTid), rest = rep.rows.filter((r) => r.tid !== league.userTid);
+  const shown = [...mine, ...(all ? rest : rest.slice(0, 5))];
+  return (
+    <section className="gg-card gg-dev-report">
+      <div className="gg-k">OFF-SEASON REPORT <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· milestones, league leaders, breakouts and roles from the {league.year - 1}-{String(league.year).slice(2)} season</span></div>
+      {shown.map((r) => { const t = league.teams[r.tid]; return (
+        <div key={r.pid} className="gg-dev-rep-row">
+          <PosBadge pos={r.pos} />
+          <div className="gg-dev-rep-who"><button className="link" onClick={() => openPlayer(r.pid)}>{r.name}</button>{r.tid !== league.userTid && t ? <span className="dim small"> · {t.abbr}</span> : null}<small>{r.notes.join(" · ")}</small></div>
+          {[...new Set(r.kinds)].slice(0, 2).map((k) => <span key={k} className={`gg-dev-rep-tag ${k}`}>{TAG[k]}</span>)}
+          <span className="gg-dev-rep-ovr" style={{ color: r.to > r.from ? "#4ade80" : r.to < r.from ? "#f87171" : "#e2e8f0" }}>{r.from} → {r.to}</span>
+        </div>
+      ); })}
+      {rest.length > 5 && <button className="link small" onClick={() => setAll((v) => !v)}>{all ? "Fewer ▴" : `All ${rest.length} around the league ▾`}</button>}
+    </section>
+  );
+}
+
 // One card per player: where he is, where he can get to, what next summer should bring,
 // and the one decision that matters (his focus, or his farm assignment).
 export default function DevelopmentPage() {
@@ -42,6 +68,7 @@ export default function DevelopmentPage() {
         <div><small>ON THE FARM</small><b>{t.prospects.length}</b></div>
         <div><small>RISING</small><b style={{ color: "#22c55e" }}>{rising}</b></div>
       </div>
+      <SummerReport />
       <ProspectWatch />
       <section className="gg-card gg-dev-plan">
         <div className="gg-k">THE PLAN <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· your staff gives {FOCUS_SLOTS} players individual attention each week; banked work pays out at season rollover</span>

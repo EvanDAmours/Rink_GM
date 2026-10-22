@@ -1,8 +1,10 @@
-import {stream,clamp} from "./rng.js";
+import {stream,clamp,hashStr} from "./rng.js";
 import {isGoalie,isDefense} from "./constants.js";
 import {defaultArchetype,computeOvr} from "./ratings.js";
 import {syncLines,autoLines} from "./lines.js";
 import {callUp,sendDown,canSendDown,capSpace,counts,logTx} from "./roster.js";
+import {verifiedRating} from "./verifiedData.js";
+import {rollDev,DEV_RANK,primeEnd,growBy} from "./players.js";
 
 export function createAssistant(key,role) {
   const r=stream(key);return {id:key,role,name:`${r.pick(["Pat","Chris","Alex","Daniel","Johan","Mikko"])} ${r.pick(["Mercer","Wilson","Larsson","Roy","Campbell","Lehtinen"])}`,development:r.int(62,92),specialTeams:r.int(62,92),goaltending:r.int(62,92)};
@@ -10,6 +12,190 @@ export function createAssistant(key,role) {
 export function ensureDevelopment(lg) {
   lg.assistantMarket ||= ["assistant","goalie"].flatMap(role=>Array.from({length:4},(_,i)=>createAssistant(`${lg.year}|${role}|${i}`,role)));
   for(const t of lg.teams){t.staff ||= {assistant:createAssistant(`${t.id}|assistant|initial`,"assistant"),goalie:createAssistant(`${t.id}|goalie|initial`,"goalie")};t.lineExperience ||= {};}
+  // Real players get their deliberate development traits once (new leagues and older saves).
+  if((lg.devTraitsVersion || 0)<1){assignRealDevTraits(lg);lg.devTraitsVersion=1;}
+}
+
+// ---------- Real players' development traits (Gridiron 1.5) ----------
+// Every real player's trait is set on purpose, from his age, his rating, his EA abilities and where he
+// was drafted, instead of a coin flip. The once-a-decade talents are Generational by name.
+export const GENERATIONAL_NAMES = new Set(["Connor McDavid", "Nathan MacKinnon", "Sidney Crosby", "Alex Ovechkin", "Cale Makar", "Macklin Celebrini", "Connor Bedard", "Matvei Michkov", "Matthew Schaefer"]);
+// Real draft slots (year, overall) for the players whose pedigree matters most: the top picks of
+// recent drafts and the stars who went late.
+export const DRAFT_SLOTS = {
+  "Alex Ovechkin": [2004, 1], "Evgeni Malkin": [2004, 2], "Sidney Crosby": [2005, 1], "Steven Stamkos": [2008, 1], "Drew Doughty": [2008, 2],
+  "John Tavares": [2009, 1], "Victor Hedman": [2009, 2], "Taylor Hall": [2010, 1], "Tyler Seguin": [2010, 2], "Ryan Nugent-Hopkins": [2011, 1],
+  "Gabriel Landeskog": [2011, 2], "Jonathan Huberdeau": [2011, 3], "Mark Scheifele": [2011, 7], "Nikita Kucherov": [2011, 58], "Andrei Vasilevskiy": [2012, 19],
+  "Connor Hellebuyck": [2012, 130], "Nathan MacKinnon": [2013, 1], "Aleksander Barkov": [2013, 2], "Seth Jones": [2013, 4], "Jake Guentzel": [2013, 77],
+  "Aaron Ekblad": [2014, 1], "Sam Reinhart": [2014, 2], "Leon Draisaitl": [2014, 3], "William Nylander": [2014, 8], "David Pastrnak": [2014, 25],
+  "Brayden Point": [2014, 79], "Igor Shesterkin": [2014, 118], "Connor McDavid": [2015, 1], "Jack Eichel": [2015, 2], "Mitch Marner": [2015, 4],
+  "Zach Werenski": [2015, 8], "Mikko Rantanen": [2015, 10], "Kyle Connor": [2015, 17], "Sebastian Aho": [2015, 35], "Kirill Kaprizov": [2015, 135],
+  "Auston Matthews": [2016, 1], "Matthew Tkachuk": [2016, 6], "Adam Fox": [2016, 66], "Nico Hischier": [2017, 1], "Miro Heiskanen": [2017, 3],
+  "Cale Makar": [2017, 4], "Elias Pettersson": [2017, 5], "Martin Necas": [2017, 12], "Nick Suzuki": [2017, 13], "Jason Robertson": [2017, 39],
+  "Rasmus Dahlin": [2018, 1], "Andrei Svechnikov": [2018, 2], "Brady Tkachuk": [2018, 4], "Quinn Hughes": [2018, 7], "Evan Bouchard": [2018, 10],
+  "Jack Hughes": [2019, 1], "Kaapo Kakko": [2019, 2], "Moritz Seider": [2019, 6], "Matt Boldy": [2019, 12], "Cole Caufield": [2019, 15],
+  "Alexis Lafreniere": [2020, 1], "Quinton Byfield": [2020, 2], "Tim Stutzle": [2020, 3], "Lucas Raymond": [2020, 4], "Jake Sanderson": [2020, 5],
+  "Owen Power": [2021, 1], "Matty Beniers": [2021, 2], "Mason McTavish": [2021, 3], "Luke Hughes": [2021, 4], "Wyatt Johnston": [2021, 23], "Matthew Knies": [2021, 57],
+  "Juraj Slafkovsky": [2022, 1], "Logan Cooley": [2022, 3], "Shane Wright": [2022, 4], "Lane Hutson": [2022, 62],
+  "Connor Bedard": [2023, 1], "Leo Carlsson": [2023, 2], "Adam Fantilli": [2023, 3], "Will Smith": [2023, 4], "Matvei Michkov": [2023, 7], "Ryan Leonard": [2023, 8],
+  "Macklin Celebrini": [2024, 1], "Artyom Levshunov": [2024, 2], "Beckett Sennecke": [2024, 3], "Ivan Demidov": [2024, 5], "Berkly Catton": [2024, 8], "Zeev Buium": [2024, 12],
+  "Matthew Schaefer": [2025, 1], "Michael Misa": [2025, 2], "Anton Frondell": [2025, 3], "Porter Martone": [2025, 6], "James Hagens": [2025, 7],
+};
+const isReal = (p) => p && (p.src === "ea27" || p.src === "est") && p.tid !== -2;
+// How good he is for his age, plus his EA abilities and his draft pedigree, on the OVR scale.
+export function devScore(p, { abilities = p.ratingData?.abilities, slot = DRAFT_SLOTS[p.name]?.[1] } = {}) {
+  const youth = p.age <= 25 ? (25 - p.age) * 1.4 : 0;
+  const ab = Math.min(3, Array.isArray(abilities) ? abilities.length : 0) * 0.6;
+  const ped = !slot ? 0 : slot === 1 ? 1.5 : slot <= 3 ? 1 : slot <= 10 ? 0.5 : slot >= 60 ? -0.5 : 0;
+  return p.ovr + youth + ab + ped;
+}
+// His deliberate trait. Superstars are the elite for their age (or 95+ veterans, who keep their prime
+// longer); Stars the very good; a young player drafted late who is already an NHLer is a late bloomer.
+export function realDevTrait(p, info = {}) {
+  if (GENERATIONAL_NAMES.has(p.name)) return "generational";
+  const abilities = info.abilities ?? p.ratingData?.abilities ?? verifiedRating(p)?.abilities;
+  const slot = info.slot ?? DRAFT_SLOTS[p.name]?.[1];
+  const s = devScore(p, { abilities, slot });
+  if (p.age <= 22 && s >= 102.5) return "generational";
+  if ((p.age <= 27 && s >= 95) || p.ovr >= 95) return "superstar";
+  if ((p.age <= 27 && s >= 88.5) || p.ovr >= 90) return "star";
+  if (p.age <= 24 && slot >= 50) return "late";
+  // Everyone else keeps his own (id-fixed) roll, without the top tiers a deliberate table decides.
+  const d = rollDev(p.id, p.pot);
+  return DEV_RANK[d] >= DEV_RANK.superstar ? (p.age <= 25 ? "star" : "normal") : d === "star" && p.age > 25 ? "normal" : d;
+}
+export function assignRealDevTraits(lg) {
+  let n = 0;
+  for (const p of Object.values(lg.players || {})) {
+    if (!isReal(p)) continue;
+    const d = realDevTrait(p);
+    if (p.dev !== d) { p.dev = d; n++; }
+    // A Generational talent's ceiling is the Generational tier; a young Superstar's is above him.
+    if (p.age <= 25 && d === "generational") p.pot = Math.max(p.pot || 0, Math.min(99, Math.max(96, p.ovr + 4)));
+    else if (p.age <= 25 && d === "superstar") p.pot = Math.max(p.pot || 0, Math.min(99, p.ovr + 2));
+  }
+  return n;
+}
+
+// ---------- Season form (Gridiron 1.61) ----------
+// Each player's form for a season: most play to their rating, give or take a point; now and then
+// one has a career year (or a slump). Fixed per player and season, so a hot year stays hot.
+export function seasonForm(id, year) {
+  const h = (k) => { let x = hashStr(`${id}|${year}|${k}`); x ^= x >>> 16; x = Math.imul(x, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return ((x >>> 0) + 1) / 4294967297; };
+  const z = Math.sqrt(-2 * Math.log(h("a"))) * Math.cos(2 * Math.PI * h("b"));
+  return clamp(Math.round(z * 1.5), -4, 4);
+}
+export const FORM_SHOWN = 3;
+// "career year" / "slump" once the season has shown it (ten games in), else null.
+export function formLabel(p, year) {
+  if (!p || (p.stats?.gp || 0) < 10) return null;
+  const f = seasonForm(p.id, year);
+  return f >= FORM_SHOWN ? { kind: "hot", text: "Career year", f } : f <= -FORM_SHOWN ? { kind: "cold", text: "Slump", f } : null;
+}
+
+// ---------- Role-shaped development (Gridiron 3.27) ----------
+// Every regular-season game records where a skater played: his line or pair and his special-teams
+// units. At rollover the role he mostly filled tilts his growth: its skills come along faster and the
+// ones it never asks of him slower (his overall stays where development put it). Young players adapt most.
+export function recordRoles(league, s) {
+  for (const k of ["h", "a"]) {
+    const L = s[k]?.lines;
+    if (!L) continue;
+    const at = (rows, id) => (rows || []).findIndex((row) => row?.includes(id));
+    for (const id of s[k].dressed || []) {
+      const p = league.players[id], b = s.box?.[id];
+      if (!p || isGoalie(p.pos) || !(b?.toi > 0)) continue;
+      if (p.roles?.y !== league.year) p.roles = { y: league.year, gp: 0, F: [0, 0, 0, 0], D: [0, 0, 0], pp: 0, pk: 0 };
+      const r = p.roles;
+      r.gp++;
+      const f = at(L.F, id), d = at(L.D, id);
+      if (f >= 0) r.F[f]++;
+      else if (d >= 0) r.D[d]++;
+      if (at(L.PP, id) >= 0) r.pp++;
+      if (at(L.PK, id) >= 0) r.pk++;
+    }
+  }
+}
+export const ROLE_NAME = { top6: "Top-six forward", checking: "Checking-line forward", netfront: "Net-front forward", toppair: "Top-pair defenseman", shutdown: "Shutdown defenseman", pp: "Power play", pk: "Penalty kill" };
+export const ROLE_SKILLS = {
+  top6: { oaw: 0.25, wac: 0.2, pas: 0.15, puc: 0.15, dek: 0.1, hey: 0.1 },
+  netfront: { str: 0.25, hey: 0.25, bal: 0.15, wpw: 0.15, puc: 0.1 },
+  checking: { daw: 0.25, stk: 0.2, bch: 0.15, str: 0.1, end: 0.1, fof: 0.1 },
+  toppair: { daw: 0.2, pas: 0.2, stk: 0.15, poi: 0.15, oaw: 0.1, puc: 0.1 },
+  shutdown: { daw: 0.25, blk: 0.2, stk: 0.15, bch: 0.15, str: 0.15 },
+  pp: { pas: 0.25, oaw: 0.25, hey: 0.15, wac: 0.15, spw: 0.1 },
+  pk: { daw: 0.3, stk: 0.25, blk: 0.2, dsc: 0.1 },
+};
+// What he played this season: { role, share (0-1, how settled he was in it), pp, pk } or null.
+export function seasonRole(p, year) {
+  const r = p?.roles;
+  if (!r || (year != null && r.y !== year) || !r.gp || isGoalie(p.pos)) return null;
+  const full = Math.min(1, r.gp / 60);
+  let role, n;
+  if (isDefense(p.pos)) { n = Math.max(r.D[0], r.D[1] + r.D[2]); role = r.D[0] >= r.D[1] + r.D[2] ? "toppair" : "shutdown"; }
+  else { const top = r.F[0] + r.F[1], low = r.F[2] + r.F[3]; n = Math.max(top, low); role = top >= low ? (p.type === "PWF" ? "netfront" : "top6") : "checking"; }
+  return { role, share: full * (n / r.gp), pp: full * (r.pp / r.gp), pk: full * (r.pk / r.gp), gp: r.gp };
+}
+// The off-season tilt. Mutates his attributes (keeping his OVR); returns the role he grew into, or null.
+export function roleGrowth(p, year, age = p.age) {
+  const r = seasonRole(p, year);
+  if (!r) return null;
+  const adapt = age <= 25 ? 1 : age <= 29 ? 0.7 : 0.35;
+  const nudge = {};
+  const add = (w, s) => { for (const [k, v] of Object.entries(w)) nudge[k] = (nudge[k] || 0) + adapt * s * v * 6; };
+  add(ROLE_SKILLS[r.role], r.share);
+  if (r.pp >= 0.5) add(ROLE_SKILLS.pp, r.pp * 0.6);
+  if (r.pk >= 0.5) add(ROLE_SKILLS.pk, r.pk * 0.6);
+  // The skills the role never asks of him come along a little slower.
+  const opposite = r.role === "checking" || r.role === "shutdown" ? ROLE_SKILLS.top6 : ROLE_SKILLS[isDefense(p.pos) ? "shutdown" : "checking"];
+  for (const k of Object.keys(opposite)) if (!nudge[k]) nudge[k] = -adapt * r.share * 0.6;
+  const before = p.ovr;
+  for (const [k, v] of Object.entries(nudge)) if (Number.isFinite(p.attrs[k])) p.attrs[k] = clamp(p.attrs[k] + Math.round(v), 20, 99);
+  // Keep his overall: the change is in the shape of his game, not its level.
+  const ovrOf = () => clamp(computeOvr(p.attrs, p.type) + (p.ovrOffset || 0), 40, 99);
+  const fix = Object.keys(p.attrs).filter((k) => !nudge[k] || nudge[k] < 0.5);
+  for (let g = 0, cur = ovrOf(); cur !== before && g < 60; g++, cur = ovrOf()) {
+    const k = fix[g % Math.max(1, fix.length)] || "oaw";
+    p.attrs[k] = clamp(p.attrs[k] + (cur < before ? 1 : -1), 20, 99);
+  }
+  p.ovr = ovrOf();
+  if (r.share >= 0.5) { p.grewAs = { role: r.role, age, year: year + 1 }; return r.role; }
+  return null;
+}
+
+// ---------- Big seasons (Gridiron 1.34 and 2.76) ----------
+// Season milestones and league leaders (found in awards.js seasonMilestones) pay off at rollover:
+// each milestone is worth +1 OVR (two at most); leading the league is a development-trait step for a
+// player 26 or under (+1 OVR otherwise); leading it by a landslide makes a cornerstone: +3 OVR, a
+// higher ceiling and a better trait up to 29 (a Superstar or older player gets another point instead).
+const NEXT_TRAIT = { late: "star", normal: "star", star: "superstar" };
+export function awardGrowth(p, award, age = p.age) {
+  if (!award) return null;
+  let ovr = Math.min(2, award.hits.length), boost = 0, pot = 0, dev = null;
+  const notes = [...award.hits];
+  if (award.landslides.length) {
+    notes.push(...award.landslides, ...award.leads);
+    boost = 3; pot = 4;
+    if (age <= 29 && NEXT_TRAIT[p.dev]) dev = NEXT_TRAIT[p.dev]; else boost += 1;
+  } else if (award.leads.length) {
+    notes.push(...award.leads);
+    // A league lead lifts a young player as far as Star; Superstar takes a landslide.
+    if (age <= 26 && NEXT_TRAIT[p.dev] && NEXT_TRAIT[p.dev] !== "superstar") dev = NEXT_TRAIT[p.dev]; else ovr += 1;
+  }
+  return notes.length ? { ovr, boost, pot, dev, notes } : null;
+}
+// Apply a season's reward. startOvr: his rating before this summer's development. A player past his
+// prime has his decline slowed, not reversed (a cornerstone season still counts in full).
+export function applyAwardGrowth(p, g, startOvr = p.ovr) {
+  const was = { ovr: p.ovr, dev: p.dev };
+  // The last points come hard: nothing for a milestone at 93+, one point at most from 90.
+  let ovr = p.ovr >= 93 ? 0 : p.ovr >= 90 ? Math.min(1, g.ovr) : g.ovr;
+  if (p.age - 1 > primeEnd(p)) ovr = Math.min(ovr, Math.max(0, startOvr - p.ovr));
+  if (ovr) growBy(p, ovr);
+  if (g.boost) growBy(p, g.boost);
+  if (g.pot) p.pot = Math.min(99, Math.max(p.pot || 0, p.ovr) + g.pot);
+  if (g.dev && DEV_RANK[g.dev] > DEV_RANK[p.dev]) p.dev = g.dev;
+  return { gain: p.ovr - was.ovr, devFrom: p.dev !== was.dev ? was.dev : null };
 }
 export function hireAssistant(lg,id) {
   if(!["preseason","resign","freeagency"].includes(lg.phase))return {ok:false,msg:"Staff hiring opens in preseason and the offseason."};

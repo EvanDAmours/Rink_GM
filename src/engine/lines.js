@@ -2,6 +2,7 @@ import {recruitmentOrder} from './teamPlanning.js';
 // Line combinations: 4 forward lines (LW-C-RW), 3 defense pairs (LD-RD),
 // a goalie tandem, and two power-play and penalty-kill units.
 import { composites } from "./ratings.js";
+import { slotRating } from "./roles.js";
 import { isForward, isDefense, isGoalie } from "./constants.js";
 
 export function rosterPlayers(league, team) {
@@ -73,18 +74,25 @@ export function specialTeams(avail) {
 const groupOf = (pos) => (isGoalie(pos) ? "G" : isDefense(pos) ? "D" : "F");
 const normName = (s) => String(s).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
 const COLUMN = { LW: 0, C: 1, RW: 2, LD: 0, RD: 1 };
-const slotPred = (grp, j) => (grp === "G" ? (x) => isGoalie(x.pos) : grp === "D" ? (x) => isDefense(x.pos) : j === 1 ? (x) => x.pos === "C" : (x) => isForward(x.pos));
 const clone = (L) => ({ F: L.F.map((l) => [...l]), D: L.D.map((l) => [...l]), G: [...L.G], PP: (L.PP || [[], []]).map((u) => [...u]), PK: (L.PK || [[], []]).map((u) => [...u]) });
 
-// Best healthy player not yet used, matching the slot (C slot prefers centres).
+// Best healthy player not yet used for the slot: the best slot rating (roles.js slotFit), so a
+// hurt centre is covered by the best centre or a winger who can take draws, a right D by a
+// right-shot D first. Goalies only cover goalies.
+const SLOT_OF = { F: ["LW", "C", "RW"], D: ["LD", "RD"] };
 function spareFinder(league, team, used) {
   const avail = healthy(league, team).sort(byOvr);
-  const take = (pred) => {
-    const p = avail.find((x) => !used.has(x.id) && pred(x));
-    if (p) used.add(p.id);
-    return p ? p.id : null;
+  return (grp, j) => {
+    const slot = grp === "G" ? "G" : SLOT_OF[grp]?.[j] || "C";
+    let best = null, bestV = -Infinity;
+    for (const x of avail) {
+      if (used.has(x.id) || isGoalie(x.pos) !== (grp === "G")) continue;
+      const v = slotRating(x, slot);
+      if (v > bestV) { bestV = v; best = x; }
+    }
+    if (best) used.add(best.id);
+    return best ? best.id : null;
   };
-  return (grp, j) => take(slotPred(grp, j)) || (grp === "G" ? null : take(slotPred(grp, 0)) || take((x) => !isGoalie(x.pos)));
 }
 
 // Set lines from player names (the real NHL combinations in the roster file).

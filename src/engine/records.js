@@ -1,5 +1,6 @@
 import { isGoalie } from "./constants.js";
 import { HISTORICAL_RECORDS as H } from "../data/historicalRecords.js";
+import { checkFranchiseLeaders } from "./legacy.js";
 
 export const RECORD_LABELS={g:"Goals",a:"Assists",pts:"Points",w:"Goalie wins",so:"Shutouts",sa:"Goalie saves"};
 export function ensureRecords(league) {
@@ -62,7 +63,13 @@ function takeMark(league,scope,d,top,abbr,{year=league.year,day=league.day,quiet
   if(scope==="nhl")m.nhl[d.key]=entry;else (m.franchise[abbr] ||= {})[d.key]=entry;
   if(same)return null;
   const e={scope,key:d.key,label:d.label,club:scope==="franchise"?abbr:null,...entry};
-  if(!quiet){m.history.push(e);if(m.history.length>200)m.history.splice(0,m.history.length-200);}
+  if(!quiet){m.history.push(e);if(m.history.length>200)m.history.splice(0,m.history.length-200);
+    // A record falls: league news, and the inbox when it's one of yours (Gridiron 1.64 / 2.10).
+    const where=scope==="nhl"?"NHL":`${t?.city || ""} ${t?.name || abbr}`.trim();
+    const text=`Record: ${entry.name} sets the ${where} single-season ${d.label.toLowerCase()} mark (${top.v})${cur?`, passing ${poss(cur.name)} ${cur.value}${cur.season?` (${cur.season})`:""}`:""}.`;
+    (league.news ||= []).unshift({year,day,type:"record",pid:entry.pid,text});
+    if(t?.id===league.userTid)(league.inbox ||= []).push({year,day,text:`📕 ${text}`,open:{tab:"league",sub:"records",label:"Open the Record Book"}});
+  }
   return e;
 }
 // After each regular-season day: who now holds the NHL's and each club's single-season marks.
@@ -161,6 +168,7 @@ export function careerMilestones(p){
 // the inbox when he is yours. league.milestones remembers what has been reported.
 export function checkMilestones(league){
   league.milestones ||= {};
+  try{checkFranchiseLeaders(league);}catch(e){console.error("Franchise leaders failed",e);}
   const user=league.userTid;let posted=0;
   for(const t of league.teams)for(const id of t.roster){
     const p=league.players[id];if(!p || !p.stats?.gp)continue;

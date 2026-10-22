@@ -232,11 +232,6 @@ export default function TradePage({ seed }) {
         </div>
       </div>
 
-      <div className="gg-sides">
-        <Side title="YOU SEND" color="#22c55e" team={user} viewer={ai} mine sel={give} setSel={setGive} selPicks={givePicks} setSelPicks={setGivePicks} />
-        <Side title="YOU GET" color="#3b82f6" team={ai} viewer={ai} sel={get} setSel={setGet} selPicks={getPicks} setSelPicks={setGetPicks} />
-      </div>
-
       <div className={`gg-dealbar${empty ? " empty" : ""}`}>
         <div className="gg-deal-cols">
           <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#86efac" }}>YOU SEND · {giveTV}</span><div className="gg-deal-chips">{give.map((id) => chip(id, "give"))}{givePicks.map((id) => pickChip(id, "give"))}{!give.length && !givePicks.length && <span className="dim small">Tap players or picks on the left</span>}</div></div>
@@ -256,6 +251,11 @@ export default function TradePage({ seed }) {
           <button className="ghost" onClick={reset} disabled={empty}>Clear</button>
           <span className="dim small">Values (TV) are on the OVR scale from {ai.abbr}'s point of view.</span>
         </div>
+      </div>
+
+      <div className="gg-sides">
+        <Side title="YOU SEND" color="#22c55e" team={user} viewer={ai} mine sel={give} setSel={setGive} selPicks={givePicks} setSelPicks={setGivePicks} />
+        <Side title="YOU GET" color="#3b82f6" team={ai} viewer={ai} sel={get} setSel={setGet} selPicks={getPicks} setSelPicks={setGetPicks} />
       </div>
 
       {league.tradeHistory?.length > 0 && (

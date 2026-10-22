@@ -1,0 +1,267 @@
+{
+  "date": "2026-10-21T14:54:40.774Z",
+  "seed": 4242,
+  "seasons": [
+    {
+      "year": 2026,
+      "artRoss": {
+        "name": "Jack Eichel",
+        "ovr": 94,
+        "g": 43,
+        "a": 74,
+        "pts": 117
+      },
+      "second": 116,
+      "tenth": 95,
+      "rocket": {
+        "name": "Tage Thompson",
+        "g": 66
+      },
+      "gpg": 3.06,
+      "svPct": 0.896,
+      "hundredPoint": 8,
+      "fortyGoal": 17,
+      "after": {
+        "n90": 57,
+        "n95": 10,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 17,
+        "star": 157,
+        "level": 82.71
+      },
+      "cornerstones": [
+        "Tage Thompson"
+      ],
+      "breakouts": 13
+    },
+    {
+      "year": 2027,
+      "artRoss": {
+        "name": "Connor McDavid",
+        "ovr": 99,
+        "g": 64,
+        "a": 55,
+        "pts": 119
+      },
+      "second": 118,
+      "tenth": 95,
+      "rocket": {
+        "name": "Martin Necas",
+        "g": 70
+      },
+      "gpg": 3.11,
+      "svPct": 0.895,
+      "hundredPoint": 6,
+      "fortyGoal": 19,
+      "after": {
+        "n90": 59,
+        "n95": 8,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 19,
+        "star": 197,
+        "level": 82.64
+      },
+      "cornerstones": [],
+      "breakouts": 8
+    },
+    {
+      "year": 2028,
+      "artRoss": {
+        "name": "Connor Bedard",
+        "ovr": 95,
+        "g": 56,
+        "a": 66,
+        "pts": 122
+      },
+      "second": 113,
+      "tenth": 96,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 56
+      },
+      "gpg": 3.08,
+      "svPct": 0.896,
+      "hundredPoint": 6,
+      "fortyGoal": 24,
+      "after": {
+        "n90": 49,
+        "n95": 7,
+        "n99": 0,
+        "generational": 7,
+        "superstar": 22,
+        "star": 214,
+        "level": 82.78
+      },
+      "cornerstones": [
+        "Jackson LaCombe",
+        "Joel Hofer"
+      ],
+      "breakouts": 17
+    },
+    {
+      "year": 2029,
+      "artRoss": {
+        "name": "Connor Bedard",
+        "ovr": 96,
+        "g": 51,
+        "a": 65,
+        "pts": 116
+      },
+      "second": 109,
+      "tenth": 93,
+      "rocket": {
+        "name": "Matt Boldy",
+        "g": 54
+      },
+      "gpg": 3.07,
+      "svPct": 0.896,
+      "hundredPoint": 5,
+      "fortyGoal": 19,
+      "after": {
+        "n90": 52,
+        "n95": 12,
+        "n99": 0,
+        "generational": 7,
+        "superstar": 27,
+        "star": 238,
+        "level": 83.18
+      },
+      "cornerstones": [
+        "Logan Thompson"
+      ],
+      "breakouts": 17
+    },
+    {
+      "year": 2030,
+      "artRoss": {
+        "name": "Macklin Celebrini",
+        "ovr": 98,
+        "g": 58,
+        "a": 64,
+        "pts": 122
+      },
+      "second": 113,
+      "tenth": 91,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 61
+      },
+      "gpg": 2.98,
+      "svPct": 0.897,
+      "hundredPoint": 5,
+      "fortyGoal": 18,
+      "after": {
+        "n90": 49,
+        "n95": 13,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 28,
+        "star": 265,
+        "level": 83.46
+      },
+      "cornerstones": [
+        "Jackson LaCombe"
+      ],
+      "breakouts": 15
+    },
+    {
+      "year": 2031,
+      "artRoss": {
+        "name": "Beckett Sennecke",
+        "ovr": 96,
+        "g": 68,
+        "a": 54,
+        "pts": 122
+      },
+      "second": 116,
+      "tenth": 85,
+      "rocket": {
+        "name": "Beckett Sennecke",
+        "g": 68
+      },
+      "gpg": 3.07,
+      "svPct": 0.895,
+      "hundredPoint": 3,
+      "fortyGoal": 8,
+      "after": {
+        "n90": 62,
+        "n95": 9,
+        "n99": 0,
+        "generational": 7,
+        "superstar": 26,
+        "star": 274,
+        "level": 83.83
+      },
+      "cornerstones": [
+        "Joel Hofer"
+      ],
+      "breakouts": 25
+    },
+    {
+      "year": 2032,
+      "artRoss": {
+        "name": "Connor Bedard",
+        "ovr": 97,
+        "g": 66,
+        "a": 68,
+        "pts": 134
+      },
+      "second": 114,
+      "tenth": 89,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 66
+      },
+      "gpg": 3.13,
+      "svPct": 0.894,
+      "hundredPoint": 3,
+      "fortyGoal": 17,
+      "after": {
+        "n90": 32,
+        "n95": 6,
+        "n99": 0,
+        "generational": 7,
+        "superstar": 27,
+        "star": 288,
+        "level": 83.62
+      },
+      "cornerstones": [
+        "Connor Bedard"
+      ],
+      "breakouts": 32
+    },
+    {
+      "year": 2033,
+      "artRoss": {
+        "name": "Alexis Joseph",
+        "ovr": 89,
+        "g": 41,
+        "a": 59,
+        "pts": 100
+      },
+      "second": 97,
+      "tenth": 86,
+      "rocket": {
+        "name": "Connor Bedard",
+        "g": 50
+      },
+      "gpg": 2.97,
+      "svPct": 0.896,
+      "hundredPoint": 1,
+      "fortyGoal": 10,
+      "after": {
+        "n90": 52,
+        "n95": 7,
+        "n99": 1,
+        "generational": 7,
+        "superstar": 25,
+        "star": 292,
+        "level": 83.95
+      },
+      "cornerstones": [],
+      "breakouts": 22
+    }
+  ]
+}

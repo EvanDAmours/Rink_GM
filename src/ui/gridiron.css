@@ -162,7 +162,6 @@ body, .app { font-family: var(--gg-f); background: var(--gg-bg) !important; colo
 .gg-game > :last-child { margin-left: auto; }
 .gg-game.clickable { cursor: pointer; } .gg-game.clickable:hover { background: #1e293b44; }
 .gg-news { border-bottom: 1px solid #1e293b55; padding: 3px 0; color: #cbd5e1; }
-.gg-series { display: flex; align-items: center; gap: 10px; font-size: 20px; flex-wrap: wrap; }
 .gg-quick { display: flex; gap: 6px; flex-wrap: wrap; }
 .app .gg-quick button { font-size: 13px; padding: 6px 16px; }
 .gg-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; background: #1e3a5f; color: #7dd3fc; }
@@ -517,14 +516,19 @@ body, .app { font-size: 14px; }
 /* connectors: bracket lines from each column toward the centre */
 .gg-bcol.left .gg-series::after, .gg-bcol.right .gg-series::after { content: ""; position: absolute; top: 50%; width: 10px; height: 1px; background: #475569; }
 .gg-bcol.left .gg-series::after { right: -11px; } .gg-bcol.right .gg-series::after { left: -11px; }
-.gg-stm { display: flex; align-items: center; gap: 6px; padding: 3px 2px; }
+.gg-stm { display: flex; align-items: center; gap: 6px; padding: 3px 2px; height: 40px; box-sizing: border-box; min-width: 0; }
+.gg-stm .teambadge { flex-shrink: 0; }
 .gg-stm.lost { opacity: .45; } .gg-stm.won .gg-stm-name b { color: #86efac; }
-.gg-stm-name { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; } .gg-stm-name b { font-size: 14px; } .gg-stm-name small { font-size: 10px; color: var(--gg-mt); white-space: nowrap; }
+.gg-stm-name { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; overflow: hidden; } .gg-stm-name b { font-size: 14px; } .gg-stm-name small { font-size: 10px; color: var(--gg-mt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gg-stm-slot { color: var(--gg-mt); font-size: 12px; font-weight: 700; padding: 6px 4px; }
 .gg-stm-w { margin-left: auto; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; padding: 0 4px; }
-.gg-sgames { display: flex; flex-wrap: wrap; gap: 3px; border-top: 1px solid #1e293b; padding-top: 4px; margin-top: 2px; }
-.gg-sgame { font-size: 10px; color: var(--gg-sl); background: #1e293b; border-radius: 3px; padding: 1px 5px; cursor: pointer; } .gg-sgame b { color: var(--gg-tx); }
-@media (max-width: 900px) { .gg-bracket { grid-template-columns: repeat(7, 150px); } }
+.gg-series { display: flex; flex-direction: column; min-width: 0; }
+/* Fixed game strip: 2 columns x 4 rows holds a full seven-game series, so cards never change height as games are played. */
+.gg-sgames { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, 16px); gap: 3px; height: 73px; box-sizing: content-box; border-top: 1px solid #1e293b; padding-top: 4px; margin-top: 2px; }
+.gg-sgame { display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 10px; line-height: 16px; color: var(--gg-sl); background: #1e293b; border-radius: 3px; padding: 0 4px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.gg-sgame i { font-style: normal; color: var(--gg-mt); } .gg-sgame b { color: var(--gg-tx); } .gg-sgame small { font-size: 9px; color: var(--gg-mt); margin-left: auto; }
+.gg-sgame:hover { background: #334155; }
+@media (max-width: 900px) { .gg-bracket { grid-template-columns: repeat(7, 150px); } .gg-sgame i { display: none; } }
 
 /* ---------- Free agency ---------- */
 .gg-fa-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
@@ -639,7 +643,7 @@ body, .app { font-size: 14px; }
 .gg-tname { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; } .gg-tname b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .gg-tname small { font-size: 11px; color: var(--gg-mt); }
 .gg-tovr { font-size: 16px; font-weight: 900; text-align: right; }
 .gg-tv { font-size: 11px; color: var(--gg-mt); text-align: right; } .gg-tv::before { content: "TV "; font-size: 9px; } .gg-tv.gold { color: #fde68a; }
-.gg-dealbar { position: sticky; bottom: 8px; z-index: 20; background: #0b1220f2; border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; box-shadow: 0 -10px 30px #00000088; backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 8px; }
+.gg-dealbar { position: sticky; top: 46px; margin-bottom: 10px; z-index: 20; background: #0b1220f2; border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; box-shadow: 0 10px 30px #00000088; backdrop-filter: blur(6px); display: flex; flex-direction: column; gap: 8px; }
 .gg-dealbar.empty { opacity: .85; }
 .gg-deal-cols { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; }
 .gg-deal-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

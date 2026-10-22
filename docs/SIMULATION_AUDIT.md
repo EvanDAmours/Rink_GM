@@ -90,6 +90,71 @@ The power-only scenario won 54.7% of games (95% Wilson interval 51.6–57.8%) wi
 
 The follow-up's late tied-game conservative decisions narrowed the overtime gap: 23.14% and 22.69% versus 24.85%, compared with the prior build's 20.54% and 18.90%. Shootouts rose to 8.48% and 8.18% versus 9.07%. This is improvement, not evidence of an exact NHL predictive fit.
 
+## Star scoring and season form (21 October 2026, Gridiron 1.88 / 1.61)
+
+Evan approved retuning the audited engine so stars take a star's share. Three changes in `sim.js`, none of them touching team-level conversion constants:
+
+- **Star pull.** An elite puck handler (control composite above `EDGE.eliteAt` = 91.5) draws faceoff receptions, breakout and entry touches convexly: ×e for every `EDGE.elite` = 2.4 points above the bar, capped at 6 points. The bar follows the league's own top end (the ten best control composites against the 2026 league's 94.5, fixed per season and stored on the league as `eliteBar`), so the share stays a share as ratings drift.
+- **Sharing.** No player takes more than `EDGE.touchCap` = 58% of a unit's touches (a lone star on a weak club still has to share), and an elite carrier shoots less and sets up more (`EDGE.distribute`, at most −.12 on the shoot decision). The pull is computed from his own rating, before form.
+- **Season form.** `seasonForm(pid, year)` (development.js) is a fixed per-player, per-season roll (round(z × 1.5), −4..+4): most players are within a point, about 5% have a career year (+3 or more) and 5% a slump. It is added to the composites and to finishing. It averages zero, so league totals hold. Exhibitions play without it.
+
+Games also record each skater's line/pair and special-teams units for role-shaped development (no effect on the game).
+
+Before → after (same seeds):
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Equal 82-rated clubs: win rate (1,500 games) | 52.1% | 50.0% |
+| Equal clubs: goalie save % | .9077 | .9042 |
+| 86 vs 80 skaters: win rate | 82.4% | 82.9% |
+| Elite first-line scorer: goals/60 vs linemates | 1.65 vs 0.78 | 2.02 vs 0.71 |
+| Fixed-roster season: goals/team/game | 3.083 | 3.165 |
+| Fixed-roster season: save % | .8979 | .8959 |
+| Separate-seed season: goals/team/game, save % | — | 3.103, .8979 |
+| Art Ross (mean of 8 fixed-roster seasons) | 112 | 117-124 (4-seed means; single seasons 108-153) |
+| Rocket Richard (mean of 8) | 54 | ~56 |
+| 100-point players / 40-goal scorers per season | 3.8 / 15.8 | ~5 / ~17 |
+
+Every simulation-audit and season-audit check passes (`simulation-audit-results.json`, `season-audit-results.json`, `season-audit-holdout-results.json`).
+
+**Multi-season check** (`NHL_CAREER_SEASONS=8 NHL_CAREER_OUT=docs/career-leaders-audit.json npm run test:season`): eight full franchise seasons with development, drafts and free agency. Each row now also records league goals/team/game, skater-shot save % (empty nets included) and the Superstar/Star trait counts.
+
+| Season | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Art Ross (before) | 141 | 153 | 135 | 161 | 172 | 149 | 152 | 163 |
+| Art Ross (after) | 118 | 119 | 132 | 124 | 137 | 121 | 146 | 118 |
+| Rocket Richard (before) | 63 | 73 | 71 | 87 | 84 | 84 | 89 | 79 |
+| Rocket Richard (after) | 57 | 57 | 69 | 59 | 68 | 68 | 78 | 66 |
+| Goals/team/game (after) | 3.03 | 3.09 | 2.95 | 2.93 | 2.87 | 2.77 | 2.79 | 2.66 |
+| Save % (after) | .897 | .895 | .898 | .897 | .898 | .901 | .901 | .902 |
+| Superstars (before) | 27 | 38 | 44 | 51 | 61 | 63 | 69 | 78 |
+| Superstars (after) | 16 | 20 | 23 | 23 | 25 | 26 | 27 | 26 |
+
+Changes: finishing above 83 counts at 15% per point (`FINISH` in sim.js), so elite snipers convert less of their volume; PP1 takes 80 of every 115 power-play seconds (`PP_SPLIT`, shared with the Lines screen); draft Superstar odds fall to about one per class (`rollDev`), and leading the league lifts a young player only as far as Star (Superstar still comes from a landslide).
+
+**League talent anchor (drift fix).** Diagnosis (seed 4242): the skater pool thins over a franchise while goalies and the top end hold. The mean wrist-shot finishing of the 384 best skaters fell 85.4 to 80.4 across eight seasons and the 600-deep pool 80.8 to 75.8, but the 32 best goalies stayed at 87-88.5 and the top-10 finishers stayed at 94-96. Scoring sank because every depth shooter was worse against the same goalies, and the leaders ran away because the star-to-depth gap widened (top-10 vs top-384 shooting composite 8.6 to 15.6 points), which gave lone stars 450-500 shots. `talentAnchor` in `sim.js` now measures both pools once per season against the 2026 league (stored on the league like the elite bar, so a loaded save plays the same). The skater depth gap (times `ANCHOR.gain`) lifts skater composites, and 60% of it goes to finishing and accuracy. The lift is full for depth players and tapers to nothing at the top end (`anchorLift`, `ANCHOR.top` 95), so the star gap returns to its 2026 width. The goalie gap is applied to save skill. A league at its 2026 level plays unchanged.
+
+| Season (anchor) | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Goals/team/game | 3.06 | 3.11 | 3.08 | 3.07 | 2.98 | 3.07 | 3.13 | 2.97 |
+| Save % (empty nets incl.) | .896 | .895 | .896 | .896 | .897 | .895 | .894 | .896 |
+| Art Ross | 117 | 119 | 122 | 116 | 122 | 122 | 134 | 100 |
+| Rocket Richard | 66 | 70 | 56 | 54 | 61 | 68 | 66 | 50 |
+| Superstars | 17 | 19 | 22 | 27 | 28 | 26 | 27 | 25 |
+
+Single-season audits after the change: goals/team/game 3.03 (holdout 3.00), goalie save % .900 (.902). Every simulation, positional and season check passes. The career save % column counts empty-net goals, so it reads about .004 under goalie save %. Leaders still vary season to season with seed noise (50-70 goals).
+
+## Development depth (Gridiron 1.5, 1.34, 1.75, 2.76, 2.77, 2.80, 3.27)
+
+`players.js` and `development.js` own the yearly change at rollover (`offseason.js` startNewSeason):
+
+- Traits: Generational (growth +1.4/yr, ceiling drift +0.9, 3-year longer prime, half-pace decline, retires ~4 years later), Superstar (+2-year prime, 85% decline, ~2 years later). Real players' traits are deliberate (age, rating, EA abilities, a table of real draft slots; McDavid, MacKinnon, Crosby, Ovechkin, Makar, Celebrini, Bedard, Michkov and Schaefer are Generational by name). Generated drafts get a Generational talent about one year in five, only with a ceiling of 93+. `potTier`/`isGenerationalPot` mark a ceiling of 96+ as the Generational tier for draft boards.
+- The wall: from effective age 33 (forwards 33, defensemen 34, goalies 36) a non-Superstar loses 1-2 extra OVR a year (1-3 from two years later) and stops growing; Superstars a softer 0-1 a year later; Generational talents and 88+ goalies are spared.
+- Ceilings: under 26, growth past the ceiling is cut to a 25% chance of +1 (40% for Stars); Superstars and Generational talents outgrow theirs.
+- Breakouts: 3% (+3) for a Star or better 25 or under, 1.5% (+2) for a Normal developer, 3% (+1) for a hard worker (Combine work-ethic grade A) 28 or under.
+- Big seasons: 40 goals, 100 points, 60 assists, 60 points by a defenseman, 35 wins (+1 each, two at most, nothing at 93+); leading the league in points, goals, assists, defenseman points or save percentage is a trait step for a player 26 or under (+1 otherwise); a landslide lead is a cornerstone season (+3, ceiling +4, a trait step up to 29). Past his prime a player's rewards only slow his decline.
+- Roles: the role a skater played (top six, net-front, checking, top pair, shutdown, power play, penalty kill) tilts his attributes toward its skills at rollover, keeping his OVR.
+
 ## Practical limits
 
 This is a management model, not puck physics or a fitted NHL tracking-data predictor. Shot conversion coefficients are calibrated assumptions. Its `xg` accumulator is conditional on attempts reaching the net and is not directly comparable to public all-attempt expected-goal models. Rink coordinates represent chance geometry, not a continuous collision simulation. Shift/recovery, matching and systems remain abstractions.

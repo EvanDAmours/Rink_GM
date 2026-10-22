@@ -283,7 +283,7 @@ export default function App({ resume = false }) {
 
   // Test hook for browser checks: open the game with ?debug to reach the live league from the console.
   useEffect(() => {
-    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab }; } catch { /* no window */ }
+    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab, go }; } catch { /* no window */ }
   });
 
   const ctx = useMemo(

@@ -244,4 +244,51 @@ export const PATCH_NOTES = [
     "At the Combine your scouts hand you a visit list around your picks, with three free private workouts.",
     "Your picks' ceilings are your scouts' estimate (~) until their first two seasons reveal a steal or a miss.",
   ] },
+  { v: "1.44", date: "2026-10-21", title: "Stars and Generations", notes: [
+    "Generational talents arrive: a rare tier above Superstar for players like McDavid, MacKinnon, Celebrini and Bedard. They grow fastest, peak longer and retire later. Every player's development trait now shows on his card at every age.",
+    "The wall: from about 33 most players decline faster (defencemen a year later, goalies later still). Superstars hold on longer.",
+    "Big seasons pay off: 40 goals, 100 points, 60 assists or 35 wins earns a summer boost, and a landslide league lead makes a cornerstone season.",
+    "Rare breakout summers, role-shaped growth and a new off-season report on the Development page.",
+    "Stars take a star's share: Art Ross winners now land around 120-140 points. Players can have a career year or a slump.",
+  ] },
+  { v: "1.45", date: "2026-10-21", title: "Roles and Situations", notes: [
+    "Every line and pair has a role, and each player shows how well he fits his spot.",
+    "Players are rated for the spot they play. Pick a player to see his rating at every spot, with a Move to button.",
+    "Team identity, line matching and ice-time sliders for each line and pair.",
+    "New Situations: 3-on-3 overtime trio, extra attacker, lead protection, defensive-zone faceoffs and shootout order.",
+    "Stats has a Team / Lines view with each unit against the league average, plus power-play and penalty-kill ranks.",
+    "On phones, the roster is a list of cards with a sort menu.",
+  ] },
+  { v: "1.46", date: "2026-10-21", title: "Scoring Races", notes: [
+    "Scoring races are more realistic: the scoring leader lands around 120-140 points, and goal leaders come in much closer to real NHL totals.",
+    "Superstar prospects are rarer, about one per draft class, so the league no longer fills up with Superstars over a long franchise.",
+    "Your top power-play unit now gets about 70% of each man advantage, and the Lines screen shows the new split.",
+    "Generational talents sort to the top of the scouting board, are valued properly in AI drafts and interviews, and keep their badge at any age.",
+    "The player card has a new Role Fit section showing each skater's three best roles.",
+  ] },
+  { v: "1.47", date: "2026-10-21", title: "A League That Holds Up", notes: [
+    "League scoring now stays around 3 goals a game for the whole franchise, instead of slowly drying up after year five.",
+    "As veterans retire and rookies arrive, the game measures the league's overall talent each season so ordinary skaters aren't overmatched by goalies.",
+    "Superstars no longer run away from a thinning league: goal leaders mostly land in the 50s and 60s instead of spiking toward 80.",
+    "A league at today's talent level plays exactly as before, and saved games simulate the same way after loading.",
+  ] },
+  { v: "1.48", date: "2026-10-21", title: "A Tidy Bracket", notes: [
+    "The playoff bracket stays lined up as games are played: every series card keeps the same size, scores no longer spill onto extra lines, and each round sits level with the series that feed it, on desktop and phone.",
+  ] },
+  { v: "1.49", date: "2026-10-21", title: "Deal on Top", notes: [
+    "The Trade Center's deal summary (what you send, what you get, and the Execute button) now sits at the top and stays in view as you scroll, so you can always see what's in the trade.",
+  ] },
+  { v: "1.50", date: "2026-10-21", title: "New Lines Screen", notes: [
+    "New Lines screen: one strength at a time (Even Strength, Power Play, Penalty Kill, Situations), with each line laid out as a row of player cards like in the hockey video games.",
+    "Moving players is easy: drag a card onto another to swap them, or tap one player and then another. Tap a spot to see who fits there best and what each would rate.",
+    "Each line shows its rating, role, chemistry and ice time in one small tag. Off-position players are flagged with a small \"!\".",
+    "Identity, line matching, ice time, roles, goalie rest and the game plan now sit in a Line settings drawer. The rink view is gone.",
+  ] },
+  { v: "1.51", date: "2026-10-21", title: "Raise the Banners", notes: [
+    "The Legacy Hall now has rafters: your club's Stanley Cup banners in team colours, its retired numbers and its Hockey Hall of Famers. When a star retires from your club, you can raise his number.",
+    "The Hall of Fame counts real careers: Crosby, Ovechkin and McDavid bring what they did before 2026, and players are inducted three years after retiring.",
+    "Player cards show Cups, trophies and All-Star selections, plus where a player ranks in club history (\"#2 in Oilers points\"). Retired players keep their full card.",
+    "Real all-time club leaders for 21 clubs in the Record Book. Passing a club legend or breaking a record makes the news, and Record Watch tracks who's on pace.",
+    "New GM Legacy page ranks you against great NHL general managers, every five seasons a documentary tells your era's story, and League History and Transactions are easier to browse.",
+  ] },
 ];

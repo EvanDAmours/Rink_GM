@@ -1,17 +1,17 @@
 {
-  "date": "2026-10-18T19:09:58.366Z",
+  "date": "2026-10-21T14:49:39.118Z",
   "auditSeed": 91000,
   "games": 1344,
-  "goalsPerTeamGame": 3.1956845238095237,
-  "shotsPerTeamGame": 28.344866071428573,
-  "goalieShotsPerTeamGame": 28.167782738095237,
-  "savePct": 0.8942217526249753,
-  "powerPlayPct": 0.19253122295041425,
-  "powerPlaysPerTeamGame": 3.0085565476190474,
-  "overtimeRate": 0.21428571428571427,
-  "shootoutRate": 0.078125,
-  "emptyNetGoalsPerGame": 0.3541666666666667,
-  "assistsPerGoal": 1.6372421921037124,
+  "goalsPerTeamGame": 3.027157738095238,
+  "shotsPerTeamGame": 28.359747023809526,
+  "goalieShotsPerTeamGame": 28.192708333333332,
+  "savePct": 0.9002269668258953,
+  "powerPlayPct": 0.18078055964653902,
+  "powerPlaysPerTeamGame": 3.03125,
+  "overtimeRate": 0.24776785714285715,
+  "shootoutRate": 0.09449404761904762,
+  "emptyNetGoalsPerGame": 0.33407738095238093,
+  "assistsPerGoal": 1.655430711610487,
   "benchmark": {
     "goalsPerTeamGame": 3.0815548780487805,
     "shotsPerTeamGame": 27.8323125,
@@ -22,24 +22,24 @@
     "shootoutRate": 0.09070121951219512
   },
   "decisions": {
-    "breakout": 136499,
-    "controlled-entry": 77380,
-    "shoot": 123035,
-    "cycle": 99255,
-    "icing": 5946,
-    "dump-and-chase": 35224,
-    "rush-pass": 30837,
-    "rebound": 6737,
-    "offside": 4036,
-    "goalie-pull": 931,
-    "timeout": 552,
-    "penalty": 8464,
-    "clear": 18570,
-    "goalie-change": 191
+    "breakout": 136446,
+    "controlled-entry": 77498,
+    "shoot": 123456,
+    "cycle": 99543,
+    "icing": 5881,
+    "offside": 4033,
+    "dump-and-chase": 34614,
+    "rush-pass": 31154,
+    "penalty": 8526,
+    "clear": 18644,
+    "rebound": 6829,
+    "goalie-pull": 932,
+    "timeout": 558,
+    "goalie-change": 150
   },
   "teams": [
     {
-      "abbr": "COL",
+      "abbr": "CAR",
       "ovr": 86,
       "record": {
         "gp": 84,
@@ -47,24 +47,24 @@
         "l": 17,
         "otl": 8,
         "pts": 126,
-        "gf": 330,
-        "ga": 229,
-        "rw": 45,
-        "row": 53,
+        "gf": 333,
+        "ga": 224,
+        "rw": 46,
+        "row": 55,
         "home": {
-          "w": 29,
-          "l": 10,
-          "otl": 3
+          "w": 27,
+          "l": 11,
+          "otl": 4
         },
         "away": {
-          "w": 30,
-          "l": 7,
-          "otl": 5
+          "w": 32,
+          "l": 6,
+          "otl": 4
         },
-        "last10": "WLWWWLOWWO",
+        "last10": "WWWWWWWWWW",
         "streak": [
-          "OT",
-          1
+          "W",
+          10
         ]
       }
     },
@@ -73,87 +73,57 @@
       "ovr": 86,
       "record": {
         "gp": 84,
-        "w": 58,
-        "l": 20,
-        "otl": 6,
-        "pts": 122,
-        "gf": 317,
-        "ga": 184,
-        "rw": 51,
-        "row": 55,
-        "home": {
-          "w": 32,
-          "l": 8,
-          "otl": 2
-        },
-        "away": {
-          "w": 26,
-          "l": 12,
-          "otl": 4
-        },
-        "last10": "LWLLLWWLWL",
-        "streak": [
-          "L",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "CAR",
-      "ovr": 86,
-      "record": {
-        "gp": 84,
-        "w": 55,
-        "l": 20,
+        "w": 57,
+        "l": 18,
         "otl": 9,
-        "pts": 119,
-        "gf": 319,
-        "ga": 234,
-        "rw": 49,
-        "row": 53,
-        "home": {
-          "w": 29,
-          "l": 8,
-          "otl": 5
-        },
-        "away": {
-          "w": 26,
-          "l": 12,
-          "otl": 4
-        },
-        "last10": "LWWWLWLWWW",
-        "streak": [
-          "W",
-          3
-        ]
-      }
-    },
-    {
-      "abbr": "TBL",
-      "ovr": 87,
-      "record": {
-        "gp": 84,
-        "w": 53,
-        "l": 23,
-        "otl": 8,
-        "pts": 114,
-        "gf": 290,
-        "ga": 228,
-        "rw": 42,
-        "row": 48,
+        "pts": 123,
+        "gf": 270,
+        "ga": 179,
+        "rw": 47,
+        "row": 51,
         "home": {
           "w": 30,
           "l": 9,
           "otl": 3
         },
         "away": {
-          "w": 23,
-          "l": 14,
-          "otl": 5
+          "w": 27,
+          "l": 9,
+          "otl": 6
         },
-        "last10": "WWWLWLLLLW",
+        "last10": "LWWWLLOWLO",
         "streak": [
-          "W",
+          "OT",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "MIN",
+      "ovr": 85,
+      "record": {
+        "gp": 84,
+        "w": 58,
+        "l": 23,
+        "otl": 3,
+        "pts": 119,
+        "gf": 268,
+        "ga": 198,
+        "rw": 41,
+        "row": 55,
+        "home": {
+          "w": 31,
+          "l": 9,
+          "otl": 2
+        },
+        "away": {
+          "w": 27,
+          "l": 14,
+          "otl": 1
+        },
+        "last10": "WWWWWWWWWL",
+        "streak": [
+          "L",
           1
         ]
       }
@@ -164,87 +134,27 @@
       "record": {
         "gp": 84,
         "w": 52,
-        "l": 24,
-        "otl": 8,
-        "pts": 112,
-        "gf": 307,
-        "ga": 252,
-        "rw": 43,
-        "row": 47,
-        "home": {
-          "w": 28,
-          "l": 9,
-          "otl": 5
-        },
-        "away": {
-          "w": 24,
-          "l": 15,
-          "otl": 3
-        },
-        "last10": "LWWOOWWWWW",
-        "streak": [
-          "W",
-          5
-        ]
-      }
-    },
-    {
-      "abbr": "STL",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 50,
-        "l": 23,
-        "otl": 11,
-        "pts": 111,
-        "gf": 287,
-        "ga": 248,
-        "rw": 36,
+        "l": 18,
+        "otl": 14,
+        "pts": 118,
+        "gf": 283,
+        "ga": 221,
+        "rw": 41,
         "row": 46,
         "home": {
-          "w": 23,
-          "l": 11,
-          "otl": 8
+          "w": 31,
+          "l": 9,
+          "otl": 2
         },
         "away": {
-          "w": 27,
-          "l": 12,
-          "otl": 3
+          "w": 21,
+          "l": 9,
+          "otl": 12
         },
-        "last10": "WLWWWWLLWL",
+        "last10": "LLWLWWWLOO",
         "streak": [
-          "L",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "VGK",
-      "ovr": 85,
-      "record": {
-        "gp": 84,
-        "w": 49,
-        "l": 24,
-        "otl": 11,
-        "pts": 109,
-        "gf": 319,
-        "ga": 245,
-        "rw": 42,
-        "row": 48,
-        "home": {
-          "w": 26,
-          "l": 11,
-          "otl": 5
-        },
-        "away": {
-          "w": 23,
-          "l": 13,
-          "otl": 6
-        },
-        "last10": "WWWWWWLWWW",
-        "streak": [
-          "W",
-          3
+          "OT",
+          2
         ]
       }
     },
@@ -253,27 +163,87 @@
       "ovr": 85,
       "record": {
         "gp": 84,
-        "w": 45,
-        "l": 26,
-        "otl": 13,
-        "pts": 103,
-        "gf": 294,
-        "ga": 260,
-        "rw": 40,
-        "row": 42,
+        "w": 51,
+        "l": 21,
+        "otl": 12,
+        "pts": 114,
+        "gf": 280,
+        "ga": 228,
+        "rw": 43,
+        "row": 48,
         "home": {
-          "w": 21,
-          "l": 13,
-          "otl": 8
-        },
-        "away": {
           "w": 24,
           "l": 13,
           "otl": 5
         },
-        "last10": "OOLLWOWWWO",
+        "away": {
+          "w": 27,
+          "l": 8,
+          "otl": 7
+        },
+        "last10": "WWWLWLOOWW",
         "streak": [
-          "OT",
+          "W",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "COL",
+      "ovr": 86,
+      "record": {
+        "gp": 84,
+        "w": 52,
+        "l": 24,
+        "otl": 8,
+        "pts": 112,
+        "gf": 300,
+        "ga": 219,
+        "rw": 40,
+        "row": 46,
+        "home": {
+          "w": 25,
+          "l": 12,
+          "otl": 5
+        },
+        "away": {
+          "w": 27,
+          "l": 12,
+          "otl": 3
+        },
+        "last10": "WWWWLLLWOW",
+        "streak": [
+          "W",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "LAK",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 47,
+        "l": 23,
+        "otl": 14,
+        "pts": 108,
+        "gf": 241,
+        "ga": 209,
+        "rw": 39,
+        "row": 43,
+        "home": {
+          "w": 21,
+          "l": 16,
+          "otl": 5
+        },
+        "away": {
+          "w": 26,
+          "l": 7,
+          "otl": 9
+        },
+        "last10": "WWWLOWWLLW",
+        "streak": [
+          "W",
           1
         ]
       }
@@ -284,147 +254,27 @@
       "record": {
         "gp": 84,
         "w": 47,
-        "l": 30,
-        "otl": 7,
-        "pts": 101,
-        "gf": 263,
-        "ga": 241,
-        "rw": 38,
-        "row": 42,
-        "home": {
-          "w": 24,
-          "l": 16,
-          "otl": 2
-        },
-        "away": {
-          "w": 23,
-          "l": 14,
-          "otl": 5
-        },
-        "last10": "WLLWLWWWOW",
-        "streak": [
-          "W",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "WSH",
-      "ovr": 86,
-      "record": {
-        "gp": 84,
-        "w": 46,
-        "l": 30,
-        "otl": 8,
-        "pts": 100,
-        "gf": 279,
-        "ga": 281,
-        "rw": 35,
+        "l": 25,
+        "otl": 12,
+        "pts": 106,
+        "gf": 266,
+        "ga": 232,
+        "rw": 37,
         "row": 43,
         "home": {
-          "w": 25,
-          "l": 15,
-          "otl": 2
+          "w": 23,
+          "l": 12,
+          "otl": 7
         },
         "away": {
-          "w": 21,
-          "l": 15,
-          "otl": 6
-        },
-        "last10": "WLWWWWWOLW",
-        "streak": [
-          "W",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "NYR",
-      "ovr": 85,
-      "record": {
-        "gp": 84,
-        "w": 45,
-        "l": 30,
-        "otl": 9,
-        "pts": 99,
-        "gf": 267,
-        "ga": 237,
-        "rw": 37,
-        "row": 40,
-        "home": {
           "w": 24,
           "l": 13,
           "otl": 5
         },
-        "away": {
-          "w": 21,
-          "l": 17,
-          "otl": 4
-        },
-        "last10": "WOWLLWWLLL",
+        "last10": "OOWLOWLWWL",
         "streak": [
           "L",
-          3
-        ]
-      }
-    },
-    {
-      "abbr": "NYI",
-      "ovr": 85,
-      "record": {
-        "gp": 84,
-        "w": 45,
-        "l": 31,
-        "otl": 8,
-        "pts": 98,
-        "gf": 249,
-        "ga": 241,
-        "rw": 37,
-        "row": 42,
-        "home": {
-          "w": 24,
-          "l": 15,
-          "otl": 3
-        },
-        "away": {
-          "w": 21,
-          "l": 16,
-          "otl": 5
-        },
-        "last10": "WWLWWWLWWW",
-        "streak": [
-          "W",
-          3
-        ]
-      }
-    },
-    {
-      "abbr": "MIN",
-      "ovr": 85,
-      "record": {
-        "gp": 84,
-        "w": 44,
-        "l": 30,
-        "otl": 10,
-        "pts": 98,
-        "gf": 276,
-        "ga": 252,
-        "rw": 36,
-        "row": 42,
-        "home": {
-          "w": 26,
-          "l": 11,
-          "otl": 5
-        },
-        "away": {
-          "w": 18,
-          "l": 19,
-          "otl": 5
-        },
-        "last10": "WWWOWWWLWW",
-        "streak": [
-          "W",
-          2
+          1
         ]
       }
     },
@@ -433,25 +283,85 @@
       "ovr": 84,
       "record": {
         "gp": 84,
-        "w": 45,
-        "l": 33,
-        "otl": 6,
-        "pts": 96,
-        "gf": 281,
-        "ga": 282,
-        "rw": 37,
+        "w": 48,
+        "l": 26,
+        "otl": 10,
+        "pts": 106,
+        "gf": 271,
+        "ga": 248,
+        "rw": 39,
+        "row": 43,
+        "home": {
+          "w": 23,
+          "l": 14,
+          "otl": 5
+        },
+        "away": {
+          "w": 25,
+          "l": 12,
+          "otl": 5
+        },
+        "last10": "OWLOWWWLWW",
+        "streak": [
+          "W",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "STL",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 46,
+        "l": 30,
+        "otl": 8,
+        "pts": 100,
+        "gf": 247,
+        "ga": 222,
+        "rw": 36,
         "row": 43,
         "home": {
           "w": 21,
-          "l": 18,
-          "otl": 3
+          "l": 17,
+          "otl": 4
         },
         "away": {
-          "w": 24,
-          "l": 15,
-          "otl": 3
+          "w": 25,
+          "l": 13,
+          "otl": 4
         },
-        "last10": "WWLLLOWWWL",
+        "last10": "WWLLWLWLWW",
+        "streak": [
+          "W",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "WSH",
+      "ovr": 86,
+      "record": {
+        "gp": 84,
+        "w": 45,
+        "l": 30,
+        "otl": 9,
+        "pts": 99,
+        "gf": 288,
+        "ga": 258,
+        "rw": 33,
+        "row": 43,
+        "home": {
+          "w": 20,
+          "l": 18,
+          "otl": 4
+        },
+        "away": {
+          "w": 25,
+          "l": 12,
+          "otl": 5
+        },
+        "last10": "OWLLWLWWWL",
         "streak": [
           "L",
           1
@@ -463,298 +373,28 @@
       "ovr": 85,
       "record": {
         "gp": 84,
-        "w": 42,
+        "w": 44,
         "l": 31,
-        "otl": 11,
-        "pts": 95,
-        "gf": 269,
-        "ga": 249,
-        "rw": 33,
-        "row": 37,
-        "home": {
-          "w": 22,
-          "l": 14,
-          "otl": 6
-        },
-        "away": {
-          "w": 20,
-          "l": 17,
-          "otl": 5
-        },
-        "last10": "WWWLWWOWLL",
-        "streak": [
-          "L",
-          2
-        ]
-      }
-    },
-    {
-      "abbr": "UTA",
-      "ovr": 84,
-      "record": {
-        "gp": 84,
-        "w": 42,
-        "l": 33,
         "otl": 9,
-        "pts": 93,
-        "gf": 230,
-        "ga": 231,
+        "pts": 97,
+        "gf": 252,
+        "ga": 227,
         "rw": 33,
-        "row": 39,
-        "home": {
-          "w": 23,
-          "l": 14,
-          "otl": 5
-        },
-        "away": {
-          "w": 19,
-          "l": 19,
-          "otl": 4
-        },
-        "last10": "LLWOWWWOWW",
-        "streak": [
-          "W",
-          2
-        ]
-      }
-    },
-    {
-      "abbr": "NJD",
-      "ovr": 84,
-      "record": {
-        "gp": 84,
-        "w": 41,
-        "l": 36,
-        "otl": 7,
-        "pts": 89,
-        "gf": 281,
-        "ga": 281,
-        "rw": 35,
         "row": 40,
         "home": {
-          "w": 19,
-          "l": 21,
-          "otl": 2
-        },
-        "away": {
-          "w": 22,
-          "l": 15,
-          "otl": 5
-        },
-        "last10": "WLWLLWLWLL",
-        "streak": [
-          "L",
-          2
-        ]
-      }
-    },
-    {
-      "abbr": "SEA",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 40,
-        "l": 35,
-        "otl": 9,
-        "pts": 89,
-        "gf": 271,
-        "ga": 312,
-        "rw": 32,
-        "row": 37,
-        "home": {
-          "w": 20,
-          "l": 15,
-          "otl": 7
-        },
-        "away": {
-          "w": 20,
-          "l": 20,
-          "otl": 2
-        },
-        "last10": "LLLWWWLLLW",
-        "streak": [
-          "W",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "OTT",
-      "ovr": 84,
-      "record": {
-        "gp": 84,
-        "w": 37,
-        "l": 33,
-        "otl": 14,
-        "pts": 88,
-        "gf": 251,
-        "ga": 263,
-        "rw": 25,
-        "row": 34,
-        "home": {
-          "w": 23,
+          "w": 24,
           "l": 13,
-          "otl": 6
-        },
-        "away": {
-          "w": 14,
-          "l": 20,
-          "otl": 8
-        },
-        "last10": "LWOWLOLLWW",
-        "streak": [
-          "W",
-          2
-        ]
-      }
-    },
-    {
-      "abbr": "NSH",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 35,
-        "l": 31,
-        "otl": 18,
-        "pts": 88,
-        "gf": 232,
-        "ga": 250,
-        "rw": 28,
-        "row": 30,
-        "home": {
-          "w": 20,
-          "l": 14,
-          "otl": 8
-        },
-        "away": {
-          "w": 15,
-          "l": 17,
-          "otl": 10
-        },
-        "last10": "LOWWLWOWOO",
-        "streak": [
-          "OT",
-          2
-        ]
-      }
-    },
-    {
-      "abbr": "LAK",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 40,
-        "l": 36,
-        "otl": 8,
-        "pts": 88,
-        "gf": 267,
-        "ga": 252,
-        "rw": 32,
-        "row": 40,
-        "home": {
-          "w": 22,
-          "l": 19,
-          "otl": 1
-        },
-        "away": {
-          "w": 18,
-          "l": 17,
-          "otl": 7
-        },
-        "last10": "WOWWWWLWLO",
-        "streak": [
-          "OT",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "PHI",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 39,
-        "l": 36,
-        "otl": 9,
-        "pts": 87,
-        "gf": 283,
-        "ga": 274,
-        "rw": 32,
-        "row": 36,
-        "home": {
-          "w": 23,
-          "l": 15,
-          "otl": 4
-        },
-        "away": {
-          "w": 16,
-          "l": 21,
           "otl": 5
         },
-        "last10": "WOLWWLLLLL",
-        "streak": [
-          "L",
-          5
-        ]
-      }
-    },
-    {
-      "abbr": "CBJ",
-      "ovr": 84,
-      "record": {
-        "gp": 84,
-        "w": 41,
-        "l": 39,
-        "otl": 4,
-        "pts": 86,
-        "gf": 280,
-        "ga": 273,
-        "rw": 34,
-        "row": 40,
-        "home": {
-          "w": 21,
-          "l": 18,
-          "otl": 3
-        },
         "away": {
           "w": 20,
-          "l": 21,
-          "otl": 1
-        },
-        "last10": "LLWLWLLWWL",
-        "streak": [
-          "L",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "CGY",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 37,
-        "l": 37,
-        "otl": 10,
-        "pts": 84,
-        "gf": 231,
-        "ga": 298,
-        "rw": 29,
-        "row": 33,
-        "home": {
-          "w": 21,
-          "l": 17,
+          "l": 18,
           "otl": 4
         },
-        "away": {
-          "w": 16,
-          "l": 20,
-          "otl": 6
-        },
-        "last10": "LLWOLLWLOW",
+        "last10": "LWLOLLWLWW",
         "streak": [
           "W",
-          1
+          2
         ]
       }
     },
@@ -763,25 +403,85 @@
       "ovr": 83,
       "record": {
         "gp": 84,
-        "w": 35,
-        "l": 40,
+        "w": 44,
+        "l": 31,
         "otl": 9,
-        "pts": 79,
-        "gf": 260,
-        "ga": 318,
-        "rw": 22,
-        "row": 31,
+        "pts": 97,
+        "gf": 236,
+        "ga": 238,
+        "rw": 25,
+        "row": 38,
         "home": {
-          "w": 18,
-          "l": 20,
+          "w": 25,
+          "l": 13,
           "otl": 4
         },
         "away": {
-          "w": 17,
-          "l": 20,
+          "w": 19,
+          "l": 18,
           "otl": 5
         },
-        "last10": "LOWWWOLLLL",
+        "last10": "WWWWWWLLWW",
+        "streak": [
+          "W",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "DET",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 42,
+        "l": 30,
+        "otl": 12,
+        "pts": 96,
+        "gf": 256,
+        "ga": 262,
+        "rw": 30,
+        "row": 35,
+        "home": {
+          "w": 20,
+          "l": 18,
+          "otl": 4
+        },
+        "away": {
+          "w": 22,
+          "l": 12,
+          "otl": 8
+        },
+        "last10": "LWOWLLWWWW",
+        "streak": [
+          "W",
+          4
+        ]
+      }
+    },
+    {
+      "abbr": "OTT",
+      "ovr": 84,
+      "record": {
+        "gp": 84,
+        "w": 43,
+        "l": 31,
+        "otl": 10,
+        "pts": 96,
+        "gf": 259,
+        "ga": 245,
+        "rw": 33,
+        "row": 38,
+        "home": {
+          "w": 22,
+          "l": 17,
+          "otl": 3
+        },
+        "away": {
+          "w": 21,
+          "l": 14,
+          "otl": 7
+        },
+        "last10": "LLOWWWLLLL",
         "streak": [
           "L",
           4
@@ -793,28 +493,178 @@
       "ovr": 83,
       "record": {
         "gp": 84,
-        "w": 35,
-        "l": 41,
+        "w": 43,
+        "l": 33,
         "otl": 8,
-        "pts": 78,
-        "gf": 287,
-        "ga": 344,
-        "rw": 21,
-        "row": 32,
+        "pts": 94,
+        "gf": 285,
+        "ga": 291,
+        "rw": 36,
+        "row": 42,
         "home": {
-          "w": 15,
-          "l": 22,
+          "w": 18,
+          "l": 21,
+          "otl": 3
+        },
+        "away": {
+          "w": 25,
+          "l": 12,
+          "otl": 5
+        },
+        "last10": "WWLWLWWLWL",
+        "streak": [
+          "L",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "TBL",
+      "ovr": 87,
+      "record": {
+        "gp": 84,
+        "w": 42,
+        "l": 33,
+        "otl": 9,
+        "pts": 93,
+        "gf": 251,
+        "ga": 251,
+        "rw": 25,
+        "row": 36,
+        "home": {
+          "w": 20,
+          "l": 17,
           "otl": 5
         },
         "away": {
-          "w": 20,
-          "l": 19,
+          "w": 22,
+          "l": 16,
+          "otl": 4
+        },
+        "last10": "WWWLWWWWLL",
+        "streak": [
+          "L",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "VGK",
+      "ovr": 85,
+      "record": {
+        "gp": 84,
+        "w": 40,
+        "l": 31,
+        "otl": 13,
+        "pts": 93,
+        "gf": 259,
+        "ga": 257,
+        "rw": 32,
+        "row": 38,
+        "home": {
+          "w": 21,
+          "l": 13,
+          "otl": 8
+        },
+        "away": {
+          "w": 19,
+          "l": 18,
+          "otl": 5
+        },
+        "last10": "OWWOWOWWWL",
+        "streak": [
+          "L",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "PHI",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 41,
+        "l": 35,
+        "otl": 8,
+        "pts": 90,
+        "gf": 268,
+        "ga": 279,
+        "rw": 30,
+        "row": 38,
+        "home": {
+          "w": 23,
+          "l": 16,
           "otl": 3
         },
-        "last10": "LLLOWOLWLW",
+        "away": {
+          "w": 18,
+          "l": 19,
+          "otl": 5
+        },
+        "last10": "LWOLWLWLLW",
         "streak": [
           "W",
           1
+        ]
+      }
+    },
+    {
+      "abbr": "UTA",
+      "ovr": 84,
+      "record": {
+        "gp": 84,
+        "w": 36,
+        "l": 31,
+        "otl": 17,
+        "pts": 89,
+        "gf": 224,
+        "ga": 243,
+        "rw": 28,
+        "row": 32,
+        "home": {
+          "w": 18,
+          "l": 18,
+          "otl": 6
+        },
+        "away": {
+          "w": 18,
+          "l": 13,
+          "otl": 11
+        },
+        "last10": "WOWWWLWLOL",
+        "streak": [
+          "L",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "CBJ",
+      "ovr": 84,
+      "record": {
+        "gp": 84,
+        "w": 39,
+        "l": 35,
+        "otl": 10,
+        "pts": 88,
+        "gf": 284,
+        "ga": 275,
+        "rw": 29,
+        "row": 36,
+        "home": {
+          "w": 21,
+          "l": 18,
+          "otl": 3
+        },
+        "away": {
+          "w": 18,
+          "l": 17,
+          "otl": 7
+        },
+        "last10": "LWLWLLWLWW",
+        "streak": [
+          "W",
+          2
         ]
       }
     },
@@ -823,28 +673,28 @@
       "ovr": 85,
       "record": {
         "gp": 84,
-        "w": 35,
-        "l": 42,
-        "otl": 7,
-        "pts": 77,
-        "gf": 225,
-        "ga": 284,
-        "rw": 24,
-        "row": 30,
+        "w": 41,
+        "l": 37,
+        "otl": 6,
+        "pts": 88,
+        "gf": 226,
+        "ga": 274,
+        "rw": 33,
+        "row": 37,
         "home": {
           "w": 19,
-          "l": 19,
-          "otl": 4
-        },
-        "away": {
-          "w": 16,
-          "l": 23,
+          "l": 20,
           "otl": 3
         },
-        "last10": "WLWLLOLLLW",
+        "away": {
+          "w": 22,
+          "l": 17,
+          "otl": 3
+        },
+        "last10": "WOLLWLOLLL",
         "streak": [
-          "W",
-          1
+          "L",
+          3
         ]
       }
     },
@@ -853,88 +703,28 @@
       "ovr": 83,
       "record": {
         "gp": 84,
-        "w": 35,
-        "l": 42,
-        "otl": 7,
-        "pts": 77,
-        "gf": 246,
-        "ga": 301,
-        "rw": 25,
-        "row": 33,
+        "w": 39,
+        "l": 35,
+        "otl": 10,
+        "pts": 88,
+        "gf": 236,
+        "ga": 268,
+        "rw": 24,
+        "row": 32,
         "home": {
-          "w": 16,
-          "l": 21,
-          "otl": 5
-        },
-        "away": {
           "w": 19,
-          "l": 21,
-          "otl": 2
-        },
-        "last10": "LWLLLWOWLW",
-        "streak": [
-          "W",
-          1
-        ]
-      }
-    },
-    {
-      "abbr": "DET",
-      "ovr": 83,
-      "record": {
-        "gp": 84,
-        "w": 36,
-        "l": 44,
-        "otl": 4,
-        "pts": 76,
-        "gf": 266,
-        "ga": 299,
-        "rw": 30,
-        "row": 34,
-        "home": {
-          "w": 18,
           "l": 20,
-          "otl": 4
+          "otl": 3
         },
         "away": {
-          "w": 18,
-          "l": 24,
-          "otl": 0
+          "w": 20,
+          "l": 15,
+          "otl": 7
         },
-        "last10": "WLWWWLWLLL",
+        "last10": "WOLLOLWLOL",
         "streak": [
           "L",
-          3
-        ]
-      }
-    },
-    {
-      "abbr": "PIT",
-      "ovr": 82,
-      "record": {
-        "gp": 84,
-        "w": 29,
-        "l": 41,
-        "otl": 14,
-        "pts": 72,
-        "gf": 256,
-        "ga": 350,
-        "rw": 19,
-        "row": 24,
-        "home": {
-          "w": 14,
-          "l": 20,
-          "otl": 8
-        },
-        "away": {
-          "w": 15,
-          "l": 21,
-          "otl": 6
-        },
-        "last10": "WWOOLWLWWW",
-        "streak": [
-          "W",
-          3
+          1
         ]
       }
     },
@@ -943,27 +733,177 @@
       "ovr": 82,
       "record": {
         "gp": 84,
-        "w": 31,
-        "l": 46,
-        "otl": 7,
-        "pts": 69,
-        "gf": 186,
-        "ga": 262,
-        "rw": 18,
-        "row": 26,
+        "w": 37,
+        "l": 35,
+        "otl": 12,
+        "pts": 86,
+        "gf": 212,
+        "ga": 244,
+        "rw": 33,
+        "row": 36,
         "home": {
-          "w": 15,
-          "l": 26,
-          "otl": 1
+          "w": 17,
+          "l": 22,
+          "otl": 3
         },
         "away": {
-          "w": 16,
-          "l": 20,
-          "otl": 6
+          "w": 20,
+          "l": 13,
+          "otl": 9
         },
-        "last10": "LLLLOLWLWL",
+        "last10": "WLLOWLLLWW",
+        "streak": [
+          "W",
+          2
+        ]
+      }
+    },
+    {
+      "abbr": "NYI",
+      "ovr": 85,
+      "record": {
+        "gp": 84,
+        "w": 37,
+        "l": 36,
+        "otl": 11,
+        "pts": 85,
+        "gf": 238,
+        "ga": 264,
+        "rw": 25,
+        "row": 32,
+        "home": {
+          "w": 22,
+          "l": 16,
+          "otl": 4
+        },
+        "away": {
+          "w": 15,
+          "l": 20,
+          "otl": 7
+        },
+        "last10": "LLWLWLWLWL",
         "streak": [
           "L",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "NJD",
+      "ovr": 84,
+      "record": {
+        "gp": 84,
+        "w": 31,
+        "l": 37,
+        "otl": 16,
+        "pts": 78,
+        "gf": 237,
+        "ga": 257,
+        "rw": 23,
+        "row": 29,
+        "home": {
+          "w": 13,
+          "l": 17,
+          "otl": 12
+        },
+        "away": {
+          "w": 18,
+          "l": 20,
+          "otl": 4
+        },
+        "last10": "OLLLLLWLOL",
+        "streak": [
+          "L",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "CGY",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 33,
+        "l": 39,
+        "otl": 12,
+        "pts": 78,
+        "gf": 206,
+        "ga": 269,
+        "rw": 24,
+        "row": 30,
+        "home": {
+          "w": 18,
+          "l": 17,
+          "otl": 7
+        },
+        "away": {
+          "w": 15,
+          "l": 22,
+          "otl": 5
+        },
+        "last10": "LOLWWLWWWO",
+        "streak": [
+          "OT",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "NSH",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 32,
+        "l": 39,
+        "otl": 13,
+        "pts": 77,
+        "gf": 214,
+        "ga": 281,
+        "rw": 21,
+        "row": 29,
+        "home": {
+          "w": 15,
+          "l": 19,
+          "otl": 8
+        },
+        "away": {
+          "w": 17,
+          "l": 20,
+          "otl": 5
+        },
+        "last10": "LWWLWWOWWW",
+        "streak": [
+          "W",
+          3
+        ]
+      }
+    },
+    {
+      "abbr": "NYR",
+      "ovr": 85,
+      "record": {
+        "gp": 84,
+        "w": 34,
+        "l": 43,
+        "otl": 7,
+        "pts": 75,
+        "gf": 232,
+        "ga": 288,
+        "rw": 23,
+        "row": 31,
+        "home": {
+          "w": 15,
+          "l": 24,
+          "otl": 3
+        },
+        "away": {
+          "w": 19,
+          "l": 19,
+          "otl": 4
+        },
+        "last10": "WLLLOLWWLW",
+        "streak": [
+          "W",
           1
         ]
       }
@@ -973,273 +913,113 @@
       "ovr": 82,
       "record": {
         "gp": 84,
-        "w": 21,
-        "l": 52,
-        "otl": 11,
-        "pts": 53,
-        "gf": 191,
-        "ga": 335,
-        "rw": 16,
-        "row": 19,
+        "w": 29,
+        "l": 41,
+        "otl": 14,
+        "pts": 72,
+        "gf": 222,
+        "ga": 324,
+        "rw": 19,
+        "row": 22,
         "home": {
-          "w": 11,
-          "l": 25,
+          "w": 15,
+          "l": 21,
           "otl": 6
         },
         "away": {
-          "w": 10,
-          "l": 27,
+          "w": 14,
+          "l": 20,
+          "otl": 8
+        },
+        "last10": "LWOWWLLLLW",
+        "streak": [
+          "W",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "PIT",
+      "ovr": 82,
+      "record": {
+        "gp": 84,
+        "w": 31,
+        "l": 46,
+        "otl": 7,
+        "pts": 69,
+        "gf": 241,
+        "ga": 331,
+        "rw": 26,
+        "row": 29,
+        "home": {
+          "w": 19,
+          "l": 18,
           "otl": 5
         },
-        "last10": "LLLLOLLWWL",
+        "away": {
+          "w": 12,
+          "l": 28,
+          "otl": 2
+        },
+        "last10": "LWLLLLLWLW",
+        "streak": [
+          "W",
+          1
+        ]
+      }
+    },
+    {
+      "abbr": "SEA",
+      "ovr": 83,
+      "record": {
+        "gp": 84,
+        "w": 24,
+        "l": 47,
+        "otl": 13,
+        "pts": 61,
+        "gf": 252,
+        "ga": 331,
+        "rw": 17,
+        "row": 21,
+        "home": {
+          "w": 13,
+          "l": 20,
+          "otl": 9
+        },
+        "away": {
+          "w": 11,
+          "l": 27,
+          "otl": 4
+        },
+        "last10": "OOLLOWWOLL",
         "streak": [
           "L",
-          1
+          2
         ]
       }
     }
   ],
   "leaders": [
     {
-      "name": "Aleksander Barkov",
-      "ovr": 95,
-      "stats": {
-        "gp": 84,
-        "g": 41,
-        "a": 69,
-        "pts": 110,
-        "pm": 71,
-        "pim": 37,
-        "sog": 212,
-        "hit": 72,
-        "blk": 54,
-        "toi": 117648,
-        "ppg": 7,
-        "ppp": 29,
-        "shg": 0,
-        "gwg": 8,
-        "fow": 826,
-        "fol": 711
-      }
-    },
-    {
-      "name": "Brayden Point",
-      "ovr": 88,
-      "stats": {
-        "gp": 84,
-        "g": 36,
-        "a": 70,
-        "pts": 106,
-        "pm": 34,
-        "pim": 41,
-        "sog": 226,
-        "hit": 65,
-        "blk": 44,
-        "toi": 104170,
-        "ppg": 4,
-        "ppp": 22,
-        "shg": 0,
-        "gwg": 5,
-        "fow": 633,
-        "fol": 723
-      }
-    },
-    {
-      "name": "Sebastian Aho",
-      "ovr": 91,
-      "stats": {
-        "gp": 84,
-        "g": 38,
-        "a": 66,
-        "pts": 104,
-        "pm": 29,
-        "pim": 53,
-        "sog": 256,
-        "hit": 61,
-        "blk": 60,
-        "toi": 115802,
-        "ppg": 7,
-        "ppp": 29,
-        "shg": 1,
-        "gwg": 9,
-        "fow": 735,
-        "fol": 694
-      }
-    },
-    {
-      "name": "Nathan MacKinnon",
-      "ovr": 97,
-      "stats": {
-        "gp": 84,
-        "g": 33,
-        "a": 70,
-        "pts": 103,
-        "pm": 39,
-        "pim": 43,
-        "sog": 246,
-        "hit": 106,
-        "blk": 58,
-        "toi": 119211,
-        "ppg": 8,
-        "ppp": 19,
-        "shg": 0,
-        "gwg": 6,
-        "fow": 541,
-        "fol": 600
-      }
-    },
-    {
-      "name": "Matt Boldy",
-      "ovr": 91,
-      "stats": {
-        "gp": 84,
-        "g": 59,
-        "a": 43,
-        "pts": 102,
-        "pm": 56,
-        "pim": 44,
-        "sog": 320,
-        "hit": 71,
-        "blk": 57,
-        "toi": 115946,
-        "ppg": 12,
-        "ppp": 21,
-        "shg": 0,
-        "gwg": 8,
-        "fow": 23,
-        "fol": 24
-      }
-    },
-    {
-      "name": "Brock Nelson",
-      "ovr": 85,
-      "stats": {
-        "gp": 84,
-        "g": 44,
-        "a": 57,
-        "pts": 101,
-        "pm": 68,
-        "pim": 35,
-        "sog": 236,
-        "hit": 76,
-        "blk": 48,
-        "toi": 101705,
-        "ppg": 4,
-        "ppp": 20,
-        "shg": 1,
-        "gwg": 6,
-        "fow": 757,
-        "fol": 678
-      }
-    },
-    {
-      "name": "Robert Thomas",
-      "ovr": 88,
-      "stats": {
-        "gp": 84,
-        "g": 36,
-        "a": 64,
-        "pts": 100,
-        "pm": 50,
-        "pim": 52,
-        "sog": 191,
-        "hit": 80,
-        "blk": 57,
-        "toi": 118822,
-        "ppg": 4,
-        "ppp": 19,
-        "shg": 3,
-        "gwg": 6,
-        "fow": 832,
-        "fol": 789
-      }
-    },
-    {
       "name": "Connor McDavid",
       "ovr": 99,
       "stats": {
         "gp": 84,
-        "g": 45,
-        "a": 55,
-        "pts": 100,
-        "pm": 37,
-        "pim": 40,
-        "sog": 285,
-        "hit": 91,
-        "blk": 45,
-        "toi": 119631,
-        "ppg": 9,
-        "ppp": 17,
+        "g": 46,
+        "a": 74,
+        "pts": 120,
+        "pm": 70,
+        "pim": 38,
+        "sog": 287,
+        "hit": 147,
+        "blk": 67,
+        "toi": 124444,
+        "ppg": 6,
+        "ppp": 11,
         "shg": 1,
-        "gwg": 8,
-        "fow": 583,
-        "fol": 526
-      }
-    },
-    {
-      "name": "Dylan Larkin",
-      "ovr": 89,
-      "stats": {
-        "gp": 84,
-        "g": 34,
-        "a": 64,
-        "pts": 98,
-        "pm": 26,
-        "pim": 55,
-        "sog": 215,
-        "hit": 80,
-        "blk": 46,
-        "toi": 115753,
-        "ppg": 8,
-        "ppp": 22,
-        "shg": 2,
-        "gwg": 7,
-        "fow": 902,
-        "fol": 781
-      }
-    },
-    {
-      "name": "Nick Suzuki",
-      "ovr": 93,
-      "stats": {
-        "gp": 84,
-        "g": 29,
-        "a": 68,
-        "pts": 97,
-        "pm": 27,
-        "pim": 39,
-        "sog": 229,
-        "hit": 90,
-        "blk": 74,
-        "toi": 119985,
-        "ppg": 3,
-        "ppp": 19,
-        "shg": 1,
-        "gwg": 3,
-        "fow": 917,
-        "fol": 849
-      }
-    },
-    {
-      "name": "Joel Eriksson Ek",
-      "ovr": 87,
-      "stats": {
-        "gp": 84,
-        "g": 36,
-        "a": 59,
-        "pts": 95,
-        "pm": 54,
-        "pim": 54,
-        "sog": 192,
-        "hit": 73,
-        "blk": 59,
-        "toi": 114886,
-        "ppg": 3,
-        "ppp": 16,
-        "shg": 0,
-        "gwg": 5,
-        "fow": 922,
-        "fol": 794
+        "gwg": 4,
+        "fow": 556,
+        "fol": 522
       }
     },
     {
@@ -1247,43 +1027,65 @@
       "ovr": 96,
       "stats": {
         "gp": 84,
-        "g": 47,
-        "a": 47,
-        "pts": 94,
-        "pm": 29,
-        "pim": 44,
-        "sog": 321,
-        "hit": 78,
-        "blk": 49,
-        "toi": 114902,
+        "g": 57,
+        "a": 58,
+        "pts": 115,
+        "pm": 69,
+        "pim": 63,
+        "sog": 359,
+        "hit": 152,
+        "blk": 40,
+        "toi": 121166,
         "ppg": 10,
-        "ppp": 26,
-        "shg": 0,
-        "gwg": 9,
-        "fow": 330,
-        "fol": 313
+        "ppp": 25,
+        "shg": 4,
+        "gwg": 10,
+        "fow": 326,
+        "fol": 304
       }
     },
     {
-      "name": "Wyatt Johnston",
-      "ovr": 90,
+      "name": "Sebastian Aho",
+      "ovr": 91,
       "stats": {
         "gp": 84,
-        "g": 40,
-        "a": 53,
-        "pts": 93,
-        "pm": 29,
-        "pim": 50,
-        "sog": 250,
-        "hit": 86,
-        "blk": 74,
-        "toi": 116086,
-        "ppg": 7,
-        "ppp": 16,
-        "shg": 0,
-        "gwg": 3,
-        "fow": 763,
-        "fol": 840
+        "g": 42,
+        "a": 71,
+        "pts": 113,
+        "pm": 68,
+        "pim": 42,
+        "sog": 291,
+        "hit": 159,
+        "blk": 42,
+        "toi": 121725,
+        "ppg": 2,
+        "ppp": 18,
+        "shg": 1,
+        "gwg": 7,
+        "fow": 740,
+        "fol": 730
+      }
+    },
+    {
+      "name": "Nathan MacKinnon",
+      "ovr": 97,
+      "stats": {
+        "gp": 84,
+        "g": 44,
+        "a": 66,
+        "pts": 110,
+        "pm": 24,
+        "pim": 44,
+        "sog": 320,
+        "hit": 197,
+        "blk": 56,
+        "toi": 121086,
+        "ppg": 9,
+        "ppp": 23,
+        "shg": 2,
+        "gwg": 8,
+        "fow": 567,
+        "fol": 556
       }
     },
     {
@@ -1292,20 +1094,64 @@
       "stats": {
         "gp": 84,
         "g": 38,
-        "a": 55,
-        "pts": 93,
-        "pm": 36,
-        "pim": 29,
-        "sog": 238,
-        "hit": 72,
-        "blk": 62,
-        "toi": 113389,
+        "a": 63,
+        "pts": 101,
+        "pm": 26,
+        "pim": 48,
+        "sog": 245,
+        "hit": 170,
+        "blk": 52,
+        "toi": 116406,
         "ppg": 7,
-        "ppp": 23,
+        "ppp": 24,
+        "shg": 0,
+        "gwg": 5,
+        "fow": 707,
+        "fol": 663
+      }
+    },
+    {
+      "name": "Aleksander Barkov",
+      "ovr": 95,
+      "stats": {
+        "gp": 84,
+        "g": 36,
+        "a": 64,
+        "pts": 100,
+        "pm": 40,
+        "pim": 48,
+        "sog": 236,
+        "hit": 151,
+        "blk": 62,
+        "toi": 120148,
+        "ppg": 4,
+        "ppp": 24,
         "shg": 1,
-        "gwg": 10,
-        "fow": 695,
-        "fol": 742
+        "gwg": 9,
+        "fow": 756,
+        "fol": 720
+      }
+    },
+    {
+      "name": "Lucas Raymond",
+      "ovr": 89,
+      "stats": {
+        "gp": 84,
+        "g": 43,
+        "a": 55,
+        "pts": 98,
+        "pm": 27,
+        "pim": 23,
+        "sog": 261,
+        "hit": 151,
+        "blk": 46,
+        "toi": 115840,
+        "ppg": 10,
+        "ppp": 20,
+        "shg": 1,
+        "gwg": 4,
+        "fow": 6,
+        "fol": 8
       }
     },
     {
@@ -1313,41 +1159,195 @@
       "ovr": 95,
       "stats": {
         "gp": 84,
-        "g": 45,
-        "a": 47,
-        "pts": 92,
-        "pm": -9,
-        "pim": 41,
-        "sog": 245,
-        "hit": 88,
-        "blk": 77,
-        "toi": 119677,
-        "ppg": 7,
-        "ppp": 21,
-        "shg": 1,
+        "g": 35,
+        "a": 63,
+        "pts": 98,
+        "pm": -11,
+        "pim": 38,
+        "sog": 308,
+        "hit": 174,
+        "blk": 70,
+        "toi": 121015,
+        "ppg": 4,
+        "ppp": 20,
+        "shg": 0,
         "gwg": 4,
-        "fow": 881,
-        "fol": 777
+        "fow": 923,
+        "fol": 755
+      }
+    },
+    {
+      "name": "Auston Matthews",
+      "ovr": 92,
+      "stats": {
+        "gp": 84,
+        "g": 43,
+        "a": 54,
+        "pts": 97,
+        "pm": 34,
+        "pim": 36,
+        "sog": 301,
+        "hit": 163,
+        "blk": 31,
+        "toi": 121860,
+        "ppg": 5,
+        "ppp": 11,
+        "shg": 0,
+        "gwg": 4,
+        "fow": 707,
+        "fol": 627
+      }
+    },
+    {
+      "name": "Robert Thomas",
+      "ovr": 88,
+      "stats": {
+        "gp": 84,
+        "g": 34,
+        "a": 60,
+        "pts": 94,
+        "pm": 50,
+        "pim": 39,
+        "sog": 239,
+        "hit": 148,
+        "blk": 55,
+        "toi": 121834,
+        "ppg": 2,
+        "ppp": 10,
+        "shg": 0,
+        "gwg": 4,
+        "fow": 847,
+        "fol": 733
+      }
+    },
+    {
+      "name": "Bo Horvat",
+      "ovr": 88,
+      "stats": {
+        "gp": 84,
+        "g": 41,
+        "a": 52,
+        "pts": 93,
+        "pm": 6,
+        "pim": 57,
+        "sog": 277,
+        "hit": 175,
+        "blk": 57,
+        "toi": 122768,
+        "ppg": 8,
+        "ppp": 22,
+        "shg": 1,
+        "gwg": 5,
+        "fow": 791,
+        "fol": 733
+      }
+    },
+    {
+      "name": "Joel Eriksson Ek",
+      "ovr": 87,
+      "stats": {
+        "gp": 84,
+        "g": 31,
+        "a": 62,
+        "pts": 93,
+        "pm": 68,
+        "pim": 54,
+        "sog": 193,
+        "hit": 152,
+        "blk": 78,
+        "toi": 120159,
+        "ppg": 3,
+        "ppp": 15,
+        "shg": 2,
+        "gwg": 8,
+        "fow": 843,
+        "fol": 781
+      }
+    },
+    {
+      "name": "Tage Thompson",
+      "ovr": 89,
+      "stats": {
+        "gp": 84,
+        "g": 43,
+        "a": 48,
+        "pts": 91,
+        "pm": 28,
+        "pim": 26,
+        "sog": 296,
+        "hit": 152,
+        "blk": 58,
+        "toi": 115668,
+        "ppg": 11,
+        "ppp": 18,
+        "shg": 0,
+        "gwg": 7,
+        "fow": 568,
+        "fol": 597
+      }
+    },
+    {
+      "name": "Brayden Point",
+      "ovr": 88,
+      "stats": {
+        "gp": 84,
+        "g": 35,
+        "a": 56,
+        "pts": 91,
+        "pm": 14,
+        "pim": 38,
+        "sog": 246,
+        "hit": 132,
+        "blk": 37,
+        "toi": 106617,
+        "ppg": 3,
+        "ppp": 10,
+        "shg": 0,
+        "gwg": 5,
+        "fow": 638,
+        "fol": 653
+      }
+    },
+    {
+      "name": "Nikita Kucherov",
+      "ovr": 97,
+      "stats": {
+        "gp": 84,
+        "g": 45,
+        "a": 45,
+        "pts": 90,
+        "pm": 21,
+        "pim": 40,
+        "sog": 276,
+        "hit": 171,
+        "blk": 61,
+        "toi": 122728,
+        "ppg": 6,
+        "ppp": 13,
+        "shg": 1,
+        "gwg": 6,
+        "fow": 32,
+        "fol": 32
       }
     }
   ],
   "mcdavid": {
     "gp": 84,
-    "g": 45,
-    "a": 55,
-    "pts": 100,
-    "pm": 37,
-    "pim": 40,
-    "sog": 285,
-    "hit": 91,
-    "blk": 45,
-    "toi": 119631,
-    "ppg": 9,
-    "ppp": 17,
+    "g": 46,
+    "a": 74,
+    "pts": 120,
+    "pm": 70,
+    "pim": 38,
+    "sog": 287,
+    "hit": 147,
+    "blk": 67,
+    "toi": 124444,
+    "ppg": 6,
+    "ppp": 11,
     "shg": 1,
-    "gwg": 8,
-    "fow": 583,
-    "fol": 526
+    "gwg": 4,
+    "fow": 556,
+    "fol": 522
   },
   "checks": {
     "scoring": true,

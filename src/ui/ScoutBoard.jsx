@@ -9,7 +9,7 @@ import { POS_COLOR } from "./TradePage.jsx";
 
 const POS = ["C", "LW", "RW", "LD", "RD", "G"];
 const PAGE = 40;
-const DEV_ORDER = { superstar: 4, star: 3, normal: 2, late: 1 };
+const DEV_ORDER = { generational: 5, superstar: 4, star: 3, normal: 2, late: 1 };
 
 // Your scouts' crews, group by group (Gridiron 1.42 / 1.52 / 1.74): who works each position, their
 // combined evaluation, and what a crew of two or more can see through the board.

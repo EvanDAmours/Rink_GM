@@ -18,12 +18,14 @@ import { ensureHockeyRules, contractCount, qualifyingAmount, ownedIds } from "./
 import { settleNegotiations, processOfferSheets, aiOfferSheets } from "./negotiations.js";
 import { processWaivers } from "./operations.js";
 import { holdQualifiedRFA } from "./operations.js";
-import {usageGrowth} from "./development.js";
+import {usageGrowth, roleGrowth, awardGrowth, applyAwardGrowth, ROLE_NAME} from "./development.js";
+import { breakoutRoll, growBy, DEV_TRAITS } from "./players.js";
+import { breakoutMoment, cornerstoneMoment, rewardsMoment, generationalMoment } from "./momentsDevelopment.js";
 import { archiveFarmSeasons } from "./prospectWatch.js";
 import { applyTrainingYear } from "./franchise.js";
 import { queueMoment } from "./moments.js";
 import { signingMoment, legendMoment } from "./momentsSeason.js";
-import { applyAllStarGains } from "./awards.js";
+import { applyAllStarGains, seasonMilestones } from "./awards.js";
 import { rolePay, perfFactor, loyalDiscount, veteranTerm, isFranchisePlayer, depthValue as youthEdge, stampPerformance } from "./contractValue.js";
 import { retireChance } from "./retirement.js";
 import { aiMarketDay, aiDepthDay, decidingToday } from "./faMarket.js";
@@ -338,6 +340,9 @@ export function startNewSeason(league) {
   league.eliteAnchor ??= elite();
   // More 90+ players than the league started with pulls the top end back harder each summer.
   const eliteCorrection = clamp(-0.12 * (elite() - league.eliteAnchor), -3, 0);
+  // Big seasons (milestones, league leaders, landslides), read before the stats are reset.
+  const bigSeasons = seasonMilestones(league);
+  const summerStart = {}, breakouts = [], grew = {};
   // Archive stats.
   for (const id in league.players) {
     const p = league.players[id];
@@ -358,9 +363,16 @@ export function startNewSeason(league) {
     p.age++;
     if(p.signed!==false)p.service.years++;
     const before = p.ovr;
+    summerStart[id] = before;
     applyTrainingYear(league,p);
     const banked = p.inSeasonGain?.year === league.year - 1 ? p.inSeasonGain.n : 0;
+    // The role he played last season shapes which skills grow (Gridiron 3.27).
+    const role = roleGrowth(p, league.year - 1, p.age);
+    if (role) grew[id] = role;
     developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0) - banked);
+    // A rare breakout summer (Gridiron 2.77), on top of ordinary growth.
+    const jump = p.tid >= 0 ? breakoutRoll(p) : 0;
+    if (jump) { const from = p.ovr, gain = growBy(p, jump); if (gain) breakouts.push({ pid: id, from, to: p.ovr, gain }); }
     p.lastChange = p.ovr - before + banked;
     delete p.inSeasonGain;
     p.injury = 0;
@@ -371,6 +383,7 @@ export function startNewSeason(league) {
   }
   // Last season's All-Star honourees grow in the off-season, as Gridiron's All-Pros do (once only).
   for (const g of applyAllStarGains(league) || []) { const p = league.players[g.pid]; if (p && g.gain) p.lastChange = (p.lastChange || 0) + g.gain; }
+  summerReport(league, { bigSeasons, summerStart, breakouts, grew });
   pruneFreeAgents(league);
 
   // Qualified RFAs sign their qualifying offer (or their rights lapse); yours may hold out.
@@ -421,6 +434,59 @@ export function startNewSeason(league) {
   generateDraftClass(league, league.year + 1);
   for(let y=league.year+1;y<=league.year+5;y++)createDraftPicks(league,y);
   league.inbox.push({ year: league.year, day: 0, text: `Welcome to the ${league.year}-${String(league.year + 1).slice(2)} season. Set your lines and start the season when ready. The ${league.year + 1} draft class is out: Central Scouting's midterm rankings are on the Big Board, and your scouts bank a point every week of the season. The preseason is your last chance to change scouts until after the draft.` });
+}
+
+// Milestones, league leaders and cornerstone seasons pay off; the summer is written up for the
+// Development page (league.devReport), your inbox, the news and the development moments.
+function summerReport(league, { bigSeasons, summerStart, breakouts, grew }) {
+  const rows = [];
+  const row = (p) => { let r = rows.find((x) => x.pid === p.id); if (!r) rows.push(r = { pid: p.id, name: p.name, pos: p.pos, tid: p.tid, age: p.age, from: summerStart[p.id] ?? p.ovr, to: p.ovr, dev: p.dev, notes: [], kinds: [] }); return r; };
+  const rewards = [], corner = [];
+  for (const [pid, award] of Object.entries(bigSeasons || {})) {
+    const p = league.players[pid];
+    if (!p) continue;
+    const g = awardGrowth(p, award, p.age - 1);
+    if (!g) continue;
+    const res = applyAwardGrowth(p, g, summerStart[pid] ?? p.ovr);
+    p.lastChange = (p.lastChange || 0) + res.gain;
+    const r = row(p);
+    r.notes.push(...g.notes);
+    r.kinds.push(g.boost ? "cornerstone" : "milestone");
+    if (res.devFrom) { r.devFrom = res.devFrom; r.kinds.push("trait"); r.notes.push(`now a ${DEV_TRAITS[p.dev].name} developer`); }
+    (g.boost ? corner : rewards).push({ p, from: summerStart[pid] ?? p.ovr, notes: g.notes, devFrom: res.devFrom });
+  }
+  for (const b of breakouts) {
+    const p = league.players[b.pid];
+    if (!p) continue;
+    const r = row(p);
+    r.kinds.push("breakout");
+    r.notes.push(b.gain >= 2 ? `breakout summer (+${b.gain})` : "a hard worker's step forward (+1)");
+  }
+  for (const [pid, role] of Object.entries(grew)) {
+    const p = league.players[pid];
+    if (p?.tid === league.userTid) { const r = row(p); r.kinds.push("role"); r.notes.push(`grew into his role: ${ROLE_NAME[role].toLowerCase()}`); }
+  }
+  for (const p of Object.values(league.players)) if (p.tid === league.userTid && p.wallToll && p.age >= 32) { const r = row(p); r.kinds.push("wall"); r.notes.push(`hit the wall at ${p.age} (−${p.wallToll} extra)`); }
+  for (const r of rows) { const p = league.players[r.pid]; if (p) { r.to = p.ovr; r.dev = p.dev; r.tid = p.tid; } }
+  const order = { cornerstone: 0, breakout: 1, trait: 2, milestone: 3, role: 4, wall: 5 };
+  const rank = (r) => Math.min(...r.kinds.map((k) => order[k] ?? 9));
+  rows.sort((a, b) => (b.tid === league.userTid) - (a.tid === league.userTid) || rank(a) - rank(b) || b.to - a.to);
+  league.devReport = { year: league.year, rows: rows.filter((r) => r.tid === league.userTid || r.kinds.some((k) => k !== "role" && k !== "wall")).slice(0, 60) };
+  // Your club: one inbox note, and the moments.
+  const mine = league.devReport.rows.filter((r) => r.tid === league.userTid && r.kinds.some((k) => k !== "role"));
+  if (mine.length) league.inbox.push({ year: league.year, day: 0, open: { tab: "development" }, text: `Off-season report: ${mine.slice(0, 4).map((r) => `${r.name} ${r.from} → ${r.to}${r.kinds.includes("breakout") ? " (breakout)" : r.kinds.includes("cornerstone") ? " (cornerstone season)" : ""}`).join(", ")}${mine.length > 4 ? ` and ${mine.length - 4} more` : ""}. See Player Development.` });
+  const heads = corner.map((c) => `${c.p.name} (${league.teams[c.p.tid]?.abbr || "FA"})`);
+  if (heads.length) (league.news ||= []).unshift({ year: league.year, day: 0, type: "development", pid: corner[0].p.id, text: `Cornerstone seasons: ${heads.join(", ")} ${heads.length === 1 ? "led the league by a landslide and comes" : "led the league by landslides and come"} back better than ever.` });
+  const bigJumps = breakouts.map((b) => league.players[b.pid]).filter((p) => p && p.tid >= 0 && (p.lastChange || 0) >= 4).slice(0, 3);
+  if (bigJumps.length) (league.news ||= []).unshift({ year: league.year, day: 0, type: "development", pid: bigJumps[0].id, text: `Breakout summers: ${bigJumps.map((p) => `${p.name} (${league.teams[p.tid].abbr}, now ${p.ovr})`).join(", ")}.` });
+  try {
+    const q = (m) => m && queueMoment(league, m);
+    for (const c of corner) q(cornerstoneMoment(league, c.p, { from: c.from, to: c.p.ovr, notes: c.notes, devFrom: c.devFrom }));
+    for (const b of breakouts) if (b.gain >= 2) q(breakoutMoment(league, league.players[b.pid], b));
+    q(rewardsMoment(league, rewards.map((x) => ({ p: { ...x.p, id: x.p.id }, pid: x.p.id, tid: x.p.tid, from: x.from, to: x.p.ovr, notes: x.notes, devFrom: x.devFrom, dev: x.p.dev })).map((x) => ({ ...x, p: { name: x.p.name, pos: x.p.pos, ovr: x.p.ovr, age: x.p.age, num: Number.isInteger(x.p.number) ? x.p.number : null } }))));
+    const t = league.teams[league.userTid];
+    for (const id of [...t.roster, ...t.prospects]) q(generationalMoment(league, league.players[id]));
+  } catch (e) { console.error("Development moments failed", e); }
 }
 
 function compactStats(pos, st) {

@@ -3,6 +3,7 @@
 // orgDepth adds the prospect pipeline for the draft; roleNeeds says which roles (sniper, net-front,
 // shutdown D, power-play quarterback...) your lineup is thin at.
 import {isGoalie,isDefense} from './constants.js';
+import {IDENTITIES} from './roles.js';
 const avg=a=>a.length?a.reduce((n,x)=>n+x,0)/a.length:0;
 const positions=['C','LW','RW','LD','RD','G'];
 const targets={C:4,LW:4,RW:4,LD:3,RD:3,G:2};
@@ -79,7 +80,13 @@ export function matchupPlan(lg,t,opponent){
  const speed=avg(f.map(p=>p.attrs.spd)),defSpeed=avg(d.map(p=>p.attrs.spd)),goalie=ps.filter(p=>isGoalie(p.pos)).sort((a,b)=>b.ovr-a.ovr)[0];
  return {forecheck:defSpeed<80?'aggressive':'balanced',neutral:speed>85?'trap':'balanced',attack:(goalie?.ovr||80)<81?'shoot':'cycle',reason:`${opponent.abbr}: forward speed ${speed.toFixed(0)}, defense speed ${defSpeed.toFixed(0)}, starting-goalie rating ${goalie?.ovr||'—'}.`,opponent:opponent.id};
 }
-export function gamePlan(lg,t,opponent){return t.autoPlan===false?{forecheck:'balanced',neutral:'balanced',attack:'balanced',...t.gamePlan}:matchupPlan(lg,t,opponent);}
+// The coaches' pick follows the opponent, leaning toward the club's identity (roles.js IDENTITIES:
+// Heavy forechecks and shoots, Speed rushes, Skill cycles, Defensive traps). Unset: no lean.
+export function gamePlan(lg,t,opponent){
+ if(t.autoPlan===false)return {forecheck:'balanced',neutral:'balanced',attack:'balanced',...t.gamePlan};
+ const plan=matchupPlan(lg,t,opponent),lean=IDENTITIES[t.identity]?.plan;
+ return lean?{...plan,...lean,reason:`${plan.reason} ${IDENTITIES[t.identity].name} identity.`}:plan;
+}
 export function prospectReport(lg,t,p){
  const role=p.farmRole||'middle',st=p.farmStats||{},minutes=st.gp?st.toi/st.gp/60:0;
  const nhlRole=projectedRole(lg,t,p),better=t.roster.map(id=>lg.players[id]).filter(q=>q&&q.pos===p.pos).sort((a,b)=>b.ovr-a.ovr);
