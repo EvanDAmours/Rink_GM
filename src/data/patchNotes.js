@@ -302,4 +302,11 @@ export const PATCH_NOTES = [
     "Franchise career leaderboards now cover all 32 clubs, with official NHL totals through 2025-26.",
     "Corrected the Hall of Fame and retired-number banners, including the 2024-2026 inductees and Winnipeg's banners.",
   ] },
+  { v: "1.54", date: "2026-10-22", title: "Deadline Day", notes: [
+    "Trade Deadline Day has been rebuilt: a live clock from 9 AM to the 3 PM ET deadline, an hour-by-hour bar, a deals ticker, and columns for Your Phone, the Deadline Feed, the league-wide Trade Block and Buyers & Sellers.",
+    "Your phone rings: clubs call you on their own. Contenders chase your veterans when you're selling, and rebuilding teams offer veterans who fill your needs when you're buying.",
+    "Every offer shows a fair-deal rating and how many hours it's good for. Offers you ignore get pulled, and the feed reports it.",
+    "The Trade Block shows why each player is available and what his team is asking for, and Inquire opens the trade screen with him loaded.",
+    "AI trades follow the standings, with buyers adding rentals and sellers cashing out veterans. Deadline day usually brings 15-25 deals, and none break the cap or roster limits.",
+  ] },
 ];
