@@ -12,7 +12,7 @@ import { isRFA } from "./players.js";
 import { pickLabel,visibleRatings } from "./draft.js";
 import { conferenceTable } from "./standings.js";
 
-export const DEADLINE_START = 8 * 60; // 8:00 AM ET
+export const DEADLINE_START = 9 * 60; // 9:00 AM ET
 export const DEADLINE_END = 15 * 60; // 3:00 PM ET
 const TICK = 10; // minutes of deadline day per tick
 const WIRE_MAX = 80;
@@ -35,6 +35,7 @@ export function place(league, t) {
   return shared ? `${t.city === "New York" ? "NY" : t.city} ${t.name}` : t.city;
 }
 
+const fullName = (t) => (t ? `${t.city} ${t.name}` : "?");
 const poss = (name) => (name.endsWith("s") ? `${name}'` : `${name}'s`);
 
 function wire(league, item) {
@@ -241,7 +242,7 @@ function buildPackage(league, buyer, seller, pid, { target, max = 3, under = fal
       chosen.push(next);
       total += next.v;
     }
-    if (total < target || total > target * 1.6) return null;
+    if (total < target || total > target * 1.4) return null;
   }
   return {
     ids: chosen.filter((a) => a.kind === "p").map((a) => a.id),
@@ -352,7 +353,9 @@ function findDeal(league, entry, { onlyBuyer = null } = {}) {
     if (capSpace(league, buyer) + outCap - p.cap - callUpCost(league, buyer, pkgRoster, [p.id]) < 0.75) continue;
     if (capSpace(league, seller) + p.cap - outCap - callUpCost(league, seller, [p.id], pkgRoster) < 0.25) continue;
     if (!evaluateTrade(league, offer).accept) continue;
-    return { offer, buyer, seller, p, aGets: [assetLabel(league, p.id, "p")], bGets: labels(league, pkg.ids, pkg.picks), big: isBlockbuster(league, p.ovr, pkg.picks) };
+    // A deal is reported with its value from the seller's side (what came back / what he was worth to them).
+    const ratio = pkg.total / Math.max(0.01, assetValue(league, p.id, seller));
+    return { offer, buyer, seller, p, ratio, rental: p.yrs <= 1, aGets: [assetLabel(league, p.id, "p")], bGets: labels(league, pkg.ids, pkg.picks), big: isBlockbuster(league, p.ovr, pkg.picks) };
   }
   return null;
 }
@@ -366,6 +369,11 @@ function doDeal(league, d) {
   const B = place(league, d.buyer);
   const S = place(league, d.seller);
   const text = `${B} acquire ${d.aGets[0]} from ${S} for ${d.bGets.join(", ")}.`;
+  if (deadlineActive(league)) {
+    const dl = league.deadline;
+    dl.deals = dl.deals || [];
+    dl.deals.push({ min: dl.minute, buyer: d.buyer.id, seller: d.seller.id, pid: d.p.id, name: d.p.name, pos: d.p.pos, ovr: d.p.ovr, age: d.p.age, ratio: Math.round((d.ratio || 1) * 100) / 100, rental: !!d.rental, pieces: d.offer.give.length + d.offer.givePicks.length });
+  }
   wire(league, {
     kind: "trade",
     text,
@@ -394,7 +402,7 @@ function recentlyDeclined(league, tid, pid) {
   return (league.declined || []).some((d) => d.tid === tid && d.pid === pid && d.year === league.year && d.phase === league.phase && Math.abs(clock(league) - d.at) < (league.phase === "freeagency" ? 7 : 14));
 }
 
-function offerFor(league, pid, { unsolicited = false, expMin = null } = {}) {
+function offerFor(league, pid, { unsolicited = false, expMin = null, eager = 1 } = {}) {
   const user = league.teams[league.userTid];
   const p = league.players[pid];
   if (!p || p.tid !== user.id) return null;
@@ -404,11 +412,12 @@ function offerFor(league, pid, { unsolicited = false, expMin = null } = {}) {
     const buyer = league.teams[bid];
     const margin = 1.05;
     // AI GMs open a little under what they'd actually pay.
-    const target = (assetValue(league, pid, buyer) / margin) * randFloat(0.82, 0.98);
+    // A desperate contender at the deadline will pay a little over the odds.
+    const target = (assetValue(league, pid, buyer) / margin) * randFloat(0.82, 0.98) * eager;
     const pkg = buildPackage(league, buyer, user, pid, { target, under: true, valuer: buyer });
     if (!pkg || (!pkg.ids.length && !pkg.picks.length)) continue;
     const offer = { from: user.id, to: buyer.id, give: [pid], givePicks: [], get: pkg.ids, getPicks: pkg.picks };
-    if (!evaluateTrade(league, offer).accept) continue;
+    if (!evaluateTrade(league, eager > 1 ? { ...offer, margin: 1 / eager } : offer).accept) continue;
     const o = {
       id: `o${league.year}${league.day}${Math.floor(rand() * 1e9).toString(36)}`,
       tid: buyer.id,
@@ -421,6 +430,7 @@ function offerFor(league, pid, { unsolicited = false, expMin = null } = {}) {
       unsolicited,
       phase: league.phase,
     };
+    o.fair = Math.round(offerFairness(league, o) * 100) / 100;
     league.offers = league.offers || [];
     league.offers.push(o);
     const text = `${place(league, buyer)} offer ${labels(league, pkg.ids, pkg.picks).join(", ")} for your ${p.name}.`;
@@ -444,10 +454,20 @@ function offerValid(league, o) {
   if (o.expMin != null && dl && dl.year === league.year && !dl.done && dl.minute > o.expMin) return false;
   const user = league.teams[league.userTid];
   const ai = league.teams[o.tid];
+  if ((o.givePicks || []).some((id) => !league.draftPicks.some((pk) => pk.id === id && pk.owner === user.id))) return false;
   return o.give.every((id) => league.players[id]?.tid === user.id) && o.get.every((id) => league.players[id]?.tid === ai.id) && o.getPicks.every((id) => league.draftPicks.some((pk) => pk.id === id && pk.owner === ai.id));
 }
 
 function pruneOffers(league) {
+  const dl = league.deadline;
+  if (deadlineActive(league)) {
+    for (const o of league.offers || []) {
+      if (o.expMin == null || dl.minute <= o.expMin || o.pulled) continue;
+      o.pulled = true;
+      const what = o.sell ? `their offer of ${league.players[o.get[0]]?.name}` : `their offer for ${league.players[o.give[0]]?.name}`;
+      wire(league, { kind: "mine", text: `The ${fullName(league.teams[o.tid])} pulled ${what}.`, tids: [o.tid] });
+    }
+  }
   league.offers = (league.offers || []).filter((o) => offerValid(league, o));
 }
 
@@ -507,7 +527,11 @@ export function declineOffer(league, offerId) {
   league.offers = (league.offers || []).filter((x) => x.id !== offerId);
   if (!o) return;
   // The same team won't come back with the same pitch for a couple of weeks.
-  league.declined = [...(league.declined || []).filter((d) => d.year === league.year && d.phase === league.phase && Math.abs(clock(league) - d.at) < 14), { tid: o.tid, pid: o.give[0], at: clock(league), phase: league.phase, year: league.year }];
+  league.declined = [...(league.declined || []).filter((d) => d.year === league.year && d.phase === league.phase && Math.abs(clock(league) - d.at) < 14), { tid: o.tid, pid: o.sell ? o.get[0] : o.give[0], at: clock(league), phase: league.phase, year: league.year }];
+  if (deadlineActive(league)) {
+    const T = league.teams[o.tid];
+    wire(league, { kind: "mine", text: o.sell ? `You turned down the ${fullName(T)}' offer of ${league.players[o.get[0]]?.name}.` : `You turned down the ${fullName(T)}' offer for ${league.players[o.give[0]]?.name}.`, tids: [o.tid] });
+  }
 }
 
 // ---------- Weekly market ----------
@@ -534,6 +558,11 @@ export function marketWeek(league) {
       const o = offerFor(league, b.pid);
       if (o) made.push(o);
     }
+  }
+  // Clubs also call unprompted, more often as the deadline nears.
+  if (chance(0.08 + 0.3 * pace * pace)) {
+    const o = pitchUser(league);
+    if (o) made.push(o);
   }
   offerSummary(league, made);
   // A rumour or two for the wire.
@@ -646,7 +675,7 @@ export function deadlineTick(league, minutes = TICK) {
     }
     resolveTalks(league);
     // Phones ring all day; the last hour is a scramble.
-    const pTrade = 0.35 + 0.35 * progress * progress + (progress > 0.86 ? 0.5 : 0);
+    const pTrade = 0.42 + 0.35 * progress * progress + (progress > 0.86 ? 0.5 : 0);
     for (let rolls = progress > 0.86 ? 3 : 1; rolls > 0; rolls--) {
       if (!chance(Math.min(0.95, pTrade))) continue;
       const busy = new Set(dl.pending.map((x) => x.pid));
@@ -669,14 +698,12 @@ export function deadlineTick(league, minutes = TICK) {
       const pool = league.block.filter((b) => b.tid !== league.userTid && b.interest?.length);
       if (pool.length) rumor(league, pick(pool));
     }
+    // Your phone: offers for players you listed, and clubs calling on their own (offers are
+    // good for one to two hours).
+    const expMin = Math.min(DEADLINE_END, dl.minute + randInt(6, 12) * TICK);
     const mine = league.block.filter((b) => b.tid === league.userTid);
-    if (mine.length && chance(0.12 + 0.05 * mine.length)) offerFor(league, pick(mine).pid, { expMin: dl.minute + 60 });
-    // Contenders also call about your pending free agents.
-    if (chance(0.05)) {
-      const user = league.teams[league.userTid];
-      const vets = players(league, user.roster).filter((p) => p.age >= 27 && p.yrs <= 1 && p.ovr >= 78 && !onBlock(league, p.id));
-      if (vets.length) offerFor(league, pick(vets).id, { unsolicited: true, expMin: dl.minute + 60 });
-    }
+    if (mine.length && chance(0.1 + 0.04 * mine.length)) offerFor(league, pick(mine).pid, { expMin, eager: randFloat(0.98, 1.08) });
+    if (dl.minute < DEADLINE_END && chance(0.16 + 0.18 * progress)) pitchUser(league, { expMin });
     if (dl.minute >= DEADLINE_END) finishDeadline(league);
   }
   return dl;
@@ -730,4 +757,114 @@ export function marketStance(league) {
     }
   }
   return { buyers: rows.filter((r) => r.buyer).sort((a, b) => b.gap - a.gap), sellers: rows.filter((r) => !r.buyer).sort((a, b) => a.gap - b.gap) };
+}
+
+// ---------- Calls to your phone ----------
+
+// How an offer looks from your side: what you get over what you give, valued by your club
+// (1 = even). "Fair deal" is within about 10% either way.
+export function offerFairness(league, o) {
+  const user = league.teams[league.userTid];
+  const c = isContending(league, user);
+  const pv = (ids = []) => ids.reduce((s, id) => { const pk = league.draftPicks.find((x) => x.id === id); return s + (pk ? pickValue(league, pk, { contending: c }) : 0); }, 0);
+  const get = o.get.reduce((s, id) => s + assetValue(league, id, user), 0) + pv(o.getPicks);
+  const give = o.give.reduce((s, id) => s + assetValue(league, id, user), 0) + pv(o.givePicks);
+  return give > 0 ? get / give : 2;
+}
+export function fairLabel(r) {
+  if (r == null) return "";
+  return r >= 1.12 ? "They're overpaying" : r >= 0.9 ? "Fair deal" : r >= 0.75 ? "A bit light" : "Lowball";
+}
+
+// Is your club buying or selling? The same test the AI uses on itself.
+export function userStance(league) {
+  return isContending(league, league.teams[league.userTid]) ? "buy" : "sell";
+}
+
+// An AI club calls you unprompted, the way it would in real life: contenders call about your
+// veterans (most of all your pending free agents if you're out of the race), and selling clubs
+// call a contender with a veteran who fills one of its needs, asking for picks and prospects.
+// Returns the new offer or null.
+export function pitchUser(league, { expMin = null } = {}) {
+  if (league.phase !== "regular" || tradingClosed(league)) return null;
+  const user = league.teams[league.userTid];
+  const live = userOffers(league);
+  if (live.length >= 4) return null;
+  const buying = userStance(league) === "buy";
+  const atDeadline = deadlineActive(league);
+  if (!buying || chance(0.3)) {
+    const top = new Set(players(league, user.roster).sort((a, b) => b.ovr - a.ovr).slice(0, 2).map((p) => p.id));
+    const cands = players(league, user.roster).filter((p) => !top.has(p.id) && p.ovr >= 74 && p.age >= (buying ? 24 : 26) && p.injury <= 0 && !p.waiverPending && !isFranchiseGoalie(league, user, p) && p.clause?.type !== "NMC" && !live.some((o) => o.give.includes(p.id)));
+    if (cands.length) {
+    for (let tries = 0; tries < 3 && cands.length; tries++) {
+      const p = weighted(cands, (q) => Math.exp((q.ovr - 78) / 6) * (q.yrs <= 1 ? (buying ? 1.2 : 2) : 1));
+      cands.splice(cands.indexOf(p), 1);
+      const o = offerFor(league, p.id, { unsolicited: true, expMin, eager: atDeadline ? randFloat(0.95, 1.06) : randFloat(0.92, 1.0) });
+      if (o) return o;
+    }
+    }
+  }
+  if (!buying && !chance(0.2)) return null;
+  const needs = new Set(positionalNeeds(league, user).filter((n) => n.score >= 20).map((n) => n.pos));
+  const pool = (league.block || []).filter((b) => {
+    const p = league.players[b.pid];
+    return b.tid !== user.id && p && p.tid === b.tid && p.ovr >= 76 && (SELLER_REASONS.has(b.reason) || b.reason === "Requested a trade") && !isContending(league, league.teams[b.tid]) && !live.some((o) => o.get.includes(b.pid)) && !recentlyDeclined(league, b.tid, b.pid);
+  });
+  for (let tries = 0; tries < 3 && pool.length; tries++) {
+    const b = weighted(pool, (x) => Math.exp((league.players[x.pid].ovr - 78) / 6) * (needs.has(league.players[x.pid].pos) ? 3 : 1));
+    pool.splice(pool.indexOf(b), 1);
+    const o = sellerCall(league, b, expMin);
+    if (o) return o;
+  }
+  return null;
+}
+
+// A selling club offers you one of its players for picks, prospects and young players.
+function sellerCall(league, b, expMin) {
+  const user = league.teams[league.userTid];
+  const seller = league.teams[b.tid];
+  const p = league.players[b.pid];
+  if (tooBusy(league, seller)) return null;
+  const target = assetValue(league, p.id, seller) * randFloat(1.0, 1.08);
+  const pkg = buildPackage(league, user, seller, p.id, { target, valuer: seller });
+  if (!pkg || (!pkg.ids.length && !pkg.picks.length)) return null;
+  const offer = { from: user.id, to: seller.id, give: pkg.ids, givePicks: pkg.picks, get: [p.id], getPicks: [] };
+  // No room under your cap: they'll keep half his salary (if the retention rules allow).
+  const outCap = pkg.ids.filter((id) => user.roster.includes(id)).reduce((s, id) => s + league.players[id].cap, 0);
+  if (capSpace(league, user) + outCap - p.cap < 0.1) offer.getRetention = { [p.id]: 0.5 };
+  if (capSpace(league, user) + outCap - p.cap * (offer.getRetention ? 0.5 : 1) < 0.1) return null;
+  if (!evaluateTrade(league, { ...offer, margin: 1 }).accept) return null;
+  const o = { id: `o${league.year}${league.day}${Math.floor(rand() * 1e9).toString(36)}`, tid: seller.id, ...offer, day: league.day, expDay: league.day + 5, expFa: null, expMin, unsolicited: true, sell: true, phase: league.phase };
+  o.fair = Math.round(offerFairness(league, o) * 100) / 100;
+  league.offers = league.offers || [];
+  league.offers.push(o);
+  wire(league, { kind: "offer", text: `${place(league, seller)} offer ${assetLabel(league, p.id, "p")}${offer.getRetention ? " (50% retained)" : ""} for ${labels(league, pkg.ids, pkg.picks).join(", ")}.`, tids: [seller.id, user.id], offerId: o.id });
+  return o;
+}
+
+// ---------- The deadline desk's trade block ----------
+
+// What a selling club wants back, in draft-pick terms.
+export function askingPrice(league, p, t) {
+  const v = assetValue(league, p.id, t);
+  const c = isContending(league, t);
+  const first = pickValue(league, { year: league.year + 1, round: 1, orig: -1 }, { contending: c });
+  const second = pickValue(league, { year: league.year + 1, round: 2 }, { contending: c });
+  const third = pickValue(league, { year: league.year + 1, round: 3 }, { contending: c });
+  return v >= first * 1.6 ? "asking a 1st and a prospect" : v >= first * 0.75 ? "asking a 1st" : v >= second * 0.85 ? "asking a 2nd" : v >= third * 0.85 ? "asking a 3rd" : "asking a mid-round pick";
+}
+
+const CONTEXT = { Rebuilding: "Rebuilding: veterans available", "Pending UFA": "Expiring contract", "Cap crunch": "Cap crunch: shedding salary", "Surplus in goal": "Surplus in goal", "Wants a bigger role": "Wants a bigger role", "Requested a trade": "Requested a trade" };
+
+// Everyone available from other clubs, best first: [{ pid, tid, p, t, why, asking }].
+export function deadlineBoard(league) {
+  const out = [];
+  for (const b of league.block || []) {
+    const p = league.players[b.pid];
+    const t = league.teams[b.tid];
+    if (!p || !t || b.tid === league.userTid || p.tid !== b.tid) continue;
+    const why = !isContending(league, t) && SELLER_REASONS.has(b.reason) ? "Rebuilding: veterans available" : CONTEXT[b.reason] || b.reason;
+    out.push({ pid: p.id, tid: t.id, p, t, why, asking: askingPrice(league, p, t), interest: b.interest || [] });
+  }
+  return out.sort((a, b) => b.p.ovr - a.p.ovr || a.p.name.localeCompare(b.p.name));
 }
