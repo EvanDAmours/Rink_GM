@@ -291,4 +291,10 @@ export const PATCH_NOTES = [
     "Real all-time club leaders for 21 clubs in the Record Book. Passing a club legend or breaking a record makes the news, and Record Watch tracks who's on pace.",
     "New GM Legacy page ranks you against great NHL general managers, every five seasons a documentary tells your era's story, and League History and Transactions are easier to browse.",
   ] },
+  { v: "1.52", date: "2026-10-22", title: "Light Mode", notes: [
+    "Light mode: pick Light, Dark or Auto (follows your device) in Settings, or in the More menu on phones. It's saved on this device.",
+    "Display size: Auto, Laptop or Desktop scales the whole game to fit your screen. Phones are never scaled.",
+    "On phones, swipe sideways to move between the sections of a screen, and the rink stays pinned at the top during live games.",
+    "The tour now points at the bottom bar and the More button on phones.",
+  ] },
 ];
