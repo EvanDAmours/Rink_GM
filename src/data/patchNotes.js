@@ -309,4 +309,10 @@ export const PATCH_NOTES = [
     "The Trade Block shows why each player is available and what his team is asking for, and Inquire opens the trade screen with him loaded.",
     "AI trades follow the standings, with buyers adding rentals and sellers cashing out veterans. Deadline day usually brings 15-25 deals, and none break the cap or roster limits.",
   ] },
+  { v: "1.55", date: "2026-10-22", title: "July 1 Frenzy", notes: [
+    "Free Agent Frenzy: July 1 now plays out live from noon to midnight, with a running clock, a signings ticker and a feed of signings and rumours.",
+    "Stars sign in the first hours after bidding wars. Contenders chase veterans on short deals, and rebuilding clubs give young players longer terms.",
+    "If a rival tops your offer, his agent calls before he signs, so you can beat it or let him go. Clubs may also call with trade offers.",
+    "The top free agents board shows each player's ask, his interest in your club, who else is after him and whether you're leading, beside your cap room, needs and the league's big spenders.",
+  ] },
 ];
