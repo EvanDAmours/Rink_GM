@@ -217,6 +217,9 @@ export function applyAllStarGains(league, rec = league.allNHL) {
         if (Math.abs(drift) < 1) break;
         progressAttributes(p, -drift);
       }
+      // Attributes at their caps can't absorb the gain; carry the rest on the offset (as Prospect Watch does).
+      const left = before + gain - p.ovr;
+      if (left) { p.ovrOffset = (p.ovrOffset || 0) + left; p.ovr = before + gain; }
       if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
       p.peak = Math.max(p.peak || 0, p.ovr);
     }
