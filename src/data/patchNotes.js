@@ -297,4 +297,9 @@ export const PATCH_NOTES = [
     "On phones, swipe sideways to move between the sections of a screen, and the rink stays pinned at the top during live games.",
     "The tour now points at the bottom bar and the More button on phones.",
   ] },
+  { v: "1.53", date: "2026-10-22", title: "Getting the Facts Right", notes: [
+    "Fixed incorrect birth years for 23 real players and corrected Roman Kantserov's name. Existing saves are updated automatically.",
+    "Franchise career leaderboards now cover all 32 clubs, with official NHL totals through 2025-26.",
+    "Corrected the Hall of Fame and retired-number banners, including the 2024-2026 inductees and Winnipeg's banners.",
+  ] },
 ];
