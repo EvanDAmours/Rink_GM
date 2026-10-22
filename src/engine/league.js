@@ -6,6 +6,7 @@ import {accrueCap, startCapLedger} from './capAccounting.js';
 import {commitmentWeek} from './playerCommitments.js';
 import {recordReport} from './matchReports.js';
 import {upgradeVerifiedData} from './verifiedData.js';
+import { fixRosterBios } from "./rosterBioFix.js";
 import {setInjuriesEnabled} from './injuries.js';
 import rosterFile from "../data/nhl27-rosters.json" with { type: "json" };
 import { CALDER_SEASON, CALDER_ROOKIES_2026, CALDER_GRADUATES_2026 } from "../data/calderRookies2026.js";
@@ -53,6 +54,7 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
   const year = FIRST_SEASON;
   const league = {
     version: SAVE_VERSION,
+    rosterBioFix: 1,
     game: "rink-gm",
     newsVisibilityVersion: 1,
     mode,
@@ -502,7 +504,7 @@ function migrateLeague(l) {
   migrateScouting(l);
   ensureHockeyRules(l);
   ensureFranchise(l);
-  ensureDynasty(l);upgradeVerifiedData(l);ensureUniforms(l);
+  fixRosterBios(l);ensureDynasty(l);upgradeVerifiedData(l);ensureUniforms(l);
   ensureRecords(l);
   ensureAreaScouting(l);
   ensureFutureClasses(l);

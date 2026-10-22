@@ -33,8 +33,8 @@ export const CALDER_ROOKIES_2026 = [
   "Charles-Alexis Legault",
   // CGY
   "Samuel Honzek",
-  // CHI (the roster file lists Roman Kantserov, the Blackhawks' 2023 second-rounder, as "Nikita")
-  "Anton Frondell", "Nikita Kantserov",
+  // CHI
+  "Anton Frondell", "Roman Kantserov",
   // COL
   "T.J. Hughes",
   // DAL

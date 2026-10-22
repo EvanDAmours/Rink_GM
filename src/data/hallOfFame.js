@@ -4,12 +4,17 @@
 // predecessor is not carried: Utah started fresh in 2024). League-wide 99 is retired for everyone.
 // Compiled October 2026 from the clubs' retired-number listings on NHL.com and the Hockey Hall of
 // Fame's Legends member list (hhof.com); retired numbers are current through the 2025-26 season.
+// Re-verified 2026-10-22: HHOF classes 2024 (thescore/NHL.com), 2025 (thescore) and 2026 (hhof.com
+// release, elected June 22, 2026). Bergeron's #37 goes up in 2026-27, so it isn't listed yet. The
+// current Jets have retired no numbers (Hawerchuk's 10 and Steen's 25 were honoured by Jets 1.0 /
+// the Coyotes); Winnipeg took over the original Jets' records in Sept 2026, so its Hall list keeps
+// Jets 1.0 legends.
 // Each retired number: [number, name]. Each Hall of Famer: [name, position, class year].
 export const HALL_SOURCES = ["https://www.hhof.com/LegendsOfHockey/jsp/LegendsMember.jsp", "https://www.nhl.com/news/nhl-retired-numbers"];
 export const LEAGUE_RETIRED = [[99, "Wayne Gretzky"]];
 export const RETIRED_NUMBERS = {
   ANA: [[8, "Teemu Selanne"], [9, "Paul Kariya"], [27, "Scott Niedermayer"]],
-  BOS: [[2, "Eddie Shore"], [3, "Lionel Hitchman"], [4, "Bobby Orr"], [5, "Dit Clapper"], [7, "Phil Esposito"], [8, "Cam Neely"], [9, "Johnny Bucyk"], [15, "Milt Schmidt"], [16, "Rick Middleton"], [22, "Willie O'Ree"], [24, "Terry O'Reilly"], [33, "Zdeno Chara"], [37, "Patrice Bergeron"], [77, "Ray Bourque"]],
+  BOS: [[2, "Eddie Shore"], [3, "Lionel Hitchman"], [4, "Bobby Orr"], [5, "Dit Clapper"], [7, "Phil Esposito"], [8, "Cam Neely"], [9, "Johnny Bucyk"], [15, "Milt Schmidt"], [16, "Rick Middleton"], [22, "Willie O'Ree"], [24, "Terry O'Reilly"], [33, "Zdeno Chara"], [77, "Ray Bourque"]],
   BUF: [[2, "Tim Horton"], [7, "Rick Martin"], [11, "Gilbert Perreault"], [14, "Rene Robert"], [16, "Pat LaFontaine"], [18, "Danny Gare"], [39, "Dominik Hasek"]],
   CGY: [[2, "Al MacInnis"], [9, "Lanny McDonald"], [12, "Jarome Iginla"], [30, "Mike Vernon"], [34, "Miikka Kiprusoff"]],
   CAR: [[2, "Glen Wesley"], [10, "Ron Francis"], [17, "Rod Brind'Amour"]],
@@ -21,7 +26,7 @@ export const RETIRED_NUMBERS = {
   EDM: [[3, "Al Hamilton"], [7, "Paul Coffey"], [9, "Glenn Anderson"], [11, "Mark Messier"], [17, "Jari Kurri"], [31, "Grant Fuhr"], [99, "Wayne Gretzky"]],
   FLA: [[1, "Roberto Luongo"], [93, "Bill Torrey"]],
   LAK: [[4, "Rob Blake"], [16, "Marcel Dionne"], [18, "Dave Taylor"], [20, "Luc Robitaille"], [23, "Dustin Brown"], [30, "Rogie Vachon"], [99, "Wayne Gretzky"]],
-  MIN: [[1, "Fans"]],
+  MIN: [[1, "Fans"], [9, "Mikko Koivu"]],
   MTL: [[1, "Jacques Plante"], [2, "Doug Harvey"], [3, "Butch Bouchard"], [4, "Jean Beliveau"], [5, "Bernie Geoffrion / Guy Lapointe"], [7, "Howie Morenz"], [9, "Maurice Richard"], [10, "Guy Lafleur"], [12, "Dickie Moore / Yvan Cournoyer"], [16, "Elmer Lach / Henri Richard"], [18, "Serge Savard"], [19, "Larry Robinson"], [23, "Bob Gainey"], [29, "Ken Dryden"], [33, "Patrick Roy"]],
   NSH: [[35, "Pekka Rinne"]],
   NJD: [[3, "Ken Daneyko"], [4, "Scott Stevens"], [26, "Patrik Elias"], [27, "Scott Niedermayer"], [30, "Martin Brodeur"]],
@@ -39,15 +44,15 @@ export const RETIRED_NUMBERS = {
   VAN: [[10, "Pavel Bure"], [12, "Stan Smyl"], [16, "Trevor Linden"], [19, "Markus Naslund"], [22, "Daniel Sedin"], [33, "Henrik Sedin"]],
   VGK: [[58, "Fans (the 58)"]],
   WSH: [[5, "Rod Langway"], [7, "Yvon Labre"], [11, "Mike Gartner"], [32, "Dale Hunter"]],
-  WPG: [[7, "Keith Tkachuk"], [10, "Dale Hawerchuk"], [25, "Thomas Steen"]],
+  WPG: [],
 };
 export const HALL_OF_FAME = {
   ANA: [["Teemu Selanne", "RW", 2017], ["Paul Kariya", "LW", 2017], ["Scott Niedermayer", "D", 2013], ["Chris Pronger", "D", 2015]],
-  BOS: [["Eddie Shore", "D", 1947], ["Milt Schmidt", "C", 1961], ["Bobby Orr", "D", 1979], ["Johnny Bucyk", "LW", 1981], ["Phil Esposito", "C", 1984], ["Ray Bourque", "D", 2004], ["Cam Neely", "RW", 2005], ["Willie O'Ree", "Builder", 2018], ["Zdeno Chara", "D", 2025]],
+  BOS: [["Eddie Shore", "D", 1947], ["Milt Schmidt", "C", 1961], ["Bobby Orr", "D", 1979], ["Johnny Bucyk", "LW", 1981], ["Phil Esposito", "C", 1984], ["Ray Bourque", "D", 2004], ["Cam Neely", "RW", 2005], ["Willie O'Ree", "Builder", 2018], ["Zdeno Chara", "D", 2025], ["Patrice Bergeron", "C", 2026]],
   BUF: [["Gilbert Perreault", "C", 1990], ["Dominik Hasek", "G", 2014], ["Pat LaFontaine", "C", 2003], ["Dave Andreychuk", "LW", 2017], ["Alexander Mogilny", "RW", 2025]],
   CGY: [["Lanny McDonald", "RW", 1992], ["Joe Mullen", "RW", 2000], ["Al MacInnis", "D", 2007], ["Jarome Iginla", "RW", 2020], ["Mike Vernon", "G", 2023]],
-  CAR: [["Ron Francis", "C", 2007], ["Rod Brind'Amour", "C", 2025]],
-  CHI: [["Bobby Hull", "LW", 1983], ["Stan Mikita", "C", 1983], ["Glenn Hall", "G", 1975], ["Tony Esposito", "G", 1988], ["Denis Savard", "C", 2000], ["Chris Chelios", "D", 2013], ["Marian Hossa", "RW", 2020]],
+  CAR: [["Ron Francis", "C", 2007]],
+  CHI: [["Bobby Hull", "LW", 1983], ["Stan Mikita", "C", 1983], ["Glenn Hall", "G", 1975], ["Tony Esposito", "G", 1988], ["Denis Savard", "C", 2000], ["Chris Chelios", "D", 2013], ["Marian Hossa", "RW", 2020], ["Jeremy Roenick", "C", 2024], ["Duncan Keith", "D", 2025]],
   COL: [["Peter Stastny", "C", 1998], ["Michel Goulet", "LW", 1998], ["Patrick Roy", "G", 2006], ["Joe Sakic", "C", 2012], ["Peter Forsberg", "C", 2014]],
   CBJ: [],
   DAL: [["Mike Modano", "C", 2014], ["Sergei Zubov", "D", 2019], ["Joe Nieuwendyk", "C", 2011], ["Ed Belfour", "G", 2011]],
@@ -56,24 +61,24 @@ export const HALL_OF_FAME = {
   FLA: [["Roberto Luongo", "G", 2022]],
   LAK: [["Marcel Dionne", "C", 1992], ["Luc Robitaille", "LW", 2009], ["Rob Blake", "D", 2014], ["Rogie Vachon", "G", 2016]],
   MIN: [],
-  MTL: [["Howie Morenz", "C", 1945], ["Maurice Richard", "RW", 1961], ["Jean Beliveau", "C", 1972], ["Jacques Plante", "G", 1978], ["Henri Richard", "C", 1979], ["Ken Dryden", "G", 1983], ["Guy Lafleur", "RW", 1988], ["Larry Robinson", "D", 1995], ["Patrick Roy", "G", 2006]],
-  NSH: [],
-  NJD: [["Scott Stevens", "D", 2007], ["Martin Brodeur", "G", 2018], ["Scott Niedermayer", "D", 2013], ["Patrik Elias", "LW", 2025]],
+  MTL: [["Howie Morenz", "C", 1945], ["Maurice Richard", "RW", 1961], ["Jean Beliveau", "C", 1972], ["Jacques Plante", "G", 1978], ["Henri Richard", "C", 1979], ["Ken Dryden", "G", 1983], ["Guy Lafleur", "RW", 1988], ["Larry Robinson", "D", 1995], ["Patrick Roy", "G", 2006], ["Carey Price", "G", 2026]],
+  NSH: [["Shea Weber", "D", 2024], ["Pekka Rinne", "G", 2026]],
+  NJD: [["Scott Stevens", "D", 2007], ["Martin Brodeur", "G", 2018], ["Scott Niedermayer", "D", 2013]],
   NYI: [["Denis Potvin", "D", 1991], ["Mike Bossy", "RW", 1991], ["Billy Smith", "G", 1993], ["Bryan Trottier", "C", 1997], ["Clark Gillies", "LW", 2002]],
   NYR: [["Rod Gilbert", "RW", 1982], ["Jean Ratelle", "C", 1985], ["Brian Leetch", "D", 2009], ["Mark Messier", "C", 2007], ["Henrik Lundqvist", "G", 2023]],
   OTT: [["Daniel Alfredsson", "RW", 2022], ["Dominik Hasek", "G", 2014]],
   PHI: [["Bobby Clarke", "C", 1987], ["Bernie Parent", "G", 1984], ["Bill Barber", "LW", 1990], ["Mark Howe", "D", 2011], ["Eric Lindros", "C", 2016]],
-  PIT: [["Mario Lemieux", "C", 1997], ["Jaromir Jagr", "RW", 2025], ["Ron Francis", "C", 2007], ["Paul Coffey", "D", 2004]],
+  PIT: [["Mario Lemieux", "C", 1997], ["Ron Francis", "C", 2007], ["Paul Coffey", "D", 2004]],
   SJS: [["Joe Thornton", "C", 2025]],
   SEA: [],
-  STL: [["Brett Hull", "RW", 2009], ["Bernie Federko", "C", 2002], ["Al MacInnis", "D", 2007], ["Chris Pronger", "D", 2015]],
-  TBL: [["Martin St. Louis", "RW", 2018], ["Vincent Lecavalier", "C", 2018]],
+  STL: [["Brett Hull", "RW", 2009], ["Bernie Federko", "C", 2002], ["Al MacInnis", "D", 2007], ["Chris Pronger", "D", 2015], ["Keith Tkachuk", "LW", 2026]],
+  TBL: [["Martin St. Louis", "RW", 2018]],
   TOR: [["Syl Apps", "C", 1961], ["Ted Kennedy", "C", 1966], ["Dave Keon", "C", 1986], ["Darryl Sittler", "C", 1989], ["Borje Salming", "D", 1996], ["Doug Gilmour", "C", 2011], ["Mats Sundin", "C", 2012]],
   UTA: [],
   VAN: [["Pavel Bure", "RW", 2012], ["Daniel Sedin", "LW", 2022], ["Henrik Sedin", "C", 2022], ["Roberto Luongo", "G", 2022]],
   VGK: [],
   WSH: [["Mike Gartner", "RW", 2001], ["Rod Langway", "D", 2002], ["Scott Stevens", "D", 2007], ["Alex Ovechkin", "LW", null]],
-  WPG: [["Dale Hawerchuk", "C", 2001], ["Teemu Selanne", "RW", 2017]],
+  WPG: [["Dale Hawerchuk", "C", 2001], ["Teemu Selanne", "RW", 2017], ["Keith Tkachuk", "LW", 2026]],
 };
 // Ovechkin is listed for Washington as an active legend; the class is unset until he's inducted.
 HALL_OF_FAME.WSH = HALL_OF_FAME.WSH.filter((h) => h[2]);
