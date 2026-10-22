@@ -1636,3 +1636,12 @@ body, .app { background: #0f172a !important; font-size: 14px; }
 .app .modal.rk-cmd { width: min(620px, 100%); }
 .app .modal.rk-cmd .mhead { padding: 12px 16px; }
 .app .modal.rk-cmd .modal-title { font-size: 18px; }
+
+/* Theme and Display size pickers (Settings, as in the football game's menu switches) */
+.rk-seg { display: inline-flex; gap: 2px; background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 2px; flex: 0 0 auto; }
+.app .rk-seg button, .rk-seg button { background: transparent; border: 0; color: #94a3b8; font-size: 12px; font-weight: 800; padding: 5px 12px; border-radius: 6px; min-height: 0; }
+.app .rk-seg button:hover:not(:disabled) { background: #1e293b; color: #e0e6f0; }
+.app .rk-seg button.on, .rk-seg button.on { background: #3b82f6; color: #fff; }
+.rk-look-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #1e293b; }
+.rk-look-row > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+@media (max-width: 760px) { .rk-look-row { flex-direction: column; align-items: flex-start; } }

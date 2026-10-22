@@ -1,0 +1,2 @@
+/* Hand-made light-mode touches that the generated light.css cannot infer. */
+html.light .app button.gg-advice:not(.keep-dark *) b { color: #0f172a; }

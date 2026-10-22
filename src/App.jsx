@@ -67,6 +67,7 @@ import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, Development
 import TrophyRoom from "./ui/TrophyRoom.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
 import { usePhone, desktopUrl, phoneUrl } from "./ui/mobile.js";
+import { applyTheme, getTheme } from "./ui/theme.js";
 import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
@@ -108,6 +109,7 @@ export default function App({ resume = false }) {
   const phoneRef = useRef(phone);
   phoneRef.current = phone;
   const [moreOpen, setMoreOpen] = useState(false);
+  const [themeNow, setThemeNow] = useState(getTheme);
   // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
   const go = useCallback((id, k) => { const [t, kk] = (phoneRef.current && PHONE_ALIAS[id]) || ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); setMoreOpen(false); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
@@ -726,6 +728,7 @@ export default function App({ resume = false }) {
     { label: "💾 Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
     { label: injOn ? "🩹 Injuries: on (tap to turn off)" : "🩹 Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
     { label: "✈️ Offline play", onClick: () => { go("settings"); setTimeout(() => document.getElementById("rk-offline")?.scrollIntoView({ block: "start" }), 120); } },
+    { label: themeNow === "light" ? "🌙 Theme: light (tap for dark)" : themeNow === "dark" ? "☀️ Theme: dark (tap for auto)" : "🌗 Theme: auto (tap for light)", onClick: () => { setThemeNow(applyTheme(themeNow === "light" ? "dark" : themeNow === "dark" ? "auto" : "light")); } },
     { label: "🧭 Take the tour", onClick: () => { setMoreOpen(false); setTour("run"); } },
     { label: "📝 Game updates", onClick: () => go("updates") },
     { label: "🖥 Computer layout", onClick: () => { flushSave(); window.location.href = desktopUrl(); } },
