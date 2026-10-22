@@ -1,7 +1,10 @@
 import {visibleRatings} from '../engine/draft.js';
 import React, { useEffect, useRef, useState } from "react";
 import { useGame, PlayerName, TeamBadge, money } from "./common.jsx";
-import { startDeadline, deadlineTick, deadlinePending, userOffers, toggleUserBlock, onBlock, fmtClock, marketStance, DEADLINE_START, DEADLINE_END } from "../engine/market.js";
+import { startDeadline, deadlineTick, deadlinePending, userOffers, toggleUserBlock, onBlock, fmtClock, marketStance, deadlineBoard, acceptOffer, declineOffer, fairLabel, DEADLINE_START, DEADLINE_END } from "../engine/market.js";
+import { teamNeeds } from "../engine/teamPlanning.js";
+import { capSpace } from "../engine/roster.js";
+import { pickLabel } from "../engine/draft.js";
 import { dayToDate } from "../engine/schedule.js";
 import { OfferCard, WireItem, BlockList } from "./TradeBlockPage.jsx";
 import { usePhone } from "./mobile.js";
@@ -52,12 +55,154 @@ function Stance({ league }) {
   );
 }
 
+const HOURS = [9, 10, 11, 12, 13, 14, 15];
+const hourLabel = (h) => `${((h + 11) % 12) + 1} ${h >= 12 ? "PM" : "AM"}`;
+const full = (t) => (t ? `${t.city} ${t.name}` : "?");
+const recOf = (t) => `${t.rec.w}-${t.rec.l}-${t.rec.otl ?? 0}`;
+const TAGS = { trade: ["TRADE", "trade"], rumor: ["RUMOR", "rumor"], offer: ["YOUR PHONE", "phone"], mine: ["YOUR PHONE", "phone"], info: ["NEWS", "news"], done: ["FINAL", "news"] };
+const POSF = ["All positions", "C", "LW", "RW", "LD", "RD", "G"];
+
+// The hour-by-hour track: past hours red, the current one white, the rest dim.
+function HourTrack({ minute }) {
+  return (
+    <div className="dd-track">
+      {HOURS.map((h) => {
+        const st = minute >= (h + 1) * 60 ? "past" : minute >= h * 60 ? "now" : "";
+        return (
+          <div key={h} className={`dd-seg ${st}`}>
+            <i />
+            <span>{hourLabel(h)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Asset({ league, id, pick }) {
+  if (pick) return <div className="dd-asset"><b>{pickLabel(league, league.draftPicks.find((pk) => pk.id === id)) || "Draft pick"}</b></div>;
+  const p = league.players[id];
+  if (!p) return null;
+  return (
+    <div className="dd-asset">
+      <div><span className="posbadge">{p.pos}</span> <PlayerName p={p} /> <b className="dd-ovr">{visibleRatings(league, p).ovr}</b></div>
+      <div className="muted small">Age {p.age} · {money(p.cap)}{p.yrs <= 1 ? " · expiring" : ` × ${p.yrs}`}</div>
+    </div>
+  );
+}
+
+function PhoneOffer({ o, minute }) {
+  const { league, commit, toast } = useGame();
+  const t = league.teams[o.tid];
+  const hrs = o.expMin != null ? Math.max(1, Math.ceil((Math.min(o.expMin, DEADLINE_END) - minute) / 60)) : null;
+  const fair = fairLabel(o.fair);
+  return (
+    <div className="dd-offer">
+      <div className="dd-offer-h">
+        <TeamBadge team={t} size={30} />
+        <div className="dd-offer-who">
+          <b>{full(t)}</b>
+          <div className="muted small">{recOf(t)}{hrs != null ? ` · offer good for ${hrs} more hour${hrs === 1 ? "" : "s"}` : ""}</div>
+        </div>
+        {fair && <span className={`dd-fair${o.fair >= 1.12 ? " over" : o.fair < 0.9 ? " low" : ""}`}>{fair}</span>}
+      </div>
+      <div className="dd-offer-sides">
+        <div><div className="dd-lab">They want</div>{o.give.map((id) => <Asset key={id} league={league} id={id} />)}{(o.givePicks || []).map((id) => <Asset key={id} league={league} id={id} pick />)}</div>
+        <div><div className="dd-lab">You get</div>{o.get.map((id) => <Asset key={id} league={league} id={id} />)}{(o.getPicks || []).map((id) => <Asset key={id} league={league} id={id} pick />)}{o.getRetention && <div className="muted small">They keep 50% of his salary.</div>}</div>
+      </div>
+      <div className="dd-offer-btns">
+        <button className="dd-accept" onClick={() => { const r = acceptOffer(league, o.id); toast(r.msg, 4500); commit(); }}>Accept</button>
+        <button className="dd-decline" onClick={() => { declineOffer(league, o.id); commit(); }}>Decline</button>
+      </div>
+    </div>
+  );
+}
+
+function FeedRow({ league, w }) {
+  const [tag, cls] = w.big && w.kind === "trade" ? ["BREAKING", "big"] : TAGS[w.kind] || TAGS.info;
+  const tid = w.a ?? w.tids?.[0];
+  const t = tid != null ? league.teams[tid] : null;
+  return (
+    <div className={`dd-feed-row${w.kind === "trade" ? " trade" : ""}${w.big ? " big" : ""}`}>
+      <div className="dd-feed-t">{w.min != null ? fmtClock(w.min).replace(":00", "") : ""}</div>
+      {t ? <TeamBadge team={t} size={24} /> : <span style={{ width: 24, flex: "none" }} />}
+      <div className="dd-feed-x"><span className={`dd-tag ${cls}`}>{tag}</span>{w.text}</div>
+    </div>
+  );
+}
+
+function BoardPanel({ league, closed }) {
+  const { proposeTradeFor } = useGame();
+  const user = league.teams[league.userTid];
+  const needs = teamNeeds(league, user).filter((n) => n.score >= 20).slice(0, 4).map((n) => n.pos);
+  const [mode, setMode] = useState("needs");
+  const [pos, setPos] = useState("All positions");
+  if (closed) return <div className="muted small">The deadline has passed: the block reopens after the playoffs.</div>;
+  const all = deadlineBoard(league);
+  const rows = all.filter((r) => (pos === "All positions" ? mode === "all" || !needs.length || needs.includes(r.p.pos) : r.p.pos === pos));
+  return (
+    <>
+      <div className="dd-filters">
+        <select value={mode} onChange={(e) => { setMode(e.target.value); setPos("All positions"); }} aria-label="Filter by need">
+          <option value="needs">Your needs ({needs.join(", ") || "none"})</option>
+          <option value="all">Everyone</option>
+        </select>
+        <select value={pos} onChange={(e) => setPos(e.target.value)} aria-label="Position">{POSF.map((x) => <option key={x}>{x}</option>)}</select>
+      </div>
+      <div className="muted small dd-count">{rows.length} available</div>
+      <div className="dd-scroll">
+        {rows.slice(0, 40).map((r) => (
+          <div key={r.pid} className="dd-brow">
+            <TeamBadge team={r.t} size={26} />
+            <div className="dd-bwho">
+              <div><span className="posbadge">{r.p.pos}</span> <PlayerName p={r.p} /></div>
+              <div className="muted small">{r.t.abbr} · age {r.p.age} · {money(r.p.cap)}, {r.p.yrs} yr{r.p.yrs === 1 ? "" : "s"}{r.p.yrs <= 1 ? " · Expiring" : ""} · {r.why} · {r.asking}</div>
+            </div>
+            <b className="dd-bovr">{visibleRatings(league, r.p).ovr}</b>
+            <button className="dd-inq" onClick={() => proposeTradeFor(r.pid, r.tid)} title="Open the trade screen with him loaded">Inquire</button>
+          </div>
+        ))}
+        {!rows.length && <div className="dim small">Nobody available who fits that filter.</div>}
+      </div>
+    </>
+  );
+}
+
+function MarketPanel({ league }) {
+  const { buyers, sellers } = marketStance(league);
+  const row = (r, cls) => (
+    <div key={r.t.id} className="dd-mrow" title={r.movesLeft === 0 ? "Out of deadline-day moves" : `${r.gap > 0 ? "+" : ""}${r.gap} pts from the 8th spot · ${money(r.cap)} cap room`}>
+      <TeamBadge team={r.t} size={22} />
+      <span className="dd-mname">{full(r.t)}{r.movesLeft == null ? " (you)" : ""}</span>
+      <b className={cls}>{recOf(r.t)}</b>
+    </div>
+  );
+  return (
+    <>
+      <div className="dd-head">Buyers</div>
+      {buyers.slice(0, 10).map((r) => row(r, "good"))}
+      {!buyers.length && <div className="muted small">Nobody's clearly buying.</div>}
+      <div className="dd-head" style={{ marginTop: 14 }}>Sellers</div>
+      {sellers.slice(0, 10).map((r) => row(r, "bad"))}
+      {!sellers.length && <div className="muted small">Nobody's clearly selling.</div>}
+    </>
+  );
+}
+
+function DealsTicker({ dl, year }) {
+  const items = dl.feed.filter((f) => f.kind === "trade").slice(0, 12).reverse();
+  const text = items.length ? `DEADLINE DEALS ${year + 1}: ${items.map((f) => f.short || f.text).join("   •   ")}` : "DEADLINE DAY: phones are ringing around the league…";
+  return (
+    <div className="dd-ticker keep-dark" aria-live="off">
+      <span className="ticker-track" key={items.length} style={{ animationDuration: `${Math.max(20, Math.round(text.length / 7))}s` }}>{text}</span>
+    </div>
+  );
+}
+
 export default function DeadlinePage() {
   const { league, commit, go, toast, save } = useGame();
   const phone = usePhone();
   const [running, setRunning] = useState(false);
-  const [tradesOnly, setTradesOnly] = useState(false);
-  const [shopAll, setShopAll] = useState(false);
   const [view, setView] = useState("feed"); // phones: the feed, the block, or buyers & sellers
   const timer = useRef(null);
   const dl = league.deadline && league.deadline.year === league.year ? league.deadline : null;
@@ -72,7 +217,7 @@ export default function DeadlinePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The running clock: quick through quiet stretches, slower after a trade, and it stops
-  // when a team calls about one of your players. Saves are batched while it runs.
+  // when a team calls you. Saves are batched while it runs.
   useEffect(() => {
     if (!running || done) return;
     const step = () => {
@@ -90,7 +235,7 @@ export default function DeadlinePage() {
         const o = fresh[0];
         setRunning(false);
         save();
-        toast(`📞 ${league.teams[o.tid].city} ${league.teams[o.tid].name} are calling about ${league.players[o.give[0]]?.name}. The clock is paused.`, 5000);
+        toast(`📞 The ${full(league.teams[o.tid])} are on the phone. The clock is paused.`, 5000);
         return;
       }
       timer.current = setTimeout(step, league.deadline.trades > trades ? BUSY_MS : QUIET_MS);
@@ -112,153 +257,117 @@ export default function DeadlinePage() {
   }
 
   const advance = (min) => {
-    deadlineTick(league, min);
+    setRunning(false);
+    deadlineTick(league, Math.max(10, min));
     commit();
   };
-  const left = Math.max(0, DEADLINE_END - dl.minute);
-  const pct = ((dl.minute - DEADLINE_START) / (DEADLINE_END - DEADLINE_START)) * 100;
+  const minute = Math.max(DEADLINE_START, dl.minute);
+  const nextHour = Math.min(DEADLINE_END, (Math.floor(minute / 60) + 1) * 60);
+  const left = Math.max(0, DEADLINE_END - minute);
+  const hrsLeft = Math.ceil(left / 60);
   const offers = userOffers(league);
   const user = league.teams[league.userTid];
-  const day = dl.day ?? league.deadlineDay;
-  const available = (league.block || []).filter((b) => b.tid !== user.id && league.players[b.pid]).sort((a, b) => (Number(visibleRatings(league,league.players[b.pid]).ovr)||0)-(Number(visibleRatings(league,league.players[a.pid]).ovr)||0)||league.players[a.pid].name.localeCompare(league.players[b.pid].name));
-  const sellable = user.roster.map((id) => league.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr);
-  const userTrades = (league.tradeHistory || []).filter((t) => t.year === league.year && t.day === day).length;
   const total = dl.total ?? dl.feed.filter((f) => f.kind === "trade").length;
-  const feed = tradesOnly ? dl.feed.filter((f) => f.kind === "trade" || f.kind === "done") : dl.feed;
+  const cap = capSpace(league, user);
 
+  const phonePanel = (
+    <div className={`dd-panel${offers.length ? " hot" : ""}`}>
+      <div className="dd-head">Your phone {offers.length > 0 && <i className="dd-badge">{offers.length}</i>}</div>
+      {offers.map((o) => <PhoneOffer key={o.id} o={o} minute={minute} />)}
+      {!offers.length && <div className="muted small dd-empty">{done ? "The phones have gone quiet. Trading is closed until after the playoffs." : `No offers on the table right now. Calls come in through the day: put players on your trade block to draw interest, or pick up the phone yourself with Make a call.${running ? " The clock pauses whenever an offer comes in." : ""}`}</div>}
+      {done && (dl.deals || []).length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div className="dd-head">Today's deals ({dl.deals.length})</div>
+          {dl.deals.map((d, i) => <div key={i} className="small dd-deal"><b>{league.teams[d.buyer]?.abbr}</b> get <b>{d.name}</b> ({d.pos} {d.ovr}) from <b>{league.teams[d.seller]?.abbr}</b></div>)}
+        </div>
+      )}
+    </div>
+  );
   const feedPanel = (
-    <div className="panel">
-      <h3>
-        {tradesOnly ? "Trade tracker" : "Breaking"}
-        <span className="right row" style={{ gap: 4 }}>
-          <button className={`tiny${!tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(false)}>Everything</button>
-          <button className={`tiny${tradesOnly ? " primary" : ""}`} onClick={() => setTradesOnly(true)}>Trades only</button>
-        </span>
-      </h3>
-      <div className="stack dlfeed" style={{ gap: 8 }}>
-        {feed.map((w) => (
-          <div key={`${dl.feed.length - dl.feed.indexOf(w)}`}>
-            <WireItem w={w} />
-          </div>
-        ))}
-        {!feed.length && <div className="dim small">{dl.synthetic ? "This deadline passed before the deadline desk existed, so there's no feed for it." : "Nothing yet."}</div>}
+    <div className="dd-panel">
+      <div className="dd-head">Deadline feed</div>
+      <div className="dd-scroll">
+        {dl.feed.map((w, i) => <FeedRow key={dl.feed.length - i} league={league} w={w} />)}
+        {!dl.feed.length && <div className="dim small">{dl.synthetic ? "This deadline passed before the deadline desk existed, so there's no feed for it." : "Nothing yet."}</div>}
       </div>
     </div>
   );
-  const bestPanel = (
-    <div className="panel">
-      <h3>Best available</h3>
-      <BlockList entries={available} limit={12} />
+  const blockPanel = (
+    <div className="dd-panel">
+      <div className="dd-head">Trade block</div>
+      <BoardPanel league={league} closed={done} />
     </div>
   );
-  const shopPanel = (
-    <div className="panel">
-      <h3>Shop your players</h3>
-      <div className="muted small" style={{ marginBottom: 6 }}>List a player and interested teams will call with offers as the day goes on.</div>
-      <div className="list">
-        {(shopAll ? sellable : sellable.slice(0, 12)).map((p) => (
-          <div className="item small" key={p.id}>
-            <span className="posbadge">{p.pos}</span>
-            <PlayerName p={p} />
-            <span className="muted">{visibleRatings(league,p).ovr} · {p.age}y · {p.yrs <= 1 ? "expiring" : `${p.yrs} yrs`}</span>
-            <button className={`tiny${onBlock(league, p.id) ? " primary" : ""}`} style={{ marginLeft: "auto" }} onClick={() => { toggleUserBlock(league, p.id); commit(); }} title={onBlock(league, p.id) ? "Take him off the block" : "Put him on the block"}>
-              {onBlock(league, p.id) ? "Listed ✓" : "List"}
-            </button>
-          </div>
-        ))}
-      </div>
-      {sellable.length > 12 && <button className="small ghost" style={{ marginTop: 6 }} onClick={() => setShopAll(!shopAll)}>{shopAll ? "Show fewer" : `Show all ${sellable.length}`}</button>}
-    </div>
-  );
+  const marketPanel = <div className="dd-panel"><MarketPanel league={league} /></div>;
 
-  // Phones (the football game's deadline on a phone): a slim clock bar pinned under the header,
-  // your offers first, then the feed, the block and the buyers & sellers as tabs, and the
-  // clock's controls in the action bar at the bottom of the screen.
   if (phone) {
-    const stop = (fn) => () => { setRunning(false); fn(); };
     const bar = done
       ? [{ label: "Back to the season ▸", onClick: () => go("dashboard") }]
       : [
-          { label: "Advance 1 hour ▸", onClick: stop(() => advance(Math.min(60, DEADLINE_END - dl.minute))), tone: "red" },
-          { label: "+10 minutes", onClick: stop(() => advance(10)) },
-          { label: "📞 Open the Trade Center", onClick: stop(() => go("trade")), tone: "blue" },
-          { label: "Skip to 3:00 PM", onClick: stop(() => advance(DEADLINE_END - dl.minute)) },
+          { label: `Advance to ${fmtClock(nextHour)} ▸`, onClick: () => advance(nextHour - dl.minute), tone: "red" },
+          { label: "📞 Make a call", onClick: () => { setRunning(false); go("trade"); }, tone: "blue" },
+          { label: "Sim to 3:00 PM", onClick: () => advance(DEADLINE_END - dl.minute) },
         ];
     return (
-      <div className={`rk-dlp${done ? " done" : ""}`}>
-        <div className="rk-dlp-clock" role="timer" aria-label={`Deadline clock ${fmtClock(dl.minute)} ET`}>
+      <div className={`rk-dlp dd${done ? " done" : ""}`}>
+        <div className="rk-dlp-clock" role="timer" aria-label={`Deadline clock ${fmtClock(minute)} ET`}>
           <div className="rk-dlp-row">
             <span className="rk-dlp-live">{done ? "FINAL" : "● LIVE"}</span>
-            <span className="rk-dlp-time">{fmtClock(dl.minute)}</span>
-            <span className="rk-dlp-left">{done ? `Deadline passed · ${total} trade${total === 1 ? "" : "s"}` : left <= 60 ? "Final hour" : `${Math.floor(left / 60)}h ${String(left % 60).padStart(2, "0")}m left`}</span>
+            <span className="rk-dlp-time">{fmtClock(minute)}</span>
+            <span className="rk-dlp-left">{done ? `Deadline passed · ${total} trade${total === 1 ? "" : "s"}` : left <= 60 ? "Final hour" : `${hrsLeft} hrs left`}</span>
             {!done && <button className={`rk-dlp-run${running ? " on" : ""}`} onClick={() => setRunning((r) => !r)}>{running ? "❚❚ Pause" : "▶ Run clock"}</button>}
           </div>
-          <div className="rk-dlp-bar"><i style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <div className="dd-mini">{HOURS.map((h) => <i key={h} className={minute >= (h + 1) * 60 ? "past" : minute >= h * 60 ? "now" : ""} />)}</div>
         </div>
-        <div className={`panel${offers.length ? " hot" : ""}`}>
-          <div className="rk-dlp-phone">📞 OFFERS FOR YOU{offers.length > 0 && <i>{offers.length}</i>}</div>
-          {offers.length > 0
-            ? <div className="offergrid">{offers.map((o) => <OfferCard key={o.id} o={o} compact />)}</div>
-            : <div className="muted small">{done ? "The phones have gone quiet. Trading is closed until after the playoffs." : `No offers on the table right now. Calls come in through the day: list players under Trade block to draw interest, or make a call from the Trade Center.${running ? " The clock pauses when a team calls." : ""}`}</div>}
-        </div>
+        <DealsTicker dl={dl} year={league.year} />
+        {phonePanel}
         <div className="rk-dlp-tabs" role="tablist">
           {[["feed", "Feed"], ["block", "Trade block"], ["market", "Buyers & sellers"]].map(([k, l]) => <button key={k} role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
         </div>
         {view === "feed" && feedPanel}
-        {view === "block" && (done ? <div className="panel muted small">The deadline has passed: the block reopens after the playoffs.</div> : <>{bestPanel}{shopPanel}</>)}
-        {view === "market" && (done ? <div className="panel muted small">The deadline has passed.</div> : <Stance league={league} />)}
+        {view === "block" && blockPanel}
+        {view === "market" && marketPanel}
         <MobileActionBar key={done ? "done" : "live"} actions={bar} />
       </div>
     );
   }
 
   return (
-    <div className="stack">
-      <div className={`dlhero${done ? " done" : ""}`}>
-        <div className="dl-l">
-          <div className="dl-k">{done ? "Deadline passed" : "Trade Deadline Day"}</div>
-          <div className="dl-date">{dayToDate(league.year, day, league.scheduleStart)}</div>
+    <div className="dd">
+      <div className={`dd-hero keep-dark${done ? " done" : ""}`}>
+        <div className="dd-top">
+          <div>
+            <div className="dd-live">{done ? "DEADLINE DAY · FINAL" : "● LIVE · TRADE DEADLINE DAY"}</div>
+            <div className="dd-clockrow">
+              <span className="dd-clock">{fmtClock(minute).replace(/ (AM|PM)/, "")}<small>{minute >= 720 ? " PM" : " AM"}</small><em>ET</em></span>
+              <span className="dd-left">{done ? `THE DEADLINE HAS PASSED · ${total} TRADE${total === 1 ? "" : "S"}` : left <= 60 ? "FINAL HOUR BEFORE THE DEADLINE" : `${hrsLeft} HOURS TO THE DEADLINE`}</span>
+            </div>
+          </div>
+          <div className="dd-me">
+            <TeamBadge team={user} size={40} />
+            <div><div><b>{recOf(user)}</b> at the deadline</div><div>Cap space <b className={cap >= 0 ? "good" : "bad"}>{money(cap)}</b></div></div>
+          </div>
         </div>
-        <div className="dl-c">
-          <div className="dl-clock">{fmtClock(dl.minute)} <span>ET</span></div>
-          <div className="dl-left">{done ? "Trading is closed until after the playoffs" : `${Math.floor(left / 60)}h ${String(left % 60).padStart(2, "0")}m left until the 3:00 PM deadline`}</div>
+        <HourTrack minute={done ? DEADLINE_END + 60 : minute} />
+        <div className="dd-btns">
+          {!done ? (
+            <>
+              <button className="dd-b red" onClick={() => advance(nextHour - dl.minute)}>Advance to {fmtClock(nextHour)} ▸</button>
+              <button className={`dd-b dark${running ? " on" : ""}`} onClick={() => setRunning((r) => !r)}>{running ? "❚❚ Pause clock" : "▶ Run the clock"}</button>
+              <button className="dd-b blue" onClick={() => { setRunning(false); go("trade"); }}>📞 Make a call (trade screen)</button>
+              <button className="dd-b dim" onClick={() => advance(DEADLINE_END - dl.minute)}>Sim to 3:00 PM</button>
+            </>
+          ) : (
+            <button className="dd-b green" onClick={() => go("dashboard")}>Back to the season ▸</button>
+          )}
         </div>
-        <div className="dl-r">
-          <div className="dl-n">{total}</div>
-          <div className="dl-k">trades{userTrades ? ` · ${userTrades} yours` : ""}</div>
-        </div>
-        <div className="dl-bar"><i style={{ width: `${Math.min(100, pct)}%` }} /></div>
       </div>
-
-      <div className="row">
-        {!done ? (
-          <>
-            <button className="primary" onClick={() => setRunning((r) => !r)}>{running ? "❚❚ Pause the clock" : "▶ Run the clock"}</button>
-            <button onClick={() => advance(10)} disabled={running}>+10 min</button>
-            <button onClick={() => advance(60)} disabled={running}>+1 hour</button>
-            <button onClick={() => advance(DEADLINE_END - dl.minute)} disabled={running}>Skip to 3:00 PM</button>
-            <button onClick={() => { setRunning(false); go("trade"); }}>Open the Trade Center</button>
-            <span className="muted small">Time only moves when you move it. The clock pauses when a team calls you.</span>
-          </>
-        ) : (
-          <button className="primary" onClick={() => go("dashboard")}>Back to the season →</button>
-        )}
-      </div>
-
-      {offers.length > 0 && (
-        <div className="panel hot">
-          <h3>📞 Offers for you <span className="right muted small">They're good until the time shown; every offer ends at 3:00 PM.</span></h3>
-          <div className="offergrid">{offers.map((o) => <OfferCard key={o.id} o={o} compact />)}</div>
-        </div>
-      )}
-
-      <div className="dlgrid">
+      <DealsTicker dl={dl} year={league.year} />
+      <div className="dd-grid">
+        {phonePanel}
         {feedPanel}
-        <div className="stack">
-          {!done && bestPanel}
-          {!done && <Stance league={league} />}
-          {!done && shopPanel}
-        </div>
+        {blockPanel}
+        {marketPanel}
       </div>
     </div>
   );

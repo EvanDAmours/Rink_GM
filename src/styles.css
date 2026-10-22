@@ -596,3 +596,82 @@ table.combine td.top { color: var(--good); font-weight: 700; }
   .app .gg-needs-long { display: none; }
   .app .gg-needs-short { display: inline; }
 }
+
+/* ---------- Trade Deadline Day desk (Gridiron-style) ---------- */
+.dd { display: flex; flex-direction: column; gap: 10px; }
+.dd-hero { background: linear-gradient(120deg, #450a0a, #0b0f19 55%, #1e1b4b); border: 1px solid #ef444466; border-radius: 14px; padding: 14px 18px; color: #e2e8f0; }
+.dd-hero.done { background: linear-gradient(120deg, #1e293b, #0b0f19); border-color: #334155; }
+.dd-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dd-live { font-size: 13px; font-weight: 900; letter-spacing: 3px; color: #fca5a5; }
+.dd-clockrow { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.dd-clock { font-family: var(--mono); font-size: 54px; font-weight: 900; color: #ffffff; line-height: 1.05; }
+.dd-clock small { font-size: 46px; }
+.dd-clock em { font-style: normal; font-size: 18px; color: #fca5a5; margin-left: 6px; }
+.dd-left { font-size: 18px; font-weight: 800; color: #fecaca; letter-spacing: .5px; }
+.dd-me { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #cbd5e1; }
+.dd-me b { color: #ffffff; }
+.dd-me b.good, .dd-mrow b.good { color: #4ade80; }
+.dd-me b.bad, .dd-mrow b.bad { color: #f87171; }
+.dd-track { display: flex; gap: 6px; margin-top: 14px; }
+.dd-seg { flex: 1; text-align: center; font-size: 11px; color: #94a3b8; }
+.dd-seg i { display: block; height: 6px; border-radius: 3px; background: #ffffff22; margin-bottom: 5px; }
+.dd-seg.past i { background: #ef4444; }
+.dd-seg.now i { background: #ffffff; }
+.dd-seg.now span { color: #ffffff; font-weight: 800; }
+.dd-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.dd-b { border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 800; font-size: 15px; color: #ffffff; cursor: pointer; }
+.dd-b.red { background: #dc2626; }
+.dd-b.dark { background: #1e293b; color: #fecaca; }
+.dd-b.dark.on { background: #7f1d1d; }
+.dd-b.blue { background: #1d4ed8; }
+.dd-b.dim { background: #1e293b; color: #94a3b8; font-size: 14px; }
+.dd-b.green { background: #16a34a; }
+.dd-ticker { overflow: hidden; white-space: nowrap; background: #7f1d1d; border: 1px solid #ef444455; border-radius: 4px; padding: 7px 0; font-weight: 900; color: #fee2e2; letter-spacing: .5px; font-size: 14px; }
+.dd-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; }
+@media (max-width: 1250px) { .dd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .dd-grid { grid-template-columns: 1fr; } .dd-clock { font-size: 40px; } .dd-clock small { font-size: 32px; } }
+.dd-panel { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.dd-panel.hot { border-color: #ef444466; }
+.dd-head { font-size: 15px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: #fca5a5; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.dd-badge { font-style: normal; background: #dc2626; color: #ffffff; border-radius: 10px; padding: 0 8px; font-size: 13px; letter-spacing: 0; }
+.dd-scroll { max-height: 620px; overflow-y: auto; }
+.dd-offer { background: #0f172a; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+.dd-offer-h { display: flex; align-items: center; gap: 8px; }
+.dd-offer-who { flex: 1; min-width: 0; }
+.dd-offer-who b { font-size: 16px; color: #ffffff; }
+.dd-fair { font-weight: 800; font-size: 13px; color: #facc15; white-space: nowrap; }
+.dd-fair.over { color: #4ade80; }
+.dd-fair.low { color: #f87171; }
+.dd-offer-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+.dd-lab { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; color: #fca5a5; text-transform: uppercase; }
+.dd-asset { margin-top: 3px; font-size: 14px; }
+.dd-ovr { color: #4ade80; margin-left: 2px; }
+.dd-offer-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dd-accept { background: #22c55e; color: #ffffff; border: 0; border-radius: 6px; padding: 7px; font-weight: 800; cursor: pointer; }
+.dd-decline { background: #334155; color: #e2e8f0; border: 0; border-radius: 6px; padding: 7px; font-weight: 800; cursor: pointer; }
+.dd-empty { line-height: 1.5; }
+.dd-deal { padding: 4px 0; border-bottom: 1px solid #1f2937; }
+.dd-feed-row { display: flex; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #1f293799; align-items: flex-start; }
+.dd-feed-row.big { background: #ef444414; }
+.dd-feed-row.trade .dd-feed-x { font-weight: 700; }
+.dd-feed-t { width: 44px; flex: none; font-size: 11px; color: #94a3b8; text-align: right; padding-top: 2px; }
+.dd-feed-x { flex: 1; min-width: 0; font-size: 14px; color: #e2e8f0; }
+.dd-tag { font-size: 10px; font-weight: 900; letter-spacing: 1px; margin-right: 6px; }
+.dd-tag.trade { color: #f87171; }
+.dd-tag.big { color: #ef4444; }
+.dd-tag.rumor { color: #fb923c; }
+.dd-tag.phone { color: #4ade80; }
+.dd-tag.news { color: #60a5fa; }
+.dd-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.dd-filters select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; font-weight: 700; max-width: 100%; }
+.dd-count { text-align: right; margin: 6px 0; }
+.dd-brow { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #1f293799; }
+.dd-bwho { flex: 1; min-width: 0; }
+.dd-bovr { font-size: 20px; color: #4ade80; }
+.dd-inq { background: #1d4ed8; color: #ffffff; border: 0; border-radius: 6px; padding: 5px 10px; font-weight: 800; cursor: pointer; }
+.dd-mrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; }
+.dd-mname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-mini { display: flex; gap: 3px; margin-top: 6px; }
+.dd-mini i { flex: 1; height: 4px; border-radius: 2px; background: #ffffff22; }
+.dd-mini i.past { background: #ef4444; }
+.dd-mini i.now { background: #ffffff; }
