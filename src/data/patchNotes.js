@@ -340,4 +340,8 @@ export const PATCH_NOTES = [
     "Trade offers no longer pause the sim (you can turn that back on in Settings).",
     "The end-of-season All-Star Teams screen is gone, and All-Star selections no longer give an OVR boost.",
   ] },
+  { v: "1.61", date: "2026-10-23", title: "Tighter Lines", notes: [
+    "The Lines screen is more compact: on a desktop the four forward lines sit two per row, so your whole lineup fits on one screen without scrolling.",
+    "Higher contrast and slightly smaller player cards make names, positions and ratings easier to read at a glance.",
+  ] },
 ];

@@ -292,3 +292,31 @@
   .app .main .lnx .lx-pick-l { grid-template-columns: 1fr 1fr; }
   .app .main .lnx .lx-chip span:last-child:not(:first-child) { display: none; }
 }
+
+/* Readability pass (v1.61): a little smaller, higher contrast, easier to scan. */
+.app .main .lnx { max-width: 1180px; margin-inline: auto; }
+.app .main .lnx .lx-lines { gap: 6px 10px; }
+.app .main .lnx .lx-line { padding: 5px 7px 7px; background: #0f172a; border-color: #2a3650; }
+.app .main .lnx .lx-line-h { margin-bottom: 5px; }
+.app .main .lnx .lx-line-h > b { color: #f1f5f9; font-size: 12px; }
+.app .main .lnx .lx-chip { color: #cbd5e1; border-color: #334155; background: #111a2e; }
+.app .main .lnx .lx-grp { color: #94a3b8; font-size: 12px; }
+.app .main .lnx .lx-slots { gap: 5px; }
+.app .main .lnx button.lx-pc { min-height: 46px; padding: 4px 8px; gap: 7px; background: #172033; border-color: #33415c; }
+.app .main .lnx button.lx-pc:hover:not(.ro) { border-color: #60a5fa; background: #1b2740; }
+.app .main .lnx .lx-pc-face { width: 32px; height: 32px; }
+.app .main .lnx .lx-pc-who b { font-size: 14px; color: #f8fafc; }
+.app .main .lnx .lx-pc-who small { color: #cbd5e1; }
+.app .main .lnx .lx-pc-who em { color: #94a3b8; }
+.app .main .lnx .lx-pc-ovr { font-size: 18px; }
+.app .main .lnx .lx-pc-proj b { font-size: 16px; }
+.app .main .lnx .lx-pc-tag { font-size: 9.5px; }
+.app .main .lnx .lx-dim, .app .main .lnx .lx-k, .app .main .lnx .lx-hint, .app .main .lnx .lx-card-m, .app .main .lnx .lx-meta { color: #94a3b8; }
+.app .main .lnx .lx-tabs button { color: #cbd5e1; }
+.app .main .lnx button.lx-x { min-height: 30px; font-size: 12.5px; border-color: #334155; color: #e2e8f0; }
+.app .main .lnx .lx-pk-n small { color: #94a3b8; }
+@media (min-width: 1100px) {
+  .app .main .lnx .lx-line.g-F { grid-column: auto; }
+  .app .main .lnx .lx-line.g-F .lx-pc-who em { display: none; }
+  .app .main .lnx .lx-line.g-F .lx-pc-face { width: 30px; height: 30px; }
+}

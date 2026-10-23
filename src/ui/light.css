@@ -298,6 +298,18 @@ button.rk-rcard { background: #ffffff; border: 1px solid #d3d9e2; border-left: 3
 .app .main .lnx .warn { color: #b45309; }
 .app .main .lnx button.lx-pk { background: #ffffff; border: 1px solid #d3d9e2; }
 .app .main .lnx button.lx-x { background: #ffffff; border: 1px solid #d3d9e2; color: #1e293b; }
+.app .main .lnx .lx-line { background: #f4f6fa; }
+.app .main .lnx .lx-line-h > b { color: #0f172a; }
+.app .main .lnx .lx-chip { border-color: #cbd2dc; }
+.app .main .lnx .lx-grp { color: #475569; }
+.app .main .lnx .lx-dim,
+.app .main .lnx .lx-k,
+.app .main .lnx .lx-hint,
+.app .main .lnx .lx-card-m,
+.app .main .lnx .lx-meta { color: #475569; }
+.app .main .lnx .lx-tabs button { color: #334155; }
+.app .main .lnx button.lx-x { border-color: #cbd2dc; color: #1e293b; }
+.app .main .lnx .lx-pk-n small { color: #475569; }
 
 /* src/ui/live.css */
 .lv-bside { background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #ffffff) 70%, #ffffff 100%); }
