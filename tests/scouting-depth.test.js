@@ -166,12 +166,13 @@ test("one draft order: pick labels, trade values, the mock draft, Scouting HQ an
   assert.ok(gn.score >= 45 && gn.reasons.includes("no goalie of the future"));
 });
 
-test("a scouting checkpoint every fourth week stops the sim once, with targets near your pick", () => {
+// Moments no longer stop a sim (they wait until it finishes), so this only checks the checkpoint is queued.
+test("a scouting checkpoint every fourth week is queued once, never stopping the sim", () => {
   const l = createLeague({ userAbbr: "MTL", seed: 27 });
   startRegularSeason(l);
   let days = 0;
-  while (!momentStopsSim(l) && days < 40) { simDays(l, 1); days++; }
-  assert.ok(momentStopsSim(l), "the sim stops");
+  while (!l.moments.some((m) => m.kind === "scoutCheckpoint") && days < 40) { simDays(l, 1); days++; }
+  assert.ok(!momentStopsSim(l), "the sim does not stop");
   const cps = l.moments.filter((m) => m.kind === "scoutCheckpoint");
   assert.equal(cps.length, 1, "one checkpoint");
   const m = cps[0];

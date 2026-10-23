@@ -39,9 +39,11 @@ export function closeMoment(league) {
   return m;
 }
 
-// A running sim stops when a moment that asks for it is waiting.
-export function momentStopsSim(league) {
-  return !!league?.moments?.some((m) => m.stop);
+// Moments never stop a running sim (Evan: "very annoying when the sim stops for no reason").
+// They queue up and the app shows them once the sim reaches the end point you chose. The old
+// `stop` flag is kept on the data for old saves but ignored.
+export function momentStopsSim() {
+  return false;
 }
 
 // Called once at the end of every regular-season day (simmed or played live), after results are in.
