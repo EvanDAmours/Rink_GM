@@ -199,34 +199,7 @@ export function allStarById(rec) {
   return out;
 }
 
-// Next season's gain for the All-Star Teams, applied once per record. Returns [{ pid, name, tid, team, gain }].
-export function applyAllStarGains(league, rec = league.allNHL) {
-  if (!rec || rec.applied) return [];
-  rec.applied = true;
-  const out = [];
-  for (const [pid, team] of Object.entries(allStarById(rec))) {
-    const p = league.players[pid];
-    if (!p) continue;
-    const gain = Math.min(allStarGain(team, p.ovr), 99 - p.ovr);
-    const before = p.ovr;
-    if (gain > 0) {
-      progressAttributes(p, gain);
-      // Attribute noise can drift OVR; pull it back to the intended gain (as development does).
-      for (let g = 0; g < 4; g++) {
-        const drift = p.ovr - (before + gain);
-        if (Math.abs(drift) < 1) break;
-        progressAttributes(p, -drift);
-      }
-      // Attributes at their caps can't absorb the gain; carry the rest on the offset (as Prospect Watch does).
-      const left = before + gain - p.ovr;
-      if (left) { p.ovrOffset = (p.ovrOffset || 0) + left; p.ovr = before + gain; }
-      if ((p.pot || 0) < p.ovr) p.pot = p.ovr;
-      p.peak = Math.max(p.peak || 0, p.ovr);
-    }
-    out.push({ pid: p.id, name: p.name, tid: p.tid, team, gain: p.ovr - before });
-  }
-  return out;
-}
+// All-Star Teams are recorded for history and accolades only: no OVR gain (removed in batch x2).
 
 // ---------- Season milestones and league leaders (Gridiron 1.34 / 2.76) ----------
 // Found at rollover from the regular season just played; development.js turns them into growth.

@@ -6,7 +6,7 @@ import { simPlayoffDay } from "../src/engine/playoffs.js";
 import { simDraftToUser } from "../src/engine/draft.js";
 import { simFADay } from "../src/engine/offseason.js";
 import { FA_DAYS, isDefense, isGoalie } from "../src/engine/constants.js";
-import { allStarGain, applyAllStarGains, ALL_STAR_SLOTS } from "../src/engine/awards.js";
+import { allStarGain, ALL_STAR_SLOTS } from "../src/engine/awards.js";
 import { queueMoment, closeMoment } from "../src/engine/moments.js";
 import { cupWinMoment, awardsNightMoment, ringNightMoment, openingNight, titleMeaning } from "../src/engine/momentsCup.js";
 
@@ -53,22 +53,6 @@ test("All-Star teams: a C, LW, RW, two D and a G each, every player at his posit
   if (lg.awards.vezina) assert.equal(allNHL.first.find((e) => e.slot === "G").pid, lg.awards.vezina.pid);
   if (lg.awards.norris) assert.ok(allNHL.first.some((e) => e.slot === "D" && e.pid === lg.awards.norris.pid));
   assert.equal(ALL_STAR_SLOTS.reduce((n, s) => n + s.n, 0), 6);
-});
-
-test("All-Star gains: +2 First Team, +1 Second Team, tapering for the elite, applied once", () => {
-  assert.equal(allStarGain("first", 88), 2);
-  assert.equal(allStarGain("second", 88), 1);
-  assert.equal(allStarGain("first", 93), 1);
-  assert.equal(allStarGain("first", 95), 0);
-  assert.equal(allStarGain("first", 99), 0);
-  assert.equal(allStarGain("rookie", 75), 0);
-  const copy = deserializeLeague(serializeLeague(lg));
-  const rec = structuredClone(allNHL);
-  const before = Object.fromEntries([...rec.first, ...rec.second].map((e) => [e.pid, copy.players[e.pid].ovr]));
-  const out = applyAllStarGains(copy, rec);
-  for (const x of out.filter((o) => o.team !== "rookie")) assert.equal(copy.players[x.pid].ovr - before[x.pid], allStarGain(x.team, before[x.pid]), `${x.name} gains exactly his boost`);
-  assert.equal(rec.applied, true);
-  assert.deepEqual(applyAllStarGains(copy, rec), [], "a second call does nothing");
 });
 
 test("the Cup moment is queued only when your club wins, with the Conn Smythe and what the title means", () => {
@@ -128,9 +112,8 @@ test("ring night: once, at the next season's opener, and only for the champions"
   simDraftToUser(lg, { all: true }); completeDraft(lg); goToFreeAgency(lg);
   while (lg.fa && lg.fa.day < FA_DAYS) simFADay(lg);
   beginNextSeason(lg);
-  // The gains come with off-season development (as Gridiron's All-Pros do), once.
-  assert.equal(lg.allNHL.applied, true, "last season's All-Star gains were applied in the off-season");
-  assert.deepEqual(applyAllStarGains(lg), [], "and never twice");
+  // All-Star Teams no longer boost OVR (batch x2): nothing is applied in the off-season.
+  assert.ok(!lg.allNHL?.applied, "no All-Star gains");
   startRegularSeason(lg);
   const rings = lg.moments.filter((m) => m.kind === "ringNight");
   assert.equal(rings.length, 1);

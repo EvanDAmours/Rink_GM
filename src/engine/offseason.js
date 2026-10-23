@@ -25,7 +25,7 @@ import { archiveFarmSeasons } from "./prospectWatch.js";
 import { applyTrainingYear } from "./franchise.js";
 import { queueMoment } from "./moments.js";
 import { signingMoment, legendMoment } from "./momentsSeason.js";
-import { applyAllStarGains, seasonMilestones } from "./awards.js";
+import { seasonMilestones } from "./awards.js";
 import { rolePay, perfFactor, loyalDiscount, veteranTerm, isFranchisePlayer, depthValue as youthEdge, stampPerformance } from "./contractValue.js";
 import { retireChance } from "./retirement.js";
 import { aiMarketDay, aiDepthDay, decidingToday } from "./faMarket.js";
@@ -385,7 +385,6 @@ export function startNewSeason(league) {
     p.rookie = calderEligible(p);
   }
   // Last season's All-Star honourees grow in the off-season, as Gridiron's All-Pros do (once only).
-  for (const g of applyAllStarGains(league) || []) { const p = league.players[g.pid]; if (p && g.gain) p.lastChange = (p.lastChange || 0) + g.gain; }
   summerReport(league, { bigSeasons, summerStart, breakouts, grew });
   pruneFreeAgents(league);
 
