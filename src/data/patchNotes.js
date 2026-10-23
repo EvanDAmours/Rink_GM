@@ -344,4 +344,10 @@ export const PATCH_NOTES = [
     "The Lines screen is more compact: on a desktop the four forward lines sit two per row, so your whole lineup fits on one screen without scrolling.",
     "Higher contrast and slightly smaller player cards make names, positions and ratings easier to read at a glance.",
   ] },
+  { v: "1.62", date: "2026-10-23", title: "Line Chemistry", notes: [
+    "The Lines screen is rebuilt: forwards on the left, defence on the right, goalies below, with big clear headings, so you can see who's on which line at a glance.",
+    "Line chemistry is here. Every line, pair and special-teams unit shows a chemistry rating (Great, Good, Fair or Poor). Tap it to see why: playmakers feeding snipers, a puck-mover with a shutdown partner, left and right shots, time spent together, and your coaching staff's style.",
+    "New Autofill by chemistry and Autofill by overall buttons, for even strength and special teams.",
+    "Every player card shows his style (SNP, PLY, PWF, 2WY, OFD, DFD and more), with a legend in the Chemistry panel. Scratches, injured players and the power-play and penalty-kill 'not on a unit' pool get their own bigger panels.",
+  ] },
 ];
