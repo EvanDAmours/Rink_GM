@@ -103,7 +103,6 @@ export default function ProspectProfile({ p }) {
         <div className="row">
           <ScoutButton p={p} read={read} className="small primary" />
           {combine && read.lvl < 2 && <button className="small" disabled={!(d.workoutsLeft > 0)} title="Combine week: a free full workup" onClick={workout}>🏋️ Private workout ({d.workoutsLeft || 0} left)</button>}
-          <span className="muted small">{user.scoutPts || 0} scouting point{user.scoutPts === 1 ? "" : "s"} left</span>
         </div>
       </div>
 

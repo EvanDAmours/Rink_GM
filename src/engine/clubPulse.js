@@ -8,6 +8,7 @@
 import { stream, clamp } from "./rng.js";
 import { teamRatings } from "./lines.js";
 import { isGoalie } from "./constants.js";
+import { surveyWeek } from "./scouting.js";
 
 export const MORALE_NEUTRAL = 50;
 export const CHEM_NEUTRAL = 75;
@@ -219,7 +220,7 @@ export const SP_ACTIONS = {
   teamEvent: { cost: 2, name: "Team bonding trip", desc: "A night away together: +6 chemistry." },
   fanNight: { cost: 2, name: "Fan appreciation night", desc: "+5 fan support." },
   ownerLunch: { cost: 2, name: "Lunch with the owner", desc: "+6 owner trust." },
-  scoutTrip: { cost: 2, name: "Fund a scouting trip", desc: "+1 scouting point." },
+  scoutTrip: { cost: 2, name: "Fund a scouting trip", desc: "Every scout files one extra report this week." },
 };
 export function runAction(league, key) {
   const a = SP_ACTIONS[key];
@@ -232,7 +233,7 @@ export function runAction(league, key) {
   } else if (key === "teamEvent") bump(t, "chemistry", 6, CHEM_NEUTRAL);
   else if (key === "fanNight") t.owner && (t.owner.fanSupport = clamp((t.owner.fanSupport ?? 60) + 5, 0, 100));
   else if (key === "ownerLunch") t.owner && (t.owner.trust = clamp((t.owner.trust ?? 65) + 6, 0, 100));
-  else if (key === "scoutTrip") t.scoutPts = (t.scoutPts || 0) + 1;
+  else if (key === "scoutTrip") surveyWeek(league, -1);
   return { ok: true, msg: `${a.name}: ${a.desc}` };
 }
 

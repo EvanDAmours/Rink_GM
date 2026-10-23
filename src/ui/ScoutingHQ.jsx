@@ -2,10 +2,10 @@ import React from "react";
 import { useGame, PlayerName } from "./common.jsx";
 import {
   prospectRead, scoutProspect, csRank, classPool, userNeeds, userPickAround, scoutsShortlist, interviewProspect, privateWorkout, atCombine,
-  crewStrength, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_SLOTS, SCOUT_PTS_CAP, scoutPointsLost, gradeClass, PRIVATE_WORKOUTS,
+  crewStrength, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_SLOTS, gradeClass, PRIVATE_WORKOUTS,
 } from "../engine/scouting.js";
 import { POS_COLOR } from "./TradePage.jsx";
-import { AREA_START, TRIP_COST, MAX_TRIPS, REGIONS, regionOf, scoutRegion } from "../engine/regions.js";
+import { REGIONS, regionOf, scoutAssignments } from "../engine/regions.js";
 import { ScoutButton, ScoutFlags, RoleTag } from "./scoutingBits.jsx";
 
 const NEED_WORD = { C: "centre", LW: "left wing", RW: "right wing", LD: "left D", RD: "right D", G: "goalie" };
@@ -67,7 +67,6 @@ export function CombineWeek() {
         <div className="sc-cweek-grid">
           <div><b>🎤 {d.interviewsLeft || 0}</b><span>Interviews</span><small>A sit-down: his work ethic, which tends to go with how fast he develops, and any red flags in the room.</small></div>
           <div><b>🏋️ {d.workoutsLeft || 0}</b><span>Private workouts</span><small>A full workup for free: exact ratings and (from a major scout) his development trait. {PRIVATE_WORKOUTS} a year.</small></div>
-          <div><b>🔎 {t.scoutPts || 0}</b><span>Scouting points</span><small>Reports and workups, same as always. Unused points expire after the draft.</small></div>
         </div>
       </div>
       <div className="sc-movers">
@@ -84,9 +83,6 @@ export function CombineWeek() {
 export default function ScoutingHQ({ onBoard, onRegions, onList }) {
   const { league, commit, toast, openPlayer } = useGame();
   const t = league.teams[league.userTid];
-  const pts = t.scoutPts || 0;
-  const area = t.area?.year === league.draftClassYear ? t.area : null;
-  const areaPts = area ? area.points : AREA_START;
   const cls = classPool(league);
   if (!cls.length) return null;
   const needs = userNeeds(league, 3);
@@ -94,45 +90,41 @@ export default function ScoutingHQ({ onBoard, onRegions, onList }) {
   // Before the order exists (no games yet), your scouts work the middle of the first round.
   const around = slot ?? 16;
   const inRange = (p) => csRank(p) >= around - 10 && csRank(p) <= around + 24;
-  const targets = cls.filter((p) => needs.includes(p.pos) && inRange(p)).map((p) => ({ p, read: prospectRead(league, p) })).filter((x) => x.read.cost).sort((a, b) => csRank(a.p) - csRank(b.p)).slice(0, 6);
+  const targets = cls.filter((p) => needs.includes(p.pos) && inRange(p)).map((p) => ({ p, read: prospectRead(league, p) })).filter((x) => x.read.lvl < 2).sort((a, b) => csRank(a.p) - csRank(b.p)).slice(0, 6);
   const closed = ["resign", "freeagency"].includes(league.phase) || (league.phase === "draft" && league.draft?.stage !== "combine");
-  const regionPick = Object.keys(REGIONS).map((k) => ({ k, n: cls.filter((p) => regionOf(p) === k && csRank(p) <= 64).length, trips: area?.trips?.[k] || 0 })).filter((r) => r.trips < MAX_TRIPS && r.n > 0).sort((a, b) => b.n - a.n || a.trips - b.trips)[0];
-  const lost = scoutPointsLost(league);
+  const assign = scoutAssignments(league, t);
   const crews = crewStrength(league).filter((c) => c.n >= 2);
-  const send = (k) => { const r = scoutRegion(league, k); toast(r.msg); commit(); };
   const s = t.scouts || {};
   return (
     <section className="gg-card gg-hq sc-hq">
       <div className="gg-k">DO THIS NEXT <span className="right dim" style={{ letterSpacing: 0, textTransform: "none" }}>your biggest needs: {needs.length ? needs.map((k) => NEED_WORD[k]).join(", ") : "none pressing"} · {slot == null ? "the draft order takes shape once games are played (your scouts start around #16)" : own ? `your first pick lands around #${slot}` : `you've traded your picks; your record says #${slot}`}</span></div>
-      {(pts >= SCOUT_PTS_CAP - 1 || lost > 0) && league.phase === "regular" && <div className="sc-cap">⚠ Your scouts carry at most <b>{SCOUT_PTS_CAP}</b> points of unfiled work; past that, each week's point is lost.{lost > 0 ? <> You've lost <b>{lost}</b> this year.</> : " You're at the cap: spend some now."}</div>}
-      {!closed && regionPick && areaPts >= TRIP_COST && <div className="gg-hq-row"><span className="gg-hq-ico">🗺️</span><div><b>Send your area scouts to the {REGIONS[regionPick.k].name}</b><span>{regionPick.n} of Central Scouting's top 64 play there. A trip reads every prospect in the region at once; from the third trip they start seeing through the list to its sleepers and red flags.</span></div><button className="primary small" onClick={() => send(regionPick.k)}>Send ({TRIP_COST} pts)</button></div>}
       {atCombine(league) && <div className="gg-hq-row sc-hq-visit"><span className="gg-hq-ico">🗂️</span><div><b>Your scouts' visit list <span className="dim small">interview and work out players who'll be there when you pick</span></b><VisitList compact /></div></div>}
       {targets.map(({ p, read }) => (
         <div key={p.id} className="gg-hq-row">
           <Pos pos={p.pos} />
           <div>
             <b><button className="link" onClick={() => openPlayer(p.id)}>{p.name}</button> <span className="dim">#{csRank(p)} on Central Scouting's list · {p.bio?.team || "junior"} ({p.bio?.lg || "?"})</span> <RoleTag p={p} /> <ScoutFlags read={read} compact /></b>
-            <span>{read.lvl === 0 ? `No report yet. A ${NEED_WORD[p.pos]} in your range.` : "Reported. A workup would sharpen it."}</span>
+            <span>{read.lvl === 0 ? `No report yet. A ${NEED_WORD[p.pos]} in your range${read.cov === "office" ? ": no scout in his region" : ""}.` : "Reported. Your scout will work him up."}</span>
           </div>
           <ScoutButton p={p} read={read} className="small primary" />
         </div>
       ))}
       {!targets.length && <div className="dim small" style={{ padding: "6px 0" }}>Every prospect at your need positions in your range has been scouted. Check the Big Board for more, or build Your list.</div>}
-      <div className="row" style={{ gap: 6, marginTop: 8 }}><button className="small" onClick={onBoard}>Big Board →</button><button className="small" onClick={onList}>Your list →</button><button className="small" onClick={onRegions}>All regions →</button></div>
+      <div className="row" style={{ gap: 6, marginTop: 8 }}><button className="small" onClick={onBoard}>Big Board →</button><button className="small" onClick={onList}>Your list →</button><button className="small" onClick={onRegions}>Scout assignments →</button></div>
       <div className="sc-hq-staff">
-        <div className="gg-k" style={{ marginTop: 12 }}>YOUR SCOUTING STAFF {crews.length > 0 && <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {crews.map((c) => `${c.n} scouts on ${SCOUT_GROUPS[c.group].toLowerCase()}`).join(", ")}</span>}</div>
+        <div className="gg-k" style={{ marginTop: 12 }}>YOUR SCOUTING STAFF {crews.length > 0 && <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {crews.map((c) => `${c.n} scouts in ${c.name}`).join(", ")}</span>}</div>
         <div className="sc-hq-scouts">
           {SCOUT_SLOTS.map((r) => { const sc = s[r]; return (
             <div key={r} className={`sc-hq-scout${sc ? "" : " empty"}`}>
               <small className={r.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[r].name.toUpperCase()}</small>
-              {sc ? <><b>{sc.name}</b><span>{SCOUT_GROUPS[sc.group]} · evaluation <b>{sc.eval}</b></span></> : <span className="dim">Vacant</span>}
+              {sc ? <><b>{sc.name}</b><span>{REGIONS[assign[r]]?.name} · grade <b>{sc.eval}</b></span></> : <span className="dim">Vacant</span>}
             </div>); })}
         </div>
       </div>
       <div className="gg-guide gg-guide-3">
-        <div><b>1. Area trips</b><span>Area points. A rough read on every prospect in a region; more trips sharpen it, turn up sleepers (💎) and red flags (🚩), and after four you get a ~OVR on everyone there.</span></div>
-        <div><b>2. Scouting reports</b><span>1 scouting point per prospect: close estimates, tool grades, an NHL comparison, and whether he's a hidden gem or a red flag. Best in your scouts' position groups.</span></div>
-        <div><b>3. Full workups</b><span>2 more points: exact ratings, and from a major scout his development trait. Two or more scouts on one group form a crew: sharper reads and early hunches.</span></div>
+        <div><b>1. Assign</b><span>Before the season, send each scout to a region on the Scout assignments tab.</span></div>
+        <div><b>2. Season</b><span>They file reports there on their own. Nothing to spend, nothing stops the sim; one inbox note when the board updates.</span></div>
+        <div><b>3. Combine</b><span>Interviews and private workouts before the draft. Higher-graded scouts give tighter reads and find late-ranked gems.</span></div>
       </div>
     </section>
   );

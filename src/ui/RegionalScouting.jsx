@@ -1,35 +1,62 @@
 import React from "react";
 import { useGame, PlayerName } from "./common.jsx";
-import { REGIONS, ensureAreaScouting, scoutRegion, regionOf, TRIP_COST, MAX_TRIPS } from "../engine/regions.js";
-import { prospectRead, csRank } from "../engine/scouting.js";
+import { REGIONS, regionOf, scoutAssignments, assignScout, assignWindowOpen } from "../engine/regions.js";
+import { prospectRead, csRank, classPool, SCOUT_SLOTS, SCOUT_ROLES, reportsPerWeek } from "../engine/scouting.js";
 import { ScoutFlags } from "./scoutingBits.jsx";
 
-// Area scouting (Gridiron 1.81): trips read every prospect in a region. From the third trip they
-// start seeing through Central Scouting's list (💎 sleepers and hunches, 🚩 red flags); after the
-// fourth they've seen enough to put a ~OVR on everyone there.
+const gradeWord = (ev) => (ev >= 85 ? "Elite eye" : ev >= 76 ? "Sharp" : ev >= 66 ? "Solid" : "Raw");
+
+// Scout assignments (batch x2: hands-off scouting). One screen, set before the season: send each
+// scout to a region. Through the season they file reports there on their own; nothing to spend,
+// nothing stops the sim. Better-graded scouts read tighter, work players up faster and find the
+// region's hidden gems.
 export default function RegionalScouting() {
   const { league, commit, toast } = useGame();
-  const area = ensureAreaScouting(league);
-  const pool = league.draftClass.map((id) => league.players[id]).filter((p) => p?.tid === -2);
-  const closed = ["resign", "freeagency"].includes(league.phase) || league.phase === "draft" && league.draft?.stage !== "combine";
-  return <div className="stack">
-    <div className="notice">Send your area scouts to leagues, then use position scouts to investigate individual players. Each visit sharpens every read in that region. From the third visit they start seeing through Central Scouting's list to its sleepers (💎) and red flags (🚩); after the fourth you get a ~OVR estimate on everyone there. They never expose exact ratings or reorder Central Scouting.</div>
-    <div className="pagehead"><h3>Amateur scouting network</h3><div className="scout-budget regional"><span>AREA POINTS</span><strong>{area.points}</strong></div><span className="muted small">2 per week · {TRIP_COST} per visit · up to {MAX_TRIPS} visits</span></div>
+  const t = league.teams[league.userTid];
+  const s = t.scouts || {};
+  const a = scoutAssignments(league, t);
+  const open = assignWindowOpen(league);
+  const pool = classPool(league);
+  const set = (role, k) => { const r = assignScout(league, role, k); if (!r.ok) toast(r.msg); commit(); };
+  const byRegion = Object.fromEntries(Object.keys(REGIONS).map((k) => [k, pool.filter((p) => regionOf(p) === k)]));
+  return <div className="stack sc-assign">
+    <div className="panel">
+      <h3>Scout assignments {open ? <span className="pill on">Set for the season</span> : <span className="pill">On the road</span>}</h3>
+      <p className="muted small" style={{ margin: "4px 0 0" }}>{open
+        ? "Send each scout to a region. Once the season starts they file reports there on their own: no points, no stops. Higher-graded scouts read closer, work players up sooner and find the late-ranked gems."
+        : "Your scouts are on the road. Reports come in on their own through the season; you can change assignments after the draft and in the preseason."}</p>
+      <div className="sc-assign-grid">
+        {SCOUT_SLOTS.map((role) => { const sc = s[role]; const reg = a[role]; const ps = byRegion[reg] || []; const done = ps.filter((p) => (p.scout?.lvl || 0) > 0).length; return (
+          <div key={role} className={`sc-assign-card${sc ? "" : " empty"}`}>
+            <small className={role.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[role].name.toUpperCase()}</small>
+            {sc ? <>
+              <b>{sc.name}</b>
+              <span className="muted small">Grade <b>{sc.eval}</b> · {gradeWord(sc.eval)} · {reportsPerWeek(sc.eval) + (sc.trait === "workhorse" ? 1 : 0)} reports a week</span>
+              <label className="sc-assign-pick"><span className="dim tiny">REGION</span>
+                <select value={reg} disabled={!open} onChange={(e) => set(role, e.target.value)} aria-label={`${sc.name}'s region`}>
+                  {Object.entries(REGIONS).map(([k, r]) => <option key={k} value={k}>{r.name} · {byRegion[k].length} prospects</option>)}
+                </select>
+              </label>
+              <span className="tiny muted">{REGIONS[reg].note}{pool.length ? ` · ${done}/${ps.length} reported` : ""}</span>
+            </> : <span className="dim small">Vacant: hire one on the Scouts tab.</span>}
+          </div>); })}
+      </div>
+    </div>
     <div className="grid g3">{Object.entries(REGIONS).map(([key, r]) => {
-      const ps = pool.filter((p) => regionOf(p) === key).sort((a,b) => csRank(a)-csRank(b));
-      const trips = area.trips[key] || 0;
+      const ps = [...byRegion[key]].sort((x, y) => csRank(x) - csRank(y));
+      const who = SCOUT_SLOTS.filter((k) => s[k] && a[k] === key).map((k) => s[k]);
       const reads = ps.map((p) => [p, prospectRead(league, p)]);
       const gems = reads.filter(([, x]) => x.sleeper || x.hunch), flags = reads.filter(([, x]) => x.flag);
       const r1 = ps.filter((p) => csRank(p) <= 32).length;
-      return <div className="panel region-card" key={key}>
-        <div className="row"><span className="pill">{r.family}</span><h3 style={{margin:0}}>{r.name}</h3></div>
-        <p className="muted small">{r.note}</p><div className="row"><b>{ps.length} prospects</b><span className="muted">{r1} in Central Scouting's first round · {trips}/{MAX_TRIPS} visits</span></div>
-        <div className="region-progress" aria-label={`${trips} scouting visits`}>{[1,2,3,4].map((n) => <i key={n} className={n <= trips ? "on" : ""} />)}</div>
-        <button disabled={closed || area.points < TRIP_COST || trips >= MAX_TRIPS || !ps.length} onClick={() => { const r = scoutRegion(league,key); toast(r.msg); commit(); }}>{trips >= MAX_TRIPS ? "Fully scouted" : `Scout ${r.name} · ${TRIP_COST} pts`}</button>
-        <div className="list" style={{marginTop:12}}>{reads.slice(0,3).map(([p, x]) => <div className="item small" key={p.id}><span className="dim">#{csRank(p)}</span><PlayerName p={p} /><ScoutFlags read={x} compact /><b style={{marginLeft:"auto"}}>{x.pot}{trips >= MAX_TRIPS && x.ovr !== "??" ? <span className="dim"> · {x.ovr}</span> : null}</b></div>)}</div>
+      const reported = reads.filter(([, x]) => x.lvl > 0).length;
+      return <div className={`panel region-card${who.length ? " on" : ""}`} key={key}>
+        <div className="row"><span className="pill">{r.family}</span><h3 style={{ margin: 0 }}>{r.name}</h3></div>
+        <p className="muted small">{r.note}</p>
+        <div className="row"><b>{ps.length} prospects</b><span className="muted">{r1} in Central Scouting's first round · {reported} reported</span></div>
+        <div className="small" style={{ margin: "4px 0" }}>{who.length ? <>🔎 {who.map((x) => `${x.name} (${x.eval})`).join(", ")}</> : <span className="dim">No scout assigned: front-office reads only.</span>}</div>
+        <div className="list" style={{ marginTop: 8 }}>{reads.slice(0, 3).map(([p, x]) => <div className="item small" key={p.id}><span className="dim">#{csRank(p)}</span><PlayerName p={p} /><ScoutFlags read={x} compact /><b style={{ marginLeft: "auto" }}>{x.pot}</b></div>)}</div>
         {gems.length > 0 && <p className="sc-region-note gem small">💎 {gems.length} possible sleeper{gems.length > 1 ? "s" : ""}: {gems.slice(0, 3).map(([p]) => p.name).join(", ")}</p>}
         {flags.length > 0 && <p className="sc-region-note red small">🚩 {flags.length} red flag{flags.length > 1 ? "s" : ""}: {flags.slice(0, 3).map(([p]) => p.name).join(", ")}</p>}
-        {trips >= MAX_TRIPS && <p className="muted tiny" style={{ margin: "6px 0 0" }}>Four visits: every prospect here has a ~OVR on the boards.</p>}
       </div>;
     })}</div>
   </div>;

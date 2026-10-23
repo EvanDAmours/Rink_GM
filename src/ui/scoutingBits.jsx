@@ -1,7 +1,7 @@
 import React from "react";
 import { useGame } from "./common.jsx";
 import { DEV_TRAITS } from "../engine/players.js";
-import { scoutProspect, bioStats, gradeClass, SCOUT_ROLES, SCOUT_GROUPS } from "../engine/scouting.js";
+import { bioStats, gradeClass, SCOUT_ROLES, SCOUT_GROUPS } from "../engine/scouting.js";
 import { ROLE_TAGS, roleOf, roleNeeds } from "../engine/teamPlanning.js";
 import { isGoalie } from "../engine/constants.js";
 import "./scouting.css";
@@ -29,8 +29,8 @@ export function CovTag({ read, flags = true }) {
   const role = read.cov;
   const crew = read.scout ? [read.scout, ...(read.others || [])] : [];
   const title = crew.length > 1
-    ? `${crew.length} scouts on it: ${crew.map((x) => x.name).join(", ")} all work ${SCOUT_GROUPS[read.scout.group].toLowerCase()}. A crew reads sharper and can see through Central Scouting's list.`
-    : read.scout ? `${SCOUT_ROLES[role].name}: ${read.scout.name} (${SCOUT_GROUPS[read.scout.group].toLowerCase()})` : "None of your scouts covers this position, so your front office's generalists file the reports.";
+    ? `${crew.length} scouts on it: ${crew.map((x) => x.name).join(", ")} all survey his region. A crew reads sharper and can see through Central Scouting's list.`
+    : read.scout ? `${SCOUT_ROLES[role].name}: ${read.scout.name} (surveys his region)` : "None of your scouts is assigned to his region, so your front office's generalists file the reports.";
   return (
     <>
       <span className={`cov ${role}${crew.length > 1 ? " crew" : ""}`} title={title}>{role === "office" ? "No scout" : crew.length > 1 ? `${crew.length} scouts` : SCOUT_ROLES[role].short}</span>
@@ -66,32 +66,10 @@ export function scoutLabel(read) {
   return read.lvl === 0 ? "Scout" : read.lvl === 1 ? "Workup" : "Scouted";
 }
 
-export function ScoutButton({ p, read, className = "tiny" }) {
-  const { league, commit, toast } = useGame();
-  const pts = league.teams[league.userTid].scoutPts || 0;
-  const cost = read.cost;
-  const tip = !cost
-    ? "Fully scouted"
-    : read.lvl === 0
-      ? `File a scouting report (${cost} point)`
-      : read.cov === "major"
-        ? `Full workup (${cost} points): exact ratings and his development trait`
-        : `Full workup (${cost} points): a sharper read`;
-  return (
-    <button
-      className={`${className}${cost ? "" : " ghost"}`}
-      disabled={!cost || pts < cost}
-      title={tip}
-      onClick={(e) => {
-        e.stopPropagation();
-        const r = scoutProspect(league, p.id);
-        toast(r.msg);
-        commit();
-      }}
-    >
-      {cost ? `${scoutLabel(read)} · ${cost}` : "✓ Scouted"}
-    </button>
-  );
+// Reports are filed by your scouts in their regions (no points): this is a status chip, not a button.
+export function ScoutButton({ read, className = "tiny" }) {
+  const t = read.lvl >= 2 ? "✓ Full workup" : read.lvl === 1 ? "Report filed" : read.cov === "office" ? "No scout here" : "Not seen yet";
+  return <span className={`${className} pill${read.lvl >= 2 ? " on" : ""}`} title="Your scouts file reports on their own through the season, in the regions you assigned them.">{t}</span>;
 }
 
 export function statText(league, p) {

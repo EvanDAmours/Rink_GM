@@ -8,7 +8,7 @@ import { assetValue, pickValue, evaluateTrade, isContending, tradingClosed } fro
 import { isGoalie, isDefense } from "./constants.js";
 import { stream } from "./rng.js";
 
-export const TALK_COST = 1; // scouting points
+export const TALK_COST = 0; // scouting points are gone (batch x2): a talk is free
 const TRUST_GAIN = 20;
 const WIRE_MAX = 80;
 const groupOf = (p) => (isGoalie(p.pos) ? "G" : isDefense(p.pos) ? "D" : "F");
@@ -33,8 +33,6 @@ export function shoppedOffers(league) {
 export function talkDown(league, pid) {
   const t = league.teams[league.userTid], p = league.players[pid];
   if (!p || p.tid !== t.id || !p.wantsTrade) return { ok: false, msg: "He no longer wants a trade." };
-  if ((t.scoutPts || 0) < TALK_COST) return { ok: false, msg: `You need ${TALK_COST} scouting point to talk him down.` };
-  t.scoutPts -= TALK_COST;
   const trust = Math.min(100, playerTrust(p) + TRUST_GAIN);
   p.relationship = { trust, reason: "Talked out of his trade request" };
   if (p.rolePromise) p.rolePromise.trust = trust;

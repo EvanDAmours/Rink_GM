@@ -484,7 +484,7 @@ export default function App({ resume = false }) {
       commit();
     },
     startDraft: () => {
-      const pts = user.scoutPts || 0, iv = league.draft?.interviewsLeft ?? 0;
+      const pts = 0, iv = league.draft?.interviewsLeft ?? 0;
       if (!pts && !iv) return act.startDraftNow();
       setModal({ type: "stage", title: "Move on to the Draft?", yes: "Yes, go to the Draft", onYes: act.startDraftNow, lines: [
         ...(iv ? [{ tone: "warn", head: `${iv} prospect interview${iv === 1 ? "" : "s"} not used yet`, text: "Interviews only happen at the Combine." }] : []),

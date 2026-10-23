@@ -489,7 +489,6 @@ function PhaseCard({ lg, t, go, slot, series }) {
     head = `${lg.draft?.year} ENTRY DRAFT${done ? " · COMPLETE" : atCombine(lg) ? " · COMBINE" : ""}`;
     rows = done ? [row("Your class", `${taken.length} player${taken.length === 1 ? "" : "s"}${grade ? ` · analysts say ${grade}` : ""}`), ...(taken[0] ? [row("First pick", `${taken[0].name} (#${taken[0].draft.pick})`)] : [])]
       : [row("Your next pick", slot ? `#${slot.overall} overall (round ${slot.round})` : "No picks left"), row("Picks this year", picks)];
-    rows.push(row("Scouting points", t.scoutPts ?? 0));
   } else if (lg.phase === "resign") {
     const exp = expiringPlayers(lg, t).sort((a, b) => b.ovr - a.ovr);
     head = `RE-SIGN WINDOW · ${exp.length} EXPIRING`;

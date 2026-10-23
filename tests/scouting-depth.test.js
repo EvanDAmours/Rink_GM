@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createLeague, startRegularSeason, simDay } from "../src/engine/league.js";
+import { createLeague, startRegularSeason, simDay, serializeLeague, deserializeLeague } from "../src/engine/league.js";
+import { regionOf, assignScout } from "../src/engine/regions.js";
+const sharpScout = (id) => ({ id, name: id, group: "C", eval: 95, trait: "sharp" });
 import { deadlinePending, skipDeadline } from "../src/engine/market.js";
 import { closeMoment, momentStopsSim } from "../src/engine/moments.js";
 import {
   classPool, csRank, csScore, publicPot, prospectRead, generalIdea, crewOf, scoutProspect, interviewProspect, runCombine,
-  revealDraftees, believedPot, scoutCheckpoint, scoutsShortlist, userPickAround, myBoard, SCOUT_PTS_CAP, scoutWeek,
+  revealDraftees, believedPot, scoutsShortlist, userPickAround, myBoard, fileScoutReport,
 } from "../src/engine/scouting.js";
 import { projectedDraftOrder, pickSlot, myDraftSlots, aiPickScore, aiPickContext, startDraft, makePick, currentSlot, visibleRatings, simDraftToUser } from "../src/engine/draft.js";
 import { projectedPickSlot } from "../src/engine/trade.js";
@@ -46,10 +48,12 @@ test("every class seeds 4-6 hidden gems and 3-5 red flags that Central Scouting 
 test("a report sees through the board: the gem's ceiling and the red flag's reason", () => {
   const l = createLeague({ userAbbr: "TOR", seed: 21 });
   const t = l.teams[l.userTid];
-  t.scoutPts = 40;
   const g = classPool(l).find((p) => p.gem), b = classPool(l).find((p) => p.bust);
-  scoutProspect(l, g.id); scoutProspect(l, g.id);
-  scoutProspect(l, b.id); scoutProspect(l, b.id);
+  // Sharp scouts in both regions (a low grade can miss them: see the hands-off test below).
+  t.scouts = { major: sharpScout("s1"), major2: sharpScout("s2"), minor: null, minor2: null };
+  t.scoutRegions = { major: regionOf(g), major2: regionOf(b), minor: "OHL", minor2: "OHL" };
+  fileScoutReport(l, g.id); fileScoutReport(l, g.id);
+  fileScoutReport(l, b.id); fileScoutReport(l, b.id);
   const rg = prospectRead(l, g), rb = prospectRead(l, b);
   assert.ok(rg.sleeper && /💎/.test(rg.gemWhy), "💎 marker with the reason once a report is in");
   assert.ok(Math.abs(rg.potV - g.pot) <= 8, "the report reads the real ceiling");
@@ -73,18 +77,19 @@ test("a work-ethic red flag shows up in a Combine interview", () => {
 test("two or more scouts on a group tighten its read and can see through the board", () => {
   const l = createLeague({ userAbbr: "NYR", seed: 23 });
   const t = l.teams[l.userTid];
-  const cls = classPool(l).filter((p) => p.pos === "C");
-  const p = cls[5];
+  const p = classPool(l).filter((x) => regionOf(x) === "OHL")[5];
+  t.scoutRegions = { major: "OHL", major2: "OHL", minor: "OHL", minor2: "OHL" };
   t.scouts = { major: { id: "a", name: "A", group: "C", eval: 78, trait: null }, major2: null, minor: null, minor2: null };
   const solo = generalIdea(l, p);
   t.scouts.major2 = { id: "b", name: "B", group: "C", eval: 82, trait: null };
   const two = generalIdea(l, p);
   assert.equal(crewOf(l, p).n, 2);
   assert.ok(two.sd < solo.sd, "a second scout narrows the read");
-  assert.match(two.who, /2 scouts on centers/);
+  assert.match(two.who, /2 scouts in the OHL/);
   // A deep, sharp crew on a gem's group sees him for what he is before a report.
   const gem = classPool(l).find((x) => x.gem && !["G"].includes(x.pos));
-  const grp = gem.pos === "C" ? "C" : ["LW", "RW"].includes(gem.pos) ? "W" : "D";
+  const grp = "C";
+  t.scoutRegions = { major: regionOf(gem), major2: regionOf(gem), minor: regionOf(gem), minor2: "OHL" };
   t.scouts = { major: { id: "c1", name: "C1", group: grp, eval: 95, trait: "sharp" }, major2: { id: "c2", name: "C2", group: grp, eval: 93, trait: null }, minor: { id: "c3", name: "C3", group: grp, eval: 90, trait: null }, minor2: null };
   const deep = generalIdea(l, gem);
   assert.ok(crewOf(l, gem).see >= 0.5);
@@ -94,9 +99,11 @@ test("two or more scouts on a group tighten its read and can see through the boa
 
 test("your scouts' board ranks the class on your reads, Central Scouting where you have none", () => {
   const l = createLeague({ userAbbr: "VAN", seed: 24 });
-  l.teams[l.userTid].scoutPts = 20;
   const gem = classPool(l).find((p) => p.gem);
-  scoutProspect(l, gem.id); scoutProspect(l, gem.id);
+  const t = l.teams[l.userTid];
+  t.scouts = { major: sharpScout("v1"), major2: null, minor: null, minor2: null };
+  t.scoutRegions = { major: regionOf(gem), major2: "OHL", minor: "OHL", minor2: "OHL" };
+  fileScoutReport(l, gem.id); fileScoutReport(l, gem.id);
   const board = myBoard(l);
   assert.equal(board.size, classPool(l).length);
   assert.ok(board.get(gem.id) < csRank(gem) - 20, "the scouted gem climbs your board");
@@ -166,31 +173,56 @@ test("one draft order: pick labels, trade values, the mock draft, Scouting HQ an
   assert.ok(gn.score >= 45 && gn.reasons.includes("no goalie of the future"));
 });
 
-// Moments no longer stop a sim (they wait until it finishes), so this only checks the checkpoint is queued.
-test("a scouting checkpoint every fourth week is queued once, never stopping the sim", () => {
+// Batch x2: hands-off scouting. No points, no checkpoints: scouts survey their assigned regions
+// each week on their own; one inbox note when the board updates; grades decide the gems.
+test("a season of scouting runs hands-off: reports by region, no checkpoint moments, one quiet note a month", () => {
   const l = createLeague({ userAbbr: "MTL", seed: 27 });
+  const t = l.teams[l.userTid];
   startRegularSeason(l);
-  let days = 0;
-  while (!l.moments.some((m) => m.kind === "scoutCheckpoint") && days < 40) { simDays(l, 1); days++; }
-  assert.ok(!momentStopsSim(l), "the sim does not stop");
-  const cps = l.moments.filter((m) => m.kind === "scoutCheckpoint");
-  assert.equal(cps.length, 1, "one checkpoint");
-  const m = cps[0];
-  assert.equal(m.week, 4);
-  assert.ok(m.stop && m.targetIds.length > 0 && m.news.length > 0, "Scout targets and Central Scouting's moves");
-  assert.ok(classPool(l).some((p) => p.cs.now != null), "Central Scouting's list moved");
-  while (l.moments.length) closeMoment(l);
+  simDays(l, 60);
   assert.ok(!momentStopsSim(l));
-  // The rest of that week (and a second call for the same week) never stops it again.
-  scoutCheckpoint(l, 4);
-  assert.ok(!l.moments.some((x) => x.kind === "scoutCheckpoint"), "the same checkpoint is never queued twice");
-  simDays(l, 5);
-  assert.ok(!l.moments.some((x) => x.kind === "scoutCheckpoint" && x.stop), "no new stop inside the same four weeks");
-  // Use-or-lose: points never pile up past the cap during the season.
-  l.teams[l.userTid].scoutPts = SCOUT_PTS_CAP;
-  l.teams[l.userTid].scoutWeekPaid = Math.floor(l.day / 7) - 1;
-  scoutWeek(l);
-  assert.equal(l.teams[l.userTid].scoutPts, SCOUT_PTS_CAP);
+  assert.ok(!l.moments.some((m) => m.kind === "scoutCheckpoint"), "no checkpoint pop-ups");
+  assert.equal(t.scoutPts, undefined, "no scouting points");
+  const regs = new Set(Object.values(t.scoutRegions));
+  const seen = classPool(l).filter((p) => p.scout?.lvl > 0);
+  assert.ok(seen.length >= 20, `reports filed: ${seen.length}`);
+  assert.ok(seen.every((p) => regs.has(regionOf(p))), "only in assigned regions");
+  assert.ok(l.inbox.some((m) => /Scouting board updated/.test(m.text)), "an inbox note");
+  // Assignments are locked in season.
+  assert.equal(assignScout(l, "major", "Russia").ok, false);
+});
+
+test("scout grade matters: a sharp scout finds a region's hidden gems, a raw one mostly misses them", () => {
+  const run = (ev) => {
+    const l = createLeague({ userAbbr: "CHI", seed: 31 });
+    const t = l.teams[l.userTid];
+    const regs = ["OHL", "WHL", "QMJHL", "Sweden"];
+    t.scouts = Object.fromEntries(["major", "major2", "minor", "minor2"].map((k, i) => [k, { id: `g${ev}${i}`, name: `S${i}`, group: "C", eval: ev, trait: null }]));
+    t.scoutRegions = { major: regs[0], major2: regs[1], minor: regs[2], minor2: regs[3] };
+    startRegularSeason(l);
+    simDays(l, 70);
+    const gems = classPool(l).filter((p) => p.gem && regs.includes(regionOf(p)));
+    const found = gems.filter((p) => prospectRead(l, p).sleeper).length;
+    const sds = classPool(l).filter((p) => p.scout?.lvl === 1 && p.scout.sd != null).map((p) => p.scout.sd);
+    return { found, n: gems.length, sd: sds.reduce((a, b) => a + b, 0) / Math.max(1, sds.length) };
+  };
+  const hi = run(94), lo = run(55);
+  assert.ok(hi.n > 0, "there are gems to find");
+  assert.ok(hi.found > lo.found, `sharp ${hi.found}/${hi.n} vs raw ${lo.found}/${lo.n}`);
+  assert.ok(hi.sd < lo.sd, "tighter ranges from a better scout");
+});
+
+test("old saves with scouting points, area points and a pending checkpoint load cleanly", () => {
+  const l = createLeague({ userAbbr: "EDM", seed: 33 });
+  const t = l.teams[l.userTid];
+  t.scoutPts = 9; t.scoutLost = { year: 2027, n: 2 }; t.area = { year: 2027, points: 8, trips: { OHL: 2 }, paid: 0 };
+  delete t.scoutRegions;
+  l.moments.push({ kind: "scoutCheckpoint", key: "scoutcp:2026:4", stop: true, week: 4 });
+  const back = deserializeLeague(serializeLeague(l));
+  const u = back.teams[back.userTid];
+  assert.equal(u.scoutPts, undefined); assert.equal(u.area, undefined); assert.equal(u.scoutLost, undefined);
+  assert.deepEqual(Object.keys(u.scoutRegions).sort(), ["major", "major2", "minor", "minor2"]);
+  assert.ok(!back.moments.some((m) => m.kind === "scoutCheckpoint"));
 });
 
 test("the scouts' visit list works around your pick with a reason for each name", () => {

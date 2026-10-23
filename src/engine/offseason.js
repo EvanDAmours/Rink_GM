@@ -401,7 +401,6 @@ export function startNewSeason(league) {
 
   for (const t of league.teams) {
     t.rec = blankRecord();
-    t.scoutPts = SCOUT_POINTS_START;
     t.scoutWeekPaid = -1;
     t.playoffResult = null;
     // Unsigned draft rights lapse at 23.

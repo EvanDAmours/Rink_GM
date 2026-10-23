@@ -41,7 +41,7 @@ export function takeJob(lg,tid){
   if(lg.career.fired && !lg.career.offers.some(o=>o.tid===tid))return {ok:false,msg:"That club has not offered a position."};
   const old=lg.userTid;const last=lg.career.jobs.at(-1);if(last)last.end=lg.year;
   lg.userTid=tid;lg.career.jobs.push({tid,start:lg.year+1});lg.career.fired=false;lg.career.offers=[];
-  lg.teams[tid].scouts ||= structuredClone(lg.teams[old].scouts);lg.myList={year:lg.draftClassYear,ids:[]};lg.teams[tid].scoutPts ||= 6;lg.teams[tid].owner.trust=Math.max(55,lg.teams[tid].owner.trust);
+  lg.teams[tid].scouts ||= structuredClone(lg.teams[old].scouts);lg.myList={year:lg.draftClassYear,ids:[]};lg.teams[tid].owner.trust=Math.max(55,lg.teams[tid].owner.trust);
   logTx(lg,`GM accepts the ${lg.teams[tid].abbr} job`,[old,tid]);return {ok:true,msg:`You now manage the ${lg.teams[tid].name}. The league's history carries on.`};
 }
 export function archiveRetirement(lg,p,tot){

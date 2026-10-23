@@ -10,21 +10,23 @@ import { clamp, stream, hashStr } from "./rng.js";
 import { randomNameWith } from "./names.js";
 import { lastDay } from "./schedule.js";
 import { rollDev } from "./players.js";
-import { isGoalie, isDefense, posGroup, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBINE, COMBINE_INVITES, COMBINE_INTERVIEWS } from "./constants.js";
+import { isGoalie, isDefense, posGroup, COMBINE_INVITES, COMBINE_INTERVIEWS } from "./constants.js";
 
 // ---------- Scouting staff ----------
 
-import { creditAreaWeeks, regionRead, regionOf, REGIONS } from "./regions.js";
+import { regionOf, REGIONS, DEFAULT_ASSIGN, scoutAssignments } from "./regions.js";
 import { scoutingPaper } from "./papers.js";
 import { teamNeeds, roleOf } from "./teamPlanning.js";
 import { myDraftSlots, projectedDraftOrder } from "./draft.js";
 import { queueMoment } from "./moments.js";
-import { checkpointMoment, revealMoment } from "./momentsScouting.js";
+import { revealMoment } from "./momentsScouting.js";
 
-// Your scouts can only carry so much unfiled work: past the cap a week's point is lost. Spend them.
-export const SCOUT_PTS_CAP = 14;
-// Every fourth week of the regular season the sim pauses for a scouting checkpoint.
+// Every fourth week of the regular season Central Scouting's list moves and one inbox note
+// sums up what your scouts filed. Nothing stops the sim.
 export const CHECKPOINT_EVERY = 4;
+// Reports a scout files in his region each week of the regular season: 2 for an average grade,
+// up to 4 for an elite one, 1 for a poor one.
+export const reportsPerWeek = (ev) => clamp(Math.round(1 + (ev - 50) / 14), 1, 4);
 // Combine week: prospects you bring in for a day get a full workup without the points.
 export const PRIVATE_WORKOUTS = 3;
 
@@ -32,17 +34,17 @@ export const SCOUT_GROUPS = { C: "Centers", W: "Wingers", D: "Defensemen", G: "G
 export const scoutGroup = (pos) => (pos === "C" ? "C" : pos === "LW" || pos === "RW" ? "W" : isDefense(pos) ? "D" : "G");
 
 export const SCOUT_ROLES = {
-  major: { name: "Major scout", short: "Major", desc: "Covers one position in depth: sharp reports, exact ratings after a full workup, and development traits." },
-  major2: { name: "Second major scout", short: "Major II", desc: "A second specialist for deep reports and development traits." },
-  minor2: { name: "Second minor scout", short: "Minor II", desc: "A second area of positional coverage." },
-  minor: { name: "Minor scout", short: "Minor", desc: "Covers one position more loosely: a general idea of every prospect there and rougher reports. No development traits." },
+  major: { name: "Major scout", short: "Major", desc: "Surveys his region in depth: sharp reports, exact ratings after a full workup, and development traits." },
+  major2: { name: "Second major scout", short: "Major II", desc: "A second senior scout for deep reports and development traits." },
+  minor2: { name: "Second minor scout", short: "Minor II", desc: "A second area scout: rougher reads in his region." },
+  minor: { name: "Minor scout", short: "Minor", desc: "Surveys his region more loosely: rougher reports. No development traits." },
 };
 
 export const SCOUT_TRAITS = {
-  workhorse: { name: "Road warrior", desc: "+1 scouting point every 4 weeks of the season." },
+  workhorse: { name: "Road warrior", desc: "Files one extra report a week." },
   sharp: { name: "Sharp eye", desc: "His reads are more accurate (+8 evaluation)." },
   projector: { name: "Projector", desc: "Spots development traits a step earlier." },
-  combine: { name: "Combine guru", desc: "+3 scouting points at the Scouting Combine." },
+  combine: { name: "Combine guru", desc: "One extra Combine interview." },
   europe: { name: "Overseas network", desc: "Far more accurate on prospects playing in Europe." },
 };
 
@@ -127,44 +129,67 @@ export function swapScoutRoles(league) {
   return { ok: true, msg: "Your scouts have switched roles." };
 }
 
-// Scouting points: some in the bank when the class is announced, one a week through the
-// regular season, more at the Combine. Weeks are credited even if the sim skips a day.
-// During the season they're use-or-lose: past SCOUT_PTS_CAP a week's point is gone (a points
-// balance already over the cap, from an older save, is left alone). Every fourth week the sim
-// pauses at a scouting checkpoint, and Central Scouting's rankings move.
+// The season's survey (Evan, batch x2: hands-off scouting). No points: each week of the regular
+// season every scout files reports on prospects in the region you sent him to (regions.js). Who he
+// looks at first is the board's read plus what his eye catches: a high grade spots a late-ranked
+// prospect with a real ceiling (a hidden gem) and works him up early; a low grade follows the board
+// with noise and misses them. Repeat looks deepen a report into a full workup. Every fourth week
+// Central Scouting's list moves and one inbox note sums up the month. Weeks are credited even if
+// the sim skips a day.
 export function scoutWeek(league) {
   const t = league.teams[league.userTid];
   if (!t) return;
   const week = Math.floor(league.day / 7);
   const paid = t.scoutWeekPaid ?? -1;
-  const s = t.scouts || {};
-  const workhorse = SCOUT_SLOTS.some((role) => s[role]?.trait === "workhorse");
-  const season = league.phase === "regular";
-  creditAreaWeeks(league);
-  let lost = 0;
-  for (let w = paid + 1; w <= week; w++) {
-    const credit = SCOUT_POINTS_WEEKLY + (workhorse && w > 0 && w % 4 === 0 ? 1 : 0);
-    const pts = t.scoutPts || 0;
-    const add = season ? Math.max(0, Math.min(credit, SCOUT_PTS_CAP - pts)) : credit;
-    t.scoutPts = pts + add;
-    lost += credit - add;
-    if (w > 0 && w % 8 === 0 && season) scoutingPaper(league, w);
-    if (w > 0 && w % CHECKPOINT_EVERY === 0 && season) scoutCheckpoint(league, w);
+  if (league.phase === "regular") {
+    for (let w = paid + 1; w <= week; w++) {
+      surveyWeek(league, w);
+      if (w > 0 && w % 8 === 0) scoutingPaper(league, w);
+      if (w > 0 && w % CHECKPOINT_EVERY === 0) { stockWatch(league, w); boardNote(league, t, w); }
+    }
   }
-  if (lost) noteLostPoints(league, t, lost);
   t.scoutWeekPaid = Math.max(paid, week);
   revealDraftees(league);
 }
 
-// Points lost to the cap this season (shown on the checkpoint and the Scouts screen).
-export function scoutPointsLost(league) {
+export function surveyWeek(league, w) {
   const t = league.teams[league.userTid];
-  return t?.scoutLost?.year === league.draftClassYear ? t.scoutLost.n : 0;
+  const s = t?.scouts || {};
+  const pool = classPool(league);
+  if (!pool.length) return { filed: 0 };
+  const a = scoutAssignments(league, t);
+  const log = (t.surveyLog?.year === league.draftClassYear ? t.surveyLog : (t.surveyLog = { year: league.draftClassYear, filed: 0, gems: 0, noted: 0, gemIds: [] }));
+  let filed = 0;
+  for (const role of SCOUT_SLOTS) {
+    const sc = s[role];
+    if (!sc) continue;
+    const reg = a[role];
+    const eye = clamp((sc.eval - 62) / 28, 0, 1);
+    const r = stream(`${league.draftClassYear}|${w}|${sc.id}|${role}|survey`);
+    const noise = 1.2 + (100 - sc.eval) / 10;
+    const cands = pool.filter((p) => regionOf(p) === reg && (p.scout?.lvl || 0) < 2)
+      .map((p) => ({ p, s: csScore(p) + eye * 1.8 * gemGap(p) + r.gauss(0, noise) - 2.5 * (p.scout?.lvl || 0) }))
+      .sort((x, y) => y.s - x.s);
+    const n = reportsPerWeek(sc.eval) + (sc.trait === "workhorse" ? 1 : 0);
+    for (const { p } of cands.slice(0, n)) {
+      fileReport(league, p, (p.scout?.lvl || 0) + 1);
+      filed++;
+      if (p.scout.notes?.gem && !log.gemIds.includes(p.id)) { log.gemIds.push(p.id); log.gems++; }
+    }
+  }
+  log.filed += filed;
+  return { filed };
 }
-function noteLostPoints(league, t, n) {
-  const first = scoutPointsLost(league) === 0;
-  t.scoutLost = { year: league.draftClassYear, n: scoutPointsLost(league) + n };
-  if (first) league.inbox?.push({ year: league.year, day: league.day, text: `⚠ Your scouts carry at most ${SCOUT_PTS_CAP} scouting points of unfiled work. ${n} point${n === 1 ? " was" : "s were"} lost this week: spend them on reports before more go to waste.` });
+
+// One quiet inbox line when the board updates (never a pop-up, never a stop).
+function boardNote(league, t, w) {
+  const log = t.surveyLog;
+  if (!log || log.year !== league.draftClassYear) return;
+  const n = log.filed - (log.noted || 0);
+  if (n <= 0) return;
+  const gems = log.gems - (log.notedGems || 0);
+  log.noted = log.filed; log.notedGems = log.gems;
+  league.inbox?.push({ year: league.year, day: league.day, text: `🔎 Scouting board updated (week ${w}): your scouts filed ${n} report${n === 1 ? "" : "s"}${gems ? ` and flagged ${gems} possible sleeper${gems === 1 ? "" : "s"} 💎` : ""}.` });
 }
 
 // ---------- What your scouts know ----------
@@ -172,13 +197,15 @@ function noteLostPoints(league, t, n) {
 const EURO_LEAGUES = new Set(["SHL", "J20 Nationell", "HockeyAllsvenskan", "Liiga", "U20 SM-sarja", "Mestis", "KHL", "MHL", "VHL", "Czechia", "Czechia U20", "Slovakia", "Slovakia U20", "NL", "U20-Elit", "DEL", "DNL U20"]);
 const OFFICE_EVAL = 60;
 
-// Which of your scouts covers a prospect: "major", "minor", or "office" (nobody, so the
-// front office's generalists handle it). With several scouts on one group the best major scout
-// leads and the rest are second opinions (`second` is the next one, `others` all of them).
+// Which of your scouts covers a prospect: "major", "minor", or "office" (nobody in his region,
+// so the front office's generalists handle it). Scouts cover the region you assigned them to
+// (regions.js). With several scouts on one region the best major scout leads and the rest are
+// second opinions (`second` is the next one, `others` all of them).
+const assignOf = (league) => ({ ...DEFAULT_ASSIGN, ...(league.teams[league.userTid]?.scoutRegions || {}) });
 export function coverage(league, p) {
   const s = league.teams[league.userTid]?.scouts || {};
-  const g = scoutGroup(p.pos);
-  const on = SCOUT_SLOTS.filter((k) => s[k]?.group === g).map((k) => ({ kind: roleType(k), scout: s[k] }))
+  const a = assignOf(league), g = regionOf(p);
+  const on = SCOUT_SLOTS.filter((k) => s[k] && a[k] === g).map((k) => ({ kind: roleType(k), scout: s[k] }))
     .sort((a, b) => (a.kind === b.kind ? scoutEval(b.scout, p) - scoutEval(a.scout, p) : a.kind === "major" ? -1 : 1));
   if (!on.length) return { role: "office", scout: null };
   const others = on.slice(1).map((x) => x.scout);
@@ -207,19 +234,21 @@ export function crewOf(league, p) {
   return { cov, n, ev, see: clamp((ev - 75) / 24, 0, 1) * Math.min(1, 0.25 + 0.25 * n) };
 }
 
-// Crew strength by group, for the Scouts screen and Scouting HQ: who works it, their combined
-// evaluation, and what they can see through the board.
+// Crew strength by region, for the Scouts screen and Scouting HQ: who works it, their combined
+// evaluation, and what they can see through the board. `group` is the region key.
 export function crewStrength(league) {
   const s = league.teams[league.userTid]?.scouts || {};
-  return Object.keys(SCOUT_GROUPS).map((g) => {
-    const on = SCOUT_SLOTS.filter((k) => s[k]?.group === g).map((k) => ({ role: k, scout: s[k] }));
-    if (!on.length) return { group: g, n: 0, ev: OFFICE_EVAL, see: 0, scouts: [], label: "Front office only" };
+  const a = assignOf(league);
+  return Object.keys(REGIONS).map((g) => {
+    const name = REGIONS[g].name;
+    const on = SCOUT_SLOTS.filter((k) => s[k] && a[k] === g).map((k) => ({ role: k, scout: s[k] }));
+    if (!on.length) return { group: g, name, n: 0, ev: OFFICE_EVAL, see: 0, scouts: [], label: "Front office only" };
     const lead = [...on].sort((a, b) => (roleType(a.role) === roleType(b.role) ? b.scout.eval - a.scout.eval : roleType(a.role) === "major" ? -1 : 1));
     const ev = scoutEval(lead[0].scout, null, lead.slice(1).map((x) => x.scout));
     const n = on.length;
     const see = clamp((ev - 75) / 24, 0, 1) * Math.min(1, 0.25 + 0.25 * n);
     const label = n >= 2 ? (see >= 0.4 ? "Deep crew: sees through the board" : see > 0 ? "Crew: sharper reads, early hunches" : "Crew: sharper reads") : roleType(lead[0].role) === "major" ? "One major scout" : "One minor scout";
-    return { group: g, n, ev, see, scouts: on, label };
+    return { group: g, name, n, ev, see, scouts: on, label };
   });
 }
 
@@ -233,28 +262,34 @@ export function readSd(role, lvl, ev) {
   return lvl >= 2 ? 2.6 : lvl === 1 ? 4.2 : Infinity;
 }
 
-export function scoutCost(p) {
-  const l = p?.scout?.lvl || 0;
-  return l === 0 ? 1 : l === 1 ? 2 : 0;
+// Reports cost nothing now: your scouts file them on their own through the season.
+export function scoutCost() {
+  return 0;
 }
 
 // Would the next report on this prospect reveal his development trait?
-function seesDev(cov, lvl) {
-  if (cov.role === "major") return lvl >= 2 || [cov.scout, ...(cov.others || [])].some((x) => x.trait === "projector");
+// A sharp major scout (grade 82+) names it from his first report.
+function seesDev(cov, lvl, ev = 0) {
+  if (cov.role === "major") return lvl >= 2 || ev >= 82 || [cov.scout, ...(cov.others || [])].some((x) => x.trait === "projector");
   if (cov.role === "minor") return lvl >= 2 && cov.scout.trait === "projector";
   return false;
 }
 
+// The next report on a prospect, filed by whoever covers his region (the weekly survey uses it; so
+// can tests and debugging). No cost.
+export function fileScoutReport(league, pid) {
+  const p = league.players[pid];
+  if (!p || p.tid !== -2 || !p.scout) return { ok: false, msg: "You can only scout prospects in the upcoming draft." };
+  if ((p.scout.lvl || 0) >= 2) return { ok: false, msg: `${p.name} is already fully scouted.` };
+  fileReport(league, p, (p.scout.lvl || 0) + 1);
+  return { ok: true, msg: `${p.scout.who} filed a ${p.scout.lvl >= 2 ? "full workup" : "scouting report"} on ${p.name}.` };
+}
+
+// Kept for old callers: reports are filed by your scouts in their regions, not bought one by one.
 export function scoutProspect(league, pid) {
   const p = league.players[pid];
-  const t = league.teams[league.userTid];
   if (!p || p.tid !== -2 || !p.scout) return { ok: false, msg: "You can only scout prospects in the upcoming draft." };
-  const cost = scoutCost(p);
-  if (!cost) return { ok: false, msg: `${p.name} is already fully scouted.` };
-  if ((t.scoutPts || 0) < cost) return { ok: false, msg: `Not enough scouting points (that takes ${cost}).` };
-  t.scoutPts -= cost;
-  fileReport(league, p, p.scout.lvl + 1);
-  return { ok: true, msg: `${p.scout.who} filed a ${p.scout.lvl >= 2 ? "full workup" : "scouting report"} on ${p.name}.` };
+  return { ok: false, msg: `Your scouts file reports on their own through the season. Send a scout to the ${REGIONS[regionOf(p)]?.name || "region"} to cover ${p.name}.` };
 }
 
 function fileReport(league, p, lvl) {
@@ -268,8 +303,10 @@ function fileReport(league, p, lvl) {
   const skills = skillReads(p, sd, ePot - eOvr, r);
   const office = cov.role === "office";
   const notes = notesFor(p, skills, r);
-  // A report sees what the board can't: the hidden gem's ceiling and the red flag's reason.
-  if (p.bust) notes.flag = `🚩 Red flag: ${p.bust.why}. ${office ? "Our people see" : "Your scout sees"} a high bust risk.`;
+  // A report sees what the board can't: the hidden gem's ceiling and the red flag's reason. A
+  // sharp scout nearly always does; a poor one often misses it (a workup catches more).
+  const eye = stream(`${p.id}|${cov.scout?.id || "office"}|eye`).next() < clamp((ev - 52) / 34 + (lvl >= 2 ? 0.2 : 0), 0.08, 0.97);
+  if (!eye) { /* missed it */ } else if (p.bust) notes.flag = `🚩 Red flag: ${p.bust.why}. ${office ? "Our people see" : "Your scout sees"} a high bust risk.`;
   else if (p.gem) notes.gem = `💎 Sleeper: ${p.gem.why}. ${office ? "Our people think" : "Your scout thinks"} he's much better than where Central Scouting has him.`;
   Object.assign(p.scout, {
     lvl,
@@ -279,7 +316,7 @@ function fileReport(league, p, lvl) {
     exact: sd === 0,
     by: cov.role,
     who: cov.others ? [cov.scout, ...cov.others].map((x) => x.name).join(" & ") : cov.scout?.name || "Your front office",
-    dev: seesDev(cov, lvl) ? p.dev : p.scout.dev || null,
+    dev: seesDev(cov, lvl, ev) ? p.dev : p.scout.dev || null,
     skills,
     notes,
     comp: comparable(league, p, ePot),
@@ -403,7 +440,7 @@ export function generalIdea(league, p) {
   const sleeper = !!p.gem && hunch && see >= 0.5;
   // Star and Superstar traits, spotted early by a crew (two or more good scouts on the group).
   const spot = n >= 2 && ["superstar", "star"].includes(p.dev) && stream(`${p.id}|crew|dev`).next() < clamp((ev - 76) / 19, 0, 1) * Math.min(0.95, 0.2 + 0.22 * n);
-  return { pot, grade: potGrade(pot), tier: projection(p.pos, pot), by: cov.role, sd, who: n > 1 ? `Your ${n} scouts on ${SCOUT_GROUPS[scoutGroup(p.pos)].toLowerCase()}` : cov.scout.name, hunch, sleeper, flag, dev: spot ? p.dev : null, crew: n };
+  return { pot, grade: potGrade(pot), tier: projection(p.pos, pot), by: cov.role, sd, who: n > 1 ? `Your ${n} scouts in the ${REGIONS[regionOf(p)]?.name || "region"}` : cov.scout.name, hunch, sleeper, flag, dev: spot ? p.dev : null, crew: n };
 }
 
 // Everything the UI shows about a prospect, from your point of view.
@@ -412,7 +449,7 @@ export function prospectRead(league, p) {
   const cov = coverage(league, p);
   const has = s.lvl > 0 && s.eOvr != null;
   const gen0 = has ? null : generalIdea(league, p);
-  const reg = has ? null : regionRead(league, p);
+  const reg = null; // area-scout trips are gone: region coverage is your assigned scouts
   // The sharper of your position scouts' general idea and your area scouts' regional read.
   const either = (k) => !!(gen0?.[k] || reg?.[k]);
   const gen = gen0 && reg
@@ -775,26 +812,6 @@ export function userPickAround(league) {
   return { slot: i >= 0 ? i + 1 : null, own: false, slots };
 }
 
-// ---------- Scouting checkpoints ----------
-// Every fourth week of the regular season: Central Scouting's list moves, and your scouts come
-// back with who they want eyes on near your pick. Queued as a moment that pauses a running sim.
-export function scoutCheckpoint(league, week) {
-  const t = league.teams[league.userTid];
-  if (!t || !classPool(league).length) return null;
-  const news = stockWatch(league, week);
-  const { slot } = userPickAround(league);
-  const pick = slot || 16;
-  const targets = scoutTargets(league, { pick, needs: userNeeds(league, 3), movers: news.map((x) => x.pid) });
-  const m = checkpointMoment(league, { week, news, targetIds: targets.map((p) => p.id), pick: slot, pts: t.scoutPts || 0, cap: SCOUT_PTS_CAP, lost: scoutPointsLost(league) });
-  if (m && queueMoment(league, m) && m.stop) {
-    // It's what stopped the sim, so it's the first thing on screen: ahead of quieter moments (a result card).
-    const q = league.moments;
-    const i = q.findIndex((x) => !x.stop);
-    if (i >= 0 && i < q.length - 1) q.splice(i, 0, q.pop());
-  }
-  return m;
-}
-
 // ---------- Scouting misses ----------
 // A drafted player's ceiling (POT) starts as what was believed on draft day: your scouts' read for
 // your own picks (exact only if they nailed him), Central Scouting's public read otherwise. The
@@ -998,15 +1015,11 @@ export function runCombine(league) {
   [...pool].sort((a, b) => b.cs.fscore - a.cs.fscore).forEach((p, i) => (p.cs.final = i + 1));
   if (d) {
     d.stage = "combine";
-    d.interviewsLeft = COMBINE_INTERVIEWS;
+    d.interviewsLeft = COMBINE_INTERVIEWS + (SCOUT_SLOTS.some((role) => league.teams[league.userTid]?.scouts?.[role]?.trait === "combine") ? 1 : 0);
     d.workoutsLeft = PRIVATE_WORKOUTS;
     d.buzz = combineBuzz(pool, invited);
   }
-  const t = league.teams[league.userTid];
-  const s = t.scouts || {};
-  const bonus = SCOUT_POINTS_COMBINE + (SCOUT_SLOTS.some((role) => s[role]?.trait === "combine") ? 3 : 0);
-  t.scoutPts = (t.scoutPts || 0) + bonus;
-  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: test results and Central Scouting's final rankings are out. You have ${COMBINE_INTERVIEWS} interview slots, ${PRIVATE_WORKOUTS} private workouts and ${bonus} extra scouting points before the draft. Your scouts' visit list is on the Your scouts tab.` });
+  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: test results and Central Scouting's final rankings are out. You have ${d?.interviewsLeft ?? COMBINE_INTERVIEWS} interview slots and ${PRIVATE_WORKOUTS} private workouts before the draft. Your scouts' visit list is on the Your scouts tab.` });
 }
 
 function combineBuzz(pool, invited) {
@@ -1106,6 +1119,10 @@ export function moveOnMyList(league, pid, dir) {
 export function migrateScouting(l) {
   const user = l.teams[l.userTid];
   if (user && !("scouts" in user)) user.scouts = defaultScouts(l);
+  // Hands-off scouting (batch x2): no scouting points, area points or in-season checkpoints.
+  for (const t of l.teams || []) { delete t.scoutPts; delete t.scoutLost; delete t.area; }
+  if (user) scoutAssignments(l, user);
+  if (Array.isArray(l.moments)) l.moments = l.moments.filter((m) => m?.kind !== "scoutCheckpoint");
   if (!Array.isArray(l.scoutPool)) refreshScoutPool(l);
   for (const id in l.players) {
     const p = l.players[id];

@@ -193,20 +193,19 @@ export function scoutingPaper(league, week) {
   cls.sort((a, b) => csRank(a) - csRank(b));
   const near = cls.slice(Math.max(0, slot - 8), slot + 6);
   const blind = near.filter((p) => !p.scout?.lvl);
-  const pts = t.scoutPts || 0, area = t.area?.year === league.draftClassYear ? t.area.points : 0;
-  const trips = Object.keys(t.area?.trips || {}).length;
+  const filed = t.surveyLog?.year === league.draftClassYear ? t.surveyLog.filed : 0;
   pushPaper(league, {
     id: `scout:${league.year}:${week}`, kind: "scouting", year: league.year, day: league.day, date: paperDate(league),
     edition: "SCOUTING CHECKPOINT", weather: "Cold rinks, long drives.", headline: "YOUR SCOUTS ARE BACK FROM THE ROAD",
-    sub: `Week ${week}: ${t.city} picks around #${slot} as things stand. ${pts} scouting point${pts === 1 ? "" : "s"} and ${area} area point${area === 1 ? "" : "s"} in hand.`,
+    sub: `Week ${week}: ${t.city} picks around #${slot} as things stand. Your scouts have filed ${filed} report${filed === 1 ? "" : "s"} in their regions.`,
     story: [
-      `Every report you file now is a pick you do not make blind in June. ${blind.length ? `${blind.length} of the ${near.length} prospects in your range still have no report, among them ${blind.slice(0, 3).map((p) => `${p.name} (${p.pos})`).join(", ")}.` : "Everyone in your range has at least a first read."}`,
-      trips ? `Your area scouts have made ${trips} regional trip${trips === 1 ? "" : "s"} this year; the sleepers show up on those.` : "Your area scouts have not left the office yet this year. A regional trip reads every prospect in a league at once.",
+      `Your scouts work their regions on their own. ${blind.length ? `${blind.length} of the ${near.length} prospects in your range still have no report, among them ${blind.slice(0, 3).map((p) => `${p.name} (${p.pos})`).join(", ")}.` : "Everyone in your range has at least a first read."}`,
+      "Where you sent them decides who they see: a sharp scout finds the late-ranked prospects with a real ceiling.",
       "Central Scouting's midterm order is a public list: some of the movement is real, some is hype, and only a report tells you which.",
     ],
     photo: { tid: t.id, caption: `${t.city}'s scouting staff.` },
     side: [{ h: "In Your Range", rows: near.slice(0, 8).map((p) => [`#${cls.indexOf(p) + 1}`, `${p.name} (${p.pos})${p.scout?.lvl >= 2 ? " · full workup" : p.scout?.lvl ? " · first read" : " · no report"}`]) }],
-    foot: "INSIDE · Regional scouting, D3 · Combine invites, D5",
+    foot: "INSIDE · Scout assignments, D3 · Combine invites, D5",
     button: "Open the scouting board →",
   });
 }

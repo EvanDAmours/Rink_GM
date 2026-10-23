@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import * as L from "../src/engine/league.js";
 import scheduleData from "../src/data/schedule2026.json" with {type:"json"};
 import {normalizeSchedule,importSeasonSchedule,dayToDate,generateSchedule} from "../src/engine/schedule.js";
-import {REGIONS,scoutRegion,regionRead,regionOf,creditAreaWeeks} from "../src/engine/regions.js";
+import {REGIONS,regionOf,assignScout} from "../src/engine/regions.js";
 import {classPool,prospectRead,csRank,scoutProspect} from "../src/engine/scouting.js";
 import {setTraining,trainingCamp,franchiseWeek,applyTrainingYear,hireCoach,reviewOwner} from "../src/engine/franchise.js";
 import {extendPlayer,futurePayroll} from "../src/engine/extensions.js";
@@ -42,25 +42,26 @@ test("generated future schedules preserve all 84-game counts and matrix",()=>{
  const lg=league();const sched=generateSchedule(lg.teams);
  for(const t of lg.teams){assert.equal(sched.filter(g=>g.h===t.id).length,42);assert.equal(sched.filter(g=>g.a===t.id).length,42);}
 });
-test("region visits improve coverage without exposing hidden numbers or changing board order",()=>{
- const lg=league(),t=lg.teams[lg.userTid];t.scouts={};
+// Batch x2: area trips and points are gone; a scout assigned to a region covers it.
+test("assigning a scout to a region covers it without exposing hidden numbers or changing board order",()=>{
+ const lg=league(),t=lg.teams[lg.userTid];
  const p=classPool(lg).find(p=>regionOf(p)==="Liiga");assert.ok(p);
  const before=classPool(lg).sort((a,b)=>csRank(a)-csRank(b)).map(p=>p.id);
+ for(const k of ["major","major2","minor","minor2"])assert.ok(assignScout(lg,k,"OHL").ok);
  assert.equal(prospectRead(lg,p).pot,"??");
- assert.ok(scoutRegion(lg,"Liiga").ok);assert.ok(prospectRead(lg,p).general);
+ assert.ok(assignScout(lg,"minor","Liiga").ok);assert.ok(prospectRead(lg,p).general);
  assert.equal(prospectRead(lg,p).ovr,"??");assert.equal(prospectRead(lg,p).exact,false);
- for(let n=0;n<3;n++)assert.ok(scoutRegion(lg,"Liiga").ok);
- assert.equal(scoutRegion(lg,"Liiga").ok,false);assert.equal(regionRead(lg,p).trips,4);
+ L.startRegularSeason(lg);assert.equal(assignScout(lg,"minor","WHL").ok,false,"locked in season");
  assert.deepEqual(classPool(lg).sort((a,b)=>csRank(a)-csRank(b)).map(p=>p.id),before);
  assert.deepEqual(Object.keys(REGIONS).slice(0,3),["OHL","WHL","QMJHL"]);
 });
-test("area and training weeks are credited once even across skipped days",()=>{
+test("training weeks are credited once even across skipped days",()=>{
  const lg=league(),t=lg.teams[lg.userTid],p=t.roster.map(id=>lg.players[id]).find(p=>p.pos!=="G" && !p.injury && p.attrs.spd<98);
  assert.ok(setTraining(lg,p.id,"skating").ok);
- lg.day=21;creditAreaWeeks(lg);franchiseWeek(lg);
- const points=t.area.points,work=t.training.earned[p.id].skating;
- creditAreaWeeks(lg);franchiseWeek(lg);
- assert.equal(t.area.points,points);assert.equal(t.training.earned[p.id].skating,work);
+ lg.day=21;franchiseWeek(lg);
+ const work=t.training.earned[p.id].skating;
+ franchiseWeek(lg);
+ assert.equal(t.training.earned[p.id].skating,work);
  const speed=p.attrs.spd;applyTrainingYear(lg,p);assert.ok(p.attrs.spd>speed);
 });
 test("training limits, position restrictions, and once-per-year camps are enforced",()=>{
@@ -126,8 +127,8 @@ test("records retain names after retirement; repeated owner reviews and season a
  reviewOwner(lg);const trust=lg.teams[lg.userTid].owner.trust;reviewOwner(lg);assert.equal(lg.teams[lg.userTid].owner.trust,trust);
 });
 test("new systems round-trip, and legacy saves keep played schedules and running draft ownership",()=>{
- const lg=league();scoutRegion(lg,"WHL");const round=L.deserializeLeague(L.exportLeagueText(lg));
- assert.equal(round.teams[round.userTid].area.trips.WHL,1);assert.ok(round.teams[round.userTid].coach);assert.ok(round.recordBook);
+ const lg=league();assignScout(lg,"minor","QMJHL");const round=L.deserializeLeague(L.exportLeagueText(lg));
+ assert.equal(round.teams[round.userTid].scoutRegions.minor,"QMJHL");assert.ok(round.teams[round.userTid].coach);assert.ok(round.recordBook);
  const legacy=structuredClone(lg);delete legacy.scheduleStart;delete legacy.scheduleInfo;delete legacy.recordBook;delete legacy.coachMarket;
  legacy.draftPicks=legacy.draftPicks.filter(p=>p.round<=4);legacy.draftClass=legacy.draftClass.slice(0,170);
  for(const id of legacy.draftClass)legacy.players[id].scout.lvl=1;
