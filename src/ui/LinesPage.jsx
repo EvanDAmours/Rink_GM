@@ -3,9 +3,9 @@ import Headshot from "./Headshot.jsx";
 import React, { useRef, useState } from "react";
 import { useGame, TeamBadge, ovrColor } from "./common.jsx";
 import { autoLines, resetNhlLines, syncLines, gameLines, healthy, teamRatings, lineupIds } from "../engine/lines.js";
-import { isGoalie } from "../engine/constants.js";
+import { isGoalie, isDefense } from "../engine/constants.js";
 import { restShare, REST_OPTIONS } from "../engine/sim.js";
-import { lineChemistry } from "../engine/development.js";
+import { chemistry, archAbbr, ARCH_LEGEND, staffNote, autofillByChemistry, autofillByOverall, autofillSpecialTeams } from "../engine/chemistry.js";
 import { POS_COLOR } from "./TradePage.jsx";
 import AbilityChip from "./AbilityChip.jsx";
 import { iceShare, goalieShare, lastName, firstName, offPosition } from "./linesView.js";
@@ -25,6 +25,7 @@ const D_POS = ["LD", "RD"];
 const avg = (ps) => (ps.length ? Math.round(ps.reduce((s, p) => s + p.ovr, 0) / ps.length) : null);
 const sameLines = (a, b) => !!a && !!b && JSON.stringify([a.F, a.D, a.G]) === JSON.stringify([b.F, b.D, b.G]);
 const signed = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+const CHEM_TONE = { Great: "#22c55e", Good: "#84cc16", Fair: "#eab308", Poor: "#ef4444" };
 const TABS = [["es", "Even Strength", "5v5"], ["pp", "Power Play", "PP"], ["pk", "Penalty Kill", "PK"], ["sit", "Situations", "Sit"]];
 const GROUP = { es: ["F", "D", "G"], pp: ["PP"], pk: ["PK"] };
 
@@ -36,6 +37,7 @@ export default function LinesPage({ onRoster }) {
   const [drawer, setDrawer] = useState(false);
   const [over, setOver] = useState(null);
   const [spots, setSpots] = useState(false);
+  const [why, setWhy] = useState(null);
   const drag = useRef(null);
   const team = league.teams[viewTid];
   const mine = viewTid === league.userTid;
@@ -120,7 +122,7 @@ export default function LinesPage({ onRoster }) {
         <span className="lx-pc-face">{p && <Headshot p={p} team={team} size={40} decorative />}</span>
         <span className="lx-pc-who">
           <small>{p ? <>{p.number ? `#${p.number} ` : ""}{firstName(p.name)}</> : " "}</small>
-          <b>{p ? lastName(p.name) : "Empty"}</b>
+          <b>{p ? lastName(p.name) : "Empty"}{p && archAbbr(p) && <i className="lx-arch" title={p.type}>{archAbbr(p)}</i>}</b>
           <em>{out ? <span className="bad">{p.injury > 0 ? `Out ${p.injury}g` : "LTIR"}{sub ? ` · ${lastName(sub.name)} in` : ""}</span> : p ? <>{p.pos}{off ? <span className="warn"> at {pos}</span> : ""} · {p.age}<AbilityChip p={p} /></> : mine ? "Tap to fill" : ""}</em>
         </span>
         {proj != null ? <span className="lx-pc-proj" title={`${selPlayer.name} would rate ${proj} here`}><small>→</small><b style={{ color: ovrColor(proj) }}>{proj}</b></span>
@@ -165,27 +167,39 @@ export default function LinesPage({ onRoster }) {
   };
 
   // ---- one line card ----
-  const chem = (ids) => { try { const v = lineChemistry(league, team, ids.filter(Boolean)); return Number.isFinite(v) ? v : null; } catch { return null; } };
+  const kindOf = (g) => (g === "F" || g === "D" || g === "PP" || g === "PK" ? g : null);
+  const chem = (ids, g) => { try { return chemistry(league, team, ids.filter(Boolean), g); } catch { return null; } };
   const roles = lineRoles(team);
-  const line = (g, i, ids, slots, extra) => {
-    const name = g === "F" ? `Line ${i + 1}` : g === "D" ? `Pair ${i + 1}` : g === "G" ? "Goalies" : `${g === "PP" ? "Power play" : "Penalty kill"} ${i + 1}`;
+  const chemBadge = (c, key) => {
+    if (!c) return null;
+    const open = why === key, tone = CHEM_TONE[c.label];
+    return (
+      <span className="lx-chem-w">
+        <button type="button" className={`lx-chem${open ? " on" : ""}`} style={{ "--chem": tone }} aria-expanded={open} onClick={() => setWhy(open ? null : key)}
+          title={`Chemistry ${c.label} (${signed(c.pts)})\n${c.reasons.map((r) => `${signed(r.v)} ${r.text}`).join("\n") || "Nothing special yet"}`}>
+          <small>CHEM</small><span className="lx-chem-bar"><i style={{ width: `${c.score}%` }} /></span><b>{c.score}</b><em>{c.label}</em>
+        </button>
+        {open && <span className="lx-chem-pop" role="note">{c.reasons.length ? c.reasons.map((r, k) => <span key={k}><b className={r.v >= 0 ? "good" : "bad"}>{signed(r.v)}</b> {r.text}</span>) : <span>Nothing special yet. Chemistry grows as they play together.</span>}</span>}
+      </span>
+    );
+  };
+  const line = (g, i, ids, slots, extra, rows) => {
+    const name = g === "F" ? `Line ${i + 1}` : g === "D" ? `Pair ${i + 1}` : g === "G" ? "Tandem" : `${g === "PP" ? "Power play" : "Penalty kill"} ${i + 1}`;
     const a = avg(ids.map(get).filter(Boolean));
-    const c = g === "F" ? chem(L.F[i]) : null;
+    const c = kindOf(g) ? chem(g === "F" || g === "D" ? L[g][i] : ids, g) : null;
     const role = g === "F" ? LINE_ROLES[roles.F[i]]?.name : g === "D" ? PAIR_ROLES[roles.D[i]]?.name : null;
     const share = g === "G" ? null : iceShare(g, i, g === "F" || g === "D" ? team : undefined);
     return (
       <section key={`${g}${i}`} className={`lx-line g-${g}`}>
         <header className="lx-line-h">
-          <b>{name}</b>
-          <span className="lx-chip" title={[a != null && `Line rating ${a}`, role && `Role: ${role}`, c != null && `Chemistry ${signed(c)}`, share != null && `${share}% of the ice time`].filter(Boolean).join(" · ")}>
-            {a != null && <b style={{ color: ovrColor(a) }}>{a}</b>}
-            {role && <span>{role.replace(/ (line|pair)$/i, "")}</span>}
-            {c != null && <span className={c >= 0.6 ? "good" : c < 0 ? "bad" : ""}>{c >= 0.6 ? "●" : c < 0 ? "●" : "○"} chem {signed(c)}</span>}
-            {share != null && <span>{share}%</span>}
-            {extra}
-          </span>
+          <b className="lx-line-n">{name}</b>
+          {a != null && <b className="lx-line-o" style={{ color: ovrColor(a) }} title="Line rating">{a}</b>}
+          {role && <span className="lx-line-r">{role.replace(/ (line|pair)$/i, "")}</span>}
+          {share != null && <span className="lx-line-r" title="Share of the ice time">{share}%</span>}
+          {extra}
+          {chemBadge(c, `${g}${i}`)}
         </header>
-        <div className={`lx-slots n${slots.length}`}>{slots}</div>
+        {rows ? rows.map((r, k) => <div key={k} className={`lx-slots n${r.length} st-row`}>{r}</div>) : <div className={`lx-slots n${slots.length}`}>{slots}</div>}
       </section>
     );
   };
@@ -196,21 +210,54 @@ export default function LinesPage({ onRoster }) {
   const starts = (r) => Math.round(league.schedule.filter((g) => g.h === team.id || g.a === team.id).length * (1 - r / 100));
 
   // Render the lines of this tab, with the picker right under the line that holds the selection.
-  const blocks = [];
-  const push = (g, i, ids, slots, extra) => { blocks.push(line(g, i, ids, slots, extra)); if (sel && sel.g === g && sel.i === i) blocks.push(picker()); };
+  const col = () => { const out = []; out.add = (g, i, ids, slots, extra, rows) => { out.push(line(g, i, ids, slots, extra, rows)); if (sel && sel.g === g && sel.i === i) out.push(picker()); }; return out; };
+  const fwd = col(), def = col(), gol = col(), st = col();
   if (tab === "es") {
-    blocks.push(<div className="lx-grp" key="hf">Forwards</div>);
-    L.F.forEach((ln, i) => push("F", i, game.F[i], ln.map((_, j) => slot({ g: "F", i, j }))));
-    blocks.push(<div className="lx-grp" key="hd">Defence</div>);
-    L.D.forEach((pr, i) => push("D", i, game.D[i], pr.map((_, j) => slot({ g: "D", i, j }))));
-    blocks.push(<div className="lx-grp" key="hg">Goalies</div>);
-    push("G", 0, [], [slot({ g: "G", i: 0 }, "G1"), slot({ g: "G", i: 1 }, "G2")], <span>{gStart}/{gBack} starts</span>);
+    L.F.forEach((ln, i) => fwd.add("F", i, game.F[i], ln.map((_, j) => slot({ g: "F", i, j }))));
+    L.D.forEach((pr, i) => def.add("D", i, game.D[i], pr.map((_, j) => slot({ g: "D", i, j }))));
+    gol.add("G", 0, [], [slot({ g: "G", i: 0 }, "G1"), slot({ g: "G", i: 1 }, "G2")], <span className="lx-line-r">{gStart}/{gBack} starts</span>);
   } else if (tab === "pp" || tab === "pk") {
     const k = tab.toUpperCase();
-    L[k].forEach((u, i) => push(k, i, u, u.map((_, j) => slot({ g: k, i, j }))));
+    L[k].forEach((u, i) => {
+      const cells = u.map((_, j) => ({ j, d: isDefense(get(u[j])?.pos) }));
+      const rows = [cells.filter((c) => !c.d), cells.filter((c) => c.d)].filter((r) => r.length).map((r) => r.map((c) => slot({ g: k, i, j: c.j })));
+      st.add(k, i, u, null, null, rows);
+    });
   }
   const extrasK = tab === "es" ? "ES" : tab.toUpperCase();
   const extras = tab === "es" ? scratches : tab === "sit" ? [] : stBench(extrasK);
+  const fill = (byChem) => {
+    if (tab === "es") { if (byChem) autofillByChemistry(league, team); else autofillByOverall(league, team); }
+    else autofillSpecialTeams(league, team, byChem);
+    setSel(null); setWhy(null); commit();
+    toast(byChem ? "Lines set for the best chemistry." : "Lines set by overall.");
+  };
+  const extrasPanel = tab !== "sit" && (
+    <section className="lx-extras lx-panel">
+      <h3 className="lx-grp">{tab === "es" ? "Scratches" : "Not on a unit"} <small>{mine ? (tab === "es" ? "drag or tap into a spot" : "dressed skaters · drag or tap into a spot") : ""}</small></h3>
+      <div className="lx-xrow">
+        {extras.length ? extras.map((p) => { const a = { g: "X", id: p.id, k: tab === "es" ? (isGoalie(p.pos) ? "G" : "ES") : extrasK }; const hot = mine && sel && sel.g !== "X" && kind(sel) === a.k; return (
+          <button type="button" key={p.id} {...dnd(a)} className={`lx-x${same(sel, a) ? " sel" : ""}${hot ? " target" : ""}`} onClick={() => (mine ? act(a) : openPlayer(p.id))}>
+            <i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span className="lx-x-n"><b>{lastName(p.name)}</b><small>{archAbbr(p)} · {p.age}</small></span><b className="lx-x-o" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+          </button>); }) : <span className="lx-dim">Nobody.</span>}
+      </div>
+      {tab === "es" && injured.length > 0 && (<>
+        <h3 className="lx-grp sm">Injured</h3>
+        <div className="lx-xrow inj">
+          {injured.map((p) => <button type="button" key={p.id} className="lx-x out" onClick={() => openPlayer(p.id)} title={p.injuryNote || "injury"}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span className="lx-x-n"><b>{lastName(p.name)}</b><small>{archAbbr(p)}</small></span><b className="lx-x-o bad">{p.injury > 0 ? `${p.injury}g` : "LTIR"}</b></button>)}
+        </div>
+      </>)}
+    </section>
+  );
+  const chemPanel = (
+    <section className="lx-panel lx-chempanel">
+      <h3 className="lx-grp">Chemistry</h3>
+      <p>{tab === "es" ? "Lines click when styles complement each other: a playmaker feeding a sniper or power forward, a puck-moving D with a shutdown partner, a mix of left and right shots. Chemistry also grows every week a line or pair stays together." : "Units click with a quarterback and a shooter on the power play, an offensive D on the point, and defensive specialists on the kill."}</p>
+      <p className="lx-staff">{staffNote(team)}</p>
+      {mine && <div className="lx-fill"><button type="button" className="lx-auto" onClick={() => fill(true)}>Autofill by chemistry</button><button type="button" className="lx-ghost" onClick={() => fill(false)}>Autofill by overall</button></div>}
+      <div className="lx-legend">{ARCH_LEGEND.map(([k, v]) => <span key={k}><i className="lx-arch">{k}</i>{v}</span>)}</div>
+    </section>
+  );
 
   return (
     <div className="lnx" style={{ "--c1": c1, "--c2": c2 }}>
@@ -266,24 +313,28 @@ export default function LinesPage({ onRoster }) {
       {mine && sel && sel.g === "X" && <div className="lx-selbar"><b>{selPlayer ? lastName(selPlayer.name) : "Empty spot"}</b> selected · tap the spot he goes into. <button type="button" className="lx-linkbtn" onClick={() => setSel(null)}>Cancel</button></div>}
       {!mine && <div className="lx-dim">Viewing the {team.name}' lines. Tap a player for his card.</div>}
 
-      {tab === "sit" ? <SituationsPanel team={team} mine={mine} /> : <div className="lx-lines">{blocks}</div>}
-
-      {tab !== "sit" && (
-        <div className="lx-extras">
-          <div className="lx-grp">{tab === "es" ? "Scratches" : "Not on a unit"} <small>{mine ? (tab === "es" ? "drag or tap into a spot" : "dressed skaters · drag or tap into a spot") : ""}</small></div>
-          <div className="lx-xrow">
-            {extras.length ? extras.map((p) => { const a = { g: "X", id: p.id, k: tab === "es" ? (isGoalie(p.pos) ? "G" : "ES") : extrasK }; const hot = mine && sel && sel.g !== "X" && kind(sel) === a.k; return (
-              <button type="button" key={p.id} {...dnd(a)} className={`lx-x${same(sel, a) ? " sel" : ""}${hot ? " target" : ""}`} onClick={() => (mine ? act(a) : openPlayer(p.id))}>
-                <i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span>{lastName(p.name)}</span><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
-              </button>); }) : <span className="lx-dim">Nobody.</span>}
-          </div>
-          {tab === "es" && injured.length > 0 && (
-            <div className="lx-xrow inj"><span className="lx-k">INJURED</span>
-              {injured.map((p) => <button type="button" key={p.id} className="lx-x out" onClick={() => openPlayer(p.id)} title={p.injuryNote || "injury"}><i style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i><span>{lastName(p.name)}</span><b className="bad">{p.injury > 0 ? `${p.injury}g` : "LTIR"}</b></button>)}
+      {tab === "sit" ? <SituationsPanel team={team} mine={mine} />
+        : tab === "es" ? (
+          <div className="lx-es">
+            <div className="lx-col">
+              <div className="lx-blk o1"><h2 className="lx-big">Forwards</h2>{fwd}</div>
+              <div className="lx-blk o3"><h2 className="lx-big">Goalies</h2>{gol}</div>
             </div>
-          )}
-        </div>
-      )}
+            <div className="lx-col">
+              <div className="lx-blk o2"><h2 className="lx-big">Defence</h2>{def}</div>
+              <div className="lx-blk o4">{chemPanel}</div>
+              <div className="lx-blk o5">{extrasPanel}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="lx-es">
+            <div className="lx-col">
+              <h2 className="lx-big">{tab === "pp" ? "Power Play" : "Penalty Kill"}</h2>{st}
+              {extrasPanel}
+            </div>
+            <div className="lx-col">{chemPanel}</div>
+          </div>
+        )}
     </div>
   );
 }

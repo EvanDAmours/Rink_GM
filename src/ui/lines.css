@@ -320,3 +320,62 @@
   .app .main .lnx .lx-line.g-F .lx-pc-who em { display: none; }
   .app .main .lnx .lx-line.g-F .lx-pc-face { width: 30px; height: 30px; }
 }
+
+/* Lines layout v2: forwards | defence columns, big section headings, chemistry badges, panels. */
+.app .main .lnx { max-width: 1320px; }
+.app .main .lnx .lx-es { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.app .main .lnx .lx-col, .app .main .lnx .lx-blk { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.app .main .lnx .lx-big { margin: 6px 0 0; font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #f8fafc; display: flex; align-items: center; gap: 10px; }
+.app .main .lnx .lx-big::after { content: ""; flex: 1; height: 2px; background: linear-gradient(90deg, var(--c1, #3b82f6), transparent); opacity: .7; }
+.app .main .lnx .lx-line { padding: 0 0 8px; border-left-width: 4px; border-radius: 10px; overflow: visible; }
+.app .main .lnx .lx-line-h { flex-wrap: wrap; gap: 8px; padding: 6px 10px; margin: 0 0 8px; background: #16203a; border-bottom: 1px solid #2a3650; border-radius: 8px 10px 0 0; }
+.app .main .lnx .lx-line-h .lx-line-n { font-size: 14px; letter-spacing: 1.5px; color: #f8fafc; }
+.app .main .lnx .lx-line-o { font-size: 17px; font-weight: 900; }
+.app .main .lnx .lx-line-r { font-size: 12px; color: #cbd5e1; white-space: nowrap; }
+.app .main .lnx .lx-line > .lx-slots { padding: 0 8px; }
+.app .main .lnx .lx-line > .st-row { padding: 0 8px; }
+.app .main .lnx .lx-line > .st-row + .st-row { margin-top: 6px; }
+.app .main .lnx .lx-line.g-PP .st-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.app .main .lnx .lx-line.g-PK .st-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.app .main .lnx .lx-chem-w { position: relative; margin-left: auto; }
+.app .main .lnx button.lx-chem { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px; min-height: 28px; border-radius: 999px; background: #0b1220; border: 1px solid color-mix(in srgb, var(--chem) 60%, transparent); color: #e2e8f0; font-weight: 700; cursor: pointer; }
+.app .main .lnx button.lx-chem small { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #94a3b8; }
+.app .main .lnx .lx-chem-bar { width: 64px; height: 8px; border-radius: 99px; background: #1e293b; overflow: hidden; }
+.app .main .lnx .lx-chem-bar i { display: block; height: 100%; background: var(--chem); border-radius: 99px; }
+.app .main .lnx button.lx-chem b { font-size: 15px; font-weight: 900; color: var(--chem); }
+.app .main .lnx button.lx-chem em { font-style: normal; font-size: 12px; color: var(--chem); }
+.app .main .lnx button.lx-chem.on, .app .main .lnx button.lx-chem:hover { background: color-mix(in srgb, var(--chem) 14%, #0b1220); }
+.app .main .lnx .lx-chem-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 300px; max-width: 80vw; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #0b1220; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 30px #0008; font-size: 12.5px; color: #cbd5e1; }
+.app .main .lnx .lx-chem-pop b { display: inline-block; min-width: 34px; font-weight: 900; }
+.app .main .lnx .good { color: #22c55e; } .app .main .lnx .bad { color: #ef4444; }
+.app .main .lnx i.lx-arch { font-style: normal; display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 900; letter-spacing: .5px; color: #c7d2fe; background: #312e81aa; border: 1px solid #4f46e5; vertical-align: 2px; }
+.app .main .lnx .lx-pc-who b { display: flex; align-items: center; min-width: 0; }
+.app .main .lnx .lx-panel { background: #0f172a; border: 1px solid #2a3650; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.app .main .lnx .lx-panel .lx-grp { margin: 0; font-size: 16px; color: #f8fafc; letter-spacing: 1.6px; }
+.app .main .lnx .lx-panel .lx-grp.sm { font-size: 12px; color: #fca5a5; margin-top: 4px; }
+.app .main .lnx .lx-chempanel { border-color: #4f46e566; }
+.app .main .lnx .lx-chempanel p { margin: 0; font-size: 13px; line-height: 1.45; color: #cbd5e1; }
+.app .main .lnx .lx-chempanel .lx-staff { color: #e0e7ff; padding: 8px 10px; background: #1e1b4b88; border-radius: 8px; }
+.app .main .lnx .lx-fill { display: flex; gap: 8px; flex-wrap: wrap; }
+.app .main .lnx .lx-fill button { flex: 1; min-height: 38px; }
+.app .main .lnx .lx-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 8px; font-size: 11.5px; color: #94a3b8; }
+.app .main .lnx .lx-legend .lx-arch { margin: 0 5px 0 0; }
+.app .main .lnx .lx-extras .lx-xrow { gap: 8px; }
+.app .main .lnx button.lx-x { min-height: 44px; padding: 4px 12px 4px 4px; border-radius: 10px; font-size: 14px; background: #172033; border-color: #33415c; }
+.app .main .lnx button.lx-x > i { font-size: 10px; padding: 4px 6px; border-radius: 6px; }
+.app .main .lnx .lx-x-n { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.app .main .lnx .lx-x-n small { font-size: 10.5px; color: #94a3b8; font-weight: 600; }
+.app .main .lnx .lx-x-o { font-size: 17px; font-weight: 900; margin-left: 4px; }
+@media (min-width: 1100px) { .app .main .lnx .lx-line.g-F .lx-pc-who em { display: flex; } }
+@media (max-width: 899px) {
+  .app .main .lnx .lx-es { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+  .app .main .lnx .lx-es .lx-col { display: contents; }
+  .app .main .lnx .lx-blk.o1 { order: 1; } .app .main .lnx .lx-blk.o2 { order: 2; } .app .main .lnx .lx-blk.o3 { order: 3; } .app .main .lnx .lx-blk.o4 { order: 4; } .app .main .lnx .lx-blk.o5 { order: 5; }
+  .app .main .lnx .lx-big { font-size: 17px; }
+  .app .main .lnx .lx-chem-bar { width: 40px; }
+  .app .main .lnx .lx-legend { grid-template-columns: 1fr 1fr; }
+  .app .main .lnx .lx-line.g-PP .st-row { grid-template-columns: 1fr 1fr; }
+  .app .main .lnx i.lx-arch { margin-left: 0; }
+  .app .main .lnx .lx-pc-who b { flex-direction: column; }
+}
+.app .main .lnx .lx-blk > .lx-line, .app .main .lnx .lx-col > .lx-line { width: 100%; box-sizing: border-box; align-self: stretch; }

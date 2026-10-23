@@ -1,3 +1,4 @@
+import {chemistry,chemKey} from "./chemistry.js";
 import {stream,clamp,hashStr} from "./rng.js";
 import {isGoalie,isDefense} from "./constants.js";
 import {defaultArchetype,computeOvr} from "./ratings.js";
@@ -208,11 +209,9 @@ export function schemeFit(p,t) {
   const preferred=style==="attack"?["SNP","PLY","OFD"]:style==="defend"?["TWF","DFD","TWD","GRN"]:["PWF","TWF","TWD"];
   return preferred.includes(p.type)?.7:0;
 }
-export function lineChemistry(lg,t,ids) {
-  const players=ids.map(id=>lg.players[id]).filter(Boolean),types=new Set(players.map(p=>p.type));
-  const complementary=types.has("PLY") && types.has("SNP")?1:types.size>=3?.4:0;
-  const experience=t.lineExperience[ids.join("|")] || 0;
-  return Math.min(2,complementary+experience/26);
+export function lineChemistry(lg,t,ids,kind="F") {
+  // Chemistry points (about -1 to +2) from chemistry.js: archetype mix, hands, familiarity, staff.
+  return chemistry(lg,t,ids,kind).pts;
 }
 export function coachingEffects(lg,t) {
   ensureDevelopment(lg);return {pp:1+((t.staff.assistant.specialTeams+(t.coach?.specialTeams ?? 78))/2-78)*.002,pk:1+(t.staff.assistant.specialTeams-78)*.0018,goalie:(t.staff.goalie.goaltending-78)*.03};
@@ -222,7 +221,7 @@ export function developmentWeek(lg) {
   for(const t of lg.teams){
     if((t.farmWeek || 0)>=week)continue;
     const elapsed=week-(t.farmWeek || 0);t.farmWeek=week;
-    for(const line of t.lines?.F || []){const key=line.join("|");t.lineExperience[key]=Math.min(26,(t.lineExperience[key] || 0)+elapsed);}
+    for(const line of [...(t.lines?.F || []),...(t.lines?.D || [])]){const key=chemKey(line);t.lineExperience[key]=Math.min(26,Math.max(t.lineExperience[key] || 0,t.lineExperience[line.join("|")] || 0)+elapsed);}
     for(const id of [...t.roster,...t.prospects]){
       const p=lg.players[id];if(!p)continue;
       if(p.positionTraining && !p.injury){p.positionTraining.weeks+=elapsed;if(p.positionTraining.weeks>=8){

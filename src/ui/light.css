@@ -310,6 +310,20 @@ button.rk-rcard { background: #ffffff; border: 1px solid #d3d9e2; border-left: 3
 .app .main .lnx .lx-tabs button { color: #334155; }
 .app .main .lnx button.lx-x { border-color: #cbd2dc; color: #1e293b; }
 .app .main .lnx .lx-pk-n small { color: #475569; }
+.app .main .lnx .lx-line-r { color: #334155; }
+.app .main .lnx button.lx-chem { background: #ffffff; color: #1e293b; }
+.app .main .lnx button.lx-chem small { color: #475569; }
+.app .main .lnx .lx-chem-bar { background: #e7ebf1; }
+.app .main .lnx button.lx-chem.on,
+.app .main .lnx button.lx-chem:hover { background: color-mix(in srgb, var(--chem) 14%, #ffffff); }
+.app .main .lnx .lx-chem-pop { background: #ffffff; border: 1px solid #cbd2dc; color: #334155; }
+.app .main .lnx .good { color: #15803d; }
+.app .main .lnx .lx-panel { background: #f4f6fa; }
+.app .main .lnx .lx-panel .lx-grp.sm { color: #b91c1c; }
+.app .main .lnx .lx-chempanel p { color: #334155; }
+.app .main .lnx .lx-chempanel .lx-staff { background: #ede9fe88; }
+.app .main .lnx .lx-legend { color: #475569; }
+.app .main .lnx .lx-x-n small { color: #475569; }
 
 /* src/ui/live.css */
 .lv-bside { background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #ffffff) 70%, #ffffff 100%); }

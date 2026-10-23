@@ -118,7 +118,7 @@ function makeSide(league, team, opts) {
   if (!userTeam && last?.year === league.year && league.day - last.day <= 1) rest = Math.max(rest, .82);
   if (!opts.playoff && backup && chance(rest) || !goalie) goalie = backup || goalie;
   return {tid: team.id, abbr: team.abbr, user: userTeam, coaching: coachingEffects(league, team),
-    chemistry: lines.F.map(ids => lineChemistry(league, team, ids)),
+    chemistry: lines.F.map(ids => lineChemistry(league, team, ids)), dChem: lines.D.map(ids => lineChemistry(league, team, ids, 'D')),
     pref: defaultStyle(league, team), tactic: defaultStyle(league, team),
     lines, dressed, form, star, eliteAt: bar, anchor, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
@@ -266,7 +266,7 @@ function rate(s, k, ids) {
   // distribute and finish far more than an equal share of the puck.
   const pulled = key => { let sum = 0, max = -Infinity; for (let i = 0; i < n; i++) { const v = comps[i][key] * eff[i]; sum += v; if (v > max) max = v; } const m = n ? sum / n : 0; return m + (max - m - EDGE.starNorm) * EDGE.starWeight; };
   return {off: pulled('off') + (side.chemistry[side.fIdx] || 0), ctrl: pulled('ctrl'), pass: pulled('pass'),
-    def: get('def'), skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n};
+    def: get('def') + (side.dChem?.[side.dIdx] || 0) * .6, skate: get('skate'), phys: get('phys'), blk: get('blk'), dsc: get('dsc'), n};
 }
 
 function coach(s, k) {

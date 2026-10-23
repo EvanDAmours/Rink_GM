@@ -233,9 +233,10 @@ test("trade block circulates, AI teams deal, and Deadline Day closes trading at 
     deadlineTick(lg);
     const o = userOffers(lg)[0];
     if (o && !offers) {
-      const gave = o.give[0];
+      // give can also hold a draft pick id; check the first player in it.
+      const gave = o.give.find((id) => lg.players[id]);
       assert.ok(acceptOffer(lg, o.id).ok);
-      assert.equal(lg.players[gave].tid, o.tid, "accepted offer moves the player");
+      if (gave) assert.equal(lg.players[gave].tid, o.tid, "accepted offer moves the player");
     }
     offers += userOffers(lg).length;
   }
