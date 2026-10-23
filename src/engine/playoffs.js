@@ -1,7 +1,7 @@
 import { pulseAfterPlayoffDay } from "./clubPulse.js";
 import {recordReport} from './matchReports.js';
 // Stanley Cup Playoffs: 16 teams, four best-of-seven rounds, fixed bracket.
-import { playoffPicture, compareTeams } from "./standings.js";
+import { compareTeams, projectedFirstRound } from "./standings.js";
 import { createGame, simToEnd, applyResult } from "./sim.js";
 import { healInjuries } from "./roster.js";
 import { allStarTeams, connSmythe } from "./awards.js";
@@ -17,22 +17,8 @@ function series(league, round, a, b, conf) {
 }
 
 export function startPlayoffs(league) {
-  const r1 = [];
-  for (const conf of ["East", "West"]) {
-    const pic = playoffPicture(league, conf);
-    const [d1, d2] = pic.order;
-    const w1 = pic.divs[d1][0];
-    const w2 = pic.divs[d2][0];
-    const [wc1, wc2] = pic.wildcards;
-    // The better division winner faces the lower wild card.
-    const d1Better = compareTeams(w1, w2) <= 0;
-    const opp1 = d1Better ? wc2 : wc1;
-    const opp2 = d1Better ? wc1 : wc2;
-    r1.push(series(league, 0, w1.id, opp1.id, conf));
-    r1.push(series(league, 0, pic.divs[d1][1].id, pic.divs[d1][2].id, conf));
-    r1.push(series(league, 0, w2.id, opp2.id, conf));
-    r1.push(series(league, 0, pic.divs[d2][1].id, pic.divs[d2][2].id, conf));
-  }
+  // Same pairing the standings preview shows (standings.js projectedFirstRound).
+  const r1 = projectedFirstRound(league).map((m) => series(league, 0, m.top, m.bot, m.conf));
   league.playoffs = { rounds: [r1], round: 0, champion: null, seeds: seedMap(league, r1) };
   // The regular season is over: the First and Second All-Star Teams and the All-Rookie Team are picked now.
   try { league.allNHL = allStarTeams(league); } catch (e) { console.error("All-Star teams failed", e); }

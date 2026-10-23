@@ -5,7 +5,7 @@ import { Trophy } from "./TrophyRoom.jsx";
 import { playoffPicture } from "../engine/standings.js";
 
 // One best-of-seven matchup: two team rows with series wins, game chips below.
-function SeriesCard({ s, compact = false }) {
+export function SeriesCard({ s, compact = false }) {
   const { league, openBox } = useGame();
   const me = s && (s.top === league.userTid || s.bot === league.userTid);
   // Every card keeps the same shape (two rows + a fixed game strip) so the tree stays aligned as results arrive.
@@ -40,7 +40,7 @@ function SeriesCard({ s, compact = false }) {
 }
 
 // Bracket tree: each conference feeds inward from the outside toward the Final.
-function Column({ list, title, side }) {
+export function Column({ list, title, side }) {
   return (
     <div className={`gg-bcol ${side}`}>
       <div className="gg-bcol-h">{title}</div>

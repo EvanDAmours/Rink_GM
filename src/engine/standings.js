@@ -130,3 +130,38 @@ export function clinchStatus(league) {
   }
   return status;
 }
+
+// ---------- If the season ended today ----------
+// Seeds for one conference, in bracket order, with NHL tags: each division's top three (A1-A3,
+// M1-M3, C1-C3, P1-P3), then the wild cards (WC1, WC2). `hunt` is everyone else with points back of
+// the second wild card.
+export function conferenceSeeds(league, conf) {
+  const pic = playoffPicture(league, conf);
+  const seeds = [];
+  for (const d of pic.order) pic.divs[d].forEach((t, i) => seeds.push({ t, tag: `${d[0]}${i + 1}`, kind: "DIV", div: d, rank: i + 1 }));
+  pic.wildcards.forEach((t, i) => seeds.push({ t, tag: `WC${i + 1}`, kind: "WC", rank: i + 1 }));
+  const last = pic.wildcards[pic.wildcards.length - 1];
+  const hunt = pic.out.map((t) => ({ t, back: last ? last.rec.pts - t.rec.pts : 0 }));
+  return { seeds, hunt, pic };
+}
+
+// The NHL first round the standings would make, as startPlayoffs builds it: the better division
+// winner meets the second wild card, the other winner the first, and 2 v 3 in each division.
+// Returns [{ conf, top, bot }] (team ids; `top` has home ice) in bracket order, East then West.
+export function projectedFirstRound(league) {
+  const out = [];
+  for (const conf of ["East", "West"]) {
+    const pic = playoffPicture(league, conf);
+    const [d1, d2] = pic.order;
+    const A = pic.divs[d1], B = pic.divs[d2];
+    const [wc1, wc2] = pic.wildcards;
+    if (A.length < 3 || B.length < 3 || !wc2) continue;
+    const d1Better = compareTeams(A[0], B[0]) <= 0;
+    const pairs = [[A[0], d1Better ? wc2 : wc1], [A[1], A[2]], [B[0], d1Better ? wc1 : wc2], [B[1], B[2]]];
+    for (const [x, y] of pairs) {
+      const [top, bot] = compareTeams(x, y) <= 0 ? [x, y] : [y, x];
+      out.push({ conf, top: top.id, bot: bot.id });
+    }
+  }
+  return out;
+}

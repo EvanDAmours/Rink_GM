@@ -75,7 +75,7 @@ import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
 
 const NAV = [
-  {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},
+  {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"standings",label:"Standings",short:"Standings"},
   {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Player Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
   {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
   {id:"league",label:"League",short:"League"},{id:"legacy",label:"Legacy Hall",short:"Legacy Hall",tiny:"Legacy"},
@@ -83,7 +83,7 @@ const NAV = [
 // Screens reached from the menu rather than the bar (search finds them too).
 const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:"Game updates"},{id:"settings",label:"Settings"}];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
-const ALIAS = { roster:["lines","roster"], standings:["league","standings"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
+const ALIAS = { roster:["lines","roster"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
   operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], frenzy:["trade","frenzy"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
 // Phones keep the standings, stats, schedule and playoffs on one screen with a chip for each.
 const PHONE_ALIAS = { standings:["season","standings"], stats:["season","stats"], schedule:["season","schedule"], playoffs:["season","playoffs"] };
@@ -710,7 +710,7 @@ export default function App({ resume = false }) {
   const injOn = league.settings.injuries !== false;
   // More: every screen, the sections inside each, and the settings.
   const moreScreens = [
-    ...NAV.filter((n) => n.id !== "dashboard").flatMap((n) => (n.id === "schedule" ? [{ key: "season", label: "Schedule & Standings", on: tab === "season", onClick: () => go("season", "standings") }] : n.id === "stats" ? [] : [{ key: n.id, label: n.label, on: tab === n.id, badge: badgeFor(n.id), onClick: () => go(n.id) }])),
+    ...NAV.filter((n) => n.id !== "dashboard").flatMap((n) => (n.id === "schedule" ? [{ key: "season", label: "Schedule & Standings", on: tab === "season", onClick: () => go("season", "standings") }] : n.id === "stats" || n.id === "standings" ? [] : [{ key: n.id, label: n.label, on: tab === n.id, badge: badgeFor(n.id), onClick: () => go(n.id) }])),
     { key: "activity", label: unread ? `News & Inbox (${unread})` : "News & Inbox", on: tab === "activity", onClick: () => go("activity") },
     { key: "settings", label: "Settings", on: tab === "settings", onClick: () => go("settings") },
   ];
@@ -793,6 +793,7 @@ export default function App({ resume = false }) {
                 {tab === "lines" && <LinesHub sub={sub.lines} onSub={(k) => setSub("lines", k)} />}
                 {tab === "schedule" && <SchedulePage />}
                 {tab === "stats" && <StatsPage />}
+                {tab === "standings" && <StandingsPage />}
                 {tab === "season" && <SeasonHub league={league} sub={sub.season} onSub={(k) => setSub("season", k)} act={act} />}
                 {tab === "draft" && <DraftPage act={act} />}
                 {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}

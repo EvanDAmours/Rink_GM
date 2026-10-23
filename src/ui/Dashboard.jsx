@@ -105,7 +105,7 @@ export default function Dashboard({ act = {} }) {
 
   // ---- This week: the phase's main job first, then the to-do list ----
   const first = lg.phase === "preseason" ? { label: "Training Camp", sub: "Camp work and mini games to improve your roster before the season", onClick: () => go("roster") }
-    : lg.phase === "regular" ? { label: "Schedule", sub: "Your games, this week's game plan and the playoff picture", onClick: () => go("schedule") }
+    : lg.phase === "regular" ? { label: "Standings", sub: "The playoff picture: who'd be in if the season ended today, and the bracket it would make", onClick: () => go("standings") }
     : lg.phase === "playoffs" ? { label: "Playoff Bracket", sub: "The road to the Stanley Cup", onClick: () => go("playoffs") }
     : lg.phase === "draft" ? (atCombine(lg) ? { label: "Scouting Combine", sub: "Combine results, interviews and your big board", onClick: () => go("draft") } : { label: "Entry Draft", sub: draftDone(lg) ? "Your class and the draft recap" : "Make your picks", onClick: () => go("draft") })
     : lg.phase === "resign" ? { label: "Re-sign Players", sub: "Only you can talk to your expiring players this week", onClick: () => go("freeagency") }

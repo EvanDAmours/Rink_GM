@@ -421,6 +421,15 @@ button.rk-rcard { background: #ffffff; border: 1px solid #d3d9e2; border-left: 3
 .app .gg-clinch.x { color: #15803d; }
 .app .gg-clinch.e { color: #dc2626; }
 .app .gg-clinch-legend { color: var(--gg-sl, #475569); }
+.app .pp-lead { color: var(--gg-sl, #475569); }
+.app .pp-lead b.in { color: #15803d; }
+.app .pp-lead b.outl { color: #dc2626; }
+.app .pp-conf { background: var(--gg-cd, #f4f6fa); border: 1px solid var(--gg-bd, #d3d9e2); }
+.app .pp-row.me .pp-name { color: #15803d; }
+.app .pp-seed { color: #a16207; }
+.app .pp-seed.wc { color: #6d28d9; }
+.app .pp-tag.div { color: #0284c7; }
+.app .pp-tag.wc { color: #6d28d9; }
 
 /* src/styles.css */
 body { background: radial-gradient(1200px 600px at 10% -10%, #e7ebf1 0%, transparent 60%), var(--bg); }
