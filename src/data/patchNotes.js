@@ -315,4 +315,9 @@ export const PATCH_NOTES = [
     "If a rival tops your offer, his agent calls before he signs, so you can beat it or let him go. Clubs may also call with trade offers.",
     "The top free agents board shows each player's ask, his interest in your club, who else is after him and whether you're leading, beside your cap room, needs and the league's big spenders.",
   ] },
+  { v: "1.56", date: "2026-10-23", title: "Standings", notes: [
+    "Standings now has its own spot in the main menu. It opens on the Playoff picture: who's in if the season ended today, your seed, and how many points back the chasers are.",
+    "See the first-round bracket the current standings would make, all the way to the Stanley Cup Final.",
+    "Division winners, wild cards and clinch marks follow the real NHL format and tiebreakers, and the preview always matches the bracket you'll get in April.",
+  ] },
 ];
