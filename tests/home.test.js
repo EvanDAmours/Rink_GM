@@ -20,24 +20,19 @@ test("Needs Attention: urgent first, then decisions, then news, keeping the orde
   ];
   assert.deepEqual(sortAttention(raw).map((x) => x.key), ["c", "e", "b", "d", "a", "f"]);
 
+});
+
+// Batch x2: the sidebar only lists what would stop the sim or cause a real problem. Nags (Gazette,
+// development focus, camp, game plan, contract years, expiring deals) are gone; a healthy club is "All set".
+test("Needs Attention: a legal club in the preseason has nothing on the list (no nags)", () => {
   const lg = league();
   const t = userTeam(lg);
-  // An unread Gazette (news), a contract-year star (a decision) and an empty development lab (urgent).
   (lg.papers ||= []).push({ id: "preview:2026:1", edition: "SEASON PREVIEW", headline: "The season starts", seen: false });
   t.training.assignments = {};
   const items = needsAttention(lg);
-  assert.ok(items.length >= 3);
-  assert.ok(isSorted(items), `not urgent-first: ${items.map((x) => x.tone).join(",")}`);
-  assert.equal(items.at(-1).tone, "info");
-  // Every item has a second line of detail and a way in.
-  for (const it of items) {
-    assert.ok(it.sub && it.sub.length > 10, `${it.key} has no detail line`);
-    assert.ok(it.to, `${it.key} has nowhere to go`);
-  }
-  const paper = items.find((x) => x.key === "paperpreview:2026:1");
-  assert.ok(paper && paper.dismiss, "the Gazette can be dismissed");
-  runFix(lg, paper.dismiss);
-  assert.ok(!needsAttention(lg).some((x) => x.key === paper.key), "a dismissed paper leaves the list");
+  for (const k of ["paperpreview:2026:1", "devfocus", "camp", "plan", "expiring"]) assert.ok(!items.some((x) => x.key === k), `${k} is a nag`);
+  assert.ok(!items.some((x) => /^cy/.test(x.key)), "no contract-year nags");
+  for (const it of items) assert.equal(it.tone, "urgent", `${it.key} is not a blocker`);
 });
 
 test("Needs Attention: over the cap is one urgent item, not two", () => {
@@ -53,19 +48,15 @@ test("Needs Attention: over the cap is one urgent item, not two", () => {
   assert.equal(items.filter((x) => /cap/i.test(x.title)).length, 1, "the roster issue doesn't repeat the cap item");
 });
 
-test("one-tap fix: Pick the fastest growers fills every development focus slot", () => {
+test("one-tap fix: Pick the fastest growers still fills every development focus slot (not listed any more)", () => {
   const lg = league();
   lg.phase = "preseason";
   const t = userTeam(lg);
   t.training.assignments = {};
-  const item = needsAttention(lg).find((x) => x.key === "devfocus");
-  assert.ok(item, "an empty lab is on the list");
-  assert.equal(item.tone, "urgent");
-  assert.deepEqual(item.fixes.map((f) => f.fix), ["autoFocus"]);
-  const r = runFix(lg, item.fixes[0].fix);
+  assert.ok(!needsAttention(lg).some((x) => x.key === "devfocus"), "an empty lab is not a blocker");
+  const r = runFix(lg, "autoFocus");
   assert.ok(r.ok);
   assert.equal(Object.keys(t.training.assignments).filter((id) => lg.players[id]?.tid === t.id).length, FOCUS_SLOTS);
-  assert.ok(!needsAttention(lg).some((x) => x.key === "devfocus"), "the item clears once the slots are full");
 });
 
 test("one-tap fix: an injured regular without coach lines offers Auto-set lines, and it fills his spot", () => {

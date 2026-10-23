@@ -3,16 +3,14 @@
 // the off-season board. Pure functions of the league, so the screen and the tests share them.
 import { capSpace, rosterIssues, counts, ensureMinimums } from "./roster.js";
 import { MAX_ROSTER, FA_DAYS, isGoalie } from "./constants.js";
-import { staffGaps, staffGapText, hireCoach } from "./franchise.js";
-import { FOCUS_SLOTS, autoFocus } from "./developmentPlan.js";
-import { tradeRequests, shoppedOffers, talkDown, shopPlayer, TALK_COST } from "./tradeRequests.js";
-import { tradeLabels } from "./market.js";
+import { hireCoach } from "./franchise.js";
+import { autoFocus } from "./developmentPlan.js";
+import { talkDown, shopPlayer } from "./tradeRequests.js";
 import { teamNeeds } from "./teamPlanning.js";
 import { headCoachLines } from "./lines.js";
 import { automaticallyHandleRoster } from "./autoRoster.js";
 import { dayToDate } from "./schedule.js";
-import { AREA_START, TRIP_COST } from "./regions.js";
-import { contractYearAsks, holdouts, playItOut, holdFirm } from "./contractYear.js";
+import { holdouts, playItOut, holdFirm } from "./contractYear.js";
 
 // Urgent first, then decisions, then news; the order items are added in breaks ties.
 export const TONE_RANK = { urgent: 0, action: 1, info: 2 };
@@ -32,7 +30,10 @@ const canHire = (lg, t) => !!t.coach?.interim || ["preseason", "resign", "freeag
 // Players under contract for next season (re-sign week and free agency, after the old deals ran out).
 export const signedForNextSeason = (lg, t) => t.roster.map((id) => lg.players[id]).filter((p) => p && p.signed !== false && (p.yrs > 0 || p.extension)).length;
 
-// Needs Attention. Each item: { key, icon, tone, title, sub, cta, to, fixes, dismiss }.
+// Needs Attention: only what would stop the sim or cause a real problem (an illegal roster, over
+// the cap, a hole in the lineup, a contract decision with a deadline). Nags and news (development
+// focus, game plan, contract-year talks, camp, the Gazette, trade requests) live on their own
+// pages. An empty list means "All set". Each item: { key, icon, tone, title, sub, cta, to, fixes, dismiss }.
 // `to` says where the item's button goes: ["screen", "section"], { player }, { paper } or { lab: true }.
 // `fixes` are one-tap answers run by runFix(): [{ label, fix }].
 export function needsAttention(lg) {
@@ -51,36 +52,6 @@ export function needsAttention(lg) {
     const fixes = /^Need /.test(i) ? [{ label: "Call up from the AHL", fix: "callUps" }] : /active players/.test(i) ? [{ label: "Send down automatically", fix: "sendDown" }] : [];
     add({ key: `issue${n}`, icon: "⚠️", tone: "urgent", title: i.replace(/\.$/, ""), sub: "Fix it on the Roster screen before the next game.", cta: "Roster", to: ["roster"], fixes });
   });
-  if (lg.phase === "preseason" && !(t.camp?.year === lg.year && t.camp.games.length >= 4)) add({ key: "camp", icon: "🏕️", tone: "urgent", title: "Training camp isn't finished", sub: "Camp work, position battles and the dev camp only happen before opening night.", cta: "Training camp", to: ["roster"] });
-
-  // An interim head coach (or an empty staff chair) stays on the list until the job is filled.
-  const staff = staffGapText(t);
-  if (staff) {
-    const c = staffGaps(t).includes("head coach") && canHire(lg, t) ? bestCoach(lg) : null;
-    add({ key: "coach", icon: "🪑", tone: inSeason ? "urgent" : "action", title: staff.head, sub: c ? `Best available: ${c.name}, development ${c.development}, special teams ${c.specialTeams}.` : staff.text, cta: "Hire a coach", to: ["coaching", "coaching"], fixes: c ? [{ label: `Hire ${c.name}`, fix: `hireCoach:${c.id}` }] : [] });
-  }
-
-  // Development focus: every one of the three slots in use, by players still with the club.
-  const assigned = Object.keys(t.training?.assignments || {});
-  const focused = assigned.filter((id) => lg.players[id]?.tid === t.id);
-  const gone = assigned.filter((id) => lg.players[id] && lg.players[id].tid !== t.id).map((id) => lg.players[id]);
-  const open = FOCUS_SLOTS - focused.length;
-  if (inSeason && open > 0) add({ key: "devfocus", icon: "🧪", tone: "urgent",
-    title: gone.length ? `${gone[0].name} left the club: a development focus slot is open` : open === FOCUS_SLOTS ? "No development focus players set" : `${plural(open, "development focus slot")} open`,
-    sub: "Each week a focus player banks training work in his weakest skill group. An empty slot wastes those weeks.", cta: "Set focus", to: { lab: true },
-    fixes: [{ label: "Pick the fastest growers", fix: "autoFocus" }] });
-
-  // Area scouts stop travelling once the draft starts: the combine is the last chance.
-  const area = t.area?.year === lg.draftClassYear ? t.area : null;
-  const atCombine = lg.phase === "draft" && lg.draft?.stage === "combine";
-  if (area && area.points >= TRIP_COST && atCombine) add({ key: "area", icon: "🗺️", tone: "urgent", title: `${area.points} area-scout points about to go unused`, sub: "Regional visits close when the draft starts. Send your area scouts on a trip now.", cta: "Regions", to: ["draft"] });
-  else if (area && area.points >= Math.max(10, AREA_START + 2) && lg.phase === "regular") add({ key: "area", icon: "🗺️", tone: "action", title: `${area.points} area-scout points to spend`, sub: `A regional visit costs ${TRIP_COST} and improves every report in that region at once.`, cta: "Regions", to: ["draft"] });
-
-  // Trade requests: one item each, with the two ways to settle it right there.
-  tradeRequests(lg).forEach(({ p, trust }) => add({ key: `tr${p.id}`, icon: "📨", tone: "action", title: `${p.name} (${p.pos} ${p.ovr}) wants a trade · trust ${trust}`,
-    sub: `His trust in you is down to ${trust}/100. Talk him down (${TALK_COST} scouting point, +20 trust, he stays) or shop him and see what offer comes back.`, cta: "Player card", to: { player: p.id },
-    fixes: [{ label: `💬 Talk him down · ${TALK_COST} pt`, fix: `talkDown:${p.id}` }, { label: "📞 Shop him", fix: `shop:${p.id}` }] }));
-  shoppedOffers(lg).forEach((o) => { const club = lg.teams[o.tid], who = lg.players[o.give[0]]; add({ key: `offer${o.id}`, icon: "💰", tone: "urgent", title: `Trade offer from the ${club.city} ${club.name}`, sub: `${tradeLabels(lg, o).bGets.join(" + ")} for your ${who?.name || "player"}.`, cta: "Review", to: ["block"] }); });
 
   // Injured regulars: covered by the head coach, or a one-tap re-set of the lines around them.
   const covered = lg.settings?.coachLines !== false;
@@ -90,31 +61,19 @@ export function needsAttention(lg) {
     sub: `${p.injuryNote ? `${p.injuryNote[0].toUpperCase()}${p.injuryNote.slice(1)}. ` : ""}${covered ? "Your head coach filled the hole with the best healthy scratch." : "Set your lines around him, or let the staff fill the hole."}`,
     cta: "Lines", to: ["lines"], fixes: covered || !games ? [] : [{ label: "Auto-set lines", fix: "autoLines" }] }));
 
-  if (t.autoPlan !== false && lg.phase === "preseason") add({ key: "plan", icon: "📋", tone: "action", title: "Set your systems and game plan", sub: "Check that your systems and lines fit the roster before opening night.", cta: "Game plan", to: ["analysis"] });
   // Contract years and holdouts (contractYear.js): talk now, or let him bet on himself.
   holdouts(lg).forEach((p) => add({ key: `ho${p.id}`, icon: "✋", tone: "urgent", title: `${p.name} (${p.pos} ${p.ovr}) is holding out`,
     sub: `He won't sign his $${p.holdout.qo.toFixed(2)}M qualifying offer and sits until he gets a market deal (about $${p.holdout.ask.toFixed(2)}M × ${p.holdout.yrs}). ${p.holdout.firm ? "You're holding firm: he may give in any week." : "Meet his ask, or hold firm and wait him out."} December 1 is the signing deadline.`,
     cta: "Talk contract", to: { player: p.id }, fixes: p.holdout.firm ? [] : [{ label: "✋ Hold firm", fix: `holdFirm:${p.id}` }] }));
-  contractYearAsks(lg).slice(0, 3).forEach((p) => add({ key: `cy${p.id}`, icon: "✍️", tone: "action", title: `Contract year: ${p.name} (${p.pos} ${p.ovr}) wants to talk`,
-    sub: `Extend him now at today's price, or let him bet on himself: he'll push harder, but a big year raises his price${p.ovr >= 85 ? " (and a star on a losing team may ask out)" : ""}.`,
-    cta: "Talk extension", to: { player: p.id }, fixes: [{ label: "🎲 Let him play it out", fix: `playItOut:${p.id}` }] }));
   const sheets = lg.offerSheets?.filter((s) => !s.done && s.from === t.id).length || 0;
   if (sheets) add({ key: "sheets", icon: "📝", tone: "action", title: `${plural(sheets, "offer sheet")} awaiting a decision`, sub: "Match it or take the compensation.", cta: "Review", to: ["operations"] });
-  const expiring = roster.filter((p) => p.yrs <= 1).length;
   if (lg.phase === "resign") {
     const left = [...t.roster, ...t.prospects].map((id) => lg.players[id]).filter((p) => p && p.signed !== false && p.yrs === 0).length;
     if (left) add({ key: "resign", icon: "✍️", tone: "action", title: `${plural(left, "expiring contract")}: the re-sign window is open`, sub: "Only you can talk to them this week. Anyone you don't re-sign reaches free agency.", cta: "Re-sign", to: ["freeagency"] });
-  } else if (expiring >= 6 && lg.phase !== "freeagency") add({ key: "expiring", icon: "⌛", tone: "action", title: `${expiring} players in the last year of their deals`, sub: "Extend the ones you want to keep, or plan for the re-sign window.", cta: "Contracts", to: ["frontoffice", "contracts"] });
+  }
   // A short roster in the off-season (the football game's Build Your 53).
   const signed = signedForNextSeason(lg, t);
   if (["resign", "freeagency"].includes(lg.phase) && signed < MAX_ROSTER) add({ key: "short", icon: "🧩", tone: lg.phase === "freeagency" && (lg.fa?.day ?? 0) >= FA_DAYS - 5 ? "urgent" : "action", title: `${signed} of ${MAX_ROSTER} NHL spots signed for next season`, sub: `${plural(MAX_ROSTER - signed, "spot")} to fill. ${lg.phase === "freeagency" ? "Sign free agents, trade, or let camp fill them from the farm." : "Re-sign your own players first; free agency opens next."}`, cta: lg.phase === "freeagency" ? "Free agency" : "Re-sign", to: ["freeagency"] });
-  const trust = t.owner?.trust ?? 65;
-  if (trust < 35) add({ key: "owner", icon: "👔", tone: "urgent", title: `Owner trust ${trust}/100: hot seat`, sub: "The owner wants results. See what he expects this season.", cta: "Owner", to: ["frontoffice", "owner"] });
-
-  // News that needs no answer waits here instead of popping up over the game.
-  const papers = (lg.papers || []).filter((x) => !x.seen);
-  const paper = papers.at(-1);
-  if (paper) add({ key: `paper${paper.id}`, icon: "📰", tone: "info", title: `The Rink Gazette: ${titleCase(paper.edition)}`, sub: `${paper.sub || paper.headline || ""}${papers.length > 1 ? ` · ${papers.length - 1} more edition${papers.length > 2 ? "s" : ""} waiting` : ""}`, cta: "Read", to: { paper: paper.id }, dismiss: `paper:${paper.id}` });
   return sortAttention(items);
 }
 
