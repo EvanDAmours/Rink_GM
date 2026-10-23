@@ -249,9 +249,8 @@ test("contract year: talk now or let him play it out; the bet moves his rating a
   const p = t.roster.map((id) => lg.players[id]).find((x) => x.pos !== "G" && x.ovr >= 80);
   p.yrs = 1; delete p.extension; delete p.cyr;
   assert.ok(contractYearAsks(lg).some((x) => x.id === p.id));
-  const item = needsAttention(lg).find((x) => x.key === `cy${p.id}`);
-  assert.ok(item && item.fixes.some((f) => /play it out/.test(f.label)));
-  assert.deepEqual(item.to, { player: p.id });
+  // The Home sidebar no longer nags about contract years (batch x2): the choice lives on his card.
+  assert.ok(!needsAttention(lg).some((x) => x.key === `cy${p.id}`));
   runFix(lg, `playItOut:${p.id}`);
   assert.equal(p.cyr.choice, "bet");
   assert.ok(!contractYearAsks(lg).some((x) => x.id === p.id), "decided");

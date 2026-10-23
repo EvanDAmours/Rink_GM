@@ -36,7 +36,6 @@ import LiveGame from "./ui/LiveGame.jsx";
 import PlayerModal from "./ui/PlayerModal.jsx";
 import TeamModal from "./ui/TeamModal.jsx";
 import BoxScoreModal from "./ui/BoxScoreModal.jsx";
-import SeasonPreview from "./ui/SeasonPreview.jsx";
 import OwnerReview from "./ui/OwnerReview.jsx";
 import StageConfirm from "./ui/StageConfirm.jsx";
 import Tour, { TourWelcome } from "./ui/Tour.jsx";
@@ -59,9 +58,8 @@ import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
 import FeedbackToast from "./ui/FeedbackToast.jsx";
 import Moment from "./ui/Moment.jsx";
-import { simControl } from "./ui/moments/scouting.jsx";
 import InjuryReportCard from "./ui/InjuryReportCard.jsx";
-import { closeMoment, momentStopsSim } from "./engine/moments.js";
+import { closeMoment } from "./engine/moments.js";
 import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
 import { staffGapText } from "./engine/franchise.js";
 import { backupSave, dropBackup } from "./engine/saveSlots.js";
@@ -251,7 +249,7 @@ export default function App({ resume = false }) {
       const t0 = performance.now();
       let more = true;
       try {
-        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} if (more && leagueRef.current.playoffs?.papers?.some((p) => !p.seen)) more = false; if (more && momentStopsSim(leagueRef.current)) more = false; /* a big moment that asks to be seen now (a clinch, the Cup) */ /* a series paper is out: read it before the sim rolls on (other papers wait in Needs Attention) */ }
+        while (more && performance.now() - t0 < 45) { more = step(); const notice=more && decisionInterrupt(leagueRef.current); if(notice){showToast(notice,7000);more=false;} /* moments and series papers never stop a sim: they wait until it finishes */ }
       } catch (e) {
         console.error("Simulation step failed", e);
         showToast("The simulation stopped because of an error. Your league is saved; try again or reload.", 7000);
@@ -379,11 +377,8 @@ export default function App({ resume = false }) {
   };
 
   const act = {
-    // Start Season opens the season preview first; the card's button actually drops the puck.
-    startSeason: () => {
-      if (blockers()) return;
-      setModal({ type: "seasonpreview" });
-    },
+    // Start Season just starts it: no preview card, no camp prompt (unfinished camp simply ends).
+    startSeason: () => act.startSeasonNow(),
     startSeasonNow: () => {
       setModal(null);
       if (blockers()) return;
@@ -404,7 +399,6 @@ export default function App({ resume = false }) {
     },
     showSummary: (snap) => { if (league.settings?.simSummary === false) return; const data = buildSummary(league, snap); if (data && data.span.gp >= 2) setModal({ type: "simsummary", data }); },
     simDays: (n, label) => {
-      simControl.resume = null; // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       let i = 0;
       const snap = snapshotForSummary(league);
@@ -420,7 +414,6 @@ export default function App({ resume = false }) {
       );
     },
     simToDeadline: () => {
-      simControl.resume = () => act.simToDeadline(); // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       const snap = snapshotForSummary(league);
       runChunked(
@@ -434,7 +427,6 @@ export default function App({ resume = false }) {
       );
     },
     simToEnd: () => {
-      simControl.resume = () => act.simToEnd(); // a scouting checkpoint's "Keep simming" restarts this sim
       if (blockers()) return;
       const snap = snapshotForSummary(league);
       runChunked(
@@ -475,7 +467,7 @@ export default function App({ resume = false }) {
     simPlayoffsAll: () => {
       runChunked(
         () => "Simulating the playoffs…",
-        () => { if (league.playoffs.champion != null || league.playoffs.papers?.some((p) => !p.seen)) return false; simPlayoffDay(league); return !league.playoffs.papers?.some((p) => !p.seen); }
+        () => league.playoffs.champion == null && simPlayoffDay(league)
       );
     },
     playPlayoffLive: () => {
@@ -492,7 +484,7 @@ export default function App({ resume = false }) {
       commit();
     },
     startDraft: () => {
-      const pts = user.scoutPts || 0, iv = league.draft?.interviewsLeft ?? 0;
+      const pts = 0, iv = league.draft?.interviewsLeft ?? 0;
       if (!pts && !iv) return act.startDraftNow();
       setModal({ type: "stage", title: "Move on to the Draft?", yes: "Yes, go to the Draft", onYes: act.startDraftNow, lines: [
         ...(iv ? [{ tone: "warn", head: `${iv} prospect interview${iv === 1 ? "" : "s"} not used yet`, text: "Interviews only happen at the Combine." }] : []),
@@ -815,7 +807,6 @@ export default function App({ resume = false }) {
         {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
-        {modal?.type === "seasonpreview" && <SeasonPreview onStart={act.startSeasonNow} onClose={() => setModal(null)} />}
         {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}
         {modal?.type === "pick" && <DraftPickCard pid={modal.pid} slot={modal.slot} onClose={() => setModal(null)} />}
         {/* The big moments wait until the sim has stopped, no live game is on and no other popup is open. */}

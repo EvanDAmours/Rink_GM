@@ -8,7 +8,7 @@
 //   save from before this existed still gets its ceremony and nothing is ever shown twice.
 // Opening night of the next season: last season's All-Star honourees get their gain and the
 // defending champions get ring night (openingNight, called when the regular season starts).
-import { connSmythe, allStarTeams, allStarById, allStarGain, applyAllStarGains } from "./awards.js";
+import { connSmythe, allStarTeams, allStarById, allStarGain } from "./awards.js";
 import { queueMoment } from "./moments.js";
 import { CUP_HISTORY } from "../data/cupHistory.js";
 
@@ -147,14 +147,9 @@ export function ringNightMoment(league) {
   };
 }
 
-// Opening night (called as the regular season starts): last season's All-Star gains, then ring night.
+// Opening night (called as the regular season starts): ring night.
 export function openingNight(league) {
   try {
-    const rec = league.allNHL;
-    if (rec && !rec.applied && rec.year < league.year) {
-      const mine = applyAllStarGains(league, rec).filter((x) => x.tid === league.userTid && x.gain > 0);
-      if (mine.length) (league.inbox ||= []).push({ year: league.year, day: league.day, text: `🏅 All-Star honours pay off: ${mine.map((x) => `${x.name} +${x.gain} OVR`).join(", ")}.` });
-    }
     const m = ringNightMoment(league);
     if (m) queueMoment(league, m);
   } catch (e) {

@@ -19,8 +19,8 @@ export function CrewStrip() {
   return (
     <div className="sc-crews" aria-label="Scouting crews">
       {crews.map((c) => (
-        <div key={c.group} className={`sc-crew${c.n >= 2 ? " deep" : c.n ? "" : " none"}`} title={c.scouts.length ? c.scouts.map((x) => `${x.scout.name} (eval ${x.scout.eval})`).join(", ") : "Nobody covers this group: your front office files rough reports."}>
-          <b>{SCOUT_GROUPS[c.group]}</b>
+        <div key={c.group} className={`sc-crew${c.n >= 2 ? " deep" : c.n ? "" : " none"}`} title={c.scouts.length ? c.scouts.map((x) => `${x.scout.name} (eval ${x.scout.eval})`).join(", ") : "No scout assigned to this region: your front office files rough reports."}>
+          <b>{c.name}</b>
           <span className="sc-crew-n">{c.n ? `${c.n} scout${c.n > 1 ? "s" : ""}` : "No scout"}</span>
           <span className="sc-crew-bar"><i style={{ width: `${Math.max(6, Math.min(100, (c.ev - 40) * 1.7))}%` }} /></span>
           <small>{c.n ? `${c.label} · eval ${c.ev}` : c.label}</small>

@@ -460,7 +460,6 @@ export function DraftStatusLine() {
   const nx = live ? nextUserSlot(league) : null;
   return (
     <div className="dd-status" aria-label="Draft status">
-      <span className={`dd-pts${user.scoutPts ? " on" : ""}`} title="Scouting points left">🔎 {user.scoutPts || 0} pts</span>
       <span className={left ? "good" : ""}>{left} of {mine.length} picks left</span>
       {nx && <span>{nx.away === 0 ? "You're up" : `Next #${nx.slot.overall} (${nx.away} away)`}</span>}
       {c && <span className="mono">⏱ {clockText(c.remaining)}{c.paused ? " · paused" : ""}</span>}

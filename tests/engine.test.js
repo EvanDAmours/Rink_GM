@@ -18,7 +18,8 @@ import { toggleUserBlock, onBlock, deadlinePending, startDeadline, deadlineTick,
 import { conferenceTable } from "../src/engine/standings.js";
 import { parseRatingsCsv, matchRows, applyRatings } from "../src/engine/importer.js";
 import { MAX_ROSTER, capFloorForYear, SCOUT_POINTS_START, SCOUT_POINTS_COMBINE, COMBINE_INVITES, COMBINE_INTERVIEWS } from "../src/engine/constants.js";
-import { classPool, csRank, scoutGroup, prospectRead, scoutProspect, scoutCost, hireScout, staffWindowOpen, atCombine, interviewProspect, pickGrade } from "../src/engine/scouting.js";
+import { regionOf } from "../src/engine/regions.js";
+import { fileScoutReport, classPool, csRank, scoutGroup, prospectRead, scoutProspect, scoutCost, hireScout, staffWindowOpen, atCombine, interviewProspect, pickGrade } from "../src/engine/scouting.js";
 import rosterFile from "../src/data/nhl27-rosters.json" with { type: "json" };
 
 test("roster file: 32 teams, valid entries, no duplicates", () => {
@@ -349,7 +350,7 @@ test("injuries heal in the playoffs; scouting: stable board, four scouts, the Co
   const user = lg.teams[lg.userTid];
   // Four staff slots; overlap is allowed, and the best specialist handles each report.
   assert.ok(user.scouts.major && user.scouts.minor && user.scouts.major.group !== user.scouts.minor.group);
-  assert.equal(user.scoutPts, SCOUT_POINTS_START);
+  assert.equal(user.scoutPts, undefined, "no scouting points (batch x2)");
   const dup = lg.scoutPool.find((s) => s.group === user.scouts.major.group);
   assert.equal(hireScout(lg, dup.id, "minor").ok, true);
   // Isolate the major/minor/office report semantics below.
@@ -361,31 +362,33 @@ test("injuries heal in the playoffs; scouting: stable board, four scouts, the Co
   // The board is in Central Scouting order and scouting never moves anyone.
   const order = () => classPool(lg).sort((a, b) => csRank(a) - csRank(b)).map((p) => p.id);
   const before = order();
-  user.scoutPts = 50;
-  const majorP = classPool(lg).find((p) => scoutGroup(p.pos) === user.scouts.major.group);
-  const minorP = classPool(lg).find((p) => scoutGroup(p.pos) === "G");
-  const officeP = classPool(lg).find((p) => !["G", user.scouts.major.group].includes(scoutGroup(p.pos)));
-  assert.ok(prospectRead(lg, majorP).general && prospectRead(lg, minorP).general, "general idea at covered positions");
-  assert.ok(!prospectRead(lg, officeP).general && prospectRead(lg, officeP).ovr === "??", "nothing at uncovered positions");
+  // Scouts cover the region they're assigned to (batch x2: hands-off scouting, no points).
+  user.scoutRegions = { major: "OHL", minor: "WHL", major2: "OHL", minor2: "USA" };
+  const majorP = classPool(lg).find((p) => regionOf(p) === "OHL");
+  const minorP = classPool(lg).find((p) => regionOf(p) === "WHL");
+  const officeP = classPool(lg).find((p) => !["OHL", "WHL"].includes(regionOf(p)));
+  assert.ok(prospectRead(lg, majorP).general && prospectRead(lg, minorP).general, "general idea in covered regions");
+  assert.ok(!prospectRead(lg, officeP).general && prospectRead(lg, officeP).ovr === "??", "nothing in uncovered regions");
+  assert.equal(scoutProspect(lg, majorP.id).ok, false, "reports can't be bought");
   for (const p of [majorP, minorP, officeP]) {
-    assert.ok(scoutProspect(lg, p.id).ok);
-    assert.ok(scoutProspect(lg, p.id).ok);
+    assert.ok(fileScoutReport(lg, p.id).ok);
+    assert.ok(fileScoutReport(lg, p.id).ok);
     assert.equal(scoutCost(p), 0);
   }
   assert.deepEqual(order(), before, "board order unchanged by scouting");
-  assert.equal(user.scoutPts, 50 - 9);
   // Only the major scout gets exact numbers and the development trait.
   assert.deepEqual([majorP.scout.eOvr, majorP.scout.ePot, majorP.scout.dev], [majorP.ovr, majorP.pot, majorP.dev]);
   assert.ok(!minorP.scout.exact && !officeP.scout.exact && officeP.scout.dev == null);
   assert.ok(majorP.bio.team && majorP.bio.ht && majorP.cs.mid >= 1 && majorP.scout.skills && majorP.scout.notes.strengths.length);
 
-  // Staff is locked during the season; points come in weekly.
+  // Staff is locked during the season; reports come in on their own each week.
   L.startRegularSeason(lg);
   assert.ok(!staffWindowOpen(lg));
   assert.equal(hireScout(lg, lg.scoutPool[0].id, "major").ok, false);
-  user.scoutPts = 0;
+  const seen0 = classPool(lg).filter((p) => regionOf(p) === "WHL" && p.scout?.lvl > 0).length;
   L.simDays(lg, 30);
-  assert.ok(user.scoutPts >= 4 && user.scoutPts <= 6, `weekly points ${user.scoutPts}`);
+  assert.ok(classPool(lg).filter((p) => regionOf(p) === "WHL" && p.scout?.lvl > 0).length > seen0, "the WHL scout filed reports");
+  assert.equal(user.scoutPts, undefined);
 
   // A player hurt for two games misses two playoff games, then he's back.
   L.simRestOfSeason(lg);
@@ -399,17 +402,15 @@ test("injuries heal in the playoffs; scouting: stable board, four scouts, the Co
 
   // The Combine: tests for the top prospects, final rankings, interviews and extra points.
   while (lg.playoffs.champion == null) simPlayoffDay(lg);
-  const pts = user.scoutPts;
   L.finishPlayoffs(lg);
   assert.ok(atCombine(lg));
-  const guru = user.scouts.major?.trait === "combine" || user.scouts.minor?.trait === "combine";
-  assert.equal(user.scoutPts, pts + SCOUT_POINTS_COMBINE + (guru ? 3 : 0));
+  const guru = ["major", "major2", "minor", "minor2"].some((k) => user.scouts[k]?.trait === "combine");
   const invited = classPool(lg).filter((p) => p.combine);
   assert.equal(invited.length, COMBINE_INVITES);
   assert.ok(classPool(lg).every((p) => p.cs.final >= 1));
   assert.ok(interviewProspect(lg, invited[0].id).ok);
   assert.ok(invited[0].scout.intv.grade);
-  assert.equal(lg.draft.interviewsLeft, COMBINE_INTERVIEWS - 1);
+  assert.equal(lg.draft.interviewsLeft, COMBINE_INTERVIEWS + (guru ? 1 : 0) - 1);
   assert.ok(lg.draft.buzz.length > 0);
 
   // The draft: AI teams mostly follow the board, and every pick gets an analyst grade.

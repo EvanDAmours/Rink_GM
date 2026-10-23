@@ -71,7 +71,6 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
       lines: null,
       rec: blankRecord(),
       deadCap: [],
-      scoutPts: SCOUT_POINTS_START,
       autoGoalie: true,
       playoffResult: null,
     })),

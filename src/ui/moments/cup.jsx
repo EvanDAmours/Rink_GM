@@ -146,7 +146,8 @@ function AwardsNight({ m, onClose }) {
   const open = (i) => setOpened((s) => new Set([...s, i]));
   const ct = m.champ != null ? league.teams[m.champ] : null, ot = m.opp != null ? league.teams[m.opp] : null;
   const { clr } = momentColors(ct);
-  const hasTeams = m.allNHL?.first?.length > 0;
+  // The All-Star Teams page was removed (batch x2): awards night ends after the envelopes.
+  const hasTeams = false;
   // Something new for your shelf: the Cup or one of tonight's trophies.
   const yoursToShow = m.champ === league.userTid || env.some((e) => e.tid === league.userTid);
   const finish = () => { onClose(); if (yoursToShow) go?.("trophies"); };

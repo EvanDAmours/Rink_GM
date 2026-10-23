@@ -6,27 +6,6 @@
 //   scoutReveal      a draftee's real ceiling is out after his second season: a steal or a miss.
 // No imports from the game engine: scouting.js builds the data and calls these.
 
-// data: { week, news, targetIds, pick, pts, cap, lost }
-export function checkpointMoment(league, data) {
-  if (!data) return null;
-  const stops = league.settings?.simStops?.scouting !== false;
-  return {
-    kind: "scoutCheckpoint",
-    key: `scoutcp:${league.year}:${data.week}`,
-    tid: league.userTid,
-    stop: stops,
-    week: data.week,
-    pick: data.pick ?? null,
-    news: (data.news || []).slice(0, 6),
-    targetIds: data.targetIds || [],
-    pts: data.pts ?? 0,
-    cap: data.cap ?? 14,
-    lost: data.lost || 0,
-    kicker: `SCOUTING CHECKPOINT · WEEK ${data.week}`,
-    title: "Your scouts are back from the road",
-  };
-}
-
 // n: { pid, name, pos, from, to, gap }
 export function revealMoment(league, p, n) {
   const steal = n.gap > 0;

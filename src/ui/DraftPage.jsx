@@ -4,11 +4,11 @@ import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
 import { currentSlot, draftDone, pickSlot } from "../engine/draft.js";
 import { teamNeeds } from "../engine/teamPlanning.js";
 import { POS_COLOR } from "./TradePage.jsx";
-import { DRAFT_ROUNDS, SCOUT_POINTS_START, SCOUT_POINTS_WEEKLY, SCOUT_POINTS_COMBINE, COMBINE_INVITES } from "../engine/constants.js";
+import { DRAFT_ROUNDS, COMBINE_INVITES } from "../engine/constants.js";
 import {
   prospectRead, classPool, csRank, fmtHeight, gradeClass, COMBINE_TESTS, interviewProspect, atCombine, openDraftFloor,
   myList, onMyList, toggleMyList, moveOnMyList, pickTake, teamDraftGrade, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_TRAITS,
-  staffWindowOpen, hireScout, releaseScout, swapScoutRoles, scoutGroup, SCOUT_SLOTS, scoutProspect,
+  staffWindowOpen, hireScout, releaseScout, swapScoutRoles, scoutGroup, SCOUT_SLOTS,
 } from "../engine/scouting.js";
 import { Read, DevChip, CovTag, ScoutButton, statText } from "./scoutingBits.jsx";
 
@@ -43,12 +43,8 @@ function ArmButton({ onGo, disabled }) {
 }
 
 // The phone row's one button when you're not drafting: a scouting report, then the workup.
-function PhoneScout({ p, read }) {
-  const { league, commit, toast } = useGame();
-  const pts = league.teams[league.userTid].scoutPts || 0;
-  const cost = read.cost;
-  const tip = !cost ? "Fully scouted" : read.lvl === 0 ? `File a scouting report (${cost} point)` : `Full workup (${cost} points)`;
-  return <button type="button" className={`dd-scout${cost ? "" : " done"}`} disabled={!cost || pts < cost} title={tip} onClick={(e) => { e.stopPropagation(); const r = scoutProspect(league, p.id); toast(r.msg); commit(); }}>{!cost ? "✓" : `${read.lvl === 0 ? "Scout" : "Workup"} ${cost}`}</button>;
+function PhoneScout({ read }) {
+  return <span className={`dd-scout${read.lvl >= 2 ? " done" : ""}`} title="Filed by your scouts in their regions">{read.lvl >= 2 ? "✓" : read.lvl === 1 ? "Rpt" : "—"}</span>;
 }
 
 // Phones: one compact row per prospect. The single button is Draft while you're on the clock,
@@ -296,9 +292,9 @@ function ScoutsView() {
   return (
     <div className="stack">
       <div className="panel">
-        <h3>Scouting points <span className="right"><b className="ptsbig">{user.scoutPts || 0}</b></span></h3>
+        <h3>How scouting works</h3>
         <div className="muted small">
-          You start each season with {SCOUT_POINTS_START}, earn {SCOUT_POINTS_WEEKLY} every week of the regular season, and get {SCOUT_POINTS_COMBINE} more at the Scouting Combine. A scouting report costs 1 point and a full workup 2 more. Unused points expire after the draft.
+          No points to spend. Before each season send every scout to a region (the Assignments tab). Through the season they file reports there on their own: higher-graded scouts read closer, reach full workups sooner and find the late-ranked gems. At the Combine you get interviews and private workouts.
         </div>
       </div>
       <div className="sgrid">
@@ -316,12 +312,12 @@ function ScoutsView() {
         <div className="tablewrap">
           <table className="t howto">
             <thead>
-              <tr><th></th><th>Without a report</th><th>Scouting report (1 pt)</th><th>Full workup (+2 pts)</th></tr>
+              <tr><th></th><th>Without a report</th><th>Scouting report</th><th>Full workup</th></tr>
             </thead>
             <tbody>
-              <tr><td><b>Major scout's position</b>{s.major ? <div className="tiny muted">{SCOUT_GROUPS[s.major.group]}</div> : null}</td><td>A general idea of every prospect's ceiling (letter grade)</td><td>Close estimates, tool grades, strengths, an NHL comparable</td><td><b>Exact ratings and his development trait</b></td></tr>
-              <tr><td><b>Minor scout's position</b>{s.minor ? <div className="tiny muted">{SCOUT_GROUPS[s.minor.group]}</div> : null}</td><td>A rougher general idea of every prospect's ceiling</td><td>Looser estimates and the full write-up</td><td>Sharper estimates (no development trait)</td></tr>
-              <tr><td><b>Other positions</b></td><td>Only Central Scouting's ranking</td><td>A rough estimate from the front office</td><td>A slightly better estimate</td></tr>
+              <tr><td><b>Major scout's region</b></td><td>A general idea of every prospect's ceiling (letter grade)</td><td>Close estimates, tool grades, strengths, an NHL comparable</td><td><b>Exact ratings and his development trait</b></td></tr>
+              <tr><td><b>Minor scout's region</b></td><td>A rougher general idea of every prospect's ceiling</td><td>Looser estimates and the full write-up</td><td>Sharper estimates (no development trait)</td></tr>
+              <tr><td><b>Regions with no scout</b></td><td>Only Central Scouting's ranking</td><td>A rough estimate from the front office</td><td>A slightly better estimate</td></tr>
             </tbody>
           </table>
         </div>
@@ -444,8 +440,8 @@ function CombineView() {
           {live && (
             <div className="panel hot">
               <h3>Before the draft</h3>
-              <div className="small">Interviews left: <b>{d.interviewsLeft}</b> · Scouting points: <b>{league.teams[league.userTid].scoutPts || 0}</b></div>
-              <div className="muted small" style={{ margin: "6px 0 10px" }}>Interviews read a prospect's work ethic, which tends to go with how fast he develops. Spend your last scouting points, then head to the draft floor.</div>
+              <div className="small">Interviews left: <b>{d.interviewsLeft}</b></div>
+              <div className="muted small" style={{ margin: "6px 0 10px" }}>Interviews read a prospect's work ethic, which tends to go with how fast he develops. Then head to the draft floor.</div>
               <button className="primary" onClick={() => { openDraftFloor(league); commit(); }}>Start the draft →</button>
             </div>
           )}
@@ -628,7 +624,6 @@ function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, o
       {call && <IncomingCall o={call} phone={phone} />}
       {live && (phone ? <DraftStatusLine /> : (
         <div className="dd-slim">
-          <span className={`dd-pts${user.scoutPts ? " on" : ""}`} title="Scouting points left: reports can still be filed on the floor">🔎 {user.scoutPts || 0} pts</span>
           <PickTracker years={[d.year]} />
         </div>
       ))}
@@ -705,7 +700,7 @@ export default function DraftPage({ act }) {
   const inDraft = league.phase === "draft" && !!league.draft;
   const combine = atCombine(league);
   const hasCombine = (league.draftClass || []).some((id) => league.players[id]?.combine);
-  const defaultView = inDraft ? (combine ? "combine" : "floor") : "board";
+  const defaultView = inDraft ? (combine ? "combine" : "floor") : league.phase === "preseason" ? "regions" : "board";
   // A tab you pick sticks until the draft moves on (combine → draft floor → done).
   const stageKey = `${league.phase}|${league.draft?.stage || ""}`;
   const [sel, setSel] = useState({ v: null, k: stageKey });
@@ -718,7 +713,7 @@ export default function DraftPage({ act }) {
     ["myscouts", "Your scouts"],
     hasCombine && ["combine", "Combine"],
     ["scouts", "Scouts"],
-    ["regions", "Regional scouting"],
+    ["regions", "Scout assignments"],
     ["recap", "Draft recap"],
   ].filter(Boolean);
   const view = views.some(([k]) => k === viewSel) ? viewSel : defaultView;
@@ -778,7 +773,7 @@ export default function DraftPage({ act }) {
         <h2>{combine ? `${year} Scouting Combine` : `${year} NHL Entry Draft`}</h2>
         {slot && <span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span>}
         {!inDraft && <span className="pill">{DRAFT_ROUNDS} rounds · {DRAFT_ROUNDS * 32} picks</span>}
-        {!live && <div className="scout-budget" aria-label={`${user.scoutPts || 0} scouting points available`}><span>SCOUTING POINTS</span><strong>{user.scoutPts || 0}</strong><small>Available for player reports</small></div>}
+        {!live && <div className="scout-budget"><span>REPORTS FILED</span><strong>{user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0}</strong><small>by your scouts in their regions</small></div>}
       </div>
       <div className="tabs">
         {views.map(([k, label]) => (

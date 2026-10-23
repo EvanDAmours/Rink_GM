@@ -14,7 +14,7 @@ const requester = (lg) => {
   return t.roster.map((id) => lg.players[id]).filter((p) => !isGoalie(p.pos) && p.ovr < 90).sort((a, b) => b.ovr - a.ovr)[2];
 };
 
-test("a trade request shows his trust; talking him down costs a scouting point and settles it", () => {
+test("a trade request shows his trust; talking him down is free and settles it", () => {
   const lg = league(), t = lg.teams[lg.userTid], p = requester(lg);
   p.wantsTrade = true;
   p.relationship = { trust: 31, reason: "Playing time below the agreed role" };
@@ -23,14 +23,10 @@ test("a trade request shows his trust; talking him down costs a scouting point a
   assert.equal(list.length, 1);
   assert.equal(list[0].p.id, p.id);
   assert.equal(list[0].trust, 31);
-  // No points, no talk.
-  t.scoutPts = 0;
-  assert.equal(talkDown(lg, p.id).ok, false);
-  assert.equal(p.wantsTrade, true);
-  t.scoutPts = 3;
+  // Scouting points are gone (batch x2): a talk costs nothing.
+  assert.equal(TALK_COST, 0);
   const r = talkDown(lg, p.id);
   assert.ok(r.ok, r.msg);
-  assert.equal(t.scoutPts, 3 - TALK_COST);
   assert.equal(playerTrust(p), 51);
   assert.equal(p.wantsTrade, false);
   assert.equal(onBlock(lg, p.id), false, "off the block he only joined to ask out");

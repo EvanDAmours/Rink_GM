@@ -186,7 +186,8 @@ export default function Dashboard({ act = {} }) {
 
   const thisWeek = (
     <div className="rk-hm-list">
-      <button className="rk-b rk-wk-first" onClick={first.onClick}><b>{first.label}</b><span>{first.sub}</span></button>
+      {/* In season the sim buttons are the main job; off-season the phase's one job leads. */}
+      {lg.phase !== "preseason" && lg.phase !== "regular" && <button className="rk-b rk-wk-first" onClick={first.onClick}><b>{first.label}</b><span>{first.sub}</span></button>}
       {deadline && <button className="rk-b rk-wk-item" style={{ "--tone": TONE_C.urgent }} onClick={() => go("deadline")}><b>⏰ Trade Deadline Day</b><span>Make your moves before 3:00 PM ET.</span></button>}
       {attention.slice(0, 7).map((it) => (
         <div key={it.key} className="rk-wk-item rk-wk-row" style={{ "--tone": TONE_C[it.tone] }}>
@@ -195,7 +196,7 @@ export default function Dashboard({ act = {} }) {
         </div>
       ))}
       {attention.length > 7 && <button className="rk-b rk-wk-item" style={{ "--tone": TONE_C.info }} onClick={() => setInboxOpen(true)}><b>+{attention.length - 7} more in Needs Attention</b></button>}
-      {!attention.length && !deadline && <div className="rk-hm-quiet">Nothing else needs you this week.</div>}
+      {!attention.length && !deadline && <div className="rk-hm-quiet good">✓ All set: nothing needs you.</div>}
     </div>
   );
 
@@ -205,7 +206,7 @@ export default function Dashboard({ act = {} }) {
   return (
     <div className="gg-home rk-home">
       <div className="gg-status-row">
-        <section className={`gg-stat rk-attn ${urgentN ? "alert" : attention.length ? "warn" : "ok"}`} onClick={() => setInboxOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setInboxOpen(true))} aria-label={`Needs attention: ${attention.length} items`}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.title || "No urgent issues"}</span></div></section>
+        <section className={`gg-stat rk-attn ${urgentN ? "alert" : attention.length ? "warn" : "ok"}`} onClick={() => setInboxOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setInboxOpen(true))} aria-label={`Needs attention: ${attention.length} items`}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.title || "Nothing needs you"}</span></div></section>
         <section className="gg-stat" onClick={() => go("standings")}><small>RECORD</small><div className="gg-stat-line"><b>{rec(t.rec)}</b><span>{t.rec.gp ? `${ORD(divRank)} in the ${t.div}${odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}` : `${ORD(divRank)} in the ${t.div}`}</span></div></section>
         <section className="gg-stat" onClick={() => go("frontoffice", "contracts")}><small>CAP SPACE</small><div className="gg-stat-line"><b style={{ color: room < 0 ? "#ef4444" : room < 3 ? "#eab308" : "#22c55e" }}>{money(room)}</b><span>{expiring ? `${expiring} expiring deal${expiring === 1 ? "" : "s"}` : "No deals expiring"}</span></div></section>
         <section className={`gg-stat ${starters.length || short ? "warn" : ""}`} onClick={() => (short ? go("freeagency") : go("roster"))}><small>ROSTER HEALTH</small><div className="gg-stat-line"><b style={{ color: short ? "#eab308" : starters.length ? "#ef4444" : injured.length ? "#eab308" : "#22c55e" }}>{short ? `${signedNext}/${MAX_ROSTER}` : injured.length ? `${injured.length} injured` : "Healthy"}</b><span>{short ? `${MAX_ROSTER - signedNext} spot${MAX_ROSTER - signedNext === 1 ? "" : "s"} to fill` : starters.length ? `${starters.length} starter-level out` : `${signed} on the roster`}</span></div></section>
@@ -488,7 +489,6 @@ function PhaseCard({ lg, t, go, slot, series }) {
     head = `${lg.draft?.year} ENTRY DRAFT${done ? " · COMPLETE" : atCombine(lg) ? " · COMBINE" : ""}`;
     rows = done ? [row("Your class", `${taken.length} player${taken.length === 1 ? "" : "s"}${grade ? ` · analysts say ${grade}` : ""}`), ...(taken[0] ? [row("First pick", `${taken[0].name} (#${taken[0].draft.pick})`)] : [])]
       : [row("Your next pick", slot ? `#${slot.overall} overall (round ${slot.round})` : "No picks left"), row("Picks this year", picks)];
-    rows.push(row("Scouting points", t.scoutPts ?? 0));
   } else if (lg.phase === "resign") {
     const exp = expiringPlayers(lg, t).sort((a, b) => b.ovr - a.ovr);
     head = `RE-SIGN WINDOW · ${exp.length} EXPIRING`;

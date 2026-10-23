@@ -415,6 +415,9 @@ button.rk-rcard { background: #ffffff; border: 1px solid #d3d9e2; border-left: 3
 .sc-why-hunch { color: #be185d; }
 .sc-region-note.gem { color: #be185d; }
 .sc-region-note.red { color: #b91c1c; }
+.sc-assign-card { background: #ffffff; border: 1px solid #d3d9e2; }
+.sc-assign-card small.maj { color: #a16207; }
+.sc-assign-card small.min { color: #2563eb; }
 
 /* src/ui/standings.css */
 .app .gg-clinch.y { color: #0284c7; }

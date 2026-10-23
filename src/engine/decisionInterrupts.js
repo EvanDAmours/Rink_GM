@@ -4,7 +4,8 @@ import {headCoachLines} from './lines.js';
 // With head-coach lines on, an injury never stops the sim: the coach resets the lines here and the
 // weekly injury report card tells the story (Gridiron 3.70). Without them, a regular going down
 // still pauses the sim, because his spot is empty until you fill it.
-export const INTERRUPT_DEFAULTS={injuries:true,offers:true,roster:true};
+// Trade offers wait in the inbox instead of pausing the sim (opt back in under Settings).
+export const INTERRUPT_DEFAULTS={injuries:true,offers:false,roster:true};
 export function decisionInterrupt(lg){
  if(!lg || lg.phase!=='regular')return null;
  const settings={...INTERRUPT_DEFAULTS,...lg.settings?.simStops},t=lg.teams[lg.userTid],seen=lg.simStopSeen ||= {};
