@@ -289,22 +289,37 @@ export function retirementChance(p) {
 }
 
 // Asset value for trade logic (roughly exponential in OVR).
+// Trade value is value above replacement. A 72 OVR skater is what any club can find on
+// waivers or in the AHL, so he (and anyone below) is worth nothing in a trade, and a body
+// that takes a roster spot costs a little. Above that the curve is steep: one 88 is worth
+// far more than three 76s. Young players are valued partly on what they'll become.
+export const REPLACEMENT_OVR = 72;
+const valueCurve = (o) => Math.exp((o - 70) / 6.2);
+const POT_WEIGHT = (age) => (age <= 19 ? 0.55 : age <= 21 ? 0.5 : age === 22 ? 0.4 : age === 23 ? 0.3 : age === 24 ? 0.2 : age === 25 ? 0.1 : 0);
 export function tradeValue(p, year, { contending = false, rental = 0 } = {}) {
-  let v = Math.exp((p.ovr - 70) / 6.2);
+  const eff = p.ovr + Math.max(0, (p.pot ?? p.ovr) - p.ovr) * POT_WEIGHT(p.age);
+  let v = valueCurve(eff) - valueCurve(REPLACEMENT_OVR);
+  // At or below replacement level: a small negative for the roster spot.
+  if (v <= 0) return Math.max(-0.4, v * 0.5);
+  if (p.age >= 35) v *= 0.55;
+  else if (p.age >= 34) v *= 0.65;
+  else if (p.age >= 32) v *= 0.75;
+  else if (p.age >= 29) v *= 0.9;
   // A player in the last year of his deal is a rental once the season is under way: the
-  // buyer gets what is left of it, not a contract. At the deadline that is about half.
-  if (rental > 0 && p.yrs <= 1 && p.age >= 24) v *= 1 - 0.55 * rental;
-  if (p.age <= 23) v *= 1 + Math.max(0, p.pot - p.ovr) * 0.05;
-  else if (p.age >= 35) v *= 0.35;
-  else if (p.age >= 32) v *= 0.6;
-  else if (p.age >= 29) v *= 0.85;
+  // buyer gets what is left of it, not a contract. At the deadline that is about 0.64.
+  // Young expiring players are RFAs: the rights come with them, so no rental discount.
+  if (rental > 0 && p.yrs <= 1 && p.age >= 24) v *= 1 - 0.45 * rental;
   if (p.yrs > 0) {
+    // Contract: cap hit against what he'd earn, stretched by the years left on it.
     const surplus = marketValue(p, year) - p.cap;
-    v *= clamp(1 + surplus * 0.07, 0.45, 1.5);
+    const term = Math.min(Math.max(0, p.yrs - 1), 4);
+    v *= clamp(1 + surplus * 0.05 * (1 + term * 0.15), 0.55, 1.45);
   }
   if (isGoalie(p.pos)) v *= 0.9;
+  // Contenders want help now; rebuilders want youth and pass on veterans.
   if (contending && p.age >= 28) v *= 1.15;
   if (!contending && p.age <= 23) v *= 1.15;
+  if (!contending && p.age >= 30) v *= 0.85;
   if (p.injury > 20) v *= 0.7;
   return v;
 }

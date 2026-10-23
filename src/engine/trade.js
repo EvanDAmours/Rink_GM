@@ -68,7 +68,8 @@ export function projectedPickSlot(league, pk) {
 
 export function pickValue(league, pk, { contending = false } = {}) {
   const slot = projectedPickSlot(league, pk);
-  const base = { 1: 3 + 22 * Math.exp(-(slot - 1) / 9), 2: 2.0, 3: 1.2, 4: 0.8, 5: 0.45, 6: 0.35, 7: 0.25 }[pk.round] ?? 0.2;
+  // A first is worth a good young player near the top of the draft, a solid one in the middle.
+  const base = { 1: 2 + 16 * Math.exp(-(slot - 1) / 10), 2: 1.5, 3: 0.9, 4: 0.55, 5: 0.35, 6: 0.25, 7: 0.2 }[pk.round] ?? 0.15;
   const yearsOut = Math.max(0, pk.year - (league.year + 1));
   return base * Math.pow(0.92, yearsOut) * (contending ? 0.85 : 1.15);
 }
@@ -110,6 +111,9 @@ function cornerstonePremium(league, team, id) {
   return top.includes(id) ? 1.3 : 1;
 }
 
+const STAR_OVR = 85;
+const DEPTH_WEIGHT = [1, 1, 0.8, 0.6, 0.5];
+
 export function evaluateTrade(league, offer) {
   const user = league.teams[offer.from];
   const ai = league.teams[offer.to];
@@ -120,15 +124,24 @@ export function evaluateTrade(league, offer) {
 
   const incoming = offer.give.map((id) => assetValue(league, id, ai));
   const outgoing = offer.get.map((id) => assetValue(league, id, ai) * cornerstonePremium(league, ai, id));
-  // Consolidation tax: extra roster bodies are worth less to the receiver.
-  const extra = Math.max(0, offer.give.length - offer.get.length);
-  let valIn = incoming.reduce((a, b) => a + b, 0) - extra * 0.8;
-  let valOut = outgoing.reduce((a, b) => a + b, 0);
   const pickIn = offer.givePicks.map((pid) => league.draftPicks.find((p) => p.id === pid)).filter(Boolean);
   const pickOut = offer.getPicks.map((pid) => league.draftPicks.find((p) => p.id === pid)).filter(Boolean);
-  valIn += pickIn.reduce((a, pk) => a + pickValue(league, pk, { contending }), 0);
-  valOut += pickOut.reduce((a, pk) => a + pickValue(league, pk, { contending }), 0);
-
+  // Quality over quantity: the third and later pieces coming in count for less, and extra
+  // roster bodies cost the receiver a spot.
+  const inAssets = [...incoming, ...pickIn.map((pk) => pickValue(league, pk, { contending }))].sort((a, b) => b - a);
+  const extra = Math.max(0, offer.give.length - offer.get.length);
+  let valIn = inAssets.reduce((s, v, i) => s + (v > 0 ? v * (DEPTH_WEIGHT[i] ?? 0.5) : v), 0) - extra * 0.8;
+  let valOut = outgoing.reduce((a, b) => a + b, 0) + pickOut.reduce((a, pk) => a + pickValue(league, pk, { contending }), 0);
+  // Star premium: a club parting with a star (85+) wants a clear win and a real centrepiece
+  // back, not a pile of pieces. The user asking for one faces the higher bar.
+  const stars = offer.get.map((id) => league.players[id]).filter((p) => p && (p.ovr >= STAR_OVR || isFranchiseGoalie(league, ai, p)));
+  const starValue = stars.reduce((m, p) => Math.max(m, assetValue(league, p.id, ai)), 0);
+  let starMargin = 1, centrepieceShort = false;
+  if (stars.length) {
+    starMargin = offer.from === league.userTid ? 1.1 : 1.05;
+    centrepieceShort = (inAssets[0] ?? 0) < starValue * 0.35;
+  }
+  const finalMargin = margin * starMargin;
   const problems = [];
   if ([...offer.givePicks,...offer.getPicks].some(id=>pickLocked(league,id))) problems.push("A pick is reserved for offer-sheet compensation or conditional protection.");
   const protection=protectionIssue(league,offer);if(protection)problems.push(protection);
@@ -177,10 +190,12 @@ export function evaluateTrade(league, offer) {
   if (userLeft((p) => p && isDefense(p.pos)) < 6) problems.push("You'd be left with fewer than six defensemen.");
   if (userLeft((p) => p && !isGoalie(p.pos) && !isDefense(p.pos)) < 12) problems.push("You'd be left with fewer than twelve forwards.");
 
-  const ratio = valOut > 0 ? valIn / (valOut * margin) : valIn > 0 ? 9 : 0;
-  const accept = problems.length === 0 && valIn >= valOut * margin && valIn > 0;
+  let ratio = valOut > 0 ? valIn / (valOut * finalMargin) : valIn > 0 ? 9 : 0;
+  if (centrepieceShort) ratio = Math.min(ratio, 0.84);
+  const accept = problems.length === 0 && !centrepieceShort && valIn >= valOut * finalMargin && valIn > 0;
   let mood;
-  if (ratio >= 1) mood = "We have a deal.";
+  if (centrepieceShort && valIn >= valOut * finalMargin * 0.85) mood = "We need a real centrepiece for a star.";
+  else if (ratio >= 1) mood = "We have a deal.";
   else if (ratio >= 0.85) mood = "Close — sweeten it a little.";
   else if (ratio >= 0.6) mood = "Not enough coming back.";
   else mood = "Not even close.";
