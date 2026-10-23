@@ -320,4 +320,9 @@ export const PATCH_NOTES = [
     "See the first-round bracket the current standings would make, all the way to the Stanley Cup Final.",
     "Division winners, wild cards and clinch marks follow the real NHL format and tiebreakers, and the preview always matches the bracket you'll get in April.",
   ] },
+  { v: "1.57", date: "2026-10-23", title: "Fair Trades", notes: [
+    "Trades got smarter. Clubs now value players above replacement level, so depth players around 71-72 OVR won't pry loose a star.",
+    "Stars cost a real centrepiece. A club giving up an 85+ player wants a clear win and at least one strong piece back, not a pile of spare parts.",
+    "Contracts, age and team direction matter more. Rebuilding clubs prize youth, picks and prospects, contenders pay for veterans, and deadline rentals are discounted but still cost real assets.",
+  ] },
 ];
