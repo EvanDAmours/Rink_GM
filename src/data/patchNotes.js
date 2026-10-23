@@ -325,4 +325,19 @@ export const PATCH_NOTES = [
     "Stars cost a real centrepiece. A club giving up an 85+ player wants a clear win and at least one strong piece back, not a pile of spare parts.",
     "Contracts, age and team direction matter more. Rebuilding clubs prize youth, picks and prospects, contenders pay for veterans, and deadline rentals are discounted but still cost real assets.",
   ] },
+  { v: "1.58", date: "2026-10-23", title: "Hands-off Scouting", notes: [
+    "Scouting is now hands-off: before the season, send each scout to a region (OHL, WHL, Sweden, Finland and more), and they file reports there on their own all year. No points, no mid-season pop-ups.",
+    "Scout grades matter more: sharp scouts give tighter reads, spot development traits sooner and find the late-round gems that weaker scouts miss.",
+    "The Combine keeps its interviews and private workouts, at no cost.",
+  ] },
+  { v: "1.59", date: "2026-10-23", title: "A Quiet Sidebar", notes: [
+    "The Home 'This week' list now shows only things that would actually stop your season, like an illegal roster or going over the cap.",
+    "No more reminders about development focus, game plans or contract years on Home. When you're good to go it simply says 'All set'.",
+  ] },
+  { v: "1.60", date: "2026-10-23", title: "Uninterrupted Sims", notes: [
+    "Simming never stops for highlights any more: records, milestones and other big moments wait until the sim finishes, then play in order.",
+    "Start Season just starts the season: no preview pop-up, no training-camp prompt.",
+    "Trade offers no longer pause the sim (you can turn that back on in Settings).",
+    "The end-of-season All-Star Teams screen is gone, and All-Star selections no longer give an OVR boost.",
+  ] },
 ];
