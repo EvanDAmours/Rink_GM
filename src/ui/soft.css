@@ -117,8 +117,8 @@ html, body, body .app { background: #080c14 !important; }
 .app.app.app .rk-bar .gg-ffmenu button:hover, .app.app.app .rk-moremenu button:hover { background: #ffffff12; }
 .app.app.app button.rk-search { display: flex; align-items: center; gap: 8px; background: #ffffff0d; color: #94a3b8; font-size: 14px; font-weight: 600; padding: 7px 10px 7px 12px; border-radius: 999px; width: 190px; }
 .rk-search kbd { margin-left: auto; font-size: 11px; background: #ffffff14; border-radius: 5px; padding: 0 6px; color: #94a3b8; font-family: inherit; }
-@media (max-width: 1399px) { .app button.rk-search { width: 38px; height: 38px; padding: 0; justify-content: center; } .rk-search-t, .rk-search kbd { display: none; } }
-.app.app.app button.rk-pill { border-radius: 999px; font-size: 13px; font-weight: 800; padding: 7px 14px; white-space: nowrap; }
+@media (max-width: 1399px) { .app.app.app button.rk-search { width: 38px; height: 38px; padding: 0; justify-content: center; } .rk-search-t, .rk-search kbd { display: none; } }
+.app.app.app button.rk-pill { width: auto; min-width: max-content; max-width: none; border-radius: 999px; font-size: 13px; font-weight: 800; padding: 7px 14px; white-space: nowrap; }
 .app.app.app button.rk-pill.red { background: #dc2626; color: #fff; }
 .app.app.app button.rk-pill.blue { background: #2563eb; color: #fff; }
 .rk-more { position: relative; }
@@ -185,3 +185,6 @@ html:not(.light) .app.app .main .lnx .lx-card { background: var(--soft-inner); b
 .app .gg-confirm-line { background: var(--soft-card); border: 0; border-left: 3px solid #3b82f6; border-radius: 14px; padding: 10px 14px; }
 .app .gg-confirm-line.warn { border-left-color: #f59e0b; } .app .gg-confirm-line.good { border-left-color: #22c55e; } .app .gg-confirm-line.bad { border-left-color: #ef4444; }
 .app .gg-confirm-lines { display: flex; flex-direction: column; gap: 8px; }
+.rk-bar-right > * { flex-shrink: 0; }
+.rk-bar-nav { flex: 1 1 auto; overflow: hidden; }
+@media (max-width: 1250px) { .app.app.app .rk-bar-nav button { padding: 8px 8px; font-size: 14px; } .rk-seasonbtn b { font-size: 15px; } }
