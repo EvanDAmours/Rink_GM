@@ -277,7 +277,7 @@ export function playScheduledGame(league, g, state) {
   if (g.played) return {hs:g.hs,as:g.as,ot:g.ot,shots:g.shots,stars:g.stars,goals:g.goals,g:g.gl};
   const result = applyResult(league, state, { playoff: false });
   const mine = g.h === league.userTid || g.a === league.userTid;
-  Object.assign(g, { played: true, hs: result.hs, as: result.as, ot: result.ot, shots: result.shots, stars: result.stars, gl: result.g });
+  Object.assign(g, { played: true, ...(state?.live ? { watched: true } : {}), hs: result.hs, as: result.as, ot: result.ot, shots: result.shots, stars: result.stars, gl: result.g });
   if (mine) { g.goals = result.goals; recordReport(league,state,g.id); }
   return result;
 }

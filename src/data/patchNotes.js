@@ -387,4 +387,8 @@ export const PATCH_NOTES = [
     "Newspapers now close with Escape, like every other popup.",
     "Fixed a save that changed slightly after reloading during the re-signing period.",
   ] },
+  { v: "1.69", date: "2026-10-26", title: "Only If You Were There", notes: [
+    "The result card after a holiday or outdoor game now only appears if you played that game live. Simmed special games no longer pop up afterwards.",
+    "Fixed the Halloween headline that called a road win a win for the home crowd.",
+  ] },
 ];

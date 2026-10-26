@@ -30,6 +30,11 @@ test("the title card queues the evening before and is dropped once the game is p
   assert.equal(pre[0].kind, "special-intro");
   l.moments.push(pre[0]);
   l.day = oct31; g.played = true; g.hs = 3; g.as = 2;
+  // A simmed special game: the title card is dropped and no result popup follows.
+  assert.deepEqual(specialDayMoments(l, [g]), []);
+  assert.equal(l.moments.length, 0);
+  // Played live: the result card follows.
+  g.watched = true;
   const post = specialDayMoments(l, [g]);
   assert.equal(post[0].kind, "special-result");
   assert.equal(post[0].won, true);

@@ -7,7 +7,7 @@
 const CANADIAN = new Set(["MTL", "TOR", "OTT", "WPG", "CGY", "EDM", "VAN"]);
 
 export const SPECIAL_EVENTS = {
-  halloween: { name: "Halloween", eyebrow: "Holiday game", line: "Costumes in the stands, candy in the concourse.", art: "🎃", pog: "The treat goes to", head: ["Treats", "for the home crowd"], lose: ["A real", "fright"] },
+  halloween: { name: "Halloween", eyebrow: "Holiday game", line: "Costumes in the stands, candy in the concourse.", art: "🎃", pog: "The treat goes to", head: ["All treats", "no tricks"], lose: ["A real", "fright"] },
   heritage: { name: "Heritage Classic", eyebrow: "Outdoors in Canada", line: "Wool toques, a stadium rink and the game the way it started.", art: "🍁", pog: "Player of the game", head: ["Heritage", "night"], lose: ["Cold", "night out"], outdoor: true },
   thanksgiving: { name: "Thanksgiving Showdown", eyebrow: "The day after the turkey", line: "Hockey and family: the whole country is watching.", art: "🦃", pog: "The drumstick goes to", head: ["A Showdown", "to remember"], lose: ["Hard to", "digest"] },
   nye: { name: "New Year's Eve", eyebrow: "Holiday game", line: "One more game before the ball drops.", art: "🎆", pog: "Player of the game", head: ["Out with", "a bang"], lose: ["A rough way", "to end the year"] },
@@ -74,7 +74,8 @@ export function specialDayMoments(league, games) {
   const g = (games || []).find((x) => x.played && (x.h === ut || x.a === ut));
   if (g) {
     league.moments = (league.moments || []).filter((m) => !(m.kind === "special-intro" && String(m.gid) === String(g.id)));
-    const r = specialResult(league, g);
+    // The result card only follows a special game you played live; a simmed one gets no popup.
+    const r = g.watched ? specialResult(league, g) : null;
     if (r) out.push(r);
   }
   const next = (league.schedule || []).find((x) => x.day === league.day + 1 && !x.played && (x.h === ut || x.a === ut));
