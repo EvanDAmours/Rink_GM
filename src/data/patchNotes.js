@@ -438,4 +438,8 @@ export const PATCH_NOTES = [
     "Draft › Scouting opens on a new Scouting HQ: your picks if the season ended today, the prospects worth a look in range of them, where the talent is this year, and your scouts at a glance.",
     "Your scouts cover more ground: your senior scout works three regions, your second major scout two, each minor scout one, so 7 of 9 regions are covered. Older saves fill the new slots automatically.",
   ] },
+  { v: "1.81", date: "2026-10-26", title: "Reminder Board", notes: [
+    "Home's To do is now a calm reminder board. Anything that would stop the sim stays at the top, then a few short reminders: pick your focus player, hire a scout, set your scouts' regions. Each one disappears once it's done.",
+    "Key contracts get one quiet line from mid-season on, such as \"3 key players need new deals\" with their names. Tap it for Contracts, or Not now to hide it for a month. No more contract-year nags in the inbox.",
+  ] },
 ];

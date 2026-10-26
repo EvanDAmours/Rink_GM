@@ -44,7 +44,8 @@ test("scouts: an open seat asks for a hire; a scout without a region asks for as
   const reg = needsAttention(lg).find((x) => x.key === "rmScoutRegions");
   assert.equal(reg?.title, "Set your scouts' regions");
   assert.deepEqual(reg.to, ["draft", "regions"]);
-  t.scoutRegions.major = "OHL"; t.scoutRegions.minor = ["WHL"]; t.scoutRegions.major2 = ["Sweden"];
+  // Every slot filled (major 3, second major 2, minors 1 each, per the region slots).
+  t.scoutRegions.major = ["OHL", "WHL", "QMJHL"]; t.scoutRegions.minor = ["USA"]; t.scoutRegions.major2 = ["NCAA", "Sweden"];
   assert.ok(!keys(lg).includes("rmScoutRegions"), "gone once assigned");
   // an unhired seat isn't a missing region
   t.scoutRegions.minor2 = []; t.scouts.minor2 = null;
