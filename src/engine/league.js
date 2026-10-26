@@ -484,6 +484,7 @@ function migrateLeague(l) {
   ensureHockeyRules(l);
   // Preserve played fixtures and running drafts. Only future pick inventories expand.
   l.scheduleStart ||= `${l.year}-10-07`;
+  l.talks ||= {};
   l.scheduleInfo ||= { kind: "legacy", label: "Existing franchise schedule" };
   l.draftPicks ||= [];
   for (let year=l.year+1;year<=l.year+5;year++) {

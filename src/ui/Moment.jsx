@@ -11,8 +11,9 @@ import { RESULT_MOMENTS } from "./moments/results.jsx";
 import { SCOUTING_MOMENTS } from "./moments/scouting.jsx";
 import { DRAFT_MOMENTS } from "./moments/draftnight.jsx";
 import { DEV_MOMENTS } from "./moments/development.jsx";
+import { SPECIAL_MOMENTS } from "./moments/special.jsx";
 
-const REGISTRY = { ...SEASON_MOMENTS, ...CUP_MOMENTS, ...RESULT_MOMENTS, ...SCOUTING_MOMENTS, ...DRAFT_MOMENTS, ...DEV_MOMENTS };
+const REGISTRY = { ...SEASON_MOMENTS, ...CUP_MOMENTS, ...RESULT_MOMENTS, ...SCOUTING_MOMENTS, ...DRAFT_MOMENTS, ...DEV_MOMENTS, ...SPECIAL_MOMENTS };
 
 export default function Moment({ m, onClose }) {
   if (!m) return null;
