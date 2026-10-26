@@ -430,4 +430,7 @@ export const PATCH_NOTES = [
     "The Lineup coach now waits until you ask. One quiet line tells you how far your lines are from their best, like \"4 changes could improve your lineup, 3 points short of your best\", or \"Your lineup is set.\" Tap it to see the ideas.",
     "The coach panel remembers whether you left it open, and swap highlights only show while it is open. Works on even strength, the power play and the penalty kill.",
   ] },
+  { v: "1.79", date: "2026-10-26", title: "Faces, Not Sweaters", notes: [
+    "Players without an NHL headshot now show a clean grey silhouette, tinted with their club's colour, instead of the generated sweater drawing. Real players still show their real faces.",
+  ] },
 ];

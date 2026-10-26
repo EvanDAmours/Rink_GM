@@ -78,3 +78,4 @@ confirm the Pages deploy. Report real outcomes only.
   Trade Center, Hockey Operations, combine table, team-roster sheet, Game plan.
 - 1.78 Lineup coach panel closed by default; one line shows the gap to the optimal lineup (greedy coach run: N changes,
   points short = rating + chemistry weighted by ice time) — Evan felt the endless swap ideas should be opt-in.
+- 1.79 Generated sweater art replaced everywhere by an NHL-style grey silhouette (Headshot.jsx Silhouette) when no headshot exists — Evan found the sweaters silly. Jersey.jsx kept only for the uniform designer.

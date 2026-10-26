@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, TeamBadge, useGame } from "./common.jsx";
-import Jersey from "./Jersey.jsx";
+import Headshot from "./Headshot.jsx";
 import { momentColors } from "./MomentFrame.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import { DEV_TRAITS } from "../engine/players.js";
@@ -33,7 +33,7 @@ export function PickStage({ m, onClose, onFull, cta = "Continue the draft" }) {
         {m.green && <div className="dn-green">★ FROM THE GREEN ROOM ★</div>}
         <div className="dn-podium">
           <span className="dn-crest"><TeamBadge team={team} size={64} decorative /></span>
-          <span className="dn-sweater"><Jersey team={team} player={p} size={118} /></span>
+          <span className="dn-sweater"><Headshot p={p} team={team} size={118} /></span>
         </div>
         <div className="dn-k">ROUND {m.round} · PICK #{m.overall} · {m.year} NHL DRAFT</div>
         <div className="dn-sel">The {team.city} {team.name} select</div>
