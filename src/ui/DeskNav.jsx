@@ -12,7 +12,8 @@ export function sectionsFor(league, { deadlineOpen, frenzyOpen }) {
   return [
     { id: "home", label: "Home", screens: [["Home", "dashboard"]] },
     { id: "team", label: "Team", screens: [["Lines", "lines", "lines", ["lines"]], ["Roster", "lines", "roster", ["roster"]], ["Coaching", "coaching"], ["Development", "development"]] },
-    { id: "season", label: "Season", screens: [["Schedule", "schedule"], ["Standings", "standings"], ["Playoffs", "league", "playoffs", ["playoffs"]], ["Stats", "stats"]] },
+    { id: "standings", label: "Standings", screens: [["Standings", "standings"]] },
+    { id: "season", label: "Season", screens: [["Schedule", "schedule"], ["Playoffs", "league", "playoffs", ["playoffs"]], ["Stats", "stats"]] },
     { id: "draft", label: "Draft", screens: [["Scouting", "draft", "board", ["board", "list", "myscouts", "scouts", "regions"]], ["Draft", "draft", "floor", ["floor", "combine"]], ["Draft Recap", "draft", "recap", ["recap"]]] },
     { id: "market", label: "Trades & FA", screens: [["Trade", "trade", "trade", ["trade"]], ["Trade Block", "trade", "block", ["block"]], [league.phase === "resign" ? "Re-sign" : "Free Agency", "trade", "fa", ["fa"]], ...(deadlineOpen ? [["Deadline Day", "trade", "deadline", ["deadline"]]] : []), ...(frenzyOpen ? [["July 1 Frenzy", "trade", "frenzy", ["frenzy"]]] : [])] },
     { id: "office", label: "Front Office", screens: [["Front Office", "frontoffice"], ["League", "league", "teams", ["teams", "retired", "standings"]], ["Franchise History", "legacy", "club", ["club", "case", "gm"]], ["Record Book", "league", "records", ["records"]], ["League History", "league", "awards", ["awards"]], ["Transactions", "league", "tx", ["tx"]], ["Legacy Hall", "legacy", "hall", ["hall", "trophies", "awards"]]] },
@@ -60,6 +61,7 @@ export function heroStats(id, league, user, h) {
   const cap = h.capSpace;
   const gp = rec.w + rec.l + rec.otl;
   if (id === "team") return [["Record", recordStr(rec)], ["Roster", `${h.active}/23`], ["Cap space", money(cap), cap >= 0 ? "#4ade80" : "#f87171"], ["Injured", h.injured ? String(h.injured) : "None", h.injured ? "#fca5a5" : undefined], ["Prospects", String(user.prospects.length)]];
+  if (id === "standings") return [["Record", recordStr(rec)], ["Points", String(rec.pts ?? rec.w * 2 + rec.otl)], ["Games played", `${gp}/82`], ["Goal diff", h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff), h.goalDiff > 0 ? "#4ade80" : h.goalDiff < 0 ? "#f87171" : undefined]];
   if (id === "season") return [["Record", recordStr(rec)], ["Points", String(rec.pts ?? rec.w * 2 + rec.otl)], ["Games played", `${gp}/82`], ["Goal diff", h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff), h.goalDiff > 0 ? "#4ade80" : h.goalDiff < 0 ? "#f87171" : undefined]];
   if (id === "draft") return [["Draft class", String(h.draftYear)], ["Your picks", String(h.picks)], ["First pick", h.firstPick || "None"], ["Reports filed", String(h.reports)]];
   if (id === "market") return [["Cap space", money(cap), cap >= 0 ? "#4ade80" : "#f87171"], ["Roster", `${h.active}/23`], ["Trade offers", String(h.offers)], ["Free agents", String(league.freeAgents?.length || 0)]];

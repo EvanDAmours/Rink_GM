@@ -395,4 +395,7 @@ export const PATCH_NOTES = [
     "Simming now goes game to game: Sim game plays your game and skips the off days, landing you on your next game day with Play and Sim game ready. No more pressing Sim day through empty days.",
     "On a day without a game, the button reads Sim to next game. It still stops at the trade deadline and the end of the season.",
   ] },
+  { v: "1.71", date: "2026-10-26", title: "Standings Up Top", notes: [
+    "Standings has its own spot in the top bar again, right after Team, opening on the playoff picture.",
+  ] },
 ];
