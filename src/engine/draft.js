@@ -307,7 +307,7 @@ export function finishDraft(league) {
   for (const id of league.draftClass) {
     const p = league.players[id];
     if (p && p.tid === -2) {
-      p.tid=-1;p.assignment='freeagent';p.signed=false;p.yrs=0;p.cap=0;
+      p.tid=-1;p.assignment='freeagent';p.signed=false;p.yrs=0;p.cap=0;p.undrafted=true;
       (p.moveHistory ||= []).push({year:league.year,day:league.day,from:-2,to:-1,kind:'undrafted free agent'});
       if(!league.freeAgents.includes(id))league.freeAgents.push(id);
     }
