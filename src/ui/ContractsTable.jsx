@@ -22,6 +22,7 @@ export default function ContractsTable() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("cap");
   const [talk, setTalk] = useState(null);
+  const [more, setMore] = useState(false); // the clause and buyout columns, one tap away
   const data = contractRows(league, t);
   const ov = capOverview(league, t);
   const space = capSpace(league, t);
@@ -37,10 +38,10 @@ export default function ContractsTable() {
   const rows = data.rows.filter(F[filter]).sort((a, b) => { const x = key(a), y = key(b); return (typeof x === "string" ? x.localeCompare(y) : x - y) || b.cap - a.cap; });
   const books = [...data.retained, ...data.dead];
   const th = (k, label, num) => <th className={`${k ? "sort" : ""}${sort === k ? " on" : ""}${num ? " num" : ""}`} onClick={k ? () => setSort(k) : undefined}>{label}{sort === k ? " ▼" : ""}</th>;
-  const extendCell = (r) => r.holdout ? <button className="tiny ct-ext hold" onClick={() => setTalk(r.p)}>Talk contract</button>
+  const extendCell = (r, full) => r.holdout ? <button className="tiny ct-ext hold" onClick={() => setTalk(r.p)}>Talk contract</button>
     : r.extension ? <span className="ct-next">Next: {money(r.extension.aav)} × {r.extension.yrs} from {season(r.extension.start)}</span>
     : r.canExtend ? <button className="tiny ct-ext" onClick={() => setTalk(r.p)}>Extend</button>
-    : <span className="ct-why" title={r.extendWhy}>{r.extendWhy}</span>;
+    : full ? <span className="ct-why" title={r.extendWhy}>{r.extendWhy}</span> : <span className="ct-why dim" title={r.extendWhy}>Not yet</span>;
   const tags = (r) => <>
     {r.loyal && <span className="ct-tag loyal" title="Three seasons with you: about 10% off to re-sign or extend.">LOYAL</span>}
     {r.holdout && <span className="ct-tag hold">HOLDOUT</span>}
@@ -58,6 +59,7 @@ export default function ContractsTable() {
       <div className="ct-bar">
         <div className="gg-chips ct-filters">{[["all", `All (${data.rows.length})`], ["expiring", `Expiring (${counts.expiring})`], ["extend", `Can extend (${counts.extend})`], ["retained", `Retained & dead (${counts.retained})`], ["buried", `Buried (${counts.buried})`]].map(([k, l]) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         <span className="ct-hint">Tap a column to sort · extend from July 1 of a deal's last season</span>
+        <button type="button" className="rk-morecols" aria-pressed={more} onClick={() => setMore((v) => !v)}>{more ? "Fewer columns" : "More columns"}</button>
       </div>
       {filter === "retained" ? (
         <section className="gg-card">
@@ -67,7 +69,7 @@ export default function ContractsTable() {
       ) : <>
         <div className="ct-wrap">
           <table className="ct-table">
-            <thead><tr>{th("name", "Player")}{th("pos", "Pos")}{th("ovr", "OVR", true)}{th("age", "Age", true)}{th("cap", "Cap hit", true)}{th("yrs", "Yrs", true)}<th>Ends as</th><th>Clause</th>{th("buyout", "Buyout", true)}<th>Extension</th></tr></thead>
+            <thead><tr>{th("name", "Player")}{th("pos", "Pos")}{th("ovr", "OVR", true)}{th("age", "Age", true)}{th("cap", "Cap hit", true)}{th("yrs", "Yrs", true)}<th>Ends as</th>{more && <th>Clause</th>}{more && th("buyout", "Buyout", true)}<th>Extension</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className={r.expiring ? "exp" : ""}>
@@ -78,8 +80,8 @@ export default function ContractsTable() {
                   <td className="num">{r.kind === "rights" ? <span className="dim">QO {money(r.qo)}</span> : <><span className="ct-cap">{money(r.cap)}</span>{r.kind === "farm" && <small>{money(r.counts)} counts</small>}</>}</td>
                   <td className="num" style={{ color: r.yrs === 1 ? "#f59e0b" : undefined }}>{r.kind === "rights" ? "—" : r.yrs}{r.through ? <small>to {season(r.through)}</small> : null}</td>
                   <td><span className={`ct-tag ${r.status === "RFA" ? "rfa" : "ufa"}`}>{r.status}</span></td>
-                  <td>{r.clause ? <span className="ct-tag clause">{r.clause}</span> : <span className="dim">—</span>}</td>
-                  <td className="num">{r.buyout.total ? <><span className="ct-dead">{money(r.buyout.total)}</span><small>over {r.buyout.years} season{r.buyout.years === 1 ? "" : "s"}</small></> : <span className="dim">—</span>}</td>
+                  {more && <td>{r.clause ? <span className="ct-tag clause">{r.clause}</span> : <span className="dim">—</span>}</td>}
+                  {more && <td className="num">{r.buyout.total ? <><span className="ct-dead">{money(r.buyout.total)}</span><small>over {r.buyout.years} season{r.buyout.years === 1 ? "" : "s"}</small></> : <span className="dim">—</span>}</td>}
                   <td>{extendCell(r)}</td>
                 </tr>
               ))}
@@ -100,7 +102,7 @@ export default function ContractsTable() {
                 {r.clause && <span className="ct-tag clause">{r.clause}</span>}
                 {r.buyout.total > 0 && <span>Buyout <b className="ct-dead">{money(r.buyout.total)}</b> over {r.buyout.years}</span>}
               </div>
-              <div className="ct-card-act">{extendCell(r)}</div>
+              <div className="ct-card-act">{extendCell(r, true)}</div>
             </div>
           ))}
           {!rows.length && <div className="ct-empty">Nobody fits that filter.</div>}

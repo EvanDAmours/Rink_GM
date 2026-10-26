@@ -162,3 +162,5 @@ html.light .app.app.app button.rk-sb { background: #0f172a0f; color: #334155; }
 html.light .app.app.app button.rk-sb.on { background: #0f172a; color: #fff; }
 /* Phones show the roster as cards, so the table's column toggle has nothing to do there. */
 .app.rk-phone-app .gg-roster .rk-morecols { display: none; }
+.app.app .ct-bar .rk-morecols { margin-left: 0; }
+.app.app.app .gg-stat small, .app.app.app .ct-tile small, .app.app.app .gg-coach-hero small { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: none; }

@@ -1666,6 +1666,9 @@ body .app { background: #eef1f6 !important; }
 .app.app.app .gg-cal-months { background: #0f172a0d; }
 .app.app.app .gg-cal-months button { color: #334155; }
 .app.app.app button.rk-sb { background: #0f172a12; color: #334155; }
+.app.app.app .gg-stat small,
+.app.app.app .ct-tile small,
+.app.app.app .gg-coach-hero small { color: #475569; }
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }
