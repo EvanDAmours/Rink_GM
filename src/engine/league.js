@@ -7,6 +7,7 @@ import {commitmentWeek} from './playerCommitments.js';
 import {recordReport} from './matchReports.js';
 import {upgradeVerifiedData} from './verifiedData.js';
 import { fixRosterBios } from "./rosterBioFix.js";
+import { ensureDraftHistory } from "./realDraft.js";
 import {setInjuriesEnabled} from './injuries.js';
 import rosterFile from "../data/nhl27-rosters.json" with { type: "json" };
 import { CALDER_SEASON, CALDER_ROOKIES_2026, CALDER_GRADUATES_2026 } from "../data/calderRookies2026.js";
@@ -109,6 +110,7 @@ export function createLeague({ userAbbr = "TOR", mode = "real", difficulty = "no
     else autoLines(league, t);
   }
   seedFreeAgents(league);
+  ensureDraftHistory(league);
   league.ratingAnchor = ratingLevel(league);
   for (let y = year + 1; y <= year + 5; y++) createDraftPicks(league, y);
   generateDraftClass(league, year + 1);
@@ -507,7 +509,7 @@ function migrateLeague(l) {
   migrateScouting(l);
   ensureHockeyRules(l);
   ensureFranchise(l);
-  fixRosterBios(l);ensureDynasty(l);upgradeVerifiedData(l);ensureUniforms(l);
+  fixRosterBios(l);ensureDraftHistory(l);ensureDynasty(l);upgradeVerifiedData(l);ensureUniforms(l);
   ensureRecords(l);
   ensureAreaScouting(l);
   ensureFutureClasses(l);

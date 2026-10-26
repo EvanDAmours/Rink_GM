@@ -83,7 +83,8 @@ export default function PlayerModal({ pid }) {
             <span className="k">Rating source</span>
             <span>{p.ratingData ? <><span className="src ea">EA</span> EA SPORTS {p.ratingData.edition} · {p.ratingData.keys.length} published attributes{league.year>(league.startYear || 2026)?" · franchise development applied":""}</> : p.src === "ea27" ? <><span className="src ea">EA</span> Official EA SPORTS NHL 27 overall</> : p.src === "est" ? <><span className="src est">EST</span> Estimated — update it in Settings → Ratings Import</> : "Generated player"}</span>
             {injuryReturn(league, p) && (<><span className="k">Injury</span><span className="bad">{p.injuryNote || "Injury"} — {injuryLine(league, p)}</span></>)}
-            {p.draft && (<><span className="k">Drafted</span><span>{p.draft.year} · Round {p.draft.round}, #{p.draft.pick} by {league.teams[p.draft.tid]?.abbr}</span></>)}
+            {p.draft && (<><span className="k">Drafted</span><span>{p.draft.year} · Round {p.draft.round}, #{p.draft.pick} by {p.draft.abbr || league.teams[p.draft.tid]?.abbr}</span></>)}
+            {!p.draft && p.undrafted && (<><span className="k">Drafted</span><span>Undrafted</span></>)}
           </div>
         </div>
 
