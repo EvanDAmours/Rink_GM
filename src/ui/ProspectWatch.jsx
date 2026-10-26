@@ -50,7 +50,7 @@ export default function ProspectWatch({ compact = false, limit }) {
   return (
     <section className={`gg-card gg-watch${compact ? " compact" : ""}`}>
       {callUpFlow.element}
-      <div className="gg-k">PROSPECT WATCH <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {rows.length} young players · {moved} up this season · {dom} dominating · {decisions} need a decision</span>{compact && <button className="small" style={{ marginLeft: "auto" }} onClick={() => go("development")}>Open the development desk →</button>}</div>
+      <div className="gg-k">Prospect watch <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {rows.length} young players · {moved} up this season · {dom} dominating · {decisions} need a decision</span>{compact && <button className="small" style={{ marginLeft: "auto" }} onClick={() => go("development")}>Open the development desk →</button>}</div>
       {!compact && <div className="gg-chips gg-watch-filters">{FILTERS.map(([k, l]) => <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>}
       <div className="gg-watch-grid">
         {shown.map((r) => {

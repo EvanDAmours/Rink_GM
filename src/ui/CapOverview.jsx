@@ -21,7 +21,7 @@ export default function CapOverview() {
         <section className="gg-stat" onClick={() => go("frontoffice")}><small>EXPIRING DEALS</small><div className="gg-stat-line"><b>{o.expiring}</b><span>after this season · see them →</span></div></section>
       </div>
       <section className="gg-card">
-        <div className="gg-k">THE LONG VIEW <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· money already committed against each season's cap. Re-signings, rookies and free agents come out of the room.</span></div>
+        <div className="gg-k">The long view <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· money already committed against each season's cap. Re-signings, rookies and free agents come out of the room.</span></div>
         <div className="gg-capov-years">
           {o.years.map((y, i) => (
             <div key={y.year} className={`gg-capov-year${i === 0 ? " now" : ""}`}>
@@ -30,7 +30,7 @@ export default function CapOverview() {
               <div className="gg-capov-room" style={{ color: y.room < 0 ? "#ef4444" : i === 0 ? "#22c55e" : "#fbbf24" }}>{money(y.room)}</div>
               <small className="dim">room · {money(y.committed)} committed</small>
               <small className="dim">{y.signed} players signed</small>
-              <div className="gg-k" style={{ marginTop: 8 }}>DEALS ENDING</div>
+              <div className="gg-k" style={{ marginTop: 8 }}>Deals ending</div>
               {y.ending.slice(0, 4).map((p) => <div key={p.id} className="gg-capov-row"><PosBadge pos={p.pos} /><button className="link" onClick={() => openPlayer(p.id)}>{p.name}</button><b>{p.ovr}</b></div>)}
               {y.ending.length > 4 && <small className="dim">+{y.ending.length - 4} more</small>}
               {!y.ending.length && <small className="dim">nobody</small>}
@@ -40,18 +40,18 @@ export default function CapOverview() {
       </section>
       <div className="gg-capov-bottom">
         <section className="gg-card">
-          <div className="gg-k">WHERE THE MONEY GOES</div>
+          <div className="gg-k">Where the money goes</div>
           <div className="gg-capov-split">{o.groups.map((g) => <i key={g.key} style={{ flex: Math.max(1, g.you), background: g.key === "F" ? "#f59e0b" : g.key === "D" ? "#38bdf8" : "#a78bfa" }} title={`${g.label} ${money(g.you)}`} />)}</div>
           <table className="gg-pc-table"><thead><tr><th>Group</th><th className="num">You</th><th className="num">League avg</th><th className="num">vs avg</th></tr></thead><tbody>
             {o.groups.map((g) => <tr key={g.key}><td><span className="gg-capov-dot" style={{ background: g.key === "F" ? "#f59e0b" : g.key === "D" ? "#38bdf8" : "#a78bfa" }} />{g.label}</td><td className="num"><b>{money(g.you)}</b></td><td className="num dim">{money(g.avg)}</td><td className="num" style={{ color: g.vs > 15 ? "#ef4444" : g.vs < -15 ? "#22c55e" : "#94a3b8" }}>{g.vs >= 0 ? "+" : ""}{g.vs}%</td></tr>)}
           </tbody></table>
         </section>
         <section className="gg-card">
-          <div className="gg-k">BIGGEST CAP HITS <button className="link right" onClick={() => go("frontoffice")}>All {o.roster} contracts →</button></div>
+          <div className="gg-k">Biggest cap hits <button className="link right" onClick={() => go("frontoffice")}>All {o.roster} contracts →</button></div>
           {o.biggest.map(({ p, pct }) => <div key={p.id} className="gg-capov-row"><PosBadge pos={p.pos} /><button className="link" onClick={() => openPlayer(p.id)}><PlayerName p={p} /></button><b style={{ color: "#fbbf24" }}>{money(p.cap)}</b><small className="dim">{pct}%</small></div>)}
         </section>
         <section className="gg-card">
-          <div className="gg-k">CAP ADVISOR</div>
+          <div className="gg-k">Cap advisor</div>
           {o.advice.map((a, i) => <button key={i} className={`gg-advice ${a.tone}`} onClick={() => a.go && go(a.go)}><b>{a.title}</b><span>{a.text}</span></button>)}
         </section>
       </div>
@@ -74,7 +74,7 @@ export function CapGuide() {
   ];
   return (
     <div className="stack">
-      <section className="gg-card"><div className="gg-k">HOW THE CAP WORKS</div><div className="gg-guide">{rows.map(([h, p]) => <div key={h}><b>{h}</b><span>{p}</span></div>)}</div></section>
+      <section className="gg-card"><div className="gg-k">How the cap works</div><div className="gg-guide">{rows.map(([h, p]) => <div key={h}><b>{h}</b><span>{p}</span></div>)}</div></section>
     </div>
   );
 }

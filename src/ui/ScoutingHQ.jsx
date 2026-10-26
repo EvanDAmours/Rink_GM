@@ -70,8 +70,8 @@ export function CombineWeek() {
         </div>
       </div>
       <div className="sc-movers">
-        <div className="panel"><h3 className="good">📈 Stock up · tested like a higher pick</h3>{up.map((p) => <Mover key={p.id} p={p} />)}{!up.length && <div className="dim small">Nobody from the back of the list blew up the Combine.</div>}</div>
-        <div className="panel"><h3 className="bad">📉 Stock down · early names who tested poorly</h3>{down.length > 0 && <div className="dim small" style={{ marginBottom: 4 }}>A real concern or a bad day? An interview or private workout tells you, but only spend one if he could fall to you.</div>}{down.map((p) => <Mover key={p.id} p={p} />)}{!down.length && <div className="dim small">The early names all held up.</div>}</div>
+        <div className="panel"><h3 className="good">Stock up · tested like a higher pick</h3>{up.map((p) => <Mover key={p.id} p={p} />)}{!up.length && <div className="dim small">Nobody from the back of the list blew up the Combine.</div>}</div>
+        <div className="panel"><h3 className="bad">Stock down · early names who tested poorly</h3>{down.length > 0 && <div className="dim small" style={{ marginBottom: 4 }}>A real concern or a bad day? An interview or private workout tells you, but only spend one if he could fall to you.</div>}{down.map((p) => <Mover key={p.id} p={p} />)}{!down.length && <div className="dim small">The early names all held up.</div>}</div>
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ export default function ScoutingHQ({ onBoard, onRegions, onList }) {
   const s = t.scouts || {};
   return (
     <section className="gg-card gg-hq sc-hq">
-      <div className="gg-k">DO THIS NEXT <span className="right dim" style={{ letterSpacing: 0, textTransform: "none" }}>your biggest needs: {needs.length ? needs.map((k) => NEED_WORD[k]).join(", ") : "none pressing"} · {slot == null ? "the draft order takes shape once games are played (your scouts start around #16)" : own ? `your first pick lands around #${slot}` : `you've traded your picks; your record says #${slot}`}</span></div>
+      <div className="gg-k">Do this next <span className="right dim" style={{ letterSpacing: 0, textTransform: "none" }}>your biggest needs: {needs.length ? needs.map((k) => NEED_WORD[k]).join(", ") : "none pressing"} · {slot == null ? "the draft order takes shape once games are played (your scouts start around #16)" : own ? `your first pick lands around #${slot}` : `you've traded your picks; your record says #${slot}`}</span></div>
       {atCombine(league) && <div className="gg-hq-row sc-hq-visit"><span className="gg-hq-ico">🗂️</span><div><b>Your scouts' visit list <span className="dim small">interview and work out players who'll be there when you pick</span></b><VisitList compact /></div></div>}
       {targets.map(({ p, read }) => (
         <div key={p.id} className="gg-hq-row">
@@ -112,7 +112,7 @@ export default function ScoutingHQ({ onBoard, onRegions, onList }) {
       {!targets.length && <div className="dim small" style={{ padding: "6px 0" }}>Every prospect at your need positions in your range has been scouted. Check the Big Board for more, or build Your list.</div>}
       <div className="row" style={{ gap: 6, marginTop: 8 }}><button className="small" onClick={onBoard}>Big Board →</button><button className="small" onClick={onList}>Your list →</button><button className="small" onClick={onRegions}>Scout assignments →</button></div>
       <div className="sc-hq-staff">
-        <div className="gg-k" style={{ marginTop: 12 }}>YOUR SCOUTING STAFF {crews.length > 0 && <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {crews.map((c) => `${c.n} scouts in ${c.name}`).join(", ")}</span>}</div>
+        <div className="gg-k" style={{ marginTop: 12 }}>Your scouting staff {crews.length > 0 && <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {crews.map((c) => `${c.n} scouts in ${c.name}`).join(", ")}</span>}</div>
         <div className="sc-hq-scouts">
           {SCOUT_SLOTS.map((r) => { const sc = s[r]; return (
             <div key={r} className={`sc-hq-scout${sc ? "" : " empty"}`}>

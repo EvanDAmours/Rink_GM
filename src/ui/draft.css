@@ -34,7 +34,7 @@
    anything inside from sticking to the window. While the draft runs, clip it instead. */
 @supports (overflow: clip) { .app .main:has(.dd-bar) { overflow-x: clip; } }
 .dd-bar { position: sticky; top: 42px; z-index: 30; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 12px; border-radius: 10px;
-  background: linear-gradient(100deg, color-mix(in srgb, var(--clr) 55%, #0b1120) 0%, #0b1120 34%, #0b1120f5 100%); border: 1px solid #1e293b; box-shadow: 0 8px 20px #0008; backdrop-filter: blur(6px); }
+  background: linear-gradient(100deg, color-mix(in srgb, var(--clr) 55%, #0b1120) 0%, #0b1120 34%, #0b1120f5 100%); border: 1px solid #ffffff10; box-shadow: 0 8px 20px #0008; backdrop-filter: blur(6px); }
 .dd-bar.mine { border-color: #22c55e; box-shadow: 0 0 0 1px #22c55e, 0 8px 20px #0008; }
 .dd-live { background: #b91c1c; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
 .dd-live.off { background: #475569; }
@@ -58,11 +58,11 @@
 .app .main .dd-bar.phone button.dd-pause:not(.link) { padding: 6px 10px; font-size: 14px; min-height: 34px; }
 
 /* ---------- The ticker ---------- */
-.dd-ticker { display: flex; align-items: stretch; height: 34px; overflow: hidden; background: #020617; border: 1px solid #1e293b; border-radius: 8px; }
+.dd-ticker { display: flex; align-items: stretch; height: 34px; overflow: hidden; background: #020617; border: 1px solid #ffffff10; border-radius: 8px; }
 .dd-ticker-k { flex-shrink: 0; background: #b91c1c; color: #fff; font-weight: 900; font-size: 12px; letter-spacing: 1.5px; padding: 0 10px; display: flex; align-items: center; }
 .dd-ticker-list { display: flex; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
 .dd-ticker-list::-webkit-scrollbar { display: none; }
-.dd-tick { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; font-size: 13px; color: #e2e8f0; border-right: 1px solid #1e293b; opacity: .85; }
+.dd-tick { display: inline-flex; align-items: center; gap: 6px; padding: 0 16px; font-size: 13px; color: #e2e8f0; border-right: 1px solid #ffffff10; opacity: .85; }
 .dd-tick.new { opacity: 1; } .dd-tick.mine { color: #22c55e; }
 .dd-tick-n, .dd-tick-pos { color: #64748b; }
 .dd-vtag { border-radius: 4px; padding: 1px 6px; font-size: 12px; font-weight: 900; letter-spacing: 1px; white-space: nowrap; }
@@ -82,7 +82,7 @@
 .dd-gradechip { background: #0008; border-radius: 4px; padding: 1px 6px; font-weight: 800; }
 
 /* ---------- On the clock ---------- */
-.dd-otc { border-radius: 14px; overflow: hidden; border: 1px solid #1e293b; background: #0b1120; }
+.dd-otc { border-radius: 14px; overflow: hidden; border: 1px solid #ffffff10; background: #0b1120; }
 .dd-otc.mine { border: 2px solid #22c55e; }
 .dd-otc-main { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: linear-gradient(120deg, var(--clr) 0%, #0b1120 80%); }
 .dd-otc-who { flex: 1 1 260px; min-width: 0; }
@@ -106,7 +106,7 @@
 .dd-war-rule { font-size: 12px; color: #64748b; }
 .dd-slim { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .app .main .dd-slim .gg-picks { flex: 1; min-width: 0; padding: 6px 10px; margin: 0; }
-.dd-pts { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #111827; border: 1px solid #1e293b; font-size: 13px; font-weight: 800; color: #64748b; white-space: nowrap; }
+.dd-pts { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #141820; border: 1px solid #ffffff10; font-size: 13px; font-weight: 800; color: #64748b; white-space: nowrap; }
 .dd-pts.on { background: #eab30822; border-color: #eab308; color: #fde68a; }
 .dd-status { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; font-size: 13px; color: #94a3b8; }
 .dd-status .good { color: #22c55e; font-weight: 800; }
@@ -126,13 +126,13 @@
 .dd-offer-who small { font-size: 12px; color: #64748b; } .dd-offer-who small b.pos { color: #86efac; } .dd-offer-who .neg, .neg { color: #fca5a5; }
 .dd-offer-k { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 800; letter-spacing: .5px; }
 .dd-pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 6px; }
-.dd-pill { font-size: 13px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: #1e293b; color: #e2e8f0; }
+.dd-pill { font-size: 13px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: #1f232b; color: #e2e8f0; }
 .dd-pill.good { background: #14532d; color: #86efac; } .dd-pill.bad { background: #7f1d1d; color: #fca5a5; }
 .dd-offer-chart { font-size: 12px; color: #eab308; margin-bottom: 6px; } .dd-offer-chart.ok { color: #22c55e; }
 .dd-offer-act { display: flex; gap: 6px; }
 .app .main .dd-offer-act button.dd-b:not(.link), .dd-call .dd-offer-act button.dd-b { flex: 1; font-size: 13px; padding: 6px 0; }
 .app .main .dd-offer-act button.dd-b.pass:not(.link) { flex: 0 0 auto; padding: 6px 10px; }
-.dd-panel { background: #111827; border-radius: 10px; padding: 12px 14px; border: 1px solid #334155; }
+.dd-panel { background: #141820; border-radius: 10px; padding: 12px 14px; border: 1px solid #ffffff10; }
 .dd-panel.for { border-color: #ca8a0466; } .dd-panel.up { border-color: #7c3aed66; } .dd-panel.shop { border-color: #0ea5e966; }
 .dd-panel-h { font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #e2e8f0; }
 .dd-panel.for .dd-panel-h { color: #fde68a; } .dd-panel.up .dd-panel-h { color: #c4b5fd; } .dd-panel.shop .dd-panel-h { color: #7dd3fc; }
@@ -141,7 +141,7 @@
 .dd-panel-f { display: flex; gap: 6px; margin-top: 10px; }
 .dd-sheet-bg { position: fixed; inset: 0; z-index: 1100; background: #000a; display: flex; align-items: flex-end; }
 .dd-sheet { position: relative; width: 100%; max-height: 85vh; overflow-y: auto; background: #080c14; border-radius: 18px 18px 0 0; padding: 30px 10px calc(14px + env(safe-area-inset-bottom, 0px)); animation: ddSheet .22s ease-out; }
-.app .main button.dd-sheet-x:not(.link) { position: absolute; top: 6px; right: 8px; width: 34px; height: 30px; padding: 0; background: #1e293b; color: #94a3b8; border-radius: 8px; }
+.app .main button.dd-sheet-x:not(.link) { position: absolute; top: 6px; right: 8px; width: 34px; height: 30px; padding: 0; background: #1f232b; color: #94a3b8; border-radius: 8px; }
 .dd-sheet .dd-offers { grid-template-columns: 1fr; }
 
 /* The incoming call: on the page, bottom right, clear of the board. */
@@ -185,7 +185,7 @@
 .dd-filters.wrap { flex-wrap: wrap; } .dd-filters.wrap input { flex: 1 1 100%; }
 .app .main button.dd-mag:not(.link) { flex: 0 0 44px; min-height: 38px; padding: 0; font-size: 16px; }
 .dd-plist { display: flex; flex-direction: column; gap: 4px; }
-.dd-prow { display: flex; align-items: center; gap: 5px; background: #080c14; border: 1px solid #1e293b; border-radius: 8px; padding: 4px 6px 4px 4px; min-height: 46px; cursor: pointer; }
+.dd-prow { display: flex; align-items: center; gap: 5px; background: #080c14; border: 1px solid #ffffff10; border-radius: 8px; padding: 4px 6px 4px 4px; min-height: 46px; cursor: pointer; }
 .dd-prow.live { border-color: #22c55e66; } .dd-prow.gone { opacity: .5; }
 .dd-prow-rk { width: 26px; flex-shrink: 0; text-align: center; font-weight: 900; font-size: 14px; color: #94a3b8; }
 .app .main button.dd-star:not(.link) { flex: 0 0 28px; min-height: 36px; padding: 0; background: transparent; border: 0; font-size: 18px; color: #64748b; }
@@ -211,7 +211,7 @@
 .dr-mine-g { font-size: 40px; font-weight: 900; color: var(--gc); line-height: 1; }
 .dr-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .app .main button.dr-card:not(.link) { display: flex; flex-direction: column; align-items: stretch; gap: 4px; text-align: left; background: #080c14; border: 1px solid color-mix(in srgb, var(--vc) 35%, transparent); border-radius: 8px; padding: 10px; font-weight: 500; font-size: 13px; }
-.app .main button.dr-card:not(.link):hover:not(:disabled) { background: #0f172a; border-color: var(--vc); }
+.app .main button.dr-card:not(.link):hover:not(:disabled) { background: #141820; border-color: var(--vc); }
 .dr-card-h { display: flex; align-items: center; gap: 6px; } .dr-card-h b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dr-card-m { font-size: 12px; color: #64748b; }
 .dr-card-r { font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -219,8 +219,8 @@
 .dr-verdict { font-weight: 800; white-space: nowrap; }
 .dr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start; }
 .dr-counts { display: flex; gap: 6px 10px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; color: #64748b; }
-.dr-jrow, .dr-grow { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid #1e293b55; cursor: pointer; border-radius: 4px; }
-.dr-jrow:hover, .dr-grow:hover { background: #1e293b55; }
+.dr-jrow, .dr-grow { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid #ffffff10; cursor: pointer; border-radius: 4px; }
+.dr-jrow:hover, .dr-grow:hover { background: #1f232b55; }
 .dr-jrow.mine, .dr-grow.mine { background: #22c55e12; } .dr-grow.on { background: #3b82f61a; box-shadow: inset 3px 0 0 #3b82f6; }
 .dr-n { width: 30px; flex-shrink: 0; font-size: 12px; color: #64748b; font-variant-numeric: tabular-nums; }
 .dr-jname, .dr-gname { flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -229,7 +229,7 @@
 .dr-filters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .dr-table td { vertical-align: middle; }
 .dr-team { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.dr-table tbody tr { cursor: pointer; } .dr-table tbody tr:hover { background: #1e293b55; }
+.dr-table tbody tr { cursor: pointer; } .dr-table tbody tr:hover { background: #1f232b55; }
 .dr-table tr.mine { background: #22c55e12; } .dr-table tr.newround td { border-top: 2px solid #334155; }
 .dr-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 

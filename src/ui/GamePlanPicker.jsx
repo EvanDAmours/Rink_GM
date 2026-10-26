@@ -18,7 +18,7 @@ export default function GamePlanPicker({ opp, compact = false }) {
   const grade = (key, value) => value === plan[key] ? ["best fit", "#22c55e"] : value === "balanced" ? ["B", "#60a5fa"] : ["C", "#eab308"];
   return (
     <section className="gg-card gg-plan">
-      <div className="gg-k">🎯 GAME PLAN{opp ? ` vs ${opp.abbr}` : ""} <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>{auto ? "your coaches' pick (best fit)" : "your call"}</span>
+      <div className="gg-k">Game plan{opp ? ` vs ${opp.abbr}` : ""} <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>{auto ? "your coaches' pick (best fit)" : "your call"}</span>
         <label className="gg-plan-auto"><input type="checkbox" checked={auto} onChange={(e) => { t.autoPlan = e.target.checked; if (!e.target.checked) t.gamePlan = { ...current }; commit(); }} /> Automatically adapt to each opponent</label>
       </div>
       {PLAN_ROWS.map(([key, label, values]) => (

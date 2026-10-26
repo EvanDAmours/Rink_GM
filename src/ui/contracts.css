@@ -19,7 +19,7 @@
 .ct-plan-best { flex: 1; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
 .ct-plan-best.dim { color: #64748b; }
 .ct-plan-foot { font-size: 11.5px; color: #64748b; margin-top: 6px; }
-.gg-fa .ct-plan { margin: 0; background: var(--gg-cd); border-color: var(--gg-bd); }
+.gg-fa .ct-plan { margin: 0; background: var(--gg-cd); border-color: #ffffff10; }
 @media (max-width: 700px) { .ct-plan-grid { grid-template-columns: 1fr; } .ct-plan-lbl { width: 112px; } }
 
 /* ---- Role tags (3.32): a $ on roles the market pays less ---- */
@@ -49,7 +49,7 @@
 /* ---- Contracts screen ---- */
 .ct-screen { display: flex; flex-direction: column; gap: 12px; }
 .ct-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.ct-tile { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 14px; min-width: 0; }
+.ct-tile { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 10px 14px; min-width: 0; }
 .ct-tile small { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--gg-mt); text-transform: uppercase; }
 .ct-tile b { display: block; font-size: 22px; font-weight: 900; margin-top: 2px; }
 .ct-tile span { display: block; font-size: 12px; color: #94a3b8; }
@@ -62,7 +62,7 @@
 .ct-table th { padding: 8px 8px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--gg-mt); text-align: left; border-bottom: 1px solid var(--gg-bd); white-space: nowrap; text-transform: uppercase; }
 .ct-table th.sort { cursor: pointer; } .ct-table th.on { color: #fde68a; }
 .ct-table th.num, .ct-table td.num { text-align: right; }
-.ct-table td { padding: 7px 8px; border-bottom: 1px solid #1e293b88; white-space: nowrap; vertical-align: middle; }
+.ct-table td { padding: 7px 8px; border-bottom: 1px solid #ffffff10; white-space: nowrap; vertical-align: middle; }
 .ct-table tr.exp td:first-child { box-shadow: inset 3px 0 0 #f59e0b; }
 .ct-table td.who { position: sticky; left: 0; background: var(--gg-cd); z-index: 1; min-width: 170px; }
 .ct-table td.who .link { font-weight: 800; color: #f1f5f9; }
@@ -93,19 +93,19 @@
 .ct-pc-years { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
 .ct-pc-years th { font-size: 10px; letter-spacing: .8px; color: var(--gg-mt); text-align: right; font-weight: 800; padding: 2px 4px; }
 .ct-pc-years th:first-child, .ct-pc-years td:first-child { text-align: left; }
-.ct-pc-years td { text-align: right; padding: 3px 4px; border-top: 1px solid #1e293b; font-variant-numeric: tabular-nums; }
-.ct-pc-note { font-size: 12px; line-height: 1.45; border-radius: 6px; padding: 6px 8px; margin-top: 6px; background: #0b1220; color: #cbd5e1; }
+.ct-pc-years td { text-align: right; padding: 3px 4px; border-top: 1px solid #ffffff10; font-variant-numeric: tabular-nums; }
+.ct-pc-note { font-size: 12px; line-height: 1.45; border-radius: 6px; padding: 6px 8px; margin-top: 6px; background: #141820; color: #cbd5e1; }
 .ct-pc-note.up { color: #fde68a; } .ct-pc-note.down { color: #bfdbfe; } .ct-pc-note.hold { color: #fcd34d; border: 1px solid #b4530966; }
 .ct-pc-act { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
 .ct-pc-act .ct-why { max-width: none; }
 
 /* ---- Contract table: how your club looks to him ---- */
-.ct-look { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; font-size: 13px; }
+.ct-look { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; font-size: 13px; }
 .ct-look-k { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--gg-mt); text-transform: uppercase; align-self: center; }
 .ct-look-v { color: #cbd5e1; }
 .ct-look-v.good { color: #86efac; } .ct-look-v.bad { color: #fca5a5; }
 .ct-look-v .want { margin-left: 6px; font-size: 10px; font-weight: 900; color: #fde68a; border: 1px solid #ca8a04; border-radius: 999px; padding: 0 5px; }
 .ct-look-h { grid-column: 1 / -1; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--gg-mt); margin-bottom: 2px; }
 .ct-notes { display: flex; flex-direction: column; gap: 6px; }
-.ct-note { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.45; color: #cbd5e1; }
+.ct-note { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.45; color: #cbd5e1; }
 .ct-note.up { color: #fde68a; } .ct-note.down { color: #bfdbfe; } .ct-note.loyal { color: #e9d5ff; } .ct-note.market { color: #cbd5e1; }

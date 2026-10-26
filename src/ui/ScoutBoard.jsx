@@ -64,7 +64,7 @@ export default function ScoutBoard({ onDraft, canDraft = false, startMine = true
   return (
     <div className="stack">
       {combine && <CombineWeek />}
-      {combine && <div className="panel sc-visit"><h3>🗂️ Your scouts' visit list <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>interview and work out players who'll be there when you pick</span></h3><VisitList /></div>}
+      {combine && <div className="panel sc-visit"><h3>Your scouts' visit list <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>interview and work out players who'll be there when you pick</span></h3><VisitList /></div>}
       <div className="panel sc-board">
         <h3>
           {mine ? "Your scouts' big board" : "Big Board"}

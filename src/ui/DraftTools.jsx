@@ -315,7 +315,7 @@ export function ForPickPanel({ overall, phone, onDone, onClose }) {
   return (
     <Sheet phone={phone} onClose={onClose}>
       <div className="dd-panel for">
-        <div className="dd-panel-h">🔁 Trade for pick #{overall} <small>· the draft is on hold while you talk. Make the trade and the pick is yours.</small></div>
+        <div className="dd-panel-h">Trade for pick #{overall} <small>· the draft is on hold while you talk. Make the trade and the pick is yours.</small></div>
         {!q.offer && <div className="dd-panel-no">{FORPICK_NO[q.no]?.(t.name)}</div>}
         {q.offer && <div className="dd-offers"><OfferCard o={q.offer} onAccept={accept} /></div>}
         <div className="dd-panel-f"><button type="button" className="dd-b pass" onClick={onClose}>{q.offer ? "No thanks" : "Close"}</button></div>
@@ -333,7 +333,7 @@ export function TradeUpPanel({ phone, onDone, onClose }) {
   return (
     <Sheet phone={phone} onClose={onClose}>
       <div className="dd-panel up">
-        <div className="dd-panel-h">📞 Trade up <small>· the draft is on hold while you work the phones. Prices from the draft chart; moving up costs a premium.</small></div>
+        <div className="dd-panel-h">Trade up <small>· the draft is on hold while you work the phones. Prices from the draft chart; moving up costs a premium.</small></div>
         {!offers.length && <div className="dd-panel-no">Nobody ahead of you is willing to move down right now (or you don't have the picks to pay for it).</div>}
         <div className="dd-offers">{offers.map((o) => <OfferCard key={o.id} o={o} onAccept={accept} onPass={pass} />)}</div>
         <div className="dd-panel-f"><button type="button" className="dd-b pass" onClick={onClose}>Close</button></div>
@@ -352,7 +352,7 @@ export function ShopPanel({ overall, phone, onDone, onClose }) {
   return (
     <Sheet phone={phone} onClose={onClose}>
       <div className="dd-panel shop">
-        <div className="dd-panel-h">💱 Shop pick #{overall} <small>· clubs picking after it that would move up. You always come out with more picks.</small></div>
+        <div className="dd-panel-h">Shop pick #{overall} <small>· clubs picking after it that would move up. You always come out with more picks.</small></div>
         {!offers.length && <div className="dd-panel-no">No club behind this pick wants to move up right now.</div>}
         <div className="dd-offers">{offers.map((o) => <OfferCard key={o.id} o={o} onAccept={accept} onMore={more} onPass={pass} />)}</div>
         <div className="dd-panel-f"><button type="button" className="dd-b pass" onClick={onClose}>Close</button></div>

@@ -11,7 +11,7 @@ export default function GamePlanPage() {
     <div className="stack gg-gameplan">
       <div className="gg-pagehead">
         <div><h2>Game Plan & Reports</h2><div className="gg-status">Opponent scouting, tactics, cap ledger and postgame analysis</div></div>
-        {opp && <div className="gg-next"><span className="gg-k" style={{ margin: 0 }}>NEXT</span><TeamBadge team={opp} size={30} /><b>{next.h === t.id ? "vs" : "@"} <TeamName tid={opp.id} /></b></div>}
+        {opp && <div className="gg-next"><span className="gg-k" style={{ margin: 0 }}>Next</span><TeamBadge team={opp} size={30} /><b>{next.h === t.id ? "vs" : "@"} <TeamName tid={opp.id} /></b></div>}
       </div>
       <FranchiseDepth />
     </div>

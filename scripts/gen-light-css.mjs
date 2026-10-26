@@ -13,7 +13,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const FILES = [
   "src/ui/callup.css", "src/ui/contracts.css", "src/ui/draft.css", "src/ui/home.css", "src/ui/legacy.css", "src/ui/lines.css", "src/ui/live.css",
   "src/ui/prep.css", "src/ui/scouting.css", "src/ui/standings.css",
-  "src/styles.css", "src/ui/premium.css", "src/ui/clubhouse.css", "src/ui/gridiron.css", "src/ui/mobile.css",
+  "src/styles.css", "src/ui/premium.css", "src/ui/clubhouse.css", "src/ui/gridiron.css", "src/ui/soft.css", "src/ui/mobile.css",
 ];
 // selectors that belong to things keeping their own look
 const KEEP_RE = /\.(lx-pc\b|lg-wall|lg-banner|gg-head|rk-phead|rk-hm|mm-|lr-|rinkwrap|gg-paper|rkt|gg-splash|lv-bug|keep-dark|rk-tour-card)/;

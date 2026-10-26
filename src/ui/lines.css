@@ -16,29 +16,29 @@
 .app .main .lnx .lx-h1, .app .main .lnx .lx-h2 { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; min-width: 0; }
 .app .main .lnx .lx-eyebrow { font-size: 13px; font-weight: 800; letter-spacing: 1.6px; color: #94a3b8; }
 .app .main .lnx .lx-subtabs { display: flex; gap: 6px; }
-.app .main .lnx .lx-subtabs button { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; min-height: 34px; }
+.app .main .lnx .lx-subtabs button { background: transparent; color: #94a3b8; border: 1px solid #ffffff10; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; min-height: 34px; }
 .app .main .lnx .lx-subtabs button.on { background: #0f1d3a; color: #fff; border-color: #3b82f6; }
-.app .main .lnx .lx-subtabs button:hover:not(.on) { background: #1e293b; color: #e2e8f0; }
+.app .main .lnx .lx-subtabs button:hover:not(.on) { background: #1f232b; color: #e2e8f0; }
 .app .main .lnx .lx-h1r { margin-left: auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .app .main .lnx .lx-team { min-width: 210px; }
-.app .main .lnx .lx-seg { display: inline-flex; background: #0b1220; border: 1px solid #1e293b; border-radius: 999px; padding: 3px; flex-shrink: 0; }
+.app .main .lnx .lx-seg { display: inline-flex; background: #141820; border: 1px solid #ffffff10; border-radius: 999px; padding: 3px; flex-shrink: 0; }
 .app .main .lnx .lx-seg button { background: transparent; color: #94a3b8; border: 0; border-radius: 999px; padding: 5px 14px; font-size: 13px; font-weight: 800; min-height: 30px; }
 .app .main .lnx .lx-seg button.on { background: #1e3a5f; color: #e0f2fe; }
 .app .main .lnx .lx-sides { display: flex; gap: 6px; flex-wrap: wrap; }
-.app .main .lnx .lx-sides button { background: transparent; color: #cbd5e1; border: 1px solid #334155; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; min-height: 36px; }
+.app .main .lnx .lx-sides button { background: transparent; color: #cbd5e1; border: 1px solid #ffffff10; border-radius: 6px; padding: 6px 14px; font-size: 14px; font-weight: 700; min-height: 36px; }
 .app .main .lnx .lx-sides button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-.app .main .lnx .lx-sides button:hover:not(.on) { background: #1e293b; }
+.app .main .lnx .lx-sides button:hover:not(.on) { background: #1f232b; }
 .app .main .lnx .lx-h2r { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .app .main .lnx button.lx-auto { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; border-radius: 4px; padding: 5px 12px; font-size: 13px; font-weight: 700; min-height: 32px; }
 .app .main .lnx button.lx-auto:hover { background: #22c55e33; color: #4ade80; border-color: #22c55e88; }
-.app .main .lnx button.lx-ghost { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 5px 10px; font-size: 12px; font-weight: 700; min-height: 32px; }
+.app .main .lnx button.lx-ghost { background: transparent; color: #94a3b8; border: 1px solid #ffffff10; border-radius: 4px; padding: 5px 10px; font-size: 12px; font-weight: 700; min-height: 32px; }
 .app .main .lnx .lx-hint { font-size: 12px; color: #64748b; }
 .app .main .lnx .lx-selbar { flex: 1; min-width: 220px; font-size: 13px; color: #94a3b8; }
 .app .main .lnx .lx-selbar b { color: #e2e8f0; }
 
 /* Gridiron's PERSONNEL row: the team ratings and the opening-night status */
 .app .main .lnx .lx-sub { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; min-height: 24px; }
-.app .main .lnx .lx-rt { display: inline-flex; align-items: baseline; gap: 4px; border: 1px solid #1e293b; border-radius: 6px; padding: 1px 8px; font-size: 13px; }
+.app .main .lnx .lx-rt { display: inline-flex; align-items: baseline; gap: 4px; border: 1px solid #ffffff10; border-radius: 6px; padding: 1px 8px; font-size: 13px; }
 .app .main .lnx .lx-rt small { font-size: 11px; font-weight: 700; color: #94a3b8; }
 .app .main .lnx .lx-rt b { font-weight: 900; }
 .app .main .lnx .lx-nhl { margin-left: auto; font-size: 12px; color: #64748b; display: inline-flex; align-items: center; gap: 6px; }
@@ -46,33 +46,33 @@
 
 /* ---- The game-plan strip under the rink (Gridiron 2.94) ---- */
 .app .main .lnx .lx-planwrap { display: grid; gap: 8px; margin-top: 6px; }
-.app .main .lnx .lx-plan { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; font-size: 13px; }
+.app .main .lnx .lx-plan { background: #141820; border: 1px solid #ffffff10; border-radius: 12px; padding: 8px 12px; display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; font-size: 13px; }
 .app .main .lnx .lx-plan-k { font-size: 11px; font-weight: 900; letter-spacing: 1.3px; color: #eab308; }
 .app .main .lnx .lx-plan b { font-weight: 800; }
 .app .main .lnx .lx-plan b.good { color: #22c55e; }
 .app .main .lnx .lx-plan em { font-style: normal; color: #64748b; font-size: 12px; }
 .app .main .lnx .lx-plan-tabs { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-.app .main .lnx button.lx-plan-tab { background: transparent; color: #93c5fd; border: 1px solid #1e293b; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 800; min-height: 30px; }
+.app .main .lnx button.lx-plan-tab { background: transparent; color: #93c5fd; border: 1px solid #ffffff10; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 800; min-height: 30px; }
 .app .main .lnx button.lx-plan-tab.on { background: #3b82f633; color: #bfdbfe; border-color: #3b82f6; }
-.app .main .lnx button.lx-plan-tab:hover:not(.on) { background: #1e293b; }
+.app .main .lnx button.lx-plan-tab:hover:not(.on) { background: #1f232b; }
 .app .main .lnx .lx-plan-open { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px; }
-.app .main .lnx button.lx-style { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; text-align: left; background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; color: var(--gg-tx, #e0e6f0); min-height: 52px; }
+.app .main .lnx button.lx-style { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; text-align: left; background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; color: var(--gg-tx, #e0e6f0); min-height: 52px; }
 .app .main .lnx button.lx-style b { font-size: 14px; font-weight: 800; }
 .app .main .lnx button.lx-style small { font-size: 12px; color: #94a3b8; font-weight: 500; line-height: 1.35; }
 .app .main .lnx button.lx-style.on { border-color: #22c55e; background: #22c55e14; }
 
 /* ---- List view: readable unit cards, like Gridiron's position cards ---- */
 .app .main .lnx .lx-list { display: flex; flex-direction: column; gap: 12px; }
-.app .main .lnx .lx-sec-h { font-size: 14px; font-weight: 800; letter-spacing: 1px; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 4px; margin-bottom: 8px; }
+.app .main .lnx .lx-sec-h { font-size: 14px; font-weight: 800; letter-spacing: 1px; color: #94a3b8; border-bottom: 1px solid #ffffff10; padding-bottom: 4px; margin-bottom: 8px; }
 .app .main .lnx .lx-sec-h small { font-size: 12px; font-weight: 600; letter-spacing: 0; color: #64748b; margin-left: 8px; }
 .app .main .lnx .lx-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 8px; align-items: start; }
-.app .main .lnx .lx-card { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 10px; min-width: 0; }
+.app .main .lnx .lx-card { background: #141820; border: 1px solid #ffffff10; border-radius: 6px; padding: 8px 10px; min-width: 0; }
 .app .main .lnx .lx-card-h { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; }
 .app .main .lnx .lx-card-h > b { font-size: 14px; font-weight: 800; white-space: nowrap; }
 .app .main .lnx .lx-card-m { margin-left: auto; display: flex; gap: 4px 10px; flex-wrap: wrap; justify-content: flex-end; font-size: 11px; color: #64748b; }
 .app .main .lnx .lx-card-m b { font-weight: 800; color: #cbd5e1; }
 .app .main .lnx .lx-card-m b.good { color: #4ade80; } .app .main .lnx .lx-card-m b.bad { color: #f87171; }
-.app .main .lnx .lx-card-f { margin-top: 8px; padding-top: 8px; border-top: 1px solid #1e293b; display: flex; flex-direction: column; gap: 6px; }
+.app .main .lnx .lx-card-f { margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffffff10; display: flex; flex-direction: column; gap: 6px; }
 .app .main .lnx .lx-rows { display: flex; flex-direction: column; gap: 2px; }
 .app .main .lnx button.lx-row {
   display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; min-width: 0; text-align: left; min-height: 44px; padding: 4px 6px 4px 5px;
@@ -126,10 +126,10 @@
 .app .main .lnx .lx-ice-n { font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app .main .lnx .lx-ice input[type=range] { width: 100%; accent-color: #3b82f6; }
 .app .main .lnx .lx-ice-v { font-size: 14px; font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
-.app .main .lnx .lx-gsep { display: block; height: 1px; background: #1e293b; margin: 4px 0; }
-.app .main .lnx .lx-spv { background: #0b1220; border: 1px solid #1e3a5f; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.app .main .lnx .lx-gsep { display: block; height: 1px; background: #1f232b; margin: 4px 0; }
+.app .main .lnx .lx-spv { background: #141820; border: 1px solid #1e3a5f; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
 .app .main .lnx .lx-spv-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.app .main .lnx .lx-spv-c { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 4px; min-width: 0; }
+.app .main .lnx .lx-spv-c { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1px solid #ffffff10; border-radius: 6px; padding: 5px 4px; min-width: 0; }
 .app .main .lnx .lx-spv-c i { font-style: normal; font-size: 10px; font-weight: 900; color: #fff; border-radius: 3px; padding: 0 5px; }
 .app .main .lnx .lx-spv-c b { font-size: 18px; font-weight: 900; line-height: 1.1; }
 .app .main .lnx .lx-spv-c small { font-size: 10px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }
@@ -144,13 +144,13 @@
 .app .main .lnx .lx-rolewant { padding: 2px 4px; }
 .app .main .lnx .lx-gtag.lx-sit { background: #0ea5e9; }
 .app .main .lnx .lx-sit-d { margin: -2px 0 6px; }
-.app .main .lnx .lx-plan-box { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; }
+.app .main .lnx .lx-plan-box { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; }
 /* the plan usage report also sits on the game-plan card, outside the Lines screen */
-.lx-usage { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1e293b; }
+.lx-usage { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffffff10; }
 .lx-usage .lx-k { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #64748b; }
 .lx-usage .lx-k span { letter-spacing: 0; font-weight: 600; }
 .lx-usage-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
-.lx-usage-g > span { display: flex; flex-direction: column; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 8px; min-width: 0; }
+.lx-usage-g > span { display: flex; flex-direction: column; border: 1px solid #ffffff10; border-radius: 6px; padding: 5px 8px; min-width: 0; }
 .lx-usage-g small { font-size: 11px; color: #94a3b8; font-weight: 700; }
 .lx-usage-g b { font-size: 14px; font-weight: 800; color: #e2e8f0; }
 .lx-usage-g em { font-style: normal; font-size: 11px; color: #64748b; }
@@ -170,7 +170,7 @@
   .rk-rc-sort { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
   .rk-rc-sort select { flex: 1; min-height: 44px; }
   .rk-rcards { display: flex; flex-direction: column; gap: 6px; }
-  button.rk-rcard { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: #0b1220; border: 1px solid #1e293b; border-left: 3px solid #1e293b; border-radius: 10px; padding: 8px 10px; min-height: 58px; color: var(--gg-tx, #e0e6f0); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  button.rk-rcard { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: #141820; border: 1px solid #ffffff10; border-left: 3px solid #1e293b; border-radius: 10px; padding: 8px 10px; min-height: 58px; color: var(--gg-tx, #e0e6f0); font-weight: 400; text-transform: none; letter-spacing: 0; }
   button.rk-rcard.top { border-left-color: #22c55e; }
   button.rk-rcard.out { border-left-color: #ef4444; }
   .rk-rc-face { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; }
@@ -191,10 +191,10 @@
 .app .main .lnx .lx-rts small { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: .6px; }
 .app .main .lnx .lx-rts b { font-weight: 900; }
 .app .main .lnx .lx-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.app .main .lnx .lx-tabs { display: inline-flex; background: #0b1220; border: 1px solid #1e293b; border-radius: 10px; padding: 3px; gap: 2px; }
+.app .main .lnx .lx-tabs { display: inline-flex; background: #141820; border: 1px solid #ffffff10; border-radius: 10px; padding: 3px; gap: 2px; }
 .app .main .lnx .lx-tabs button { background: transparent; color: #94a3b8; border: 0; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 800; min-height: 36px; letter-spacing: .3px; }
 .app .main .lnx .lx-tabs button.on { background: var(--c1, #3b82f6); color: #fff; box-shadow: inset 0 -2px 0 var(--c2, #fff3); }
-.app .main .lnx .lx-tabs button:hover:not(.on) { color: #e2e8f0; background: #1e293b; }
+.app .main .lnx .lx-tabs button:hover:not(.on) { color: #e2e8f0; background: #1f232b; }
 .app .main .lnx .lx-tabs .s { display: none; }
 .app .main .lnx .lx-bar-r { margin-left: auto; display: flex; gap: 6px; }
 .app .main .lnx button.lx-auto { font-size: 14px; font-weight: 800; padding: 6px 16px; min-height: 36px; border-radius: 8px; }
@@ -202,7 +202,7 @@
 .app .main .lnx button.lx-ghost.on { border-color: #3b82f6; color: #bfdbfe; background: #3b82f61a; }
 .app .main .lnx .lx-selbar { flex: none; font-size: 13px; background: #22c55e10; border: 1px solid #22c55e44; border-radius: 8px; padding: 6px 10px; }
 
-.app .main .lnx .lx-drawer { background: #0d1526; border: 1px solid #1e293b; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.app .main .lnx .lx-drawer { background: #0d1526; border: 1px solid #ffffff10; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 .app .main .lnx .lx-drawer-r { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
 .app .main .lnx .lx-drawer-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 8px; }
 .app .main .lnx .lx-roles { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
@@ -212,12 +212,12 @@
 .app .main .lnx .lx-lines { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; align-items: start; }
 .app .main .lnx .lx-grp { grid-column: 1 / -1; font-size: 11px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: #64748b; margin-top: 4px; }
 .app .main .lnx .lx-grp small { font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; margin-left: 6px; }
-.app .main .lnx .lx-line { background: #111827; border: 1px solid #1e293b; border-left: 3px solid var(--c1, #3b82f6); border-radius: 8px; padding: 6px 8px 8px; min-width: 0; }
+.app .main .lnx .lx-line { background: #141820; border: 1px solid #ffffff10; border-left: 3px solid var(--c1, #3b82f6); border-radius: 8px; padding: 6px 8px 8px; min-width: 0; }
 .app .main .lnx .lx-line.g-F { grid-column: 1 / -1; }
 .app .main .lnx .lx-line.g-PP, .app .main .lnx .lx-line.g-PK { grid-column: 1 / -1; }
 .app .main .lnx .lx-line-h { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; }
 .app .main .lnx .lx-line-h > b { font-size: 12px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #cbd5e1; white-space: nowrap; }
-.app .main .lnx .lx-chip { display: inline-flex; align-items: center; gap: 8px; background: #0b1220; border: 1px solid #1e293b; border-radius: 999px; padding: 1px 10px; font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; min-width: 0; }
+.app .main .lnx .lx-chip { display: inline-flex; align-items: center; gap: 8px; background: #141820; border: 1px solid #ffffff10; border-radius: 999px; padding: 1px 10px; font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; min-width: 0; }
 .app .main .lnx .lx-chip b { font-size: 13px; font-weight: 900; }
 .app .main .lnx .lx-slots { display: grid; gap: 6px; }
 .app .main .lnx .lx-slots.n2 { grid-template-columns: 1fr 1fr; }
@@ -237,7 +237,7 @@
 .app .main .lnx button.lx-pc.empty { background: transparent; border-style: dashed; }
 .app .main .lnx .lx-pc-tag { position: absolute; top: -1px; left: -1px; font-size: 9px; font-weight: 900; color: #fff; border-radius: 8px 0 6px 0; padding: 1px 5px; line-height: 13px; }
 .app .main .lnx .lx-off { display: inline-block; font-style: normal; margin-left: 3px; background: #f59e0b; color: #111; border-radius: 999px; width: 11px; height: 11px; line-height: 11px; text-align: center; font-size: 9px; }
-.app .main .lnx .lx-pc-face { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: #0b1220; display: inline-flex; align-items: center; justify-content: center; }
+.app .main .lnx .lx-pc-face { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: #141820; display: inline-flex; align-items: center; justify-content: center; }
 .app .main .lnx .lx-pc-face.sm { width: 30px; height: 30px; }
 .app .main .lnx .lx-pc-face .gg-mug { width: 100% !important; height: 100% !important; }
 .app .main .lnx .lx-pc-who { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
@@ -254,7 +254,7 @@
 .app .main .lnx .lx-pick-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .app .main .lnx .lx-pick-h .lx-ghost:first-of-type { margin-left: auto; }
 .app .main .lnx .lx-pick-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
-.app .main .lnx button.lx-pk { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; min-height: 42px; background: #111827; border: 1px solid #1e293b; border-radius: 6px; color: inherit; text-align: left; font-weight: 400; }
+.app .main .lnx button.lx-pk { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; min-height: 42px; background: #141820; border: 1px solid #ffffff10; border-radius: 6px; color: inherit; text-align: left; font-weight: 400; }
 .app .main .lnx button.lx-pk:hover { border-color: #22c55e; }
 .app .main .lnx .lx-pk-n { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
 .app .main .lnx .lx-pk-n b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -263,7 +263,7 @@
 
 .app .main .lnx .lx-extras { display: flex; flex-direction: column; gap: 6px; }
 .app .main .lnx .lx-xrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.app .main .lnx button.lx-x { display: inline-flex; align-items: center; gap: 6px; background: #111827; border: 1px solid #1e293b; border-radius: 999px; padding: 3px 10px 3px 3px; min-height: 32px; font-size: 13px; font-weight: 700; color: #e2e8f0; cursor: grab; }
+.app .main .lnx button.lx-x { display: inline-flex; align-items: center; gap: 6px; background: #141820; border: 1px solid #ffffff10; border-radius: 999px; padding: 3px 10px 3px 3px; min-height: 32px; font-size: 13px; font-weight: 700; color: #e2e8f0; cursor: grab; }
 .app .main .lnx button.lx-x i { font-style: normal; font-size: 9px; font-weight: 900; color: #fff; border-radius: 999px; padding: 2px 6px; }
 .app .main .lnx button.lx-x.sel { border-color: #22c55e; background: #16281f; }
 .app .main .lnx button.lx-x.target { border-style: dashed; border-color: #60a5fa88; }
@@ -296,10 +296,10 @@
 /* Readability pass (v1.61): a little smaller, higher contrast, easier to scan. */
 .app .main .lnx { max-width: 1180px; margin-inline: auto; }
 .app .main .lnx .lx-lines { gap: 6px 10px; }
-.app .main .lnx .lx-line { padding: 5px 7px 7px; background: #0f172a; border-color: #2a3650; }
+.app .main .lnx .lx-line { padding: 5px 7px 7px; background: #141820; border-color: #2a3650; }
 .app .main .lnx .lx-line-h { margin-bottom: 5px; }
 .app .main .lnx .lx-line-h > b { color: #f1f5f9; font-size: 12px; }
-.app .main .lnx .lx-chip { color: #cbd5e1; border-color: #334155; background: #111a2e; }
+.app .main .lnx .lx-chip { color: #cbd5e1; border-color: #ffffff10; background: #111a2e; }
 .app .main .lnx .lx-grp { color: #94a3b8; font-size: 12px; }
 .app .main .lnx .lx-slots { gap: 5px; }
 .app .main .lnx button.lx-pc { min-height: 46px; padding: 4px 8px; gap: 7px; background: #172033; border-color: #33415c; }
@@ -313,7 +313,7 @@
 .app .main .lnx .lx-pc-tag { font-size: 9.5px; }
 .app .main .lnx .lx-dim, .app .main .lnx .lx-k, .app .main .lnx .lx-hint, .app .main .lnx .lx-card-m, .app .main .lnx .lx-meta { color: #94a3b8; }
 .app .main .lnx .lx-tabs button { color: #cbd5e1; }
-.app .main .lnx button.lx-x { min-height: 30px; font-size: 12.5px; border-color: #334155; color: #e2e8f0; }
+.app .main .lnx button.lx-x { min-height: 30px; font-size: 12.5px; border-color: #ffffff10; color: #e2e8f0; }
 .app .main .lnx .lx-pk-n small { color: #94a3b8; }
 @media (min-width: 1100px) {
   .app .main .lnx .lx-line.g-F { grid-column: auto; }
@@ -338,19 +338,19 @@
 .app .main .lnx .lx-line.g-PP .st-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .app .main .lnx .lx-line.g-PK .st-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .app .main .lnx .lx-chem-w { position: relative; margin-left: auto; }
-.app .main .lnx button.lx-chem { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px; min-height: 28px; border-radius: 999px; background: #0b1220; border: 1px solid color-mix(in srgb, var(--chem) 60%, transparent); color: #e2e8f0; font-weight: 700; cursor: pointer; }
+.app .main .lnx button.lx-chem { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px; min-height: 28px; border-radius: 999px; background: #141820; border: 1px solid color-mix(in srgb, var(--chem) 60%, transparent); color: #e2e8f0; font-weight: 700; cursor: pointer; }
 .app .main .lnx button.lx-chem small { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #94a3b8; }
-.app .main .lnx .lx-chem-bar { width: 64px; height: 8px; border-radius: 99px; background: #1e293b; overflow: hidden; }
+.app .main .lnx .lx-chem-bar { width: 64px; height: 8px; border-radius: 99px; background: #1f232b; overflow: hidden; }
 .app .main .lnx .lx-chem-bar i { display: block; height: 100%; background: var(--chem); border-radius: 99px; }
 .app .main .lnx button.lx-chem b { font-size: 15px; font-weight: 900; color: var(--chem); }
 .app .main .lnx button.lx-chem em { font-style: normal; font-size: 12px; color: var(--chem); }
 .app .main .lnx button.lx-chem.on, .app .main .lnx button.lx-chem:hover { background: color-mix(in srgb, var(--chem) 14%, #0b1220); }
-.app .main .lnx .lx-chem-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 300px; max-width: 80vw; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #0b1220; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 30px #0008; font-size: 12.5px; color: #cbd5e1; }
+.app .main .lnx .lx-chem-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 300px; max-width: 80vw; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #141820; border: 1px solid #ffffff10; border-radius: 10px; box-shadow: 0 10px 30px #0008; font-size: 12.5px; color: #cbd5e1; }
 .app .main .lnx .lx-chem-pop b { display: inline-block; min-width: 34px; font-weight: 900; }
 .app .main .lnx .good { color: #22c55e; } .app .main .lnx .bad { color: #ef4444; }
 .app .main .lnx i.lx-arch { font-style: normal; display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 900; letter-spacing: .5px; color: #c7d2fe; background: #312e81aa; border: 1px solid #4f46e5; vertical-align: 2px; }
 .app .main .lnx .lx-pc-who b { display: flex; align-items: center; min-width: 0; }
-.app .main .lnx .lx-panel { background: #0f172a; border: 1px solid #2a3650; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.app .main .lnx .lx-panel { background: #141820; border: 1px solid #2a3650; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .app .main .lnx .lx-panel .lx-grp { margin: 0; font-size: 16px; color: #f8fafc; letter-spacing: 1.6px; }
 .app .main .lnx .lx-panel .lx-grp.sm { font-size: 12px; color: #fca5a5; margin-top: 4px; }
 .app .main .lnx .lx-chempanel { border-color: #4f46e566; }

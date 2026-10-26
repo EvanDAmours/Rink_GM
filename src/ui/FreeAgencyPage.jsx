@@ -67,7 +67,7 @@ function ResignView() {
   const signed = user.roster.map((id) => league.players[id]).filter((p) => p && p.yrs > 0);
   return (
     <section className="gg-card">
-      <div className="gg-k">RE-SIGN WINDOW · {expiring.length} EXPIRING</div>
+      <div className="gg-k">Re-sign window · {expiring.length} EXPIRING</div>
       <div className="dim small" style={{ marginBottom: 8 }}>Re-sign expiring players, or use Front Office → Operations to qualify RFAs, negotiate with agents or seek arbitration. {signed.length} players under contract for next season · cap {money(capForYear(capYear(league)))} · space {money(capSpace(league, user))}.</div>
       <div className="gg-falist">
         {expiring.map((p) => {
@@ -166,7 +166,7 @@ function MyOffers({ onRaise }) {
   const committed = pendingSpend(league, user.id), room = capSpace(league, user);
   return (
     <section className="gg-card gg-myoffers">
-      <div className="gg-k">YOUR OFFERS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · each player decides on his own day; your tabled offer always counts</span></div>
+      <div className="gg-k">Your offers <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {pending} waiting on an answer · each player decides on his own day; your tabled offer always counts</span></div>
       {committed > room + 1e-6 && <div className="gg-offer-warn">Offers out total {money(committed)} against {money(room)} of cap room. Talk to as many agents as you like; if more accept than you can fit, the earliest offers sign first and the rest fall through.</div>}
       <div className="gg-offers">
         {offers.map(({ p, standing: st, n }) => (

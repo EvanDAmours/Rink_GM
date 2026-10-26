@@ -134,7 +134,7 @@ function PlayoffPicture({ marks }) {
             <Column side="left" title={`East · ${ROUND_NAMES[0]}`} list={pick("East")} />
             <Column side="left" title={ROUND_NAMES[1]} list={tbd(2)} />
             <Column side="left" title={ROUND_NAMES[2]} list={tbd(1)} />
-            <div className="gg-bcol final"><div className="gg-bcol-h">🏆 Stanley Cup Final</div><div className="gg-bcol-body"><SeriesCard s={null} /></div></div>
+            <div className="gg-bcol final"><div className="gg-bcol-h">Stanley Cup Final</div><div className="gg-bcol-body"><SeriesCard s={null} /></div></div>
             <Column side="right" title={ROUND_NAMES[2]} list={tbd(1)} />
             <Column side="right" title={ROUND_NAMES[1]} list={tbd(2)} />
             <Column side="right" title={`West · ${ROUND_NAMES[0]}`} list={pick("West")} />

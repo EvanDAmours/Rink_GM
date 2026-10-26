@@ -81,7 +81,7 @@ export default function RecordBookPage() {
             <div><h3>{F.name}</h3><div className="dim small">Since {F.firstSeason} · {F.totals.w}-{F.totals.l}-{(F.totals.t || 0) + (F.totals.otl || 0)} all time · {F.totals.cups} Stanley Cups · {F.totals.playoffSeasons} playoff seasons</div></div>
             <Select aria-label="Record club" value={tid} onChange={(e) => setTid(e.target.value)} style={{ marginLeft: "auto", minWidth: 230 }}>{league.teams.map((t) => <option key={t.id} value={t.id}>{t.city} {t.name}</option>)}</Select>
           </div>
-          <div className="gg-rec-sec"><h3>SINGLE-SEASON RECORDS</h3><span className="dim small">The club's best single seasons, real history plus your league. Beat one and it's yours.</span></div>
+          <div className="gg-rec-sec"><h3>Single-season records</h3><span className="dim small">The club's best single seasons, real history plus your league. Beat one and it's yours.</span></div>
           <div className="gg-rec-grid">
             <RecordCard label="GOALS" mark={fm("g")} thisSeason={now(best("g"), "g")} />
             <RecordCard label="ASSISTS" mark={fm("a")} thisSeason={now(best("a"), "a")} />
@@ -93,11 +93,11 @@ export default function RecordBookPage() {
             <RecordCard label="GOALS FOR" mark={fm("tgf")} thisSeason={clubNow("gf")} />
             <RecordCard label="FEWEST GOALS AGAINST" value={F.team.fewestGoalsAgainst.value} holder={F.name} when={F.team.fewestGoalsAgainst.season} />
           </div>
-          <div className="gg-rec-sec"><h3>FRANCHISE CAREER LEADERS</h3><span className="dim small">All-time leaders with the club: its real history, plus everything done in your league. ● marks a current player.</span></div>
+          <div className="gg-rec-sec"><h3>Franchise career leaders</h3><span className="dim small">All-time leaders with the club: its real history, plus everything done in your league. ● marks a current player.</span></div>
           <div className="gg-rec-grid">
             {[...CAREER_BOARDS, ...GOALIE_BOARDS].map(([key, label]) => { const rows = franchiseBoard(league, team.abbr, key, 10); const act = rows.find((r) => r.active); return rows.length ? <LeaderCard key={key} label={label.toUpperCase()} rows={rows} active={act && rows.indexOf(act) > 4 ? act : null} /> : null; })}
           </div>
-          <div className="gg-rec-sec"><h3>SEASON BY SEASON</h3><span className="dim small">Real seasons in grey and blue (playoffs), gold for a Cup; your simulated seasons in green.</span></div>
+          <div className="gg-rec-sec"><h3>Season by season</h3><span className="dim small">Real seasons in grey and blue (playoffs), gold for a Cup; your simulated seasons in green.</span></div>
           <div className="gg-rec-chart" role="img" aria-label="Season points history">
             {F.history.slice(-30).map((h) => <div key={h.y} title={`${String(h.y).slice(0, 4)}-${String(h.y).slice(6)}: ${h.w}-${h.l}-${(h.otl || 0) + (h.t || 0)}, ${h.pts} PTS${h.cup ? " · Stanley Cup" : ""}`} style={{ height: `${Math.max(4, (h.pts / 140) * 100)}%`, background: h.cup ? "#eab308" : h.po ? "#3b82f6" : "#334155" }} />)}
             {simSeasons.map((s) => <div key={s.year} title={`Your ${s.year}: ${s.w}-${s.l}-${s.otl}, ${s.pts} PTS`} style={{ height: `${Math.max(4, ((s.pts || 0) / 140) * 100)}%`, background: "#22c55e" }} />)}
@@ -109,13 +109,13 @@ export default function RecordBookPage() {
       {view === "league" && (
         <>
           <RecordWatch league={league} />
-          <div className="gg-rec-sec"><h3>NHL SINGLE-SEASON RECORDS</h3><span className="dim small">The league's marks. Your league's best this season is shown underneath.</span></div>
+          <div className="gg-rec-sec"><h3>NHL single-season records</h3><span className="dim small">The league's marks. Your league's best this season is shown underneath.</span></div>
           <div className="gg-rec-grid">
             {[["GOALS", "g", false], ["ASSISTS", "a", false], ["POINTS", "pts", false], ["GOALIE WINS", "w", true], ["SHUTOUTS", "so", true]].map(([label, key, goalie]) => { const p = Object.values(league.players).filter((x) => x.tid >= 0 && isGoalie(x.pos) === goalie && x.stats.gp).sort((a, b) => b.stats[key] - a.stats[key])[0]; return <RecordCard key={label} label={label} mark={nm(key)} showTeam thisSeason={p ? { name: p.name, value: p.stats[key] } : null} />; })}
             {[["TEAM WINS", "tw", "w"], ["TEAM POINTS", "tpts", "pts"], ["TEAM GOALS FOR", "tgf", "gf"]].map(([label, key, k]) => { const t = inSeason ? [...league.teams].sort((a, b) => (b.rec?.[k] || 0) - (a.rec?.[k] || 0))[0] : null; return <RecordCard key={label} label={label} mark={nm(key)} thisSeason={t?.rec?.gp ? { name: t.name, value: t.rec[k] || 0 } : null} />; })}
             <RecordCard label="FEWEST GOALS AGAINST" value={L.teamSeason.fewestGoalsAgainst.value} holder={L.teamSeason.fewestGoalsAgainst.name} when={L.teamSeason.fewestGoalsAgainst.season} />
           </div>
-          <div className="gg-rec-sec"><h3>NHL CAREER LEADERS</h3></div>
+          <div className="gg-rec-sec"><h3>NHL career leaders</h3></div>
           <div className="gg-rec-grid">
             {[["GOALS", L.careerSkater.goals], ["ASSISTS", L.careerSkater.assists], ["POINTS", L.careerSkater.points], ["GOALIE WINS", L.careerGoalie.wins], ["SHUTOUTS", L.careerGoalie.shutouts]].map(([label, rows]) => <LeaderCard key={label} label={label} rows={rows} />)}
           </div>
@@ -125,7 +125,7 @@ export default function RecordBookPage() {
       {view === "careers" && <CareerLeaders league={league} />}
       {view === "mine" && (
         <>
-          <div className="gg-rec-sec"><h3>RECORDS SET IN YOUR LEAGUE</h3><span className="dim small">Single-game, single-season and career marks from simulated play only.</span></div>
+          <div className="gg-rec-sec"><h3>Records set in your league</h3><span className="dim small">Single-game, single-season and career marks from simulated play only.</span></div>
           {["game", "season", "career"].map((scope) => (
             <div key={scope}>
               <div className="gg-k" style={{ margin: "8px 0 4px" }}>{scope === "game" ? "SINGLE GAME" : scope === "season" ? "SINGLE SEASON" : "CAREER"}</div>
@@ -134,7 +134,7 @@ export default function RecordBookPage() {
               </div>
             </div>
           ))}
-          <div className="gg-rec-sec"><h3>RECORDS BROKEN OR TIED IN YOUR LEAGUE</h3><span className="dim small">NHL and club single-season marks taken in your league, newest first. They stay in the book with the new holder.</span></div>
+          <div className="gg-rec-sec"><h3>Records broken or tied in your league</h3><span className="dim small">NHL and club single-season marks taken in your league, newest first. They stay in the book with the new holder.</span></div>
           <div className="gg-card gg-rec-log">{(() => {
             const rows = [];
             // Ties this season (a share of the mark, not the record itself).
@@ -161,7 +161,7 @@ function RecordWatch({ league }) {
   if (league.phase !== "regular") return null;
   return (
     <>
-      <div className="gg-rec-sec"><h3>RECORD WATCH</h3><span className="dim small">Players within reach of an NHL single-season record, projected over 82 games.</span></div>
+      <div className="gg-rec-sec"><h3>Record watch</h3><span className="dim small">Players within reach of an NHL single-season record, projected over 82 games.</span></div>
       {rows.length ? <div className="lg-watch">{rows.map((r) => <div key={r.key} className="gg-card lg-watch-card"><small className="gg-k">{r.label.toUpperCase()} · RECORD {fmt(r.mark.value)}</small><div><b>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} showInj={false} /> : r.name}</b> <span className="dim small">{league.teams[r.tid]?.abbr}</span></div><div className="small">{fmt(r.value)} now · on pace for <b>{r.pace}</b>{r.on ? " · ON RECORD PACE" : ""}</div><div className="gg-rec-bar"><i style={{ width: `${Math.min(100, r.pct)}%` }} /></div><span className="gg-rec-pct">{r.pct}% of {r.mark.name}'s {fmt(r.mark.value)}</span></div>)}</div> : <div className="gg-card dim small">Nobody is on pace for an NHL record yet. Ten games in, the watch starts.</div>}
     </>
   );
@@ -172,7 +172,7 @@ function CareerLeaders({ league }) {
   const user = league.userTid;
   return (
     <>
-      <div className="gg-rec-sec"><h3>ALL-TIME LEADERS · YOUR LEAGUE</h3><span className="dim small">Every season simulated in this franchise, active and retired players alike. Milestones (500 goals, 1,000 games, 1,000 points) are marked on player cards.</span></div>
+      <div className="gg-rec-sec"><h3>All-time leaders · your league</h3><span className="dim small">Every season simulated in this franchise, active and retired players alike. Milestones (500 goals, 1,000 games, 1,000 points) are marked on player cards.</span></div>
       <div className="gg-rec-grid">
         {CAREER_KEYS.map(([k, label]) => <div key={k} className="gg-rec gold gg-rec-career"><small>{label}</small><b>{fmt(rows[k][0]?.value)}</b><span className="gg-rec-holder">{rows[k][0] ? `${rows[k][0].name}${rows[k][0].active ? "" : " (retired)"}` : "No games played yet"}</span>
           <ol className="gg-rec-list">{rows[k].slice(1).map((r, i) => <li key={r.pid + i}><span>{i + 2}.</span><span className={r.active ? "active" : ""}>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} showInj={false} /> : r.name}{r.tid === user ? " ★" : ""}{r.active ? "" : " (ret.)"}</span><b>{fmt(r.value)}</b></li>)}</ol></div>)}

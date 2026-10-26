@@ -217,7 +217,7 @@ export default function TradePage({ seed }) {
 
       <div className="gg-partner">
         <div className="gg-partner-pick">
-          <span className="gg-k" style={{ margin: 0 }}>TRADE PARTNER</span>
+          <span className="gg-k" style={{ margin: 0 }}>Trade partner</span>
           <Select value={String(partner)} onChange={(e) => pickTeam(Number(e.target.value))} aria-label="Trade partner" style={{ minWidth: 240 }}>
             {["East", "West"].map((c) => <optgroup key={c} label={`${c}ern Conference`}>{others.filter((t) => t.conf === c).sort((a, b) => a.city.localeCompare(b.city)).map((t) => <option key={t.id} value={t.id}>{t.city} {t.name} ({t.abbr}) · {t.rec.w}-{t.rec.l}-{t.rec.otl}</option>)}</optgroup>)}
           </Select>
@@ -228,15 +228,15 @@ export default function TradePage({ seed }) {
         <div className="gg-partner-card" style={{ "--c1": ai.colors[0], "--c2": ai.colors[1] }}>
           <TeamBadge team={ai} size={56} decorative />
           <div className="gg-partner-info"><b>{ai.city} {ai.name}</b><small>{ai.rec.w}-{ai.rec.l}-{ai.rec.otl} · cap space {money(capSpace(league, ai))} · {ev.contending ? "contending: values proven players" : "rebuilding: values youth & picks"}</small><div className="gg-partner-mood">GM: <b>“{ev.mood}”</b></div></div>
-          <div className="gg-partner-needs"><span className="gg-k" style={{ margin: 0 }}>YOUR NEEDS</span><div className="row" style={{ gap: 4 }}>{needs.map((n) => <span key={n.k} className="gg-need" style={{ borderColor: GRADE_C[n.g] }}>{n.k} <b style={{ color: GRADE_C[n.g] }}>{n.g}</b></span>)}</div></div>
+          <div className="gg-partner-needs"><span className="gg-k" style={{ margin: 0 }}>Your needs</span><div className="row" style={{ gap: 4 }}>{needs.map((n) => <span key={n.k} className="gg-need" style={{ borderColor: GRADE_C[n.g] }}>{n.k} <b style={{ color: GRADE_C[n.g] }}>{n.g}</b></span>)}</div></div>
         </div>
       </div>
 
       <div className={`gg-dealbar${empty ? " empty" : ""}`}>
         <div className="gg-deal-cols">
-          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#86efac" }}>YOU SEND · {giveTV}</span><div className="gg-deal-chips">{give.map((id) => chip(id, "give"))}{givePicks.map((id) => pickChip(id, "give"))}{!give.length && !givePicks.length && <span className="dim small">Tap players or picks on the left</span>}</div></div>
+          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#86efac" }}>You send · {giveTV}</span><div className="gg-deal-chips">{give.map((id) => chip(id, "give"))}{givePicks.map((id) => pickChip(id, "give"))}{!give.length && !givePicks.length && <span className="dim small">Tap players or picks on the left</span>}</div></div>
           <div className="gg-deal-mid"><span className={`gg-deal-net ${getTV - giveTV >= 0 ? "good" : "bad"}`}>{getTV - giveTV >= 0 ? "+" : ""}{getTV - giveTV}</span>{!empty && <span className="gg-tag" style={{ color: fairCol, borderColor: fairCol }}>{fairLab}</span>}<div className="gg-bar" style={{ height: 6, width: 120 }}><i style={{ width: `${Math.min(100, (ev.ratio / 1.4) * 100)}%`, background: ev.accept ? "#22c55e" : ev.ratio > 0.85 ? "#eab308" : "#ef4444" }} /></div></div>
-          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#93c5fd" }}>YOU GET · {getTV}</span><div className="gg-deal-chips">{get.map((id) => chip(id, "get"))}{getPicks.map((id) => pickChip(id, "get"))}{!get.length && !getPicks.length && <span className="dim small">Tap players or picks on the right</span>}</div></div>
+          <div className="gg-deal-col"><span className="gg-k" style={{ margin: 0, color: "#93c5fd" }}>You get · {getTV}</span><div className="gg-deal-chips">{get.map((id) => chip(id, "get"))}{getPicks.map((id) => pickChip(id, "get"))}{!get.length && !getPicks.length && <span className="dim small">Tap players or picks on the right</span>}</div></div>
         </div>
         {!empty && ev.problems.filter((p) => p !== "Add something to the deal.").map((p) => <div key={p} className="small bad">{p}</div>)}
         {(retainables.length > 0 || protectable.length > 0) && (
@@ -260,7 +260,7 @@ export default function TradePage({ seed }) {
 
       {league.tradeHistory?.length > 0 && (
         <div className="gg-card">
-          <div className="gg-k">📋 TRADE HISTORY</div>
+          <div className="gg-k">Trade history</div>
           {league.tradeHistory.slice(0, 10).map((t, i) => (
             <div className="small gg-news" key={i}><span className="dim">{t.year}</span> <TeamBadge team={league.teams[t.a]} size={16} /> {league.teams[t.a].abbr} sent {t.aSends} → <TeamBadge team={league.teams[t.b]} size={16} /> {league.teams[t.b].abbr} for {t.bSends}</div>
           ))}

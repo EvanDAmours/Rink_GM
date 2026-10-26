@@ -1,0 +1,187 @@
+/* Soft style (the football game's redo): borderless soft cards, sentence-case white headings,
+   hairline borders, white/dark selected chips, one green primary per view, quiet buttons.
+   Loaded after gridiron.css and before mobile.css, so the phone layout still wins. */
+:root {
+  --gg-bg: #080c14;
+  --gg-cd: #141820;      /* a soft card (#ffffff0d) over the page, as one opaque colour */
+  --gg-bd: #ffffff10;    /* hairline */
+  --soft-card: #ffffff0d;
+  --soft-inner: #ffffff0b;
+  --soft-quiet: #ffffff14;
+  --soft-chip: #ffffff12;
+  --panel: #141820;
+  --line: #ffffff10;
+  --border: #ffffff10;
+}
+html, body, body .app { background: #080c14 !important; }
+
+/* ---------- Cards ---------- */
+.app.app.app .panel, .app.app.app .gg-card, .app.app.app .gg-idea, .app.app.app .gg-analyzer, .app.app.app .modal .panel {
+  background: var(--soft-card); border: 0; border-radius: 18px; box-shadow: none;
+}
+.app.app.app .main .panel { padding: 14px 16px; }
+.app.app.app .main .panel .panel, .app.app.app .main .gg-card .gg-card, .app.app.app .gg-tiles > div, .app.app.app .gg-pagehead .gg-tiles > div {
+  background: var(--soft-inner); border: 0; border-radius: 14px;
+}
+.gg-stat, .gg-stat:not(.alert):not(.warn) { background: var(--soft-card); border: 0; border-radius: 18px; }
+.gg-stat.alert { background: #ef44441a; border: 0; }
+.gg-stat.warn { background: #f59e0b14; border: 0; }
+.app .tablewrap { border: 0; border-radius: 14px; background: transparent; }
+.app table.t td:first-child, .app table.t th:first-child { box-shadow: none; }
+.app.app.app .main .panel table.t td:first-child { background: #141820; }
+.app table.t th { background: transparent; color: #64748b; border-bottom: 1px solid #ffffff10; }
+.app.app.app .main .panel table.t th:first-child { background: #141820; }
+.app table.t td { border-color: #ffffff0a; }
+.app table.t tbody tr:nth-child(even) { background: transparent; }
+.app table.t tbody tr:hover td { background: #ffffff08; }
+.app .notice { background: var(--soft-card); border: 0; border-radius: 14px; padding: 10px 14px; }
+.app .notice.warn { background: #f59e0b14; } .app .notice.bad { background: #ef444414; }
+.app .pill { background: var(--soft-chip); border: 0; border-radius: 999px; padding: 2px 9px; }
+.app.app.app .pagehead .pill { background: var(--soft-chip); border: 0; border-radius: 999px; }
+
+/* ---------- Headings: plain white, sentence case ---------- */
+.app.app.app .main h3, .app.app.app .modal h3, .app.app.app .main .panel > h3, .app.app.app .main .panel .pagehead h3, .app.app.app .panel h3,
+.app.app.app .gg-frontoffice .panel h3, .app.app.app .gg-ops .panel h3, .app.app.app .gg-gameplan .panel h3, .app.app.app .gg-draft .panel h3 {
+  text-transform: none; letter-spacing: 0; color: #fff; font-size: 16px; font-weight: 800;
+}
+.app.app.app .gg-title { color: #fff; letter-spacing: 0; font-size: 16px; }
+.app.app.app .pagehead h2, .app.app.app .gg-pagehead h2 { font-size: 22px; font-weight: 900; letter-spacing: 0; text-transform: none; color: #fff; }
+
+/* ---------- Chips and segmented tabs: selected white, the rest quiet ---------- */
+.app.app.app .gg-chips, .app.app.app .tabs { gap: 6px; background: transparent; border: 0; }
+.app.app.app .gg-chips button, .app.app.app .tabs button, .app.app.app .main .tabs button:not(.link) {
+  background: var(--soft-chip); color: #cbd5e1; border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; text-transform: none; letter-spacing: 0;
+}
+.app.app.app .gg-chips button:hover:not(:disabled), .app.app.app .tabs button:hover:not(:disabled) { background: #ffffff1f; color: #fff; }
+.app.app.app .gg-chips button.on, .app.app.app .tabs button.on, .app.app.app .tabs button[aria-pressed=true], .app.app.app .gg-chips button.on:hover {
+  background: #fff; color: #0b1220; border: 0;
+}
+.app.app.app .gg-chips button.on .badge, .app.app.app .tabs button.on .badge { background: #0b1220; color: #fff; }
+
+/* ---------- Buttons: one green primary, the rest quiet ---------- */
+.app button, .app .main button, .app .main button:not(.link) { background: var(--soft-quiet); border: 0; border-radius: 10px; color: #e2e8f0; }
+.app button:hover:not(:disabled) { background: #ffffff24; border: 0; }
+.app button.primary, .app .main button.primary { background: #16a34a; color: #fff; border: 0; }
+.app button.primary:hover:not(:disabled) { background: #15803d; }
+.app button.danger { background: #7f1d1d; color: #fecaca; }
+.app button.ghost { background: transparent; }
+.app input, .app select, .app textarea, .app .main input:not([type=checkbox]), .app .main select { background: var(--soft-inner); border: 1px solid #ffffff10; border-radius: 10px; }
+
+/* ---------- Popups (common.jsx Modal / Sheet / Dialog) ---------- */
+.app .modalbg { background: #000000a6; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); align-items: center; padding: 24px; overflow: hidden; z-index: 60; }
+.app .modal { position: relative; background: #0d1424; border: 0; border-radius: 22px; box-shadow: 0 30px 80px #000c; max-height: 86vh; max-height: 86dvh; display: flex; flex-direction: column; overflow: hidden; }
+.app .modal .mhead { background: transparent; border-bottom: 0; padding: 18px 20px 8px; flex-shrink: 0; }
+.app .modal-title { font-family: var(--gg-f); font-size: 20px; font-weight: 900; letter-spacing: 0; line-height: 1.2; }
+.app .modal .mbody { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 20px 20px; }
+.app .modal button.close, .app .modal .mhead button.close { width: 40px; height: 40px; min-height: 40px; border-radius: 20px; padding: 0; background: var(--soft-quiet); display: grid; place-items: center; flex-shrink: 0; }
+.app .modal.rk-soft { width: min(560px, 100%); }
+.app .modal.rk-soft.rk-wide { width: min(820px, 100%); }
+.rk-dsub { font-size: 15px; color: #94a3b8; line-height: 1.5; margin: -4px 2px 12px; }
+.rk-dactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; padding-bottom: 4px; }
+.app.app.app button.rk-dbtn { min-height: 48px; padding: 0 18px; border-radius: 14px; border: 0; font-size: 15px; font-weight: 800; background: var(--soft-quiet); color: #e2e8f0; flex: 0 0 auto; }
+.app.app.app button.rk-dbtn.grow { flex: 1 1 160px; }
+.app.app.app button.rk-dbtn.primary { background: #16a34a; color: #fff; }
+.app.app.app button.rk-dbtn.danger { background: #7f1d1d; color: #fecaca; }
+.app.app.app button.rk-dbtn.gold { background: #eab308; color: #111; }
+.app.app.app button.rk-dbtn:disabled { opacity: .5; }
+.rk-softbox { background: var(--soft-card); border-radius: 14px; padding: 12px 14px; }
+@media (max-width: 760px) {
+  .app .modalbg.rk-sheetbg { align-items: flex-end; padding: 0; }
+  .app .modalbg.rk-sheetbg > .modal.rk-sheet { width: 100%; max-width: none; max-height: 92dvh; border-radius: 22px 22px 0 0; overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+  .app .modal.rk-sheet .rk-grip { position: static; background: transparent; flex-shrink: 0; }
+  .app .modal.rk-sheet .rk-grip > span { background: #ffffff40; }
+  .app .modal .mhead { padding: 4px 16px 8px; }
+  .app .modal .mbody { padding: 4px 16px 18px; }
+}
+
+/* ---------- The desktop bar ---------- */
+.rk-bar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 18px; padding: 10px 18px; background: #080c14ee; backdrop-filter: blur(10px); border-bottom: 1px solid #ffffff10; }
+.rk-bar-left { position: relative; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rk-bar-left .teambadge { border-radius: 8px; }
+.app.app.app button.rk-seasonbtn { display: block; text-align: left; background: transparent; padding: 3px 10px; line-height: 1.15; border-radius: 10px; }
+.app.app.app button.rk-seasonbtn.on, .app.app.app button.rk-seasonbtn:hover:not(:disabled) { background: #ffffff14; }
+.rk-seasonbtn b { display: block; font-size: 16px; font-weight: 900; color: #fff; }
+.rk-seasonbtn span { display: block; font-size: 12.5px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
+.rk-bar-nav { display: flex; gap: 2px; min-width: 0; }
+.app.app.app .rk-bar-nav button { background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; padding: 8px 14px; border-radius: 999px; white-space: nowrap; position: relative; }
+.app.app.app .rk-bar-nav button.on { background: #ffffff14; color: #fff; }
+.app.app.app .rk-bar-nav button:hover:not(:disabled) { color: #fff; background: #ffffff0f; }
+.rk-bar-nav .badge, .rk-shero-tabs .badge, .rk-moremenu .badge { font-size: 9px; background: #16a34a; color: #fff; border-radius: 6px; padding: 1px 5px; font-weight: 900; margin-left: 6px; vertical-align: 2px; }
+.rk-bar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.rk-bar-actions { display: flex; align-items: center; gap: 6px; }
+.app.app.app .rk-bar-actions button { font-size: 14px; font-weight: 800; padding: 8px 16px; border-radius: 999px; min-height: 36px; }
+.app.app.app button.rk-quiet { background: #ffffff14; color: #e2e8f0; }
+.app.app.app .rk-bar-actions .gg-ff { position: relative; }
+.app.app.app .rk-bar .gg-ffmenu, .rk-moremenu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 300; background: #141a26; border-radius: 16px; padding: 6px; min-width: 220px; box-shadow: 0 20px 60px #000c; display: flex; flex-direction: column; }
+.app.app.app .rk-bar .gg-ffmenu button, .app.app.app .rk-moremenu button { background: transparent; text-align: left; font-size: 14px; font-weight: 700; padding: 10px 12px; border-radius: 10px; color: #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+.app.app.app .rk-bar .gg-ffmenu button:hover, .app.app.app .rk-moremenu button:hover { background: #ffffff12; }
+.app.app.app button.rk-search { display: flex; align-items: center; gap: 8px; background: #ffffff0d; color: #94a3b8; font-size: 14px; font-weight: 600; padding: 7px 10px 7px 12px; border-radius: 999px; width: 190px; }
+.rk-search kbd { margin-left: auto; font-size: 11px; background: #ffffff14; border-radius: 5px; padding: 0 6px; color: #94a3b8; font-family: inherit; }
+@media (max-width: 1399px) { .app button.rk-search { width: 38px; height: 38px; padding: 0; justify-content: center; } .rk-search-t, .rk-search kbd { display: none; } }
+.app.app.app button.rk-pill { border-radius: 999px; font-size: 13px; font-weight: 800; padding: 7px 14px; white-space: nowrap; }
+.app.app.app button.rk-pill.red { background: #dc2626; color: #fff; }
+.app.app.app button.rk-pill.blue { background: #2563eb; color: #fff; }
+.rk-more { position: relative; }
+.app.app.app button.rk-more-btn { width: 38px; height: 38px; border-radius: 19px; padding: 0; font-size: 20px; line-height: 1; background: #ffffff0d; }
+.rk-scrim { position: fixed; inset: 0; z-index: 299; }
+.rk-seasonmenu { position: absolute; left: 0; top: calc(100% + 10px); z-index: 300; background: #141a26; border-radius: 18px; padding: 18px; width: min(980px, 92vw); box-shadow: 0 20px 60px #000c; }
+.rk-sm-head { font-size: 12px; font-weight: 900; letter-spacing: 1.4px; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; }
+.rk-sm-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(26px, 1fr)); gap: 4px; }
+.app.app.app button.rk-sm-g { height: 26px; padding: 0; border-radius: 6px; background: #ffffff0d; font-size: 10px; font-weight: 900; color: #94a3b8; }
+.app.app.app button.rk-sm-g.w { background: #166534; color: #bbf7d0; }
+.app.app.app button.rk-sm-g.l { background: #7f1d1d; color: #fecaca; }
+.app.app.app button.rk-sm-g.o { background: #78350f; color: #fde68a; }
+.app.app.app button.rk-sm-g.next { box-shadow: inset 0 0 0 2px #fff; }
+.rk-sm-legend { font-size: 12px; color: #64748b; margin: 10px 0 14px; }
+.rk-sm-legend span { display: inline-block; font-weight: 900; border-radius: 4px; padding: 0 5px; margin-right: 3px; }
+.rk-sm-legend .w { background: #166534; color: #bbf7d0; } .rk-sm-legend .l { background: #7f1d1d; color: #fecaca; } .rk-sm-legend .o { background: #78350f; color: #fde68a; }
+.rk-sm-stages { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.rk-sm-stages span { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: #ffffff0d; color: #94a3b8; }
+.rk-sm-stages span.done { color: #64748b; }
+.rk-sm-stages span.on { background: #fff; color: #0b1220; }
+.rk-sm-links { display: flex; gap: 6px; }
+.app.app.app .rk-sm-links button { font-size: 13px; padding: 7px 14px; border-radius: 999px; }
+
+/* ---------- Section header ---------- */
+.rk-shero { position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 14px; padding: 22px 28px 0; color: #fff; }
+.rk-shero-mark { position: absolute; right: -30px; top: -60px; opacity: .07; pointer-events: none; transform: rotate(-8deg); filter: grayscale(1) brightness(4); }
+.rk-shero-top { position: relative; display: flex; align-items: flex-end; gap: 30px; flex-wrap: wrap; }
+.rk-shero-sub { font-size: 12px; font-weight: 900; letter-spacing: 1.8px; color: #ffffffb3; text-transform: uppercase; }
+.app h1.rk-shero-title { font-size: 46px; font-weight: 700; line-height: 1; text-transform: uppercase; margin: 4px 0 0; color: #fff; letter-spacing: .5px; }
+.rk-shero-stats { display: flex; gap: 30px; margin-left: auto; align-items: flex-end; }
+.rk-shero-stats > div { text-align: right; }
+.rk-shero-stats b { display: block; font-size: 26px; font-weight: 900; line-height: 1; color: #fff; }
+.rk-shero-stats span { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #ffffffb3; margin-top: 5px; text-transform: uppercase; }
+.rk-shero-tabs { position: relative; display: flex; gap: 4px; margin-top: 18px; flex-wrap: wrap; }
+.app.app.app .rk-shero-tabs button { background: transparent; border-radius: 0; border-bottom: 3px solid transparent; color: #ffffffa6; padding: 8px 14px 12px; font-size: 15px; font-weight: 800; }
+.app.app.app .rk-shero-tabs button:hover:not(:disabled) { background: transparent; color: #fff; border-bottom: 3px solid #ffffff55; }
+.app.app.app .rk-shero-tabs button.on { color: #fff; border-bottom: 3px solid #fff; }
+@media (max-width: 1100px) { .rk-shero-stats { gap: 18px; } .rk-shero-stats b { font-size: 20px; } .app .rk-bar-nav button { padding: 8px 9px; font-size: 14px; } .rk-bar { gap: 10px; } }
+
+/* With a section header on top, a screen's own title, status line and number tiles repeat it. */
+.app.app .main.rk-heroed .gg-pagehead h2, .app.app .main.rk-heroed .gg-pagehead .gg-status, .app.app .main.rk-heroed .gg-pagehead .gg-tiles,
+.app.app .main.rk-heroed > .stack > .pagehead > h2, .app.app .main.rk-heroed .gg-embed .pagehead > h2 { display: none; }
+/* The Gazette keeps its own page: it scrolls on the backdrop. */
+.app .modalbg.gg-paperbg { overflow-y: auto; align-items: flex-start; }
+/* Needs attention as a sheet */
+.app .modal.rk-inbox-sheet .rk-inbox-list { max-height: none; }
+
+/* ---------- Lines ---------- */
+.app.app .main.rk-heroed .lnx .lx-subtabs, .app.app .main.rk-heroed .lnx .lx-head > .teambadge { display: none; }
+html:not(.light) .app.app .main .lnx .lx-line, html:not(.light) .app.app .main .lnx .lx-panel { background: var(--soft-card); border: 0; border-radius: 18px; }
+html:not(.light) .app.app .main .lnx .lx-card { background: var(--soft-inner); border: 0; border-radius: 12px; }
+.app.app.app .main .lnx .lx-big { font-size: 18px; letter-spacing: 0; text-transform: none; color: #fff; }
+.app.app.app .main .lnx .lx-line-h > b { text-transform: none; letter-spacing: 0; font-size: 14px; color: #fff; }
+.app.app.app .main .lnx .lx-panel .lx-grp { text-transform: none; letter-spacing: 0; color: #fff; }
+
+/* ---------- Card titles (gg-k) read as plain headings ---------- */
+.app.app .gg-k { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 0; text-transform: none; margin-bottom: 4px; }
+.app.app .gg-k .dim { font-size: 13px; font-weight: 600; }
+/* A gg-k inside a hero or tile stays a small caption. */
+.app.app .gg-coach-who .gg-k, .app.app span.gg-k { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #94a3b8; text-transform: uppercase; }
+.gg-coach-hero { border: 0; border-radius: 18px; background: var(--soft-card); }
+/* Home's matchup keeps its broadcast lettering. */
+.app.app.app.app .main .rk-mx-team h3 { text-transform: uppercase; font-size: clamp(13px, 4.2cqi, 26px); font-weight: 900; letter-spacing: 0; }
+.app .gg-confirm-line { background: var(--soft-card); border: 0; border-left: 3px solid #3b82f6; border-radius: 14px; padding: 10px 14px; }
+.app .gg-confirm-line.warn { border-left-color: #f59e0b; } .app .gg-confirm-line.good { border-left-color: #22c55e; } .app .gg-confirm-line.bad { border-left-color: #ef4444; }
+.app .gg-confirm-lines { display: flex; flex-direction: column; gap: 8px; }

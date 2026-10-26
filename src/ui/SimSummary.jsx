@@ -25,17 +25,17 @@ export default function SimSummary({ data, onClose }) {
         </div>
         <div className="gg-sum-games">{d.games.slice(-12).map((g, i) => <span key={i} className={`gg-sum-g ${g.result === "W" ? "w" : g.result === "OTL" ? "o" : "l"}`} title={`${g.home ? "vs" : "@"} ${g.opp} ${g.us}-${g.them}${g.ot ? " " + g.ot : ""}`}>{g.home ? "" : "@"}{g.opp} {g.us}-{g.them}</span>)}</div>
         <div className="grid g2">
-          <section className="gg-card"><div className="gg-k">CARRIED THE CLUB</div>
+          <section className="gg-card"><div className="gg-k">Carried the club</div>
             {d.topSkaters.length ? d.topSkaters.map((x) => <div key={x.p.id} className="gg-sum-row"><PlayerName p={x.p} /><span>{x.g}G {x.pts - x.g}A · {x.pts} pts in {x.gp}</span></div>) : <div className="dim small">No games played.</div>}
             {d.topGoalie && <div className="gg-sum-row"><PlayerName p={d.topGoalie.p} /><span>{d.topGoalie.w}-{d.topGoalie.gp - d.topGoalie.w} · {d.topGoalie.so} SO</span></div>}
           </section>
-          <section className="gg-card"><div className="gg-k">HEALTH</div>
+          <section className="gg-card"><div className="gg-k">Health</div>
             {d.newInjuries.length ? d.newInjuries.map((x) => <div key={x.pid} className="gg-sum-row bad"><PlayerName p={league.players[x.pid]} /><span>🚑 out {x.games} game{x.games === 1 ? "" : "s"}{x.note ? ` · ${x.note}` : ""}</span></div>) : <div className="dim small">No new injuries.</div>}
             {d.returned.map((x) => <div key={x.pid} className="gg-sum-row good"><PlayerName p={league.players[x.pid]} /><span>back in the lineup</span></div>)}
             {d.coachNotes > 0 && <div className="dim small">{t.coach?.name || "The coach"} adjusted the lines {d.coachNotes} time{d.coachNotes === 1 ? "" : "s"}.</div>}
           </section>
         </div>
-        {(d.milestones.length > 0 || d.headlines.length > 0 || d.myTx.length > 0) && <section className="gg-card"><div className="gg-k">AROUND THE CLUB</div>
+        {(d.milestones.length > 0 || d.headlines.length > 0 || d.myTx.length > 0) && <section className="gg-card"><div className="gg-k">Around the club</div>
           {d.milestones.map((m) => <div key={m.pid} className="gg-sum-row"><span>🏅 {m.name} reached {m.label}</span></div>)}
           {d.myTx.map((x, i) => <div key={i} className="gg-sum-row"><span>📋 {x.text}</span></div>)}
           {d.headlines.map((n, i) => <div key={i} className="gg-sum-row"><span>📰 {n.text}</span></div>)}

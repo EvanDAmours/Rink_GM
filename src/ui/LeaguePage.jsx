@@ -53,7 +53,7 @@ export default function LeaguePage({ view: forced }) {
       {view === "awards" && (
         <div className="stack">
           {league.history.length > 0 && <>
-            <div className="gg-rec-sec"><h3>STANLEY CUP CHAMPIONS</h3><span className="dim small">Every season in your league, newest first.</span></div>
+            <div className="gg-rec-sec"><h3>Stanley Cup champions</h3><span className="dim small">Every season in your league, newest first.</span></div>
             <div className="lg-hist-champ">{league.history.map((h) => { const t = league.teams[h.champion]; const cs = h.awards?.connSmythe; return (
               <div key={h.year} className={`gg-card lg-hist-card${h.champion === league.userTid ? " mine" : ""}`} onClick={() => openTeam(h.champion)} style={{ cursor: "pointer", borderLeft: `4px solid ${t?.colors?.[0] || "#475569"}` }}>
                 <TeamBadge team={t} size={40} decorative />
@@ -61,10 +61,10 @@ export default function LeaguePage({ view: forced }) {
               </div>); })}</div>
           </>}
           {(league.hallOfFame || []).length > 0 && <>
-            <div className="gg-rec-sec"><h3>HALL OF FAME</h3><span className="dim small">Inducted three years after retiring, on a legacy score that counts real pre-league careers.</span></div>
+            <div className="gg-rec-sec"><h3>Hall of Fame</h3><span className="dim small">Inducted three years after retiring, on a legacy score that counts real pre-league careers.</span></div>
             <div className="lg-hist-champ">{[...league.hallOfFame].reverse().map((h) => <div key={h.pid} className="gg-card lg-hist-card" style={{ cursor: "pointer" }} onClick={() => openPlayer(h.pid)}>{league.teams[h.tid] && <TeamBadge team={league.teams[h.tid]} size={32} decorative />}<div><b>{h.name}</b><div className="dim small">{h.pos} · Class of {h.inducted}{h.legacy != null ? ` · legacy ${h.legacy}` : ""}</div></div></div>)}</div>
           </>}
-          <div className="gg-rec-sec"><h3>AWARDS BY SEASON</h3></div>
+          <div className="gg-rec-sec"><h3>Awards by season</h3></div>
           {awardsNow && (
             <div className="panel">
               <h3>{league.year}-{String(league.year + 1).slice(2)} Awards</h3>

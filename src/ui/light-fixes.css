@@ -2,3 +2,12 @@
 html.light .app button.gg-advice:not(.keep-dark *) b { color: #0f172a; }
 html.light .app .rk-mnav button.on { color: #0f172a; }
 html.light .app .rk-mnav button.on .rk-mnav-bar { background: #15803d; }
+/* Soft style (soft.css): plain white headings and white selected chips need their light versions. */
+html.light .app .main h3:not(.keep-dark *), html.light .app .modal h3:not(.keep-dark *), html.light .app .gg-k:not(.keep-dark *), html.light .app .rk-seasonbtn b,
+html.light .app .pagehead h2:not(.keep-dark *), html.light .app .gg-pagehead h2:not(.keep-dark *), html.light .app.app.app .main .lnx .lx-big,
+html.light .app.app.app .main .lnx .lx-panel .lx-grp, html.light .app .gg-title, html.light .app .modal-title { color: #0f172a; }
+html.light .app.app.app .gg-chips button:not(.on), html.light .app.app.app .tabs button:not(.on) { color: #334155; background: #0f172a0f; }
+html.light .app.app.app .gg-chips button.on, html.light .app.app.app .tabs button.on { background: #0f172a; color: #fff; }
+html.light .app.app.app .rk-bar-nav button, html.light .app button.rk-seasonbtn { background: transparent; border: 0; box-shadow: none; color: #334155; }
+html.light .app.app.app .rk-bar-nav button.on { background: #0f172a12; color: #0f172a; }
+html.light .app button.rk-dbtn:not(.primary):not(.danger):not(.gold) { background: #0f172a12; color: #0f172a; }

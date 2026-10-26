@@ -152,7 +152,7 @@ export default function TradeBlockPage() {
 
       {offers.length > 0 && (
         <div className="panel hot">
-          <h3>📞 Offers for you</h3>
+          <h3>Offers for you</h3>
           <div className="offergrid">{offers.map((o) => <OfferCard key={o.id} o={o} />)}</div>
         </div>
       )}

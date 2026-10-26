@@ -34,9 +34,15 @@ const season = (y) => `${y}–${String(y + 1).slice(2)}`;
 
 // The user's own trophy room: the club's Stanley Cups (real history and this league), its banners,
 // every individual award its players have won, and a case showing which trophies it still chases.
-export default function TrophyRoom() {
+// On a computer the Front Office header splits these: Franchise History (the club's own story) and
+// the Legacy Hall (rafters and league awards).
+const TROPHY_VIEWS = [["hall", "Rafters & Hall"], ["club", "Our trophies"], ["case", "Trophy case"], ["awards", "League awards"], ["gm", "GM legacy"]];
+const HISTORY_VIEWS = ["club", "case", "gm"], HALL_VIEWS = ["hall", "awards"];
+export default function TrophyRoom({ view: forced, onView }) {
   const { league, commit } = useGame();
-  const [view, setView] = useState("hall");
+  const [own, setOwn] = useState("hall");
+  const view = forced && TROPHY_VIEWS.some(([k]) => k === forced) ? forced : forced ? "hall" : own;
+  const setView = onView || setOwn;
   const team = league.userTid;
   const club = league.teams[team];
   const seasons = [...league.history];
@@ -86,8 +92,8 @@ export default function TrophyRoom() {
   return (
     <div className="stack gg-trophyroom">
       <div className="gg-pagehead">
-        <div><h2>Legacy Hall · {club.name}</h2><div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
-        <div className="gg-chips"><button className={view === "hall" ? "on" : ""} onClick={() => setView("hall")}>Rafters & Hall</button><button className={view === "club" ? "on" : ""} onClick={() => setView("club")}>Our trophies</button><button className={view === "case" ? "on" : ""} onClick={() => setView("case")}>Trophy case</button><button className={view === "awards" ? "on" : ""} onClick={() => setView("awards")}>League awards</button><button className={view === "gm" ? "on" : ""} onClick={() => setView("gm")}>GM legacy</button></div>
+        <div>{!forced && <h2>Legacy Hall · {club.name}</h2>}<div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
+        <div className="gg-chips">{TROPHY_VIEWS.filter(([k]) => !forced || (HISTORY_VIEWS.includes(forced) ? HISTORY_VIEWS : HALL_VIEWS).includes(k)).map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
       </div>
 
       {view === "hall" && <Rafters />}
@@ -97,7 +103,7 @@ export default function TrophyRoom() {
           <div className="gg-legacy-hero" style={{ "--c1": club.colors[0] }}>
             <Trophy kind="stanley" size={190} className="hero" />
             <div className="gg-legacy-who">
-              <span className="gg-k">FRANCHISE LEGACY{HISTORICAL_RECORDS.franchises?.[club.abbr]?.firstSeason ? ` · SINCE ${HISTORICAL_RECORDS.franchises[club.abbr].firstSeason}` : ""}</span>
+              <span className="gg-k">Franchise legacy{HISTORICAL_RECORDS.franchises?.[club.abbr]?.firstSeason ? ` · SINCE ${HISTORICAL_RECORDS.franchises[club.abbr].firstSeason}` : ""}</span>
               <h2><TeamName tid={team} /></h2>
               <div className="gg-tiles"><div><small>STANLEY CUPS</small><b>{realCups.length + cups.length}</b></div><div><small>WON IN YOUR LEAGUE</small><b>{cups.length}</b></div><div><small>CUP FINALS LOST</small><b>{finals.length}</b></div><div><small>CONFERENCE TITLES</small><b>{confs.length}</b></div><div><small>PRESIDENTS' TROPHIES</small><b>{pres.length}</b></div><div><small>INDIVIDUAL AWARDS</small><b>{mine.length + ["hart","tedLindsay","artRoss","rocket","norris","vezina","calder","selke","ladyByng","jennings","masterton","kingClancy","messier","connSmythe"].reduce((s, k) => s + (real(k)?.count || 0), 0)}</b></div></div>
               <div className="dim small" style={{ marginTop: 8 }}>{realCups.length ? `Last real Stanley Cup: ${realCups.at(-1).year}.` : "No Stanley Cup in franchise history yet."}{cups.length ? ` Last in your league: ${season(cups[0].year)}.` : ""}</div>
@@ -145,7 +151,7 @@ export default function TrophyRoom() {
 
       {view === "awards" && (
         <section className="gg-ceremony">
-          <div className="gg-ceremony-h"><Trophy kind="hart" size={70} /><div><span className="gg-k">NHL AWARDS</span><h2>{shown ? `${season(shownYear)} ${ceremony ? "winners" : "race · projected"}` : "Awards night"}</h2><div className="dim small">{ceremony ? "Decided from the season's statistics: production, rate, team success and position. The Conn Smythe follows the Final." : projected ? "Where the trophies would go if the season ended today. Winners are announced after the Final." : "The first awards are handed out after the regular season."}</div></div></div>
+          <div className="gg-ceremony-h"><Trophy kind="hart" size={70} /><div><span className="gg-k">NHL awards</span><h2>{shown ? `${season(shownYear)} ${ceremony ? "winners" : "race · projected"}` : "Awards night"}</h2><div className="dim small">{ceremony ? "Decided from the season's statistics: production, rate, team success and position. The Conn Smythe follows the Final." : projected ? "Where the trophies would go if the season ended today. Winners are announced after the Final." : "The first awards are handed out after the regular season."}</div></div></div>
           {shown ? (
             <div className="gg-award-grid">
               {TROPHY_ORDER.filter((k) => shown[k]).sort((a, b) => Number(shown[b].tid === team) - Number(shown[a].tid === team)).map((k) => { const a = shown[k]; const p = a.pid && league.players[a.pid]; return (

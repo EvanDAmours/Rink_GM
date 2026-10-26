@@ -28,7 +28,7 @@
 .lg-doc summary{cursor:pointer}
 .lg-doc p{margin:6px 0}
 .lg-acc{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}
-.lg-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:#1e293b;color:#e2e8f0;border:1px solid #334155}
+.lg-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:#1f232b;color:#e2e8f0;border:1px solid #ffffff10}
 .lg-chip.k-stanley,.lg-chip.k-hart,.lg-chip.k-connSmythe{background:#3b2f0b;border-color:#a16207;color:#fde68a}
 .lg-chip.rank{background:#0f2a1d;border-color:#166534;color:#bbf7d0}
 .lg-chip.retired{background:#3f0d12;border-color:#9f1239;color:#fecdd3}

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { useGame, TeamBadge, PlayerName, money } from "./common.jsx";
+import { useGame, TeamBadge, PlayerName, money, Sheet } from "./common.jsx";
 import Select from "./Select.jsx";
 import Headshot from "./Headshot.jsx";
 import { divisionTable, conferenceTable } from "../engine/standings.js";
@@ -237,15 +237,15 @@ export default function Dashboard({ act = {} }) {
               {more && (
                 <div className="rk-details">
                   <div className="rk-details-row">
-                    <section className="rk-box"><div className="rk-box-h">FORM · LAST 5</div>
+                    <section className="rk-box"><div className="rk-box-h">Form · last 5</div>
                       {[[awayT, awayT.id === t.id ? formUs : formThem], [homeT, homeT.id === t.id ? formUs : formThem]].map(([team, f]) => <div key={team.id} className="rk-form"><TeamBadge team={team} size={20} decorative /><b>{team.abbr}</b>{f.length ? f.map((r, i) => <i key={i} className={`rk-pill ${r}`}>{r === "O" ? "OT" : r}</i>) : <span className="dim">No games yet</span>}</div>)}
                     </section>
-                    <section className="rk-box"><div className="rk-box-h">THE LINE</div><div className="rk-line">{Math.abs(prob - 0.5) < 0.03 ? "PICK 'EM" : `${prob >= 0.5 ? t.abbr : opp.abbr} ${Math.round(Math.max(prob, 1 - prob) * 100)}%`}</div><span className="rk-box-sub">{prob >= 0.55 ? "You're the favourite." : prob <= 0.45 ? "You're the underdog." : "A coin flip."} Offence {mine.off > theirs.off + 1 ? "edge you" : theirs.off > mine.off + 1 ? `edge ${opp.abbr}` : "even"} · goaltending {mine.goalie > theirs.goalie + 1 ? "edge you" : theirs.goalie > mine.goalie + 1 ? `edge ${opp.abbr}` : "even"}.</span></section>
-                    <section className="rk-box"><div className="rk-box-h">INJURIES</div>
+                    <section className="rk-box"><div className="rk-box-h">The line</div><div className="rk-line">{Math.abs(prob - 0.5) < 0.03 ? "PICK 'EM" : `${prob >= 0.5 ? t.abbr : opp.abbr} ${Math.round(Math.max(prob, 1 - prob) * 100)}%`}</div><span className="rk-box-sub">{prob >= 0.55 ? "You're the favourite." : prob <= 0.45 ? "You're the underdog." : "A coin flip."} Offence {mine.off > theirs.off + 1 ? "edge you" : theirs.off > mine.off + 1 ? `edge ${opp.abbr}` : "even"} · goaltending {mine.goalie > theirs.goalie + 1 ? "edge you" : theirs.goalie > mine.goalie + 1 ? `edge ${opp.abbr}` : "even"}.</span></section>
+                    <section className="rk-box"><div className="rk-box-h">Injuries</div>
                       {[opp, t].map((team) => { const out = team.roster.map((id) => lg.players[id]).filter((p) => p && p.injury > 0 && p.ovr >= 78).sort((a, b) => b.ovr - a.ovr).slice(0, 3); return <div key={team.id} className="rk-box-sub"><b>{team.abbr}</b> {out.length ? out.map((p) => `${p.name.split(" ").at(-1)} (${p.pos}, ${p.ltir ? "LTIR" : "OUT"})`).join(", ") : <span className="dim">no key players out</span>}</div>; })}
                     </section>
                   </div>
-                  <section className="rk-box"><div className="rk-box-h">KEY MATCHUPS</div>
+                  <section className="rk-box"><div className="rk-box-h">Key matchups</div>
                     {[[myScorer, theirD, "Your top scorer vs their best defender", (a, b) => edge(composites(a).off, composites(b).def)], [myD, theirScorer, "Your best defender vs their top scorer", (a, b) => edge(composites(a).def, composites(b).off)], [myG, theirG, "Goaltending", (a, b) => edge(a.ovr, b.ovr)]].filter(([a, b]) => a && b).map(([a, b, l, f]) => { const [txt, c] = f(a, b); const gl = (p) => (isGoalie(p.pos) && p.stats.gp ? `${savePct(p.stats).toFixed(3).slice(1)} SV%` : `${p.pos} ${p.ovr}`); return <div key={l} className="rk-km"><span>{l}</span><b><PlayerName p={a} showInj={false} /></b><em>{gl(a)}</em><i>vs</i><b><PlayerName p={b} showInj={false} /></b><em>{gl(b)}</em><strong style={{ color: c }}>{txt}</strong></div>; })}
                   </section>
                   <GamePlanPicker opp={opp} compact />
@@ -275,15 +275,15 @@ export default function Dashboard({ act = {} }) {
             {rightTab === "injuries" && <InjuryList lg={lg} t={t} onRoster={() => go("roster", "injured")} />}
             {rightTab === "prospects" && (
               <>
-                <div className="rk-box-h rk-side-h">PROSPECT WATCH <button className="rk-b rk-link" onClick={() => go("development")}>All →</button></div>
+                <div className="rk-box-h rk-side-h">Prospect watch <button className="rk-b rk-link" onClick={() => go("development")}>All →</button></div>
                 {watch.filter((r) => r.farm || r.p.age <= 22).slice(0, 6).map((r) => <div key={r.p.id} className="gg-home-watch-row"><PosBadge pos={r.p.pos} /><div><b><PlayerName p={r.p} /></b><span className="dim small">{r.level} · {r.line.text}</span></div><Sparkline path={r.path} width={64} height={22} color={r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8"} /><b style={{ color: r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8" }}>{r.delta > 0 ? "+" : ""}{r.delta}</b></div>)}
                 {!watch.length && <div className="rk-hm-quiet">No young players to follow yet.</div>}
-                {t.rec.gp > 0 && <><div className="rk-box-h rk-side-h" style={{ marginTop: 12 }}>CLUB LEADERS</div>{leaders.map(([k, p, f]) => p ? <div key={k} className="rk-inj-row"><span className="gg-pill">{k}</span><b><PlayerName p={p} /></b><span className="rk-inj-n">{f(p)}</span></div> : null)}</>}
+                {t.rec.gp > 0 && <><div className="rk-box-h rk-side-h" style={{ marginTop: 12 }}>Club leaders</div>{leaders.map(([k, p, f]) => p ? <div key={k} className="rk-inj-row"><span className="gg-pill">{k}</span><b><PlayerName p={p} /></b><span className="rk-inj-n">{f(p)}</span></div> : null)}</>}
               </>
             )}
           </div></div>
           <section className={`gg-lab rk-lab${labFlash ? " rk-flash" : ""}`} id="dev-focus" data-tour="devfocus" ref={labRef}>
-            <div className="rk-box-h" title="Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.">DEVELOPMENT FOCUS <span className="rk-info" aria-hidden="true">ⓘ</span></div>
+            <div className="rk-box-h" title="Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.">Development focus <span className="rk-info" aria-hidden="true">ⓘ</span></div>
             {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in the lab. Pick a player below.</div>}
             {focused.length < FOCUS_SLOTS && (<>
               <div className="rk-lab-pick"><span>{FOCUS_SLOTS - focused.length} SLOT{FOCUS_SLOTS - focused.length === 1 ? "" : "S"} OPEN</span><span className="rk-sort"><small>Sort</small>{[["pos", "Position"], ["growth", "Growth"]].map(([k, l]) => <button key={k} className={labSort === k ? "on" : ""} aria-pressed={labSort === k} onClick={() => setLabSort(k)}>{l}</button>)}</span></div>
@@ -427,9 +427,9 @@ function InjuryList({ lg, t, onRoster }) {
   if (lg.settings?.injuries === false) return <div className="rk-hm-quiet">Injuries are turned off in Settings.</div>;
   return (
     <>
-      <div className="rk-box-h rk-side-h">YOUR TEAM · {mine.length}</div>
+      <div className="rk-box-h rk-side-h">Your team · {mine.length}</div>
       {mine.length ? mine.map((p) => row(p, null)) : <div className="rk-hm-quiet good">Fully healthy.</div>}
-      <div className="rk-box-h rk-side-h" style={{ marginTop: 14 }}>AROUND THE LEAGUE</div>
+      <div className="rk-box-h rk-side-h" style={{ marginTop: 14 }}>Around the league</div>
       {league.length ? league.map(([p, x]) => row(p, x)) : <div className="rk-hm-quiet">No big names out.</div>}
       {mine.length > 0 && <button className="rk-b rk-link" onClick={onRoster}>Manage roster →</button>}
     </>
@@ -444,7 +444,7 @@ function OffseasonBoard({ lg, go, openPlayer }) {
   return (
     <div className="rk-board">
       <div className="rk-box">
-        <div className="rk-box-h">BIGGEST NEEDS</div>
+        <div className="rk-box-h">Biggest needs</div>
         {b.needs.length ? b.needs.map((n) => (
           <button key={n.pos} className="rk-b rk-board-row" onClick={() => nav(n.to)} title={`${n.name}: ${n.have} healthy of ${n.target}`}>
             <PosBadge pos={n.pos} /><b>{n.name}</b><span className="rk-board-why">{n.why}</span>
@@ -510,17 +510,10 @@ function PhaseCard({ lg, t, go, slot, series }) {
 // The full Needs Attention list (the football game's inbox): every item with its way in,
 // and the decisions you can make right there.
 function NeedsAttention({ items, onClose }) {
-  const ref = useRef(null);
-  useDialogFocus(ref, onClose);
   const urgent = items.filter((i) => i.tone === "urgent").length;
   return (
-    <div className="rk-inbox-bg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="rk-inbox" role="dialog" aria-modal="true" aria-label="Needs attention" tabIndex={-1}>
-        <div className="rk-inbox-head">
-          <b>📥 Needs Attention</b>
-          <span>{items.length ? `${items.length} item${items.length === 1 ? "" : "s"}${urgent ? ` · ${urgent} urgent` : ""}` : "All caught up"}</span>
-          <button className="ghost rk-inbox-x" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
-        </div>
+    <Sheet title="Needs attention" wide onClose={onClose} className="rk-inbox-sheet">
+        <div className="rk-dsub">{items.length ? `${items.length} item${items.length === 1 ? "" : "s"}${urgent ? ` · ${urgent} urgent` : ""}` : "All caught up"}</div>
         {!items.length && <div className="rk-inbox-empty">Nothing needs your attention right now.</div>}
         <div className="rk-inbox-list">
           {items.map((it) => (
@@ -538,7 +531,6 @@ function NeedsAttention({ items, onClose }) {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
 }

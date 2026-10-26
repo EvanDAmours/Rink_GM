@@ -693,7 +693,7 @@ function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, o
 // in the same visit keeps the clock as you left it.
 const SESSION = Math.random().toString(36).slice(2, 10);
 
-export default function DraftPage({ act }) {
+export default function DraftPage({ act, want, onView }) {
   const { league, commit, toast } = useGame();
   const phone = usePhone();
   const user = league.teams[league.userTid];
@@ -717,6 +717,9 @@ export default function DraftPage({ act }) {
     ["recap", "Draft recap"],
   ].filter(Boolean);
   const view = views.some(([k]) => k === viewSel) ? viewSel : defaultView;
+  // The section header's tabs (Scouting / Draft / Draft Recap) pick a view from outside.
+  useEffect(() => { if (want?.v) setView(want.v === "floor" && !(inDraft && !combine) ? (combine ? "combine" : "board") : want.v); }, [want?.n]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { onView?.(view); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
   const year = inDraft ? league.draft.year : league.draftClassYear;
   const done = inDraft && draftDone(league);
   const live = draftLive(league);
@@ -769,14 +772,15 @@ export default function DraftPage({ act }) {
 
   return (
     <div className={`stack gg-draft${live ? " dd-running" : ""}`}>
-      <div className="pagehead">
+      {!onView && <div className="pagehead">
         <h2>{combine ? `${year} Scouting Combine` : `${year} NHL Entry Draft`}</h2>
         {slot && <span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span>}
         {!inDraft && <span className="pill">{DRAFT_ROUNDS} rounds · {DRAFT_ROUNDS * 32} picks</span>}
         {!live && <div className="scout-budget"><span>REPORTS FILED</span><strong>{user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0}</strong><small>by your scouts in their regions</small></div>}
-      </div>
+      </div>}
+      {onView && slot && <div className="pagehead"><span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span></div>}
       <div className="tabs">
-        {views.map(([k, label]) => (
+        {views.filter(([k]) => !onView || (view === "recap" ? false : view === "floor" || view === "combine" ? k === "floor" || k === "combine" : !["floor", "recap", "combine"].includes(k))).map(([k, label]) => (
           <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>
         ))}
       </div>

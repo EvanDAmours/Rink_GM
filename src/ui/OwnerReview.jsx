@@ -16,12 +16,12 @@ export default function OwnerReview({ onClose }) {
   return (
     <Modal title={`Owner's review ${r.year}`} onClose={onClose} bare className="gg-preview">
       <div className="gg-pv">
-        <div className="gg-pv-head"><TeamBadge team={t} size={54} /><div><div className="gg-k">OWNER'S REVIEW · {r.year}-{String(r.year + 1).slice(2)} · <span style={{ color }}>{tone}</span></div><h2>{t.owner.name || `${t.city} ownership`}</h2><div className="dim">{line}</div></div></div>
+        <div className="gg-pv-head"><TeamBadge team={t} size={54} /><div><div className="gg-k">Owner's review · {r.year}-{String(r.year + 1).slice(2)} · <span style={{ color }}>{tone}</span></div><h2>{t.owner.name || `${t.city} ownership`}</h2><div className="dim">{line}</div></div></div>
         <div className="gg-pv-grid">
-          <div><div className="gg-k">OWNER PATIENCE</div><b style={{ fontSize: 22 }}>{r.before} → <span style={{ color }}>{r.trust}</span> <small className="dim">/ 100</small></b><span>{r.trust < 35 ? "Hot seat." : r.trust < 60 ? "Watchful." : "Secure."}</span></div>
-          <div><div className="gg-k">THE SEASON</div><b>Record {rec} · {r.rec.pts} points</b><span>Playoffs: {playoff}</span></div>
-          <div><div className="gg-k">OWNER'S TARGET</div><b>{r.goal}</b><span style={{ color: r.met ? "#22c55e" : "#ef4444" }}>{r.met ? "✓ Achieved" : "✗ Missed"}{r.kind === "develop" ? ` · ${r.developed ?? 0} young players developed` : ""}</span></div>
-          <div><div className="gg-k">NEXT SEASON</div><b>{r.trust < 35 ? "He wants results now" : r.met ? "He'll raise the bar at camp" : "Same ask, less patience"}</b><span>The new target is set when training camp opens.</span></div>
+          <div><div className="gg-k">Owner patience</div><b style={{ fontSize: 22 }}>{r.before} → <span style={{ color }}>{r.trust}</span> <small className="dim">/ 100</small></b><span>{r.trust < 35 ? "Hot seat." : r.trust < 60 ? "Watchful." : "Secure."}</span></div>
+          <div><div className="gg-k">The season</div><b>Record {rec} · {r.rec.pts} points</b><span>Playoffs: {playoff}</span></div>
+          <div><div className="gg-k">Owner's target</div><b>{r.goal}</b><span style={{ color: r.met ? "#22c55e" : "#ef4444" }}>{r.met ? "✓ Achieved" : "✗ Missed"}{r.kind === "develop" ? ` · ${r.developed ?? 0} young players developed` : ""}</span></div>
+          <div><div className="gg-k">Next season</div><b>{r.trust < 35 ? "He wants results now" : r.met ? "He'll raise the bar at camp" : "Same ask, less patience"}</b><span>The new target is set when training camp opens.</span></div>
         </div>
         <div className="gg-pv-actions"><button className="primary big" onClick={onClose}>Got it</button></div>
       </div>

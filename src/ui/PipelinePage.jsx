@@ -46,7 +46,7 @@ export default function PipelinePage() {
         </div>
         <span className="dim small">Young players you control, junior to NHL. ETA is the staff's estimate of when he is a 76-rated NHL regular.</span>
       </div>
-      {suggestions.length > 0 && <section className="gg-card gg-pipe-sugg"><div className="gg-k">READY FOR A LOOK · minor-leaguers rating above a dressed player</div>
+      {suggestions.length > 0 && <section className="gg-card gg-pipe-sugg"><div className="gg-k">Ready for a look · minor-leaguers rating above a dressed player</div>
         <div className="gg-pipe-sugg-rows">{suggestions.map((r) => <div key={r.p.id} className="gg-pipe-sugg-row"><Headshot p={r.p} team={t} size={40} decorative /><div><PlayerName p={r.p} /><span className="dim small">{r.p.pos} · {r.p.age} · <Ovr v={r.p.ovr} /> · out-rates {r.beats.name} ({r.beats.ovr})</span></div>{inSeason && <button className="small" onClick={() => doCallUp(r.p)}>Call up</button>}</div>)}</div>
       </section>}
       <div className="tablewrap">

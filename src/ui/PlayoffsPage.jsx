@@ -116,7 +116,7 @@ export default function PlayoffsPage({ act }) {
         <Column side="left" title={ROUND_NAMES[1]} list={pad(conf(r(1), "East"), 2)} />
         <Column side="left" title={ROUND_NAMES[2]} list={pad(conf(r(2), "East"), 1)} />
         <div className="gg-bcol final">
-          <div className="gg-bcol-h">🏆 {ROUND_NAMES[3]}</div>
+          <div className="gg-bcol-h">{ROUND_NAMES[3]}</div>
           <div className="gg-bcol-body"><SeriesCard s={final} /></div>
         </div>
         <Column side="right" title={ROUND_NAMES[2]} list={pad(conf(r(2), "West"), 1)} />

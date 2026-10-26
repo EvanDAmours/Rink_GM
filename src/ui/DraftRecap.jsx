@@ -99,7 +99,7 @@ function RecapView() {
 
       <div className="dr-grid">
         <div className="panel">
-          <h3>💎 Hidden gems and best traits</h3>
+          <h3>Hidden gems and best traits</h3>
           <div className="dr-counts">{Object.keys(DEV_TRAITS).filter((k) => k !== "normal").concat("normal").map((k) => <span key={k}><DevChip dev={k} /> {counts[k] || 0}</span>)}</div>
           {jackpots.slice(0, 10).map((r) => (
             <div key={r.pid} className={`dr-jrow${r.owner === me ? " mine" : ""}`} onClick={() => open(r)}>
@@ -113,7 +113,7 @@ function RecapView() {
           {!jackpots.length && <div className="muted small">No Star-or-better traits or hidden gems in this class.</div>}
         </div>
         <div className="panel">
-          <h3>📊 Class grades <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>tap a club to filter</span></h3>
+          <h3>Class grades <span className="right muted small" style={{ textTransform: "none", letterSpacing: 0 }}>tap a club to filter</span></h3>
           {ranked.map((g) => { const t = league.teams[g.tid]; return (
             <div key={g.tid} className={`dr-grow${g.tid === me ? " mine" : ""}${teamF === g.tid ? " on" : ""}`} onClick={() => setTeamF(teamF === g.tid ? -1 : g.tid)}>
               <span className="dr-n">{g.rank}</span>

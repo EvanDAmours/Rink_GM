@@ -71,6 +71,10 @@ import { applyTheme, getTheme } from "./ui/theme.js";
 import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
+import { DeskBar, SectionHero, sectionsFor, sectionOf, screenOn, heroStats } from "./ui/DeskNav.jsx";
+import { frenzyFor } from "./engine/frenzy.js";
+import { payroll } from "./engine/roster.js";
+import { capOverview } from "./engine/capOverview.js";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"standings",label:"Standings",short:"Standings"},
@@ -115,6 +119,8 @@ export default function App({ resume = false }) {
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [ffOpen,setFfOpen]=useState(false);
+  const [draftView, setDraftView] = useState(null);
+  const [draftWant, setDraftWant] = useState(null);
   const [tour,setTour]=useState(null); // null | "welcome" | "run"
   const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(null);
@@ -568,53 +574,6 @@ export default function App({ resume = false }) {
 
   // ---------- Top bar ----------
 
-  const actions = [];
-  if (league.phase === "preseason") actions.push(<button key="s" className="primary" onClick={act.startSeason}>Start Season ▶</button>);
-  if (league.phase === "regular") {
-    if (L.seasonOver(league)) actions.push(<button key="po" className="primary" onClick={act.startPlayoffs}>Start Playoffs 🏆</button>);
-    else if (deadlinePending(league)) {
-      actions.push(<button key="dd" className="primary" onClick={openDeadline}>⏰ Trade Deadline Day</button>);
-    } else {
-      const ug = L.userGameOnDay(league);
-      if (ug) {
-        const opp = league.teams[ug.h === user.id ? ug.a : ug.h];
-        actions.push(<button key="live" className="primary" onClick={act.playLive}>▶ Play Live {ug.h === user.id ? "vs" : "@"} {opp.abbr}</button>);
-        actions.push(<button key="sg" onClick={act.simDay}>Sim Game</button>);
-      } else actions.push(<button key="sd" onClick={act.simDay}>Sim Day</button>);
-      actions.push(<div key="ff" className="gg-ff"><button className="gg-ff-btn" aria-haspopup="menu" aria-expanded={ffOpen} title="Fast forward" onClick={() => setFfOpen((v) => !v)}>⏩ ▾</button>{ffOpen && <div className="gg-ffmenu" role="menu">
-        <button role="menuitem" onClick={() => { setFfOpen(false); act.simDays(7, "Simulating a week"); }}>Sim Week</button>
-        {league.day < league.deadlineDay && <button role="menuitem" onClick={() => { setFfOpen(false); act.simToDeadline(); }}>Sim to Deadline</button>}
-        <button role="menuitem" onClick={() => { setFfOpen(false); act.simToEnd(); }}>Sim to End of Season</button>
-      </div>}</div>);
-    }
-  }
-  if (league.phase === "playoffs") {
-    if (league.playoffs.champion != null) actions.push(<button key="d" className="primary" onClick={act.toDraft}>Go to the Draft →</button>);
-    else {
-      if (userSeries(league)) actions.push(<button key="pl" className="primary" onClick={act.playPlayoffLive}>▶ Play Live</button>);
-      actions.push(<button key="pd" onClick={act.simPlayoffDay}>Sim Day</button>);
-      actions.push(<button key="pr" onClick={act.simPlayoffRound}>Sim Round</button>);
-      actions.push(<button key="pa" onClick={act.simPlayoffsAll}>Sim All</button>);
-    }
-  }
-  if (league.phase === "draft") {
-    if (atCombine(league)) actions.push(<button key="sd" className="primary" onClick={act.startDraft}>Start the Draft →</button>);
-    else if (draftDone(league)) actions.push(<button key="rs" className="primary" onClick={act.toResign}>Continue to Re-signing →</button>);
-    else {
-      const slot = currentSlot(league);
-      if (slot.owner !== user.id) actions.push(<button key="mp" className="primary" onClick={act.simToMyPick}>Sim to My Pick</button>);
-      actions.push(<button key="ad" onClick={act.autoDraft}>Auto-Draft Rest</button>);
-    }
-  }
-  if (league.phase === "resign") actions.push(<button key="fa" className="primary" onClick={act.toFA}>Proceed to Free Agency →</button>);
-  if (league.phase === "freeagency") {
-    if (league.fa.day < FA_DAYS) {
-      actions.push(<button key="fd" onClick={act.faDay}>Next Day</button>);
-      actions.push(<button key="fe" onClick={act.faToEnd}>Sim to End</button>);
-    }
-    actions.push(<button key="ns" className="primary" onClick={act.nextSeason}>Start {league.year + 1}-{String(league.year + 2).slice(2)} Season →</button>);
-  }
-
   const space = capSpace(league, user);
   const badgeFor = (id) => {
     if (id === "draft" && league.phase === "draft") return "LIVE";
@@ -696,6 +655,50 @@ export default function App({ resume = false }) {
     if (A[0] && tab !== "dashboard" && tab !== "draft") A[0] = { ...A[0], small: true };
     return A;
   })();
+  // Desktop: the phase's main button (green), one quiet button and the rest behind ⏩.
+  const deskMain = [], deskFF = [];
+  {
+    const ph = league.phase;
+    const btn = (k, label, onClick, primary) => <button key={k} className={primary ? "primary" : "rk-quiet"} onClick={onClick}>{label}</button>;
+    if (ph === "preseason") deskMain.push(btn("s", "Start season", act.startSeason, true));
+    if (ph === "regular") {
+      if (L.seasonOver(league)) deskMain.push(btn("po", "Start playoffs", act.startPlayoffs, true));
+      else if (deadlinePending(league)) deskMain.push(btn("dd", "Open Deadline Day", openDeadline, true));
+      else {
+        const ug = L.userGameOnDay(league);
+        if (ug) {
+          const opp = league.teams[ug.h === user.id ? ug.a : ug.h];
+          deskMain.push(btn("live", `Play ${ug.h === user.id ? "vs" : "@"} ${opp.abbr}`, act.playLive, true));
+          deskMain.push(btn("sg", "Sim game", act.simDay));
+        } else deskMain.push(btn("sd", "Sim day", act.simDay, true));
+        deskFF.push(["Sim week", () => act.simDays(7, "Simulating a week")]);
+        if (league.day < league.deadlineDay) deskFF.push(["Sim to deadline", act.simToDeadline]);
+        deskFF.push(["Sim to end of season", act.simToEnd]);
+      }
+    }
+    if (ph === "playoffs") {
+      if (league.playoffs.champion != null) deskMain.push(btn("d", "Finish playoffs: go to the draft", act.toDraft, true));
+      else {
+        const mine = userSeries(league);
+        if (mine) deskMain.push(btn("pl", "Play live", act.playPlayoffLive, true));
+        deskMain.push(btn("pd", "Sim day", act.simPlayoffDay, !mine));
+        deskFF.push(["Sim round", act.simPlayoffRound], ["Sim to the end", act.simPlayoffsAll]);
+      }
+    }
+    if (ph === "draft") {
+      if (atCombine(league)) deskMain.push(btn("sd", "Start the draft", act.startDraft, true));
+      else if (draftDone(league)) deskMain.push(btn("rs", "Finish draft", act.toResign, true));
+      else {
+        if (currentSlot(league).owner !== user.id) deskMain.push(btn("mp", "Sim to my pick", act.simToMyPick, true));
+        deskFF.push(["Auto-draft the rest", act.autoDraft]);
+      }
+    }
+    if (ph === "resign") deskMain.push(btn("fa", "Finish re-signing", act.toFA, true));
+    if (ph === "freeagency") {
+      if (league.fa.day < FA_DAYS) { deskMain.push(btn("fd", "Next day", act.faDay)); deskFF.push(["Sim to the end of free agency", act.faToEnd]); }
+      deskMain.push(btn("ns", "Finish free agency", act.nextSeason, true));
+    }
+  }
   const tradeDeadlineOpen = (league.phase === "regular" || league.phase === "playoffs") && (deadlinePending(league) || (league.deadline?.year === league.year && !league.deadline.synthetic));
   // The deadline desk has its own action bar (the clock's controls).
   const onDeadlineDesk = tab === "trade" && tradeSub === "deadline" && tradeDeadlineOpen && league.deadline?.year === league.year;
@@ -735,51 +738,62 @@ export default function App({ resume = false }) {
     { label: "🖥 Computer layout", onClick: () => { flushSave(); window.location.href = desktopUrl(); } },
   ];
 
+  // ---------- Desktop: the bar and each section's header ----------
+  const frenzyOpen = league.phase === "freeagency" && (!!frenzyFor(league) || (league.fa?.day || 0) === 0);
+  const sections = sectionsFor(league, { deadlineOpen: tradeDeadlineOpen, frenzyOpen });
+  const draftSub = { ...sub, draft: draftView };
+  const where = sectionOf(sections, tab, draftSub);
+  const openScreen = (scr) => { const [, t, k] = scr; if (t === "draft" && k) { setDraftWant({ v: k, n: Date.now() }); setTab("draft"); } else { setTab(t); if (k) setSub(t, k); } setMoreOpen(false); };
+  for (const s of sections) s.badge = s.id === "draft" ? badgeFor("draft") : s.id === "market" ? badgeFor("trade") : s.id === "season" ? badgeFor("league") : null;
+  const deskMenu = [
+    <button key="n" role="menuitem" onClick={() => go("activity")}>News & inbox{unread > 0 && <span className="badge">{unread}</span>}</button>,
+    <button key="sv" role="menuitem" onClick={() => { flushSave(); showToast("Game saved in this browser."); }}>Save game</button>,
+    <button key="st" role="menuitem" onClick={() => go("settings")}>Settings</button>,
+    <button key="inj" role="menuitem" onClick={() => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); }}>Injuries: {injOn ? "on" : "off"}</button>,
+    <button key="th" role="menuitem" onClick={() => setThemeNow(applyTheme(themeNow === "light" ? "dark" : themeNow === "dark" ? "auto" : "light"))}>Theme: {themeNow}</button>,
+    <button key="tr" role="menuitem" onClick={() => setTour("run")}>Take the tour</button>,
+    <button key="up" role="menuitem" onClick={() => go("updates")}>Game updates</button>,
+    <button key="ph" role="menuitem" onClick={() => { flushSave(); window.location.href = phoneUrl(); }}>Phone layout</button>,
+  ];
+  const deskPills = [
+    tradeDeadlineOpen && (deadlinePending(league) || deadlineActive(league)) && <button key="dl" className="rk-pill red" onClick={() => go("deadline")}>Trade Deadline</button>,
+    (league.phase === "freeagency" || league.phase === "resign") && <button key="fa" className="rk-pill blue" onClick={() => go("freeagency")}>{league.phase === "resign" ? "Re-sign" : "Free Agency"}</button>,
+  ].filter(Boolean);
+  const deskBar = (
+    <DeskBar league={league} user={user} sections={sections} cur={live ? null : where?.section.id || null}
+      onSection={(s) => { if (live) return; const keep = s.screens.find((scr) => screenOn(scr, tab, draftSub)); openScreen(keep || s.screens[0]); }}
+      onGo={(id) => go(id)} onSearch={() => !live && setSearchOpen(true)} pills={live ? null : deskPills}
+      actions={live ? null : <OfflineChip />} ff={live ? null : <>{deskMain}{deskFF.length > 0 && <div className="gg-ff"><button className="gg-ff-btn rk-quiet" aria-haspopup="menu" aria-expanded={ffOpen} title="Fast forward" onClick={() => setFfOpen((v) => !v)}>⏩</button>{ffOpen && <><div className="rk-scrim" onClick={() => setFfOpen(false)} /><div className="gg-ffmenu" role="menu">{deskFF.map(([l, f]) => <button key={l} role="menuitem" onClick={() => { setFfOpen(false); f(); }}>{l}</button>)}</div></>}</div>}</>}
+      menu={deskMenu} />
+  );
+  const heroH = where && where.section.id !== "home" && !phone && !live ? (() => {
+    const c = counts(league, user);
+    const inj = user.roster.map((id) => league.players[id]).filter((p) => p && p.injury > 0).length;
+    const mine = league.schedule.filter((g) => g.played && (g.h === user.id || g.a === user.id));
+    const goalDiff = mine.reduce((s2, g) => s2 + (g.h === user.id ? g.hs - g.as : g.as - g.hs), 0);
+    const dy = league.phase === "draft" && league.draft ? league.draft.year : league.draftClassYear;
+    const picks = league.draftPicks.filter((p) => p.owner === user.id && p.year === dy);
+    const first = picks.slice().sort((a, b) => a.round - b.round)[0];
+    return { capSpace: space, active: c.active, injured: inj, goalDiff, draftYear: dy, picks: picks.length, firstPick: first ? `Round ${first.round}` : null, reports: user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0, offers: userOffers(league).length, payroll: payroll(league, user), expiring: capOverview(league, user).expiring, fans: Math.round(user.owner?.fanSupport ?? 60) };
+  })() : null;
+  const hero = heroH && <SectionHero team={user} sub={`${user.city} ${user.name}`} title={where.section.label}
+    stats={heroStats(where.section.id, league, user, heroH)}
+    tabs={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}
+    onTab={(l) => openScreen(where.section.screens.find((x) => x[0] === l))} />;
+
   return (
     <GameCtx.Provider value={ctx}>
       <div className={`app${phone ? " rk-phone-app" : ""}`} data-density={league.settings.uiDensity || "compact"} data-text-size={league.settings.textSize || "standard"} data-motion={league.settings.reducedMotion ? "reduced" : "auto"}>
         {phone ? <PhoneHeader team={user} season={seasonLabel} record={recordStr(user.rec)} cap={space} live={!!live} unread={unread} onSearch={() => setSearchOpen(true)} onInbox={() => go("activity")} /> : (
-        <header className={`gg-head${actions.length >= 3 ? " busy" : ""}`}>
-          <TeamBadge team={user} size={26} className="gg-badge"/>
-          <nav className="gg-tabs nav hdr-tabs" aria-label="Main navigation">
-            {NAV.filter((n) => !n.when || n.when(league)).map((n) => (
-              <button key={n.id} aria-current={tab===n.id && !live?"page":undefined} className={tab === n.id && !live ? "active" : ""} disabled={!!live} title={n.label} onClick={() => setTab(n.id)}>
-                {n.tiny ? <><span className="gg-tab-label gg-tab-full">{n.short}</span><span className="gg-tab-label gg-tab-tiny">{n.tiny}</span></> : <span className="gg-tab-label">{n.short}</span>}<span className="sr-only">{n.label}</span>
-                {badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}
-              </button>
-            ))}
-          </nav>
-          <span className="gg-cur-tab" aria-hidden="true">{live ? "Live Game" : (NAV.find((n) => n.id === tab)?.short || (tab === "activity" ? "News" : tab === "settings" ? "Settings" : tab === "updates" ? "Game updates" : "Home"))}</span>
-          <div className="gg-right">
-            <OfflineChip />
-            {!live && <div className="actions">{actions}</div>}
-            <button className="gg-ico" disabled={!!live} onClick={()=>setSearchOpen(true)} aria-label="Search players, teams and screens" title="Search players, teams and screens (press /)">🔍</button>
-            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("activity")} aria-label="Club news and inbox" title="News & inbox">🔔{unread>0 && <span className="notification-dot"/>}</button>
-            <button className="gg-ico" onClick={()=>{flushSave();showToast("Game saved in this browser.");}} aria-label="Save game" title="Save">💾</button>
-            <button className="gg-ico" disabled={!!live} onClick={()=>setTab("settings")} aria-label="Settings" title="Settings">🔧</button>
-            <button className="gg-ico gg-menu-btn" disabled={!!live} aria-label="Game navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen((v)=>!v)}>☰</button>
-          </div>
-          {/* The menu: on phones every screen (the bar is hidden), then the same small groups as on a computer. */}
-          {menuOpen && !live && <><div className="gg-menu-scrim" onClick={() => setMenuOpen(false)} /><div className="gg-menu" role="menu">
-            <div className="gg-menu-nav">{NAV.filter((n) => !n.when || n.when(league)).map((n) => <button key={n.id} role="menuitem" data-id={n.id} className={tab === n.id ? "active" : ""} onClick={() => { setMenuOpen(false); go(n.id); }}>{n.label}{badgeFor(n.id) && <span className="badge">{badgeFor(n.id)}</span>}</button>)}</div>
-            <div className="gg-menu-grp">FRANCHISE</div>
-            <button role="menuitem" data-id="activity" className={tab === "activity" ? "active" : ""} onClick={() => { setMenuOpen(false); go("activity"); }}><span>📰 News & Inbox</span>{unread>0 && <span className="badge">{unread}</span>}</button>
-            <button role="menuitem" data-id="trophies" className={`gg-menu-desk${tab === "legacy" ? " active" : ""}`} onClick={() => { setMenuOpen(false); go("legacy"); }}><span>🏆 Legacy Hall</span></button>
-            <div className="gg-menu-grp">SETTINGS</div>
-            <button role="menuitem" data-id="settings" className={tab === "settings" ? "active" : ""} onClick={() => { setMenuOpen(false); go("settings"); }}><span>🔧 Settings</span></button>
-            <button role="menuitem" data-id="tour" onClick={() => { setMenuOpen(false); setTour("run"); }}><span>🧭 Take the tour</span></button>
-            <div className="gg-menu-grp">MORE</div>
-            <button role="menuitem" data-id="updates" className={tab === "updates" ? "active" : ""} onClick={() => { setMenuOpen(false); go("updates"); }}><span>📝 Game updates</span></button>
-            <button role="menuitem" data-id="phone" onClick={() => { setMenuOpen(false); flushSave(); window.location.href = phoneUrl(); }}><span>📱 Phone layout</span></button>
-          </div></>}
-        </header>)}
+        deskBar)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
-          <div className="main" {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className={`main${hero ? " rk-heroed" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (
               <>
+                {hero}
                 {tab === "dashboard" && <Dashboard act={act} />}
                 {tab === "activity" && <ActivityPage />}
                 {tab === "lines" && <LinesHub sub={sub.lines} onSub={(k) => setSub("lines", k)} />}
@@ -787,14 +801,14 @@ export default function App({ resume = false }) {
                 {tab === "stats" && <StatsPage />}
                 {tab === "standings" && <StandingsPage />}
                 {tab === "season" && <SeasonHub league={league} sub={sub.season} onSub={(k) => setSub("season", k)} act={act} />}
-                {tab === "draft" && <DraftPage act={act} />}
+                {tab === "draft" && <DraftPage act={act} want={draftWant} onView={setDraftView} />}
                 {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}
                 {tab === "frontoffice" && <FrontOfficeHub sub={sub.frontoffice} onSub={(k) => setSub("frontoffice", k)} />}
                 {tab === "trade" && <TradeHub sub={sub.trade} onSub={(k) => setSub("trade", k)} seed={tradeSeed} />}
                 {tab === "development" && <DevelopmentHub sub={sub.development} onSub={(k) => setSub("development", k)} />}
                 {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
-                {tab === "legacy" && <TrophyRoom />}
+                {tab === "legacy" && <TrophyRoom {...(phone ? {} : { view: sub.legacy || "hall", onView: (k) => setSub("legacy", k) })} />}
                 {tab === "updates" && <GameUpdates />}
               </>
             )}

@@ -2,7 +2,7 @@
    The football game's look: near-black cards, gold section labels, green for ready, amber for open. */
 
 /* ---------- Game Prep ---------- */
-.app .rk-prep-modal { width: min(1180px, calc(100vw - 20px)); max-width: none; background: #080c14; border: 1px solid #1e293b; border-radius: 16px; position: relative; }
+.app .rk-prep-modal { width: min(1180px, calc(100vw - 20px)); max-width: none; background: #080c14; border: 1px solid #ffffff10; border-radius: 16px; position: relative; }
 .app .rk-prep-modal .mbody { padding: 16px; }
 .app .modalbg:has(> .rk-prep-modal) { padding-top: 20px; padding-bottom: 20px; }
 .rk-prep { display: flex; flex-direction: column; gap: 12px; color: var(--gg-tx, #e0e6f0); font-family: var(--gg-f); }
@@ -22,14 +22,14 @@
 .app .rk-prep .rk-prep-k .rk-prep-edit { margin-left: auto; font-size: 12px; letter-spacing: 0; font-weight: 700; color: #93c5fd; }
 .rk-prep-sub { font-size: 11px; font-weight: 900; letter-spacing: 1.3px; color: var(--gg-mt, #64748b); margin-top: 6px; }
 .rk-prep-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.rk-prep-tiles > div { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rk-prep-tiles > div { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .rk-prep-tiles small, .rk-prep-form small, .rk-prep-who small { font-size: 10px; letter-spacing: 1.4px; color: var(--gg-mt, #64748b); font-weight: 800; }
 .rk-prep-tiles b { font-size: 18px; font-weight: 900; white-space: nowrap; }
 .rk-prep-tiles span { font-size: 11.5px; color: var(--gg-sl, #94a3b8); line-height: 1.3; }
 .rk-prep-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 2px 0; }
 .rk-prep-form small { margin-right: 2px; }
 .rk-prep-who { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.rk-prep-who > div { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rk-prep-who > div { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .rk-prep-who > div > div { display: flex; flex-direction: column; gap: 3px; }
 .rk-prep-person { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .app .rk-prep .rk-prep-person .link { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
@@ -44,7 +44,7 @@
 .rk-mu em { font-weight: 900; font-size: 12px; letter-spacing: 1px; white-space: nowrap; }
 .rk-prep-note.target { color: #86efac; } .rk-prep-note.watch { color: #fcd34d; }
 .rk-edge { font-style: normal; } .rk-edge.good { color: #22c55e; } .rk-edge.bad { color: #ef4444; } .rk-edge.even { color: #eab308; }
-.rk-check { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid #1e293b88; }
+.rk-check { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid #ffffff10; }
 .rk-check:first-of-type { border-top: none; }
 .rk-check-ico { width: 18px; text-align: center; font-size: 14px; font-weight: 900; flex-shrink: 0; }
 .rk-check.ok .rk-check-ico { color: var(--gg-gn, #22c55e); } .rk-check.open .rk-check-ico { color: #fbbf24; }
@@ -91,7 +91,7 @@
 .rk-injcard-head > div { flex: 1; min-width: 0; }
 .rk-injcard-head small { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1.4px; color: #fca5a5; }
 .rk-injcard-head b { font-size: 15px; font-weight: 800; }
-.app .rk-injcard .rk-injcard-x:not(.link) { width: 30px; min-height: 30px; padding: 0; font-size: 20px; line-height: 1; border-radius: 8px; border: 1px solid #334155; background: transparent; color: var(--gg-sl, #94a3b8); flex-shrink: 0; }
+.app .rk-injcard .rk-injcard-x:not(.link) { width: 30px; min-height: 30px; padding: 0; font-size: 20px; line-height: 1; border-radius: 8px; border: 1px solid #ffffff10; background: transparent; color: var(--gg-sl, #94a3b8); flex-shrink: 0; }
 .rk-injcard-body { overflow-y: auto; padding: 0 14px; }
 .rk-inj-sec { margin-top: 8px; }
 .rk-inj-k { font-size: 11px; font-weight: 900; letter-spacing: 1.3px; margin-bottom: 2px; }
@@ -103,7 +103,7 @@
 .rk-inj-who small { font-size: 12px; color: var(--gg-sl, #94a3b8); }
 .rk-list { font-size: 10.5px; font-weight: 900; letter-spacing: .5px; padding: 0 4px; border-radius: 4px; }
 .rk-list.ir { color: #c4b5fd; border: 1px solid #a855f766; } .rk-list.ltir { color: #f0abfc; border: 1px solid #d946ef66; }
-.app .rk-injcard .rk-inj-top .rk-inj-change:not(.link) { flex-shrink: 0; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 6px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+.app .rk-injcard .rk-inj-top .rk-inj-change:not(.link) { flex-shrink: 0; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 6px; background: #1f232b; border: 1px solid #ffffff10; color: #e2e8f0; }
 .rk-inj-sub { margin: 4px 0 0 34px; font-size: 12.5px; color: var(--gg-sl, #94a3b8); }
 .rk-inj-sub b { color: #e2e8f0; }
 .rk-inj-still { font-size: 13px; line-height: 1.5; }
@@ -115,7 +115,7 @@
 }
 
 /* ---------- Replacement picker ---------- */
-.app .rk-rep-modal { width: min(520px, calc(100vw - 20px)); background: #0b1220; position: relative; border-radius: 14px; }
+.app .rk-rep-modal { width: min(520px, calc(100vw - 20px)); background: #141820; position: relative; border-radius: 14px; }
 .app .rk-rep-modal .mbody { padding: 16px; }
 .rk-rep { display: flex; flex-direction: column; }
 .rk-rep-head { display: flex; align-items: center; gap: 8px; padding-right: 44px; }

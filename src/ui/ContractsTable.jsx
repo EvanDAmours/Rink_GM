@@ -61,7 +61,7 @@ export default function ContractsTable() {
       </div>
       {filter === "retained" ? (
         <section className="gg-card">
-          <div className="gg-k">RETAINED SALARY AND BUYOUTS <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· money on your cap for players who are gone</span></div>
+          <div className="gg-k">Retained salary and buyouts <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· money on your cap for players who are gone</span></div>
           {books.length ? <div className="ct-books">{books.map((d) => <React.Fragment key={d.id}><b>{d.name}</b><span className="dim">{d.label}{d.offset ? ` · starts in ${d.offset} season${d.offset > 1 ? "s" : ""}` : ""} · {d.yrs} season{d.yrs === 1 ? "" : "s"}</span><span className="ct-dead">{money(d.amt)}/yr</span></React.Fragment>)}</div> : <div className="ct-empty">No retained salary or buyouts on your books.</div>}
         </section>
       ) : <>
