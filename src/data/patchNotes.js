@@ -433,4 +433,9 @@ export const PATCH_NOTES = [
   { v: "1.79", date: "2026-10-26", title: "Faces, Not Sweaters", notes: [
     "Players without an NHL headshot now show a clean grey silhouette, tinted with their club's colour, instead of the generated sweater drawing. Real players still show their real faces.",
   ] },
+  { v: "1.80", date: "2026-10-26", title: "Club Colours", notes: [
+    "Every section opens on a header in your club's colours: big title, the numbers that matter for the screen you're on, and its screens as tabs. Phones get a compact version.",
+    "Draft › Scouting opens on a new Scouting HQ: your picks if the season ended today, the prospects worth a look in range of them, where the talent is this year, and your scouts at a glance.",
+    "Your scouts cover more ground: your senior scout works three regions, your second major scout two, each minor scout one, so 7 of 9 regions are covered. Older saves fill the new slots automatically.",
+  ] },
 ];

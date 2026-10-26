@@ -79,3 +79,4 @@ confirm the Pages deploy. Report real outcomes only.
 - 1.78 Lineup coach panel closed by default; one line shows the gap to the optimal lineup (greedy coach run: N changes,
   points short = rating + chemistry weighted by ice time) — Evan felt the endless swap ideas should be opt-in.
 - 1.79 Generated sweater art replaced everywhere by an NHL-style grey silhouette (Headshot.jsx Silhouette) when no headshot exists — Evan found the sweaters silly. Jersey.jsx kept only for the uniform designer.
+- 1.80 Section hero back as ONE component on every section (club colours, block title, tab-specific numbers, screens as underline tabs; compact on phones) — Evan wanted Gridiron's "character and life" while staying consistent (small-caps captions allowed in the hero). Scouting HQ rebuilt on Gridiron's layout. Scouts cover 3/2/1/1 regions (7 of 9) — 4 of 9 was too little coverage.
