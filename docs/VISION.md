@@ -84,3 +84,4 @@ confirm the Pages deploy. Report real outcomes only.
 - 1.82 Special-game cards: no emoji art, no flavour one-liner — Evan disliked both; revisit holiday games later.
 - 1.83 Development rows/sheets show position chip, OVR and draft year/round/pick (Who component) — Evan: "so we actually KNOW who we are developing". Real players' draft data still to be imported.
 - 1.84 Development rows in Gridiron's format (name + age · POS inline, short status, big OVR + change); Prospects as a grouped 3-column grid on one screen; replaces the 1.83 chip line — Evan wanted it formatted like Gridiron, keeping ONE focus player (football's offence/defence split doesn't apply).
+- 1.85 Real draft history for all 797 real players (NHL Stats API; 700 drafted, 97 undrafted; matched by NHL id), estimated (flagged est) for generated depth players without changing ratings — draft info is shown in player details.

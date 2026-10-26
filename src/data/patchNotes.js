@@ -452,4 +452,7 @@ export const PATCH_NOTES = [
     "Development has a cleaner look: every player shows his age and position next to his name, a short note on how he's doing, and his overall with the change coming.",
     "Prospects now fit on one screen, grouped by how each placement is going, with a one-tap Use every recommended placement in the preseason.",
   ] },
+  { v: "1.85", date: "2026-10-26", title: "Where They Were Drafted", notes: [
+    "Every NHL player now shows where he was really drafted: year, round, pick and club (Connor McDavid: 2015, first overall, Edmonton). Undrafted players like Artemi Panarin say so. Existing saves are filled in automatically.",
+  ] },
 ];
