@@ -38,7 +38,7 @@ export default function RegionalScouting() {
       <div className="sc-assign-grid">
         {SCOUT_SLOTS.map((role) => { const sc = s[role]; const reg = a[role]; const ps = byRegion[reg] || []; const done = ps.filter((p) => (p.scout?.lvl || 0) > 0).length; return (
           <div key={role} className={`sc-assign-card${sc ? "" : " empty"}`}>
-            <small className={role.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[role].name.toUpperCase()}</small>
+            <small className={role.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[role].name}</small>
             {sc ? <>
               <b>{sc.name}</b>
               <span className="muted small">{SCOUT_GROUPS[sc.group]} specialist · grade <b>{sc.eval}</b> · {gradeWord(sc.eval)} · {reportsPerWeek(sc.eval) + (sc.trait === "workhorse" ? 1 : 0)} reports a week</span>

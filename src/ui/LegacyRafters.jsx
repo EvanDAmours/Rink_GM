@@ -77,7 +77,7 @@ export function GmLegacy() {
   return show && (
     <div className="stack lg-gm">
       <div className="gg-legacy-hero lg-gm-hero"><div><span className="gg-k">GM legacy</span><h2>{c.tier}</h2><div className="dim small">Score {c.score} · #{c.rank} against the great NHL general managers</div></div>
-        <div className="gg-tiles"><div><small>SEASONS</small><b>{c.seasons}</b></div><div><small>RECORD</small><b>{c.w}-{c.l}</b></div><div><small>STANLEY CUPS</small><b>{c.cups.length}</b></div><div><small>PLAYOFF TRIPS</small><b>{c.playoffs}</b></div><div><small>AWARDS WON</small><b>{c.awards}</b></div></div></div>
+        <div className="gg-tiles"><div><small>Seasons</small><b>{c.seasons}</b></div><div><small>Record</small><b>{c.w}-{c.l}</b></div><div><small>Stanley Cups</small><b>{c.cups.length}</b></div><div><small>Playoff trips</small><b>{c.playoffs}</b></div><div><small>Awards won</small><b>{c.awards}</b></div></div></div>
       {c.draftees.length > 0 && <div className="gg-card"><div className="gg-k">Your best draft picks</div>{c.draftees.map((p) => <div key={p.id} className="small">{p.name} · {p.pos} · {p.draft.year} #{p.draft.pick} · peak {p.peak || p.ovr}</div>)}</div>}
       <div className="gg-card"><div className="gg-k">Against the greats</div>
         <div className="tablewrap"><table className="t"><thead><tr><th>#</th><th>GM</th><th>Club</th><th>Years</th><th className="num">Cups</th><th className="num">Score</th></tr></thead><tbody>

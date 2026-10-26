@@ -148,9 +148,9 @@ function UnitStats({ league }) {
         <span className="muted small">{S.gp} games · small numbers are the league average for the same unit</span>
       </div>
       <div className="gg-tiles">
-        <div><small>POWER PLAY</small><b>{f1(mine?.ppPct)}%</b><span className="dim small"> {mine?.ppGoals ?? 0}/{mine?.ppOpp ?? 0} · #{ppRank(mine || {})}</span></div>
-        <div><small>PENALTY KILL</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
-        <div><small>LEAGUE PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
+        <div><small>Power play</small><b>{f1(mine?.ppPct)}%</b><span className="dim small"> {mine?.ppGoals ?? 0}/{mine?.ppOpp ?? 0} · #{ppRank(mine || {})}</span></div>
+        <div><small>Penalty kill</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
+        <div><small>League PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
       </div>
       <Table
         columns={[

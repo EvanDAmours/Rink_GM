@@ -127,3 +127,9 @@ html.light .app.app.app button.rk-morecols { color: #475569; }
 .app.app .gg-roster-h span { background: #ffffff12; border-radius: 999px; padding: 1px 8px; color: #94a3b8; font-size: 12px; }
 html.light .app.app .gg-roster-h b { color: #0f172a; }
 .app.app .roster-controls .rk-morecols { margin-left: auto; }
+
+/* ---------- Captions over numbers: sentence case, no tracking (like Development's labels) ---------- */
+.app.app.app .main small, .app.app.app .modal small { letter-spacing: 0; }
+.app.app.app .gg-tiles small, .app.app.app .gg-pagehead .gg-tiles small { font-size: 12px; font-weight: 700; color: #94a3b8; }
+.app.app.app span.gg-k { letter-spacing: 0; text-transform: none; font-size: 13px; font-weight: 700; color: #94a3b8; }
+.app.app.app .gg-rec small { font-size: 12px; font-weight: 700; }

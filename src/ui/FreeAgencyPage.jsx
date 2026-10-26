@@ -144,7 +144,7 @@ export default function FreeAgencyPage() {
                 <span className="gg-faname"><b><PlayerName p={p} /><AbilityChip p={p} /><RoleTag p={p} /></b><small>{p.age} yrs · POT {p.pot}{p.rookie ? " · Rookie" : ""}{p.moveHistory?.at(-1)?.from === league.userTid && p.moveHistory.at(-1).year === league.year ? " · your former player" : ""}</small></span>
                 <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
                 <span className="gg-faask"><b>{money(ask.aav)}</b><small>× {ask.yrs} yr{ask.yrs > 1 ? "s" : ""}</small><MarketTag p={p} /></span>
-                <button className="small primary" disabled={!open} onClick={() => setOfferFor(p.id)}>{bidStanding(league, p.id)?.status === "pending" ? "Raise" : "Offer"}</button>
+                <button className="small" disabled={!open} onClick={() => setOfferFor(p.id)}>{bidStanding(league, p.id)?.status === "pending" ? "Raise" : "Offer"}</button>
               </div>
             );
           })}

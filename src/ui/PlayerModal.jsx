@@ -91,9 +91,9 @@ export default function PlayerModal({ pid }) {
           <div className="panel gg-pm-dev">
             <h3>Development</h3>
             <div className="gg-pm-dev-grid">
-              <div><small>THIS SEASON</small><b>{watch.level}</b><span className="dim small">{watch.line.text}{watch.farm ? ` · ${watch.role} role` : ""}</span></div>
-              <div><small>RATING</small><b style={{ color: watch.delta > 0 ? "#22c55e" : watch.delta < 0 ? "#ef4444" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span className="dim small">{watch.delta > 0 ? "+" : ""}{watch.delta} since camp · {watch.trend === "surging" ? "surging" : watch.trend === "up" ? "trending up" : watch.trend === "down" ? "slipping" : "holding"}</span></div>
-              <div><small>CEILING</small><b>{p.pot}</b><span className="dim small">ETA {watch.eta}{watch.drafted ? ` · drafted ${watch.drafted}` : ""}</span></div>
+              <div><small>This season</small><b>{watch.level}</b><span className="dim small">{watch.line.text}{watch.farm ? ` · ${watch.role} role` : ""}</span></div>
+              <div><small>Rating</small><b style={{ color: watch.delta > 0 ? "#22c55e" : watch.delta < 0 ? "#ef4444" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span className="dim small">{watch.delta > 0 ? "+" : ""}{watch.delta} since camp · {watch.trend === "surging" ? "surging" : watch.trend === "up" ? "trending up" : watch.trend === "down" ? "slipping" : "holding"}</span></div>
+              <div><small>Ceiling</small><b>{p.pot}</b><span className="dim small">ETA {watch.eta}{watch.drafted ? ` · drafted ${watch.drafted}` : ""}</span></div>
               <div className="gg-pm-dev-spark"><Sparkline path={watch.path} width={160} height={40} color={watch.delta > 0 ? "#22c55e" : watch.delta < 0 ? "#ef4444" : "#94a3b8"} /><span className="dim small">{watch.prod === "dominant" ? "Dominating his level" : watch.prod === "solid" ? "Holding his own" : watch.prod === "struggling" ? "Struggling at this level" : "Early in the season"}{watch.next ? ` · ${watch.next.label}` : ""}</span></div>
             </div>
             {(p.progress || []).filter((x) => x.year === league.year).length > 0 && <div className="dim small" style={{ marginTop: 8 }}>Growth this season: {(p.progress || []).filter((x) => x.year === league.year).map((x) => `wk ${x.week} ${x.from}→${x.to} (${x.note})`).join(" · ")}</div>}

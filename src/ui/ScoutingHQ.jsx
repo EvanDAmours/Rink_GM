@@ -116,7 +116,7 @@ export default function ScoutingHQ({ onBoard, onRegions, onList }) {
         <div className="sc-hq-scouts">
           {SCOUT_SLOTS.map((r) => { const sc = s[r]; return (
             <div key={r} className={`sc-hq-scout${sc ? "" : " empty"}`}>
-              <small className={r.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[r].name.toUpperCase()}</small>
+              <small className={r.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[r].name}</small>
               {sc ? <><b>{sc.name}</b><span>{REGIONS[assign[r]]?.name} · grade <b>{sc.eval}</b></span></> : <span className="dim">Vacant</span>}
             </div>); })}
         </div>

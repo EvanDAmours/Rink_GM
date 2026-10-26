@@ -15,10 +15,10 @@ export default function CapOverview() {
   return (
     <div className="stack gg-capov">
       <div className="gg-status-row gg-capov-tiles">
-        <section className="gg-stat" onClick={() => go("roster")}><small>CAP SPACE</small><div className="gg-stat-line"><b style={{ color: tone(o.space) }}>{money(o.space)}</b><span>of {money(o.cap)} · {o.active} on the active roster</span></div></section>
-        <section className="gg-stat"><small>NEXT SEASON'S ROOM</small><div className="gg-stat-line"><b style={{ color: tone(o.next.room) }}>{money(o.next.room)}</b><span>{o.next.signed} signed for {yr(o.next.year)}, before re-signings and rookies</span></div></section>
-        <section className="gg-stat"><small>DEAD MONEY</small><div className="gg-stat-line"><b>{money(o.dead)}</b><span>{o.dead ? "buyouts and retained salary" : "none on the books"}</span></div></section>
-        <section className="gg-stat" onClick={() => go("frontoffice")}><small>EXPIRING DEALS</small><div className="gg-stat-line"><b>{o.expiring}</b><span>after this season · see them →</span></div></section>
+        <section className="gg-stat" onClick={() => go("roster")}><small>Cap space</small><div className="gg-stat-line"><b style={{ color: tone(o.space) }}>{money(o.space)}</b><span>of {money(o.cap)} · {o.active} on the active roster</span></div></section>
+        <section className="gg-stat"><small>Next season's room</small><div className="gg-stat-line"><b style={{ color: tone(o.next.room) }}>{money(o.next.room)}</b><span>{o.next.signed} signed for {yr(o.next.year)}, before re-signings and rookies</span></div></section>
+        <section className="gg-stat"><small>Dead money</small><div className="gg-stat-line"><b>{money(o.dead)}</b><span>{o.dead ? "buyouts and retained salary" : "none on the books"}</span></div></section>
+        <section className="gg-stat" onClick={() => go("frontoffice")}><small>Expiring deals</small><div className="gg-stat-line"><b>{o.expiring}</b><span>after this season · see them →</span></div></section>
       </div>
       <section className="gg-card">
         <div className="gg-k">The long view <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· money already committed against each season's cap. Re-signings, rookies and free agents come out of the room.</span></div>

@@ -120,14 +120,14 @@ export default function PlayerCard({ p, retired = null }) {
           {ranks.map((r) => <span key={r.key} className="lg-chip rank" title={`${r.value.toLocaleString("en-US")} with the club`}>#{r.rank} in {r.club} {r.label.toLowerCase()}</span>)}
         </div>}
         {retired && <div className="gg-pc-tiles">
-          <div><small>CAREER</small><b>{goalie ? `${totals.w} W` : `${totals.pts} PTS`}</b><span>{totals.gp} GP{goalie ? ` · ${totals.so} SO` : ` · ${totals.g} G · ${totals.a} A`}</span></div>
-          <div><small>PEAK</small><b>{retired.peak}</b><span>best overall rating</span></div>
-          <div><small>LEGACY</small><b>{retired.legacy ?? "—"}</b><span>{retired.pre ? `incl. ${retired.pre} from his pre-league career` : "Hall of Fame score"}</span></div>
+          <div><small>Career</small><b>{goalie ? `${totals.w} W` : `${totals.pts} PTS`}</b><span>{totals.gp} GP{goalie ? ` · ${totals.so} SO` : ` · ${totals.g} G · ${totals.a} A`}</span></div>
+          <div><small>Peak</small><b>{retired.peak}</b><span>best overall rating</span></div>
+          <div><small>Legacy</small><b>{retired.legacy ?? "—"}</b><span>{retired.pre ? `incl. ${retired.pre} from his pre-league career` : "Hall of Fame score"}</span></div>
         </div>}
         {!retired && <div className="gg-pc-tiles">
-          <div><small>TRADE VALUE</small><b>{value == null ? "—" : value}</b><span>what clubs see</span></div>
-          <div><small>WANTS</small><b className="want">{WANTS[prefs.priority][0]}</b><span>{WANTS[prefs.priority][1]}</span></div>
-          <div><small>AGENT</small><b className="agent">{prefs.personality}</b><span>{AGENT[prefs.personality]}</span></div>
+          <div><small>Trade value</small><b>{value == null ? "—" : value}</b><span>what clubs see</span></div>
+          <div><small>Wants</small><b className="want">{WANTS[prefs.priority][0]}</b><span>{WANTS[prefs.priority][1]}</span></div>
+          <div><small>Agent</small><b className="agent">{prefs.personality}</b><span>{AGENT[prefs.personality]}</span></div>
         </div>}
         <div className="gg-pc-cols">
           <div className="gg-pc-col">
@@ -156,17 +156,17 @@ export default function PlayerCard({ p, retired = null }) {
             </section>}
             {watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">Development</div>
               <div className="gg-pc-devgrid">
-                <div><small>RATING</small><b style={{ color: watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span>{watch.delta > 0 ? "+" : ""}{watch.delta} since camp</span></div>
-                <div><small>CEILING</small><b>{p.pot}</b><span>ETA {watch.eta}</span></div>
+                <div><small>Rating</small><b style={{ color: watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span>{watch.delta > 0 ? "+" : ""}{watch.delta} since camp</span></div>
+                <div><small>Ceiling</small><b>{p.pot}</b><span>ETA {watch.eta}</span></div>
                 <div className="spark"><Sparkline path={watch.path} width={140} height={36} color={watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#94a3b8"} /><span>{watch.prod === "dominant" ? "Dominating his level" : watch.prod === "solid" ? "Holding his own" : watch.prod === "struggling" ? "Struggling at this level" : "Early in the season"}{watch.next ? ` · ${watch.next.label}` : ""}</span></div>
               </div>
               {(p.farmHistory || []).length > 0 && <table className="gg-pc-table"><thead><tr><th>Year</th><th>League</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th></>}</tr></thead><tbody>{[...p.farmHistory].reverse().map((h, i) => <tr key={i}><td>{h.year}</td><td>{h.lg}</td><td className="num">{h.gp}</td>{goalie ? <><td className="num">{h.w}</td><td className="num">{h.sa ? pct((h.sa - h.ga) / h.sa) : "—"}</td></> : <><td className="num">{h.g}</td><td className="num">{h.a}</td><td className="num">{h.g + h.a}</td></>}</tr>)}</tbody></table>}
             </section>}
             {!watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">Development</div>
               <div className="gg-pc-devrow">
-                <div><small>TRAIT</small><b>{DEV_TRAITS[p.dev]?.name || "—"}</b><span>{p.dev === "generational" ? "ages slowest" : p.dev === "superstar" ? "longer prime" : p.dev === "late" ? "surges at 22-25" : p.age <= 25 ? "still growing" : "set"}</span></div>
-                <div><small>CEILING</small><b>{p.pot}</b><span>{p.pot > p.ovr ? `${p.pot - p.ovr} to go` : "at his ceiling"}</span></div>
-                <div><small>PRIME</small><b>{p.age <= prime ? `to ${prime}` : "past it"}</b><span>{p.age > prime ? `since ${prime + 1}` : `${prime - p.age} yr${prime - p.age === 1 ? "" : "s"} left`}</span></div>
+                <div><small>Trait</small><b>{DEV_TRAITS[p.dev]?.name || "—"}</b><span>{p.dev === "generational" ? "ages slowest" : p.dev === "superstar" ? "longer prime" : p.dev === "late" ? "surges at 22-25" : p.age <= 25 ? "still growing" : "set"}</span></div>
+                <div><small>Ceiling</small><b>{p.pot}</b><span>{p.pot > p.ovr ? `${p.pot - p.ovr} to go` : "at his ceiling"}</span></div>
+                <div><small>Prime</small><b>{p.age <= prime ? `to ${prime}` : "past it"}</b><span>{p.age > prime ? `since ${prime + 1}` : `${prime - p.age} yr${prime - p.age === 1 ? "" : "s"} left`}</span></div>
               </div>
               {(role || grew) && <div className="gg-pc-role">{role && <span>Role: <b>{ROLE_NAME[role.role]}</b>{role.pp >= 0.5 ? " · power play" : ""}{role.pk >= 0.5 ? " · penalty kill" : ""}</span>}{grew && <span className="grew" title="He played this role all last season and grew into it over the summer: its skills came along faster.">↗ grew into {ROLE_NAME[grew].toLowerCase()} role</span>}</div>}
               {summer && summer.notes.length > 0 && <div className="gg-pc-summer"><b>This summer:</b> {summer.from} → {summer.to} · {summer.notes.join(" · ")}</div>}
