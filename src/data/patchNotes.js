@@ -364,4 +364,16 @@ export const PATCH_NOTES = [
     "On phones, your trade sits in a tray pinned above the tab bar, free agency shows the top rival bid on each of your offers, and big sims like Sim to Deadline take a second tap.",
     "Fixed: Draft Recap no longer crashes before your first draft, and League awards keeps the Legacy Hall header.",
   ] },
+  { v: "1.65", date: "2026-10-26", title: "The Real Market", notes: [
+    "Contracts now follow the real NHL market: what a player asks depends on where he ranks at his position, priced against real 2025-26 cap hits and scaled with the cap.",
+    "Veterans cost less as they age (goalies age later), young stars want 6-8 years, players 35 and over sign for one year, and deals go up to 8 years with your own club or 7 in free agency.",
+    "Entry-level deals pay top picks more than late picks.",
+    "Head coaches now have contracts and retire when a deal ends at the end of their career, and you're told first: on the Coaching page, on Home and on the league wire. You can extend your coach, but not past his retirement.",
+  ] },
+  { v: "1.66", date: "2026-10-26", title: "At the Table", notes: [
+    "Contract talks have a new table: a chat with his agent, what he wants most and how your club fits, where your offer would rank among every contract at his position, and the asking price for each length.",
+    "His patience shows as three bars, so you know how many offers you have left before he walks away. You can accept his counter in one tap.",
+    "The Winter Classic, Stadium Series, Heritage Classic, Hockey Day in Canada, Thanksgiving Showdown, New Year's Eve and Halloween games now get a title card the night before puck drop.",
+    "After a special game, the player of the game takes the spotlight in his sweater with the final score behind him. These cards wait until your sim finishes and never stop it.",
+  ] },
 ];
