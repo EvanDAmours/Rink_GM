@@ -1,3 +1,4 @@
+import { Portal } from "./common.jsx";
 import React from "react";
 import { useGame, TeamBadge } from "./common.jsx";
 import { trophyUrl } from "./trophies.js";
@@ -9,7 +10,7 @@ export default function NewsPaper({ paper, onClose }) {
   const team = (tid) => (tid != null ? league.teams[tid] : null);
   const p1 = team(paper.photo?.tid), p2 = team(paper.photo2?.tid);
   return (
-    <div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`gg-paper kind-${paper.kind}`} role="dialog" aria-label={`${paper.edition} newspaper`}>
         <div className="gg-paper-mast">
           <div className="gg-paper-ear"><i>“All the Hockey That’s Fit to Print”</i></div>
@@ -38,5 +39,6 @@ export default function NewsPaper({ paper, onClose }) {
       </div>
       <button className="gg-paper-btn" onClick={onClose}>{paper.button || "Continue →"}</button>
     </div>
+    </Portal>
   );
 }

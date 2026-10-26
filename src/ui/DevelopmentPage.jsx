@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useGame, PlayerName, ovrColor } from "./common.jsx";
+import { useGame, PlayerName, ovrColor, Dialog, DBtn } from "./common.jsx";
 import Select from "./Select.jsx";
 import { TRAINING, setTraining } from "../engine/franchise.js";
 import { isGoalie } from "../engine/constants.js";
@@ -27,7 +27,7 @@ function SummerReport() {
   const shown = [...mine, ...(all ? rest : rest.slice(0, 5))];
   return (
     <section className="gg-card gg-dev-report">
-      <div className="gg-k">OFF-SEASON REPORT <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· milestones, league leaders, breakouts and roles from the {league.year - 1}-{String(league.year).slice(2)} season</span></div>
+      <div className="gg-k">Off-season report <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· milestones, league leaders, breakouts and roles from the {league.year - 1}-{String(league.year).slice(2)} season</span></div>
       {shown.map((r) => { const t = league.teams[r.tid]; return (
         <div key={r.pid} className="gg-dev-rep-row">
           <PosBadge pos={r.pos} />
@@ -71,7 +71,7 @@ export default function DevelopmentPage() {
       <SummerReport />
       <ProspectWatch />
       <section className="gg-card gg-dev-plan">
-        <div className="gg-k">THE PLAN <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· your staff gives {FOCUS_SLOTS} players individual attention each week; banked work pays out at season rollover</span>
+        <div className="gg-k">The plan <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· your staff gives {FOCUS_SLOTS} players individual attention each week; banked work pays out at season rollover</span>
           {used < FOCUS_SLOTS && <button className="small primary" style={{ marginLeft: "auto" }} onClick={() => act(autoFocus(league))}>Auto-fill {FOCUS_SLOTS - used} slot{FOCUS_SLOTS - used === 1 ? "" : "s"}</button>}</div>
         <div className="gg-dev-slots">
           {plan.map((p) => { const w = focusWork(league, t, p).find((x) => x.focus === assigned[p.id]); return (
@@ -111,8 +111,8 @@ export default function DevelopmentPage() {
         })}
         {!rows.length && <div className="gg-empty"><i>🧪</i><b>Nobody matches</b>Try another filter.</div>}
       </div>
-      {t.training.campReport?.length > 0 && <section className="gg-card"><div className="gg-k">CAMP REPORT</div>{t.training.campReport.map((r) => <div className="gg-inj" key={r.pid}><b>{r.name}</b><span className="dim">{TRAINING[r.focus].name}</span><span className="mono" style={{ marginLeft: "auto" }}>{r.before} → {r.after}</span></div>)}</section>}
-      {posTrain && <div className="modalbg" onMouseDown={(e) => e.target === e.currentTarget && setPosTrain(null)}><div className="modal" role="dialog" aria-label="Position training" style={{ maxWidth: 420 }}><div className="mbody stack"><h3 style={{ margin: 0 }}>Move {posTrain.name} ({posTrain.pos})</h3><div className="dim small">Eight healthy weeks of training; his archetype and overall are re-read at the new spot.</div><div className="gg-chips">{["C", "LW", "RW", "LD", "RD"].filter((x) => x !== posTrain.pos).map((x) => <button key={x} onClick={() => { act(requestPosition(league, posTrain.id, x)); setPosTrain(null); }}>{x}</button>)}</div><button className="ghost" onClick={() => setPosTrain(null)}>Cancel</button></div></div></div>}
+      {t.training.campReport?.length > 0 && <section className="gg-card"><div className="gg-k">Camp report</div>{t.training.campReport.map((r) => <div className="gg-inj" key={r.pid}><b>{r.name}</b><span className="dim">{TRAINING[r.focus].name}</span><span className="mono" style={{ marginLeft: "auto" }}>{r.before} → {r.after}</span></div>)}</section>}
+      {posTrain && <Dialog title={`Move ${posTrain.name} (${posTrain.pos})`} sub="Eight healthy weeks of training; his archetype and overall are re-read at the new spot." onClose={() => setPosTrain(null)} actions={<DBtn onClick={() => setPosTrain(null)}>Cancel</DBtn>}><div className="gg-chips">{["C", "LW", "RW", "LD", "RD"].filter((x) => x !== posTrain.pos).map((x) => <button key={x} onClick={() => { act(requestPosition(league, posTrain.id, x)); setPosTrain(null); }}>{x}</button>)}</div></Dialog>}
     </div>
   );
 }

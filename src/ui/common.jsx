@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useRef, useId } from "react";
+import { createPortal } from "react-dom";
 import {teamLogoUrl} from "./logos.js";
 import {useDialogFocus} from "./accessibility.js";
 import Icon from "./Icon.jsx";
@@ -50,31 +51,65 @@ export function TeamName({ tid, short = false }) {
 
 export const money = fmtMoney;
 
+// Every popup is drawn at the top of the page (a portal to document.body), so one opened inside a
+// transformed or sticky block still sits over everything. The wrapper keeps the app's classes
+// (display: contents, so it adds no box) and the stylesheets' ".app …" rules still reach it.
+export function Portal({ children }) {
+  if (typeof document === "undefined") return children;
+  const root = document.querySelector(".app:not(.rk-portal)");
+  const cls = `app rk-portal${document.documentElement.classList.contains("rk-phone") ? " rk-phone-app" : ""}`;
+  return createPortal(<div className={cls} style={{ display: "contents" }} data-density={root?.dataset.density} data-text-size={root?.dataset.textSize} data-motion={root?.dataset.motion}>{children}</div>, document.body);
+}
+
 // On phones (760px and narrower) a dialog is a bottom sheet that slides up; drag its grip or
-// header down to close it (sheet={false} keeps it a centred dialog, as search does).
+// header down to close it (sheet={false} keeps it a centred dialog, as search does). On a computer
+// it is a centred dialog over a blurred backdrop. No onClose: it has to be answered (no X, no tap-out).
 export function Modal({ title, onClose, children, head, bare = false, className = "", sheet = true }) {
-  const ref=useRef(null),id=useId();useDialogFocus(ref,onClose);
+  const close = onClose || (() => {});
+  const ref=useRef(null),id=useId();useDialogFocus(ref,close);
   const drag=useRef(null);
-  const grip=sheet?{
+  const grip=sheet && onClose?{
     onTouchStart:(e)=>{drag.current={y:e.touches[0].clientY,dy:0};},
     onTouchMove:(e)=>{const d=drag.current;if(!d)return;d.dy=Math.max(0,e.touches[0].clientY-d.y);if(ref.current)ref.current.style.transform=d.dy?`translateY(${d.dy}px)`:"";},
     onTouchEnd:()=>{const d=drag.current;drag.current=null;if(ref.current)ref.current.style.transform="";if(d && d.dy>70)onClose();},
   }:{};
   return (
-    <div className={`modalbg${sheet?" rk-sheetbg":""}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <Portal>
+    <div className={`modalbg${sheet?" rk-sheetbg":""}`} onMouseDown={(e) => onClose && e.target === e.currentTarget && onClose()}>
       <div ref={ref} className={`modal${sheet?" rk-sheet":""} ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} tabIndex={-1}>
         {/* the grip (phones only) carries a bare dialog's close button, so it stays at the top of the sheet */}
-        {sheet && <div className="rk-grip" {...grip}><span aria-hidden="true"/>{bare && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</div>}
-        {bare ? <><span id={id} className="sr-only">{title}</span>{!sheet && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</> : <div className="mhead" {...grip}>
+        {sheet && <div className="rk-grip" {...grip}><span aria-hidden="true"/>{bare && onClose && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</div>}
+        {bare ? <><span id={id} className="sr-only">{title}</span>{!sheet && onClose && <button className="close ghost gg-bare-close" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}</> : <div className="mhead" {...grip}>
           {head}
           <div id={id} className="modal-title">{title}</div>
-          <button className="close ghost" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>
+          {onClose && <button className="close ghost" aria-label="Close dialog" onClick={onClose}><Icon name="close"/></button>}
         </div>}
         <div className="mbody">{children}</div>
       </div>
     </div>
+    </Portal>
   );
 }
+
+// The shared popup frames (from the football game): Sheet is a plain titled popup (560px on a
+// computer, 820 with wide), Dialog a decision with an optional line under the title and its
+// buttons in one row at the bottom, DBtn those buttons (primary green, danger, gold or quiet).
+export function Sheet({ title, onClose, children, wide, className = "" }) {
+  return <Modal title={title} onClose={onClose} className={`rk-soft${wide ? " rk-wide" : ""} ${className}`}>{children}</Modal>;
+}
+export function Dialog({ title, sub, onClose, children, actions, wide, className = "" }) {
+  return (
+    <Sheet title={title} onClose={onClose} wide={wide} className={className}>
+      {sub && <div className="rk-dsub">{sub}</div>}
+      {children}
+      {actions && <div className="rk-dactions">{actions}</div>}
+    </Sheet>
+  );
+}
+export function DBtn({ kind = "quiet", onClick, disabled, children, title, grow = true, style, autoFocus }) {
+  return <button type="button" className={`rk-dbtn ${kind}${grow ? " grow" : ""}`} onClick={onClick} disabled={disabled} title={title} style={style} autoFocus={autoFocus}>{children}</button>;
+}
+export const softBox = { background: "#ffffff0d", borderRadius: 14, padding: "12px 14px" };
 
 // Sortable table. columns: [{ key, label, render(row), sort(row) -> value, num, title }]
 export function Table({ columns, rows, initialSort, rowClass, limit, empty = "Nothing to show.", dense }) {

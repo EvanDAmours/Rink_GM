@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGame, PlayerName, money, ovrColor } from "./common.jsx";
+import { useGame, PlayerName, money, ovrColor, Dialog, DBtn } from "./common.jsx";
 import Select from "./Select.jsx";
 import { TRAINING } from "../engine/franchise.js";
 import { isGoalie } from "../engine/constants.js";
@@ -18,16 +18,14 @@ const youngTag = (p, farm) => (farm ? <em className="gg-focus-tag prospect" titl
 
 function PracticeReport({ game, onClose }) {
   return (
-    <div className="modalbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal gg-report" role="dialog" aria-label="Practice report">
-        <div className="gg-report-h">📋 PRACTICE REPORT — {game.us}-{game.them}{game.ot ? " (OT)" : ""} {game.home ? "vs" : "@"} {game.opp}</div>
-        <div className="gg-k" style={{ color: "#7dd3fc" }}>STANDOUT PERFORMANCES</div>
+    <Dialog title={`Practice report: ${game.us}-${game.them}${game.ot ? " (OT)" : ""} ${game.home ? "vs" : "@"} ${game.opp}`} onClose={onClose} actions={<DBtn kind="primary" onClick={onClose}>Close</DBtn>}>
+      <div className="gg-report">
+        <div className="gg-k" style={{ color: "#7dd3fc" }}>Standout performances</div>
         {game.lines.map((l) => <div key={l.id} className="gg-camp-line"><span className="gg-grade-chip" style={{ color: gradeColor(l.grade), borderColor: gradeColor(l.grade) }}>{l.grade}</span><b>{l.name}</b><span className="dim">{l.pos}</span><span className="muted">{l.sa ? `${l.sv}/${l.sa} saves` : `${l.g}G ${l.a}A · ${l.sog} SOG · ${l.pm > 0 ? "+" : ""}${l.pm}`}</span></div>)}
-        {game.bonuses.length > 0 && <><div className="gg-k" style={{ color: "#22c55e", marginTop: 8 }}>DEVELOPMENT EARNED</div>{game.bonuses.map((b, i) => <div key={i} className="small good">{b.gain ? "▲ +1 OVR" : "+ camp credit"} → {b.name} ({b.pos}) · grade {b.grade}</div>)}</>}
+        {game.bonuses.length > 0 && <><div className="gg-k" style={{ color: "#22c55e", marginTop: 8 }}>Development earned</div>{game.bonuses.map((b, i) => <div key={i} className="small good">{b.gain ? "▲ +1 OVR" : "+ camp credit"} → {b.name} ({b.pos}) · grade {b.grade}</div>)}</>}
         {game.hurt?.length > 0 && <div className="small bad" style={{ marginTop: 6 }}>🚑 Injured: {game.hurt.join(", ")}</div>}
-        <button style={{ width: "100%", marginTop: 10 }} onClick={onClose}>CLOSE</button>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -80,7 +78,7 @@ export default function TrainingCamp() {
 
   return (
     <div className="gg-camp3 stack">
-      <div className="gg-camp2-h"><h3>Training Camp</h3><span>Season points <b>{gm.sp} SP</b></span></div>
+      <div className="gg-camp2-h"><h3>Training camp</h3><span>Season points <b>{gm.sp} SP</b></span></div>
       <div className="gg-camp3-top">
         <section className="gg-camp3-card">
           <div className="gg-camp3-t"><b>Preseason games {camp.games.length}/{CAMP_GAMES}</b><span>{camp.risk ? "Injury risk is on." : "Standout young players earn development."}</span></div>

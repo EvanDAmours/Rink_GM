@@ -1,3 +1,4 @@
+import { Portal } from "./common.jsx";
 import React from "react";
 import { useGame, TeamBadge } from "./common.jsx";
 import Headshot from "./Headshot.jsx";
@@ -32,7 +33,7 @@ export default function SeriesPaper({ paper, onClose }) {
   const road = (league.playoffs?.rounds || []).flatMap((r, i) => r.filter((s) => i <= paper.round && (s.top === w.id || s.bot === w.id) && s.winner != null).map((s) => ({ round: i, opp: league.teams[s.top === w.id ? s.bot : s.top], won: s.winner === w.id, score: s.winner === w.id ? `${Math.max(s.wTop, s.wBot)}-${Math.min(s.wTop, s.wBot)}` : `${Math.min(s.wTop, s.wBot)}-${Math.max(s.wTop, s.wBot)}` })));
   const cups = paper.titles ?? (league.history || []).filter((h) => h.champion === w.id).length + (paper.round === 3 ? 1 : 0);
   return (
-    <div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && close()}>
+    <Portal><div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && close()}>
       {ours && <div className="cup-paper-confetti" aria-hidden><Confetti colors={[clr, ac, "#e5e7eb", "#cbd5e1", "#ffffff"]} /></div>}
       <div className="gg-paper" role="dialog" aria-label="Series newspaper">
         <div className="gg-paper-mast">
@@ -73,5 +74,6 @@ export default function SeriesPaper({ paper, onClose }) {
       </div>
       <button className="gg-paper-btn" onClick={close}>{paper.round === 3 ? "Continue to the awards →" : "Continue →"}</button>
     </div>
+    </Portal>
   );
 }
