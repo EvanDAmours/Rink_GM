@@ -1,9 +1,7 @@
 import {chemistry,chemKey} from "./chemistry.js";
 import {stream,clamp,hashStr} from "./rng.js";
 import {isGoalie,isDefense} from "./constants.js";
-import {defaultArchetype,computeOvr} from "./ratings.js";
-import {syncLines,autoLines} from "./lines.js";
-import {callUp,sendDown,canSendDown,capSpace,counts,logTx} from "./roster.js";
+import {computeOvr} from "./ratings.js";
 import {verifiedRating} from "./verifiedData.js";
 import {rollDev,DEV_RANK,primeEnd,growBy} from "./players.js";
 
@@ -224,15 +222,14 @@ export function developmentWeek(lg) {
     for(const line of [...(t.lines?.F || []),...(t.lines?.D || [])]){const key=chemKey(line);t.lineExperience[key]=Math.min(26,Math.max(t.lineExperience[key] || 0,t.lineExperience[line.join("|")] || 0)+elapsed);}
     for(const id of [...t.roster,...t.prospects]){
       const p=lg.players[id];if(!p)continue;
-      if(p.positionTraining && !p.injury){p.positionTraining.weeks+=elapsed;if(p.positionTraining.weeks>=8){
-        const to=p.positionTraining.to;p.naturalPos ||= p.pos;p.pos=to;p.type=defaultArchetype(to);delete p.ovrOffset;p.ovr=Math.min(99,Math.max(40,computeOvr(p.attrs,p.type)+(p.ovrOffset || 0)));p.pot=Math.max(p.pot,p.ovr);delete p.positionTraining;
-        if(t.lines){t.lines.F=t.lines.F.map(line=>line.map(x=>x===id?null:x));t.lines.D=t.lines.D.map(line=>line.map(x=>x===id?null:x));syncLines(lg,t);}
-        logTx(lg,`${p.name} completes position training at ${to}`,[t.id]);
-      }}
       if(!t.prospects.includes(id) || p.injury>0)continue;
       if(p.farmStats && p.farmStats.year!==lg.year)p.farmStats=null;const st=p.farmStats ||= {gp:0,g:0,a:0,w:0,sa:0,ga:0,year:lg.year};
       const role=p.farmRole || "middle",usage=role==="top"?1.15:role==="depth"?.7:1;
       const r=stream(`${id}|farm|${lg.year}|${week}`);
+      // Your placement's outcome (rolled at week 4) shows in his numbers: a thriving prospect
+      // produces about 15% more, a struggling one 15% less.
+      const pl=t.id===lg.userTid && p.placement?.year===lg.year ? p.placement.outcome : null;
+      const nudge=pl==="thrive"?1.15:pl==="struggle"?.85:1;
       // Games this week at his level: AHL/junior clubs play about twice a week, college
       // closer to once, Europe in between. Goalies share the crease by role.
       const perWeek=p.assignment==="college"?1.2:p.assignment==="europe"?1.6:p.assignment==="junior"?2.3:2;
@@ -250,14 +247,15 @@ export function developmentWeek(lg) {
       if(isGoalie(p.pos)){
         // Save percentage tracks how far above the level he is; wins follow it.
         const level=p.assignment==='ahl'?72:p.assignment==='europe'?70:p.assignment==='college'?66:62;
-        const sv=clamp(.893+(p.ovr-level)*.0022+(r.next()-.5)*.012,.86,.94);
+        const sv=clamp(.893+(p.ovr-level)*.0022+(nudge-1)*.04+(r.next()-.5)*.012,.86,.94);
         const sa=games*(26+Math.round(r.next()*8));st.sa+=sa;st.ga+=Math.round(sa*(1-sv));
-        st.w+=Math.round(games*clamp(.3+(sv-.9)*6,.15,.8));
+        // Fractional carry: one start a week used to round every week's wins down to none.
+        st.wx=(st.wx || 0)+games*clamp(.3+(sv-.9)*6,.15,.8);const wins=Math.min(games,Math.floor(st.wx));st.wx-=wins;st.w+=wins;
       } else {
         // Points per game against the level he is playing at, then a position/type goal share.
         const level=p.assignment==='ahl'?70:p.assignment==='europe'?68:p.assignment==='college'?64:60;
         const base=isDefense(p.pos)?.35:.75;
-        const ppg=clamp(base+(p.ovr-level)*.045*usage,.05,2.2);
+        const ppg=clamp((base+(p.ovr-level)*.045*usage)*nudge,.05,2.2);
         // Fractional carry so a defenceman's goals and a depth forward's points add up
         // over a season instead of rounding away each week.
         st.px=(st.px || 0)+games*ppg*(.7+r.next()*.6);const pts=Math.floor(st.px);st.px-=pts;
@@ -276,22 +274,5 @@ export function usageGrowth(lg,p) {
   const s=p.stats;
   const share=isGoalie(p.pos)?s.gp/45:s.gp?Math.min(1,s.toi/s.gp/(isDefense(p.pos)?1200:900)):0;
   return clamp((share-.45)*.65,-.25,.45);
-}
-export function requestPosition(lg,pid,to) {
-  const p=lg.players[pid];if(!p || p.tid!==lg.userTid || p.pos==="G" || !["C","LW","RW","LD","RD"].includes(to) || to===p.pos)return {ok:false,msg:"Choose another skater position."};
-  if(p.positionTraining)return {ok:false,msg:"A position course is already in progress."};
-  p.positionTraining={to,weeks:0};return {ok:true,msg:`Eight healthy scouting weeks of training started at ${to}.`};
-}
-export function runCampBattles(lg) {
-  const t=lg.teams[lg.userTid];if(lg.phase!=="preseason" || t.battlesYear===lg.year)return {ok:false,msg:"Camp battles run once each preseason."};
-  const reports=[];
-  for(const pos of ["C","LW","RW","LD","RD","G"]){
-    const candidates=[...t.roster,...t.prospects].map(id=>lg.players[id]).filter(p=>p && p.pos===pos && !p.injury && !p.ltir).sort((a,b)=>b.ovr-a.ovr);
-    const pair=candidates.filter(p=>p.age<=25).slice(0,2);if(pair.length<2 || Math.abs(pair[0].ovr-pair[1].ovr)>5)continue;
-    const scores=pair.map(p=>({p,score:p.ovr+stream(`${p.id}|battle|${lg.year}`).next()*5})).sort((a,b)=>b.score-a.score);
-    const winner=scores[0].p;reports.push({pos,winner:winner.id,name:winner.name,other:scores[1].p.name});
-    if(t.prospects.includes(winner.id) && counts(lg,t).active<23 && capSpace(lg,t)>=winner.cap)callUp(lg,t,winner.id);
-  }
-  t.battlesYear=lg.year;t.battleReport=reports;return {ok:true,msg:`Camp resolved ${reports.length} position battles. Promotions respect cap, roster and waiver constraints.`};
 }
 export function resetDevelopment(lg){for(const t of lg.teams)t.farmWeek=0;for(const p of Object.values(lg.players)){if(p.farmStats){(p.farmHistory ||= []).push(p.farmStats);delete p.farmStats;}p.farmWork=0;}ensureDevelopment(lg);}

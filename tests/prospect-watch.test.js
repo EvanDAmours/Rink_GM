@@ -55,5 +55,6 @@ test("a prospect report flags decisions and never pauses the sim", () => {
   assert.ok(r.flags.includes("NHL ready"));
   const moved = inSeasonGrowth(l);
   assert.ok(Array.isArray(moved));
-  assert.ok((l.inbox || []).some((m) => /Prospect report/.test(m.text)) || Math.floor(l.day / 7) < 4, "a monthly prospect report reaches the inbox");
+  // The monthly prospect report is now the Development report's one inbox line.
+  assert.ok((l.inbox || []).some((m) => /^📈 Development/.test(m.text) && m.open?.tab === "development") || Math.floor(l.day / 7) < 4, "a monthly development line reaches the inbox");
 });

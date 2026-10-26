@@ -1,10 +1,10 @@
 import {REAL_COACHES,COACH_SOURCE} from "../data/realCoaches.js";
 import {ensureDevelopment} from "./development.js";
+import {ensureDevPlan} from "./developmentPlan.js";
 import {ensureCoachContracts,ensureCoachContract} from "./coachContracts.js";
 import { stream, clamp } from "./rng.js";
 import { teamRatings } from "./lines.js";
-import { isGoalie, isDefense } from "./constants.js";
-import { computeOvr } from "./ratings.js";
+import { isGoalie } from "./constants.js";
 import { logTx } from "./roster.js";
 
 export const COACH_STYLES = {
@@ -29,7 +29,6 @@ export function ensureFranchise(league) {
   ensureDevelopment(league);
   for (const t of league.teams) {
     if(!t.coach){t.coach=coach(`${league.startYear || league.year}|coach|${t.id}`);if(league.mode==="real" && league.year===2026){t.coach.name=REAL_COACHES[t.abbr];t.coach.real=true;t.coach.source=COACH_SOURCE;}t.coach.hiredYear=league.year;}
-    t.training ||= {assignments:{},earned:{},paid:0,campYear:null};
     t.owner ||= {trust:65,fanSupport:60,reviews:[]};
     if (!t.owner.goal || t.owner.goal.year!==league.year) {
       const ovr=teamRatings(league,t).ovr;
@@ -41,6 +40,8 @@ export function ensureFranchise(league) {
   ensureCoachContracts(league);
   league.news ||= [];
   league.achievements ||= [];
+  // Your season plan (focus player, camp priority, prospect placements), and older saves' reshape.
+  ensureDevPlan(league);
 }
 export function hireCoach(league, id) {
   const interim=league.teams[league.userTid].coach?.interim;
@@ -105,28 +106,10 @@ export function aiCoachingChanges(league) {
     if(league.coachChanges[league.year]>=3)return;
   }
 }
-export function setTraining(league, pid, focus) {
-  const t=league.teams[league.userTid],p=league.players[pid];
-  if (!p || p.tid!==t.id || ![...t.roster,...t.prospects].includes(pid)) return {ok:false,msg:"Choose one of your players."};
-  if (focus && (!TRAINING[focus] || (isGoalie(p.pos)!==(focus==="goaltending")))) return {ok:false,msg:"Choose a position-appropriate training focus."};
-  const a=t.training.assignments;
-  if (focus && !a[pid] && Object.keys(a).filter(id=>league.players[id]?.tid===t.id).length>=3) return {ok:false,msg:"Your staff can give three players individual attention."};
-  if(focus)a[pid]=focus;else delete a[pid];return {ok:true,msg:focus?`${p.name}: ${TRAINING[focus].name}.`:`Individual focus cleared for ${p.name}.`};
-}
 export function franchiseWeek(league) {
   ensureFranchise(league);
   const week=Math.floor(league.day/7);
   for(const t of league.teams) {
-    const tr=t.training;
-    if(week>tr.paid) {
-      const n=week-tr.paid;
-      for(const [id,focus] of Object.entries(tr.assignments)) {
-        const p=league.players[id];if(!p || p.tid!==t.id){delete tr.assignments[id];continue;}
-        if(p.injury>0)continue;
-        const e=tr.earned[id] ||= {};e[focus]=(e[focus] || 0)+n*(p.age<=25?1:0.35)*(0.6+(t.coach.development+t.staff[isGoalie(p.pos)?"goalie":"assistant"].development)/200);
-      }
-      tr.paid=week;
-    }
     if(t.rec.gp) t.owner.fanSupport=clamp(Math.round(40+50*t.rec.pts/(2*t.rec.gp)+(t.rec.gf-t.rec.ga)*0.1+(t.arena?.fan || 0)*2),15,95);
   }
   if (league.newsWeek===week) return;
@@ -145,35 +128,13 @@ export function franchiseWeek(league) {
   league.mediaSnapshot=Object.fromEntries(sk.map(p=>[p.id,{pts:p.stats.pts}]));
   if(league.news.length>200)league.news.length=200;
 }
-function trainAttributes(p,focus,amount) {
-  const keys=TRAINING[focus]?.keys.filter(k=>Number.isFinite(p.attrs[k])) || [];
-  for(const k of keys)p.attrs[k]=clamp(p.attrs[k]+amount,40,99);
-  p.ovr=Math.min(99,Math.max(40,computeOvr(p.attrs,p.type)+(p.ovrOffset || 0)));p.pot=Math.max(p.pot,p.ovr);
-}
-export function trainingCamp(league) {
-  const t=league.teams[league.userTid];
-  if(league.phase!=="preseason")return {ok:false,msg:"Training camp runs during the preseason."};
-  if(t.training.campYear===league.year)return {ok:false,msg:"Training camp is complete for this season."};
-  if (!Object.keys(t.training.assignments).length) return {ok:false,msg:"Select an individual focus before running camp."};
-  const notes=[];
-  for(const [id,focus] of Object.entries(t.training.assignments)) {
-    const p=league.players[id];if(!p || p.tid!==t.id || p.injury>0)continue;
-    const before=p.ovr;trainAttributes(p,focus,0.75+t.coach.development/100);
-    notes.push({pid:id,name:p.name,focus,before,after:p.ovr});
-  }
-  t.training.campYear=league.year;t.training.campReport=notes;
-  logTx(league,`${t.abbr} complete training camp`,[t.id]);return {ok:true,msg:"Training camp complete. Individual development reports are below."};
-}
-export function applyTrainingYear(league,p) {
-  const t=league.teams[p.tid];if(!t)return;
-  for(const [focus,work] of Object.entries(t.training?.earned[p.id] || {}))trainAttributes(p,focus,Math.min(2.5,work/18));
-}
 export function reviewOwner(league) {
   ensureFranchise(league);
   for(const t of league.teams) {
     if(t.owner.reviews.some(r=>r.year===league.year))continue;
     const g=t.owner.goal;
-    const developed=[...t.roster,...t.prospects].map(id=>league.players[id]).filter(p=>p && p.age<=25 && (p.stats.gp>=25 || Object.values(t.training.earned[p.id] || {}).reduce((n,w)=>n+w,0)>=12 || g.startOvrs[p.id]!=null && p.ovr>=g.startOvrs[p.id]+1)).length;
+    const focus=t.devPlan?.year===league.year && t.devPlan.gained>0 ? t.devPlan.focus : null;
+    const developed=[...t.roster,...t.prospects].map(id=>league.players[id]).filter(p=>p && p.age<=25 && (p.stats.gp>=25 || p.id===focus || g.startOvrs[p.id]!=null && p.ovr>=g.startOvrs[p.id]+1)).length;
     const wonSeries=league.playoffs?.rounds[0].some(s=>s.winner===t.id);
     const reached=league.playoffs?.rounds[0].some(s=>s.top===t.id || s.bot===t.id);
     const met=g.kind==="contend"?wonSeries:g.kind==="playoffs"?reached:developed>=3;
@@ -191,7 +152,6 @@ export function reviewOwner(league) {
   if(league.history.filter(h=>h.champion===t.id).length>=3)award("dynasty","Three Stanley Cups");
 }
 export function resetFranchiseYear(league) {
-  for(const t of league.teams){t.training.earned={};t.training.paid=0;}
   league.coachMarket=Array.from({length:8},(_,i)=>coach(`${league.year}|market|${i}`));
   league.newsWeek=-1;league.mediaSnapshot={};for(const t of league.teams)if(t.arena)t.arena.paid=0;ensureFranchise(league);
 }

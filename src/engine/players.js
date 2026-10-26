@@ -107,7 +107,7 @@ export function ageCurve(p) {
   if (p.ovr >= 88 && mean > 0) mean = Math.max(0, mean - (p.ovr - 86) * 0.3);
   return mean;
 }
-function ageSpread(p) {
+export function ageSpread(p) {
   const age = p.age - ageShift(p);
   return age <= 19 ? 2.2 : age <= 21 ? 2 : age <= 23 ? 1.8 : age <= 25 ? 1.5 : age <= 29 ? 1.3 : age <= 31 ? 1.5 : age <= 33 ? 1.7 : 2;
 }

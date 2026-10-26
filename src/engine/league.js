@@ -31,7 +31,7 @@ import { computeAwards, connSmythe, conferenceTrophies } from "./awards.js";
 import { ensureMinimums, counts, sendDown, canSendDown, logTx, IR_GAMES, healInjuries, returnCallUps, onIR } from "./roster.js";
 import { startResign, endResign, startNewSeason, aiManageRoster, ratingLevel } from "./offseason.js";
 import { marketWeek, deadlinePending, skipDeadline, refreshBlock, fitRoster, seedUserRequests, DEADLINE_END } from "./market.js";
-import { applyCampGroup } from "./camp.js";
+import { developmentPlanWeek, startPlanSeason } from "./developmentPlan.js";
 import { ensurePulse, pulseAfterDay, pulseNewSeason, pulseSeasonEnd, migratePulse } from "./clubPulse.js";
 import { tradingClosed } from "./trade.js";
 import { defaultScouts, refreshScoutPool, scoutWeek, runCombine, migrateScouting } from "./scouting.js";
@@ -269,6 +269,8 @@ export function startRegularSeason(league) {
   for (const t of league.teams) startCapLedger(league,t);
   league.deadlineDay = Math.floor(lastDay(league.schedule) * 0.78);
   freezeExpectations(league);
+  // The season plan locks; camp is the baseline for "up since camp".
+  startPlanSeason(league);
   logTx(league, `${league.year}-${String(league.year + 1).slice(2)} regular season begins`);
 }
 
@@ -317,6 +319,8 @@ export function finishDay(league, played) {
   franchiseWeek(league);
   arenaWeek(league);
   developmentWeek(league);
+  // Your season plan: the focus player's weekly chance and the prospects' week-4 outcomes.
+  developmentPlanWeek(league);
   updateRecords(league);
   pulseAfterDay(league);
   // The big moments (clinches, result card, records) for the day just finished.
@@ -370,7 +374,6 @@ export function endRegularSeason(league) {
   startPlayoffs(league);
   league.phase = "playoffs";
   pulseSeasonEnd(league);
-  applyCampGroup(league);
   const ut = league.teams[league.userTid];
   if (ut) league.inbox.push({ year: league.year, day: league.day, text: ut.playoffResult ? `The ${ut.name} are in the playoffs! First round starts now.` : `The ${ut.name} missed the playoffs this season.` });
 }

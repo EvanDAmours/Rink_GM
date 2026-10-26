@@ -22,7 +22,7 @@ import {usageGrowth, roleGrowth, awardGrowth, applyAwardGrowth, ROLE_NAME} from 
 import { breakoutRoll, growBy, DEV_TRAITS } from "./players.js";
 import { breakoutMoment, cornerstoneMoment, rewardsMoment, generationalMoment } from "./momentsDevelopment.js";
 import { archiveFarmSeasons } from "./prospectWatch.js";
-import { applyTrainingYear } from "./franchise.js";
+import { summerPlanBonus } from "./developmentPlan.js";
 import { queueMoment } from "./moments.js";
 import { signingMoment, legendMoment } from "./momentsSeason.js";
 import { seasonMilestones } from "./awards.js";
@@ -366,16 +366,19 @@ export function startNewSeason(league) {
     const p = league.players[id];
     if (p.tid === -2) continue;
     p.usageGrowth=usageGrowth(league,p);
+    // Your season plan (your club only): the camp priority's bonus, and a prospect's placement
+    // outcome in place of his farm-minutes growth.
+    const plan = p.tid === league.userTid ? summerPlanBonus(league, p) : null;
+    if (plan?.place != null) p.usageGrowth = plan.place;
     p.age++;
     if(p.signed!==false)p.service.years++;
     const before = p.ovr;
     summerStart[id] = before;
-    applyTrainingYear(league,p);
     const banked = p.inSeasonGain?.year === league.year - 1 ? p.inSeasonGain.n : 0;
     // The role he played last season shapes which skills grow (Gridiron 3.27).
     const role = roleGrowth(p, league.year - 1, p.age);
     if (role) grew[id] = role;
-    developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0) - banked);
+    developPlayer(p, (p.usageGrowth || 0) + correction + (p.ovr >= 88 ? eliteCorrection : 0) + (p.tid === league.userTid ? bonus : 0) + (plan?.camp || 0) - banked);
     // A rare breakout summer (Gridiron 2.77), on top of ordinary growth.
     const jump = p.tid >= 0 ? breakoutRoll(p) : 0;
     if (jump) { const from = p.ovr, gain = growBy(p, jump); if (gain) breakouts.push({ pid: id, from, to: p.ovr, gain }); }

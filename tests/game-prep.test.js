@@ -42,14 +42,17 @@ test("ready check: an injured regular waits on a replacement until one is chosen
   assert.ok(lineupIds(gameLines(l, t)).every((id) => l.players[id].injury <= 0), "everyone dressed tonight is healthy");
 });
 
-test("ready check: development focus, game plan and an empty lineup spot each have a fix", () => {
+test("ready check: the season plan, game plan and an empty lineup spot each have a fix", () => {
+  // The three focus slots became one season plan that locks on opening night: the preseason
+  // check offers to lock it in, and in season there is nothing left to set.
+  const pre = createLeague({ userAbbr: "EDM", seed: 12 });
+  assert.equal(item(readyCheck(pre), "focus").ok, false, "an unlocked plan is flagged in the preseason");
+  assert.ok(applyPrepFix(pre, item(readyCheck(pre), "focus").fix).ok);
+  assert.equal(item(readyCheck(pre), "focus").ok, true, "the fix locks in the staff's plan");
   const l = season(12);
   const t = l.teams[l.userTid];
-  t.training.assignments = {};
   let items = readyCheck(l);
-  assert.equal(item(items, "focus").ok, false, "empty focus slots are flagged in season");
-  assert.ok(applyPrepFix(l, item(items, "focus").fix).ok);
-  assert.equal(item(readyCheck(l), "focus").ok, true, "the fix fills all three slots");
+  assert.ok(!item(items, "focus"), "nothing to set once the season is on");
 
   // A plan that doesn't fit this opponent: Use it switches to the best fit.
   const mu = nextMatchup(l);

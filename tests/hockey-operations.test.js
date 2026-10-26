@@ -8,7 +8,7 @@ import {placeWaivers,processWaivers,claimWaiver,designateLTIR,activateLTIR,quali
 import {negotiate,settleNegotiations,pendingSpend,submitOfferSheet,resolveOfferSheet,offerSheetComp} from '../src/engine/negotiations.js';
 import {startResign,endResign} from '../src/engine/offseason.js';
 import {evaluateTrade,executeTrade} from '../src/engine/trade.js';
-import {developmentWeek,requestPosition,hireAssistant,coachingEffects,lineChemistry,usageGrowth,runCampBattles} from '../src/engine/development.js';
+import {developmentWeek,hireAssistant,coachingEffects,lineChemistry,usageGrowth} from '../src/engine/development.js';
 import {ensureFutureClasses,resolveProtections,pickLocked,importDraftClass,compareProspects} from '../src/engine/draftExpansion.js';
 import {careerReview,takeJob,upgradeArena,arenaWeek,archiveRetirement,inductHall,retireNumber} from '../src/engine/dynasty.js';
 import {playShowcase} from '../src/engine/events.js';
@@ -87,14 +87,13 @@ test('on the open market you can talk to more agents than your cap room covers; 
 test('CHL and NCAA development assignments preserve eligibility rules',()=>{
  const lg=league(),t=lg.teams[lg.userTid],p=add(lg,t.id,{age:18,signed:false});p.bio={lg:'OHL'};assert.equal(assignProspect(lg,p.id,'ahl').ok,false);assert.ok(assignProspect(lg,p.id,'junior').ok);p.age=20;assert.ok(assignProspect(lg,p.id,'ahl').ok);assert.equal(p.yrs,3);assert.equal(assignProspect(lg,p.id,'college').ok,false);
 });
-test('eight healthy weekly position sessions change position and sync old lines',()=>{
- const lg=league(),t=lg.teams[lg.userTid],p=lg.players[t.roster.find(id=>lg.players[id].pos==='LW')];p.injury=0;assert.ok(requestPosition(lg,p.id,'RD').ok);lg.day=49;developmentWeek(lg);assert.equal(p.pos,'LW');p.injury=1;lg.day=56;developmentWeek(lg);assert.equal(p.pos,'LW');p.injury=0;lg.day=63;developmentWeek(lg);assert.equal(p.pos,'RD');assert.ok(!t.lines.F.flat().includes(p.id));assert.ok(!p.positionTraining);
-});
+// The eight-week position course was removed (Lines "Move to" is the one position tool), and with it
+// its test; so were the free camp battles, which duplicated the Season Points ones.
 test('farm growth rewards role and credits weeks only once; coaching affects special teams',()=>{
  const lg=league(),t=lg.teams[lg.userTid],p=add(lg,t.id,{age:20,yrs:2,cap:1});p.farmRole='top';lg.day=70;developmentWeek(lg);const gp=p.farmStats.gp;assert.ok(gp>0);developmentWeek(lg);assert.equal(p.farmStats.gp,gp);assert.ok(usageGrowth(lg,p)>0);t.staff.assistant.specialTeams=90;const good=coachingEffects(lg,t);t.staff.assistant.specialTeams=60;const bad=coachingEffects(lg,t);assert.ok(good.pp>bad.pp && good.pk>bad.pk);lg.phase='regular';assert.equal(hireAssistant(lg,lg.assistantMarket[0].id).ok,false);
 });
-test('line familiarity rewards continuity and camp resolves only once',()=>{
- const lg=league(),t=lg.teams[lg.userTid],ids=t.lines.F[0];const before=lineChemistry(lg,t,ids);t.lineExperience[ids.join('|')]=26;assert.ok(lineChemistry(lg,t,ids)>before);assert.ok(runCampBattles(lg).ok);assert.equal(runCampBattles(lg).ok,false);
+test('line familiarity rewards continuity',()=>{
+ const lg=league(),t=lg.teams[lg.userTid],ids=t.lines.F[0];const before=lineChemistry(lg,t,ids);t.lineExperience[ids.join('|')]=26;assert.ok(lineChemistry(lg,t,ids)>before);
 });
 test('future class identities persist; comparisons never consume hidden ratings',()=>{
  const lg=league(),before=JSON.stringify(lg.futureClasses);ensureFutureClasses(lg);assert.equal(JSON.stringify(lg.futureClasses),before);const id=lg.draftClass[0],p=lg.players[id];const a=compareProspects(lg,[id]);p.attrs={};p.ovr=40;p.pot=40;const b=compareProspects(lg,[id]);assert.deepEqual(a,b);

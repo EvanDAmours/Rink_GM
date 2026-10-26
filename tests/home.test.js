@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as L from "../src/engine/league.js";
 import { needsAttention, runFix, sortAttention, topPlayer, kickoffText, primeTime, offseasonBoard, signedForNextSeason, TONE_RANK } from "../src/engine/home.js";
-import { FOCUS_SLOTS } from "../src/engine/developmentPlan.js";
+import { ensureDevPlan } from "../src/engine/developmentPlan.js";
 import { capSpace, counts } from "../src/engine/roster.js";
 import { teamNeeds } from "../src/engine/teamPlanning.js";
 import { MAX_ROSTER } from "../src/engine/constants.js";
@@ -28,7 +28,6 @@ test("Needs Attention: a legal club in the preseason has nothing on the list (no
   const lg = league();
   const t = userTeam(lg);
   (lg.papers ||= []).push({ id: "preview:2026:1", edition: "SEASON PREVIEW", headline: "The season starts", seen: false });
-  t.training.assignments = {};
   const items = needsAttention(lg);
   for (const k of ["paperpreview:2026:1", "devfocus", "camp", "plan", "expiring"]) assert.ok(!items.some((x) => x.key === k), `${k} is a nag`);
   assert.ok(!items.some((x) => /^cy/.test(x.key)), "no contract-year nags");
@@ -48,15 +47,16 @@ test("Needs Attention: over the cap is one urgent item, not two", () => {
   assert.equal(items.filter((x) => /cap/i.test(x.title)).length, 1, "the roster issue doesn't repeat the cap item");
 });
 
-test("one-tap fix: Pick the fastest growers still fills every development focus slot (not listed any more)", () => {
+// The old "fill the focus slots" fix now locks in the staff's season plan (one focus player).
+test("one-tap fix: the old development fix locks in the staff's season plan (not listed any more)", () => {
   const lg = league();
   lg.phase = "preseason";
-  const t = userTeam(lg);
-  t.training.assignments = {};
-  assert.ok(!needsAttention(lg).some((x) => x.key === "devfocus"), "an empty lab is not a blocker");
+  assert.ok(!needsAttention(lg).some((x) => x.key === "devfocus"), "an unlocked plan is not a blocker");
   const r = runFix(lg, "autoFocus");
   assert.ok(r.ok);
-  assert.equal(Object.keys(t.training.assignments).filter((id) => lg.players[id]?.tid === t.id).length, FOCUS_SLOTS);
+  const plan = ensureDevPlan(lg);
+  assert.ok(plan.locked);
+  assert.equal(lg.players[plan.focus]?.tid, userTeam(lg).id, "the staff picked one of your players");
 });
 
 test("one-tap fix: an injured regular without coach lines offers Auto-set lines, and it fills his spot", () => {

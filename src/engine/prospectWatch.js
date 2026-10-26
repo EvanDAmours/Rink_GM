@@ -1,6 +1,6 @@
 // Prospect watch: how the players you drafted are coming along in junior, college,
 // Europe and the AHL, and in their first NHL years. Development itself is driven by
-// the existing engine (age curve, farm work, focus training, usage). This adds:
+// the existing engine (age curve, farm work or placements, the focus player, usage). This adds:
 //  - in-season growth ticks, so a prospect's rating moves during the year instead of
 //    only at the summer rollover (the summer step subtracts what was already gained)
 //  - per-season farm lines archived at rollover, so a kid's junior and AHL years are
@@ -10,7 +10,7 @@
 import { isGoalie, isDefense } from "./constants.js";
 import { computeOvr } from "./ratings.js";
 import { TRAINING } from "./franchise.js";
-import { weakestGroup, ageCurve } from "./developmentPlan.js";
+import { weakestGroup, ageCurve, monthlyNote } from "./developmentPlan.js";
 import { stream, clamp } from "./rng.js";
 import { savePct } from "./players.js";
 
@@ -79,8 +79,9 @@ export function prospectReport(league, t, p) {
   // Production relative to the level: is he dominating, holding his own, or drowning?
   let prod = null;
   if (gp >= 5) {
-    if (isGoalie(p.pos)) prod = line.svpct == null ? null : line.svpct >= 0.915 ? "dominant" : line.svpct >= 0.9 ? "solid" : "struggling";
-    else { const ppg = line.pts / gp, bar = isDefense(p.pos) ? 0.45 : 0.85; prod = ppg >= bar * 1.3 ? "dominant" : ppg >= bar * 0.7 ? "solid" : "struggling"; }
+    if (isGoalie(p.pos)) prod = line.svpct == null ? null : line.svpct >= (farm ? 0.915 : 0.912) ? "dominant" : line.svpct >= (farm ? 0.9 : 0.895) ? "solid" : "struggling";
+    // Graded against his own level: farm bars for the minors, NHL rookie bars for the big club.
+    else { const ppg = line.pts / gp, bar = farm ? (isDefense(p.pos) ? 0.45 : 0.85) : (isDefense(p.pos) ? 0.28 : 0.45); prod = ppg >= bar * 1.3 ? "dominant" : ppg >= bar * 0.7 ? "solid" : "struggling"; }
   }
   const flags = [];
   let next = null;
@@ -90,14 +91,14 @@ export function prospectReport(league, t, p) {
     else if (prod === "dominant" && p.assignment !== "ahl" && p.signed !== false && !(p.age < 20 && CHL.has(p.bio?.lg))) { flags.push("Dominating"); next = { kind: "assign", label: "Move him up to the AHL" }; }
     else if (prod === "struggling" && role === "top") { flags.push("Struggling"); next = { kind: "role", label: "Ease him into a middle role" }; }
     else if (p.signed === false && p.age >= 22) { flags.push("Unsigned"); next = { kind: "sign", label: "Sign him or lose his rights" }; }
-    else if (delta <= 0 && gp >= 20 && p.age >= 22) { flags.push("Stalled"); next = { kind: "focus", label: "Put him in the development plan" }; }
+    else if (delta <= 0 && gp >= 20 && p.age >= 22) { flags.push("Stalled"); next = { kind: "focus", label: "Make him next season's focus player" }; }
   } else {
     if (p.stats.gp >= 10 && p.stats.toi / Math.max(1, p.stats.gp) < 600 && p.age <= 21 && t.prospects.length) { flags.push("Low minutes"); next = { kind: "senddown", label: "Minutes in the AHL would help" }; }
     else if (delta >= 2) flags.push("Rising");
   }
   if (p.injury > 0) { flags.unshift(`Injured ${p.injury}g`); }
   const trend = delta >= 3 ? "surging" : delta >= 1 ? "up" : delta <= -1 ? "down" : "flat";
-  return { p, farm, level, line, start, delta, recent, trend, prod, flags, next, eta: etaText(p), path, role, drafted: p.draft ? `${p.draft.year} R${p.draft.round} #${p.draft.pick}` : null, focus: t.training?.assignments?.[p.id] || null };
+  return { p, farm, level, line, start, delta, recent, trend, prod, flags, next, eta: etaText(p), path, role, drafted: p.draft ? `${p.draft.year} R${p.draft.round} #${p.draft.pick}` : null, focus: t.devPlan?.year === league.year && t.devPlan.focus === p.id };
 }
 export function prospectWatch(league, t = league.teams[league.userTid]) {
   return [...t.prospects, ...t.roster].map((id) => league.players[id]).filter((p) => p && isProspectWatch(league, t, p)).map((p) => prospectReport(league, t, p))
@@ -122,7 +123,9 @@ export function inSeasonGrowth(league) {
     if (!p || p.age > WATCH_AGE || p.ovr >= p.pot || p.injury > 0) continue;
     const farm = t.prospects.includes(id);
     const curve = Math.max(0, ageCurve(p));
-    const usage = farm ? clamp((p.farmWork || 0) / (week * 1.2), 0.3, 1.3) : clamp((p.stats.gp ? p.stats.toi / p.stats.gp / (isDefense(p.pos) ? 1200 : 900) : 0.3) + 0.4, 0.4, 1.3);
+    // A placement that's thriving (or struggling) shows in season too; otherwise his farm minutes.
+    const out = t.id === league.userTid && p.placement?.year === league.year ? p.placement.outcome : null;
+    const usage = farm ? (out ? { thrive: 1.3, steady: 1, struggle: 0.45 }[out] : clamp((p.farmWork || 0) / (week * 1.2), 0.3, 1.3)) : clamp((p.stats.gp ? p.stats.toi / p.stats.gp / (isDefense(p.pos) ? 1200 : 900) : 0.3) + 0.4, 0.4, 1.3);
     const already = p.inSeasonGain?.year === league.year ? p.inSeasonGain.n : 0;
     const expected = curve * 0.55; // roughly half of a summer's growth shows up in season
     const left = Math.max(0, expected - already);
@@ -145,7 +148,8 @@ export function inSeasonGrowth(league) {
   return moved;
 }
 
-// Monthly inbox note for your own club: who moved, who is dominating, who needs a decision.
+// Monthly inbox line for your own club (the full report is the Development overview); it never
+// stops the sim.
 export function prospectReportNote(league, moved = []) {
   const t = league.teams[league.userTid];
   const week = Math.floor(league.day / 7);
@@ -153,16 +157,8 @@ export function prospectReportNote(league, moved = []) {
   league.prospectNoteWeek ||= {};
   if (league.prospectNoteWeek[league.year] === week) return;
   league.prospectNoteWeek[league.year] = week;
-  const rows = prospectWatch(league, t);
   const mine = moved.filter((m) => m.tid === t.id);
-  const parts = [];
-  if (mine.length) parts.push(`Up this month: ${mine.slice(0, 4).map((m) => `${m.name} ${m.from}→${m.to}`).join(", ")}.`);
-  const dom = rows.filter((r) => r.prod === "dominant").slice(0, 2);
-  if (dom.length) parts.push(`Dominating: ${dom.map((r) => `${r.p.name} (${r.level}, ${r.line.text})`).join("; ")}.`);
-  const decisions = rows.filter((r) => r.next).slice(0, 2);
-  if (decisions.length) parts.push(`Decisions: ${decisions.map((r) => `${r.p.name} · ${r.next.label.toLowerCase()}`).join("; ")}.`);
-  if (!parts.length) parts.push("Quiet month on the farm; nobody moved.");
-  league.inbox?.push({ year: league.year, day: league.day, text: `📈 Prospect report: ${parts.join(" ")} Full picture under Front Office → Development.` });
+  league.inbox?.push({ year: league.year, day: league.day, open: { tab: "development", sub: "overview" }, text: monthlyNote(league) });
   league.news ||= [];
   const star = mine.sort((a, b) => b.to - a.to)[0];
   if (star) league.news.unshift({ year: league.year, day: league.day, type: "prospect", pid: star.pid, text: `Prospect watch: ${star.name} is up to ${star.to} overall after a strong month${star.farm ? ` in the ${leagueLabel(league.players[star.pid])}` : ""}.` });

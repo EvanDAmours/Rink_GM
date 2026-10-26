@@ -116,8 +116,8 @@ export function repairLeague(league) {
     // Lines in a shape the lineup code can't read are rebuilt from the roster.
     const L = t.lines;
     if (L && (!Array.isArray(L.F) || !Array.isArray(L.D) || !Array.isArray(L.G) || !L.F.every(Array.isArray) || !L.D.every(Array.isArray))) { t.lines = null; fixes.push(`rebuilt the ${t.abbr} lines`); }
-    const a = t.training?.assignments;
-    if (a && typeof a === "object") for (const id of Object.keys(a)) if (!league.players[id]) delete a[id];
+    // A season plan whose focus player is gone keeps running without one.
+    if (t.devPlan && t.devPlan.focus != null && !league.players[t.devPlan.focus]) t.devPlan.focus = null;
   }
 
   // Lists every screen reads as lines of text.

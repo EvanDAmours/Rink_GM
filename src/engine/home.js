@@ -5,7 +5,7 @@ import { coachRetirementNotice } from "./coachContracts.js";
 import { capSpace, rosterIssues, counts, ensureMinimums } from "./roster.js";
 import { MAX_ROSTER, FA_DAYS, isGoalie } from "./constants.js";
 import { hireCoach } from "./franchise.js";
-import { autoFocus } from "./developmentPlan.js";
+import { lockPlan } from "./developmentPlan.js";
 import { talkDown, shopPlayer } from "./tradeRequests.js";
 import { teamNeeds } from "./teamPlanning.js";
 import { headCoachLines } from "./lines.js";
@@ -87,7 +87,8 @@ export function runFix(lg, fix) {
   // "kind:argument" (the argument may contain colons itself, as paper ids do)
   const str = String(fix), cut = str.indexOf(":");
   const kind = cut < 0 ? str : str.slice(0, cut), arg = cut < 0 ? "" : str.slice(cut + 1);
-  if (kind === "autoFocus") return autoFocus(lg);
+  // The old "fill the focus slots" fix: the staff's season plan stands, locked in.
+  if (kind === "autoFocus" || kind === "lockPlan") return lockPlan(lg);
   if (kind === "autoLines") { const moves = headCoachLines(lg, t); return { ok: true, msg: moves.length ? `Lines re-set: ${plural(moves.length, "change")} around the injuries.` : "Your lines already cover every injury." }; }
   if (kind === "callUps") { ensureMinimums(lg, t, { notify: true }); const left = rosterIssues(lg, t).filter((i) => /^Need /.test(i)); return { ok: !left.length, msg: left.length ? left[0] : "Called up from the AHL: the lineup is full." }; }
   if (kind === "sendDown") return automaticallyHandleRoster(lg, t, { allowWaivers: false });

@@ -5,7 +5,8 @@ import scheduleData from "../src/data/schedule2026.json" with {type:"json"};
 import {normalizeSchedule,importSeasonSchedule,dayToDate,generateSchedule} from "../src/engine/schedule.js";
 import {REGIONS,regionOf,assignScout} from "../src/engine/regions.js";
 import {classPool,prospectRead,csRank,scoutProspect} from "../src/engine/scouting.js";
-import {setTraining,trainingCamp,franchiseWeek,applyTrainingYear,hireCoach,reviewOwner} from "../src/engine/franchise.js";
+import {franchiseWeek,hireCoach,reviewOwner} from "../src/engine/franchise.js";
+import {setFocus,ensureDevPlan,developmentPlanWeek} from "../src/engine/developmentPlan.js";
 import {extendPlayer,futurePayroll} from "../src/engine/extensions.js";
 import {startResign,resignAsk,offerContract,resignPlayer} from "../src/engine/offseason.js";
 import {currentSlot,startDraft,makePick,simDraftToUser} from "../src/engine/draft.js";
@@ -55,23 +56,15 @@ test("assigning a scout to a region covers it without exposing hidden numbers or
  assert.deepEqual(classPool(lg).sort((a,b)=>csRank(a)-csRank(b)).map(p=>p.id),before);
  assert.deepEqual(Object.keys(REGIONS).slice(0,3),["OHL","WHL","QMJHL"]);
 });
-test("training weeks are credited once even across skipped days",()=>{
- const lg=league(),t=lg.teams[lg.userTid],p=t.roster.map(id=>lg.players[id]).find(p=>p.pos!=="G" && !p.injury && p.attrs.spd<98);
- assert.ok(setTraining(lg,p.id,"skating").ok);
- lg.day=21;franchiseWeek(lg);
- const work=t.training.earned[p.id].skating;
- franchiseWeek(lg);
- assert.equal(t.training.earned[p.id].skating,work);
- const speed=p.attrs.spd;applyTrainingYear(lg,p);assert.ok(p.attrs.spd>speed);
-});
-test("training limits, position restrictions, and once-per-year camps are enforced",()=>{
- const lg=league(),t=lg.teams[lg.userTid];const ps=t.roster.map(id=>lg.players[id]).filter(p=>p.pos!=="G" && !p.injury).slice(0,4);
- assert.equal(setTraining(lg,ps[0].id,"goaltending").ok,false);
- for(const p of ps.slice(0,3))assert.ok(setTraining(lg,p.id,"skating").ok);
- assert.equal(setTraining(lg,ps[3].id,"shooting").ok,false);
- assert.ok(trainingCamp(lg).ok);const attrs=JSON.stringify(ps[0].attrs);
- assert.equal(trainingCamp(lg).ok,false);assert.equal(JSON.stringify(ps[0].attrs),attrs);
- assert.equal(t.training.campReport.length,3);
+// The three focus slots, banked training work and the training camp they fed were replaced by the
+// season plan (one focus player, rolled weekly): tests/development-plan.test.js covers it. What
+// stays here is the same guarantee: focus weeks are credited once, even across skipped days.
+test("focus weeks are credited once even across skipped days",()=>{
+ const lg=league(),t=lg.teams[lg.userTid],p=t.roster.map(id=>lg.players[id]).find(p=>p.pos!=="G" && !p.injury && p.age<=24);
+ assert.ok(setFocus(lg,p.id).ok);L.startRegularSeason(lg);
+ lg.day=21;developmentPlanWeek(lg);const plan=ensureDevPlan(lg);assert.equal(plan.focusWeek,3);
+ const ovr=p.ovr,gained=plan.gained;franchiseWeek(lg);developmentPlanWeek(lg);
+ assert.equal(p.ovr,ovr);assert.equal(plan.gained,gained);
 });
 test("coaching market obeys staffing windows and team identity drives simulation",async()=>{
  const lg=league(),t=lg.teams[lg.userTid];assert.ok(hireCoach(lg,lg.coachMarket[0].id).ok);

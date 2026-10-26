@@ -11,7 +11,7 @@ import { matchupPlan } from "./teamPlanning.js";
 import { divisionTable } from "./standings.js";
 import { userSeries, nextGame } from "./playoffs.js";
 import { savePct, gaa } from "./players.js";
-import { FOCUS_SLOTS, autoFocus } from "./developmentPlan.js";
+import { ensureDevPlan, lockPlan } from "./developmentPlan.js";
 import { callUp } from "./roster.js";
 import { isOut, injuredRegulars, eachSlot, slotName, replacementOptions, chooseReplacement } from "./injuries.js";
 import { injuryReturn, outPhrase } from "./injuryReport.js";
@@ -155,13 +155,12 @@ export function readyCheck(league, mu = nextMatchup(league)) {
       else items.push({ key: "plan", ok: true, text: "Game plan: your call, and it fits this matchup." });
     }
   }
-  // 5. Development focus slots (only while training runs).
-  const inSeason = league.phase === "preseason" || league.phase === "regular";
-  if (inSeason) {
-    const focused = Object.keys(team.training?.assignments || {}).filter((id) => league.players[id]?.tid === team.id).length;
-    const open = Math.max(0, FOCUS_SLOTS - focused);
-    if (open) items.push({ key: "focus", ok: false, text: `${open === FOCUS_SLOTS ? "No development focus players set" : `${open} development focus slot${open === 1 ? "" : "s"} open`}: those weeks of training are wasted.`, fix: { kind: "focus", label: "Fill them" } });
-    else items.push({ key: "focus", ok: true, text: "Development focus: all three slots in use." });
+  // 5. The season plan (preseason only: it locks on opening night).
+  if (league.phase === "preseason") {
+    const plan = ensureDevPlan(league);
+    const f = league.players[plan?.focus];
+    if (plan && !plan.locked) items.push({ key: "focus", ok: false, text: `Your season plan isn't locked in${f ? `: ${f.name} is the focus player` : ""}. Your staff's picks stand if you start the season.`, fix: { kind: "focus", label: "Lock it in" } });
+    else if (plan) items.push({ key: "focus", ok: true, text: `Season plan locked in${f ? `: ${f.name} is your focus player` : ""}.` });
   }
   return items;
 }
@@ -190,11 +189,7 @@ export function applyPrepFix(league, fix, mu = nextMatchup(league)) {
     team.gamePlan = { forecheck: best.forecheck, neutral: best.neutral, attack: best.attack };
     return { ok: true, msg: `Game plan: ${best.forecheck} forecheck, ${best.neutral} neutral zone, ${best.attack} attack.` };
   }
-  if (fix.kind === "focus") {
-    team.training ||= { assignments: {} };
-    team.training.assignments ||= {};
-    return autoFocus(league);
-  }
+  if (fix.kind === "focus") return lockPlan(league);
   if (fix.kind === "fill") {
     syncLines(league, team);
     const need = () => { const n = { F: 0, D: 0, G: 0 }; eachSlot(gameLines(league, team), (id, s) => { if (id == null) n[s.grp]++; }); return n; };
