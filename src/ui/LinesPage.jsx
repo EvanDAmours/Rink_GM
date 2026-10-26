@@ -98,10 +98,10 @@ export default function LinesPage({ onRoster }) {
   };
   const act = (a) => {
     if (!mine) { const p = get(read(a)); if (p) openPlayer(p.id); return; }
-    if (!sel) { setSel(a); setPick(a.g !== "X"); setSpots(false); return; }
+    if (!sel) { setSel(a); setPick(false); setSpots(false); return; }
     if (same(sel, a)) { setSel(null); setPick(false); return; }
     const r = swap(sel, a);
-    if (r === false) { setSel(a); setPick(a.g !== "X"); } else { setSel(null); setPick(false); }
+    if (r === false) { setSel(a); setPick(false); } else { setSel(null); setPick(false); }
   };
   const dnd = (a) => (mine && !phone ? {
     draggable: !!get(read(a)) || a.g !== "X",

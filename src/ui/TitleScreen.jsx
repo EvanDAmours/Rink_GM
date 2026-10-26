@@ -113,16 +113,28 @@ export default function TitleScreen({ onStart, ask }) {
           ))}
         </div>
         {err && <div className="rkt-err">{err}</div>}
-        <div className="rkt-grid">
-          {TEAMS.map((t) => (
-            <button key={t.abbr} className="rkt-team" style={{ "--c": tileColour(t), "--a": t.colors[1] || "#ffffff" }} title={`${t.city} ${t.name} · team rating ${strengths[t.abbr]}`} onClick={() => start(t.abbr)}>
-              <span className="rkt-team-logo"><TeamBadge team={t} size={46} decorative /></span>
-              <span className="rkt-team-text">
-                <span className="rkt-team-city">{t.city}</span>
-                <span className="rkt-team-name">{t.name}</span>
-                <span className="rkt-team-div">{t.abbr} • {t.div === "Metropolitan" ? "Metro" : t.div}</span>
-              </span>
-            </button>
+        <div className="rkt-divs">
+          {[["Eastern Conference", ["Atlantic", "Metropolitan"]], ["Western Conference", ["Central", "Pacific"]]].map(([conf, divs]) => (
+            <section key={conf} className="rkt-conf">
+              <h3 className="rkt-conf-h">{conf}</h3>
+              {divs.map((dv) => (
+                <div key={dv} className="rkt-div">
+                  <h4 className="rkt-div-h">{dv} Division</h4>
+                  <div className="rkt-grid">
+                    {TEAMS.filter((t) => t.div === dv).sort((x, y) => x.city.localeCompare(y.city)).map((t) => (
+                      <button key={t.abbr} className="rkt-team" style={{ "--c": tileColour(t), "--a": t.colors[1] || "#ffffff" }} title={`${t.city} ${t.name} · team rating ${strengths[t.abbr]}`} onClick={() => start(t.abbr)}>
+                        <span className="rkt-team-logo"><TeamBadge team={t} size={46} decorative /></span>
+                        <span className="rkt-team-text">
+                          <span className="rkt-team-city">{t.city}</span>
+                          <span className="rkt-team-name">{t.name}</span>
+                          <span className="rkt-team-div">{t.abbr}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </section>
           ))}
         </div>
         <p className="rkt-legal">Published EA SPORTS attributes and verified sweater numbers are used where they exist; other ratings are estimates. Fan-made game, not affiliated with or endorsed by the NHL, NHLPA or Electronic Arts. NHL and team logos belong to their respective owners.</p>

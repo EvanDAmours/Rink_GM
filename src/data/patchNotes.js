@@ -409,4 +409,8 @@ export const PATCH_NOTES = [
   { v: "1.74", date: "2026-10-26", title: "Clean Lineup", notes: [
     "The Lineup screen drops the sweater pictures: each spot now shows just the jersey number, name and rating.",
   ] },
+  { v: "1.75", date: "2026-10-26", title: "Pick and Move", notes: [
+    "Choose Your Team is organised by conference and division.",
+    "On the Lineup screen, tapping a player no longer opens a pop-up: tap one player, then tap where he goes. Best fits is still there in the bar at the bottom if you want it.",
+  ] },
 ];
