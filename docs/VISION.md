@@ -76,4 +76,5 @@ confirm the Pages deploy. Report real outcomes only.
   team-colour SectionHero removed; one segmented filter style; sentence case, no emoji; dense tables open with key
   columns + "More columns" — Evan asked for consistency across all screens. Still dense (need mockups first):
   Trade Center, Hockey Operations, combine table, team-roster sheet, Game plan.
-- Pending: Lineup coach suggestions collapsed by default behind "N changes could improve your lineup" (gap vs the optimal lineup).
+- 1.78 Lineup coach panel closed by default; one line shows the gap to the optimal lineup (greedy coach run: N changes,
+  points short = rating + chemistry weighted by ice time) — Evan felt the endless swap ideas should be opt-in.

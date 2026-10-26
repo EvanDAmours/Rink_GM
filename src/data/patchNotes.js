@@ -426,4 +426,8 @@ export const PATCH_NOTES = [
     "Stats, Roster, Teams and Contracts open with just the key columns; tap More columns for everything else.",
     "One green button per screen, calmer empty pages, and the top bar fits every phase of the season on a laptop.",
   ] },
+  { v: "1.78", date: "2026-10-26", title: "Coach on Call", notes: [
+    "The Lineup coach now waits until you ask. One quiet line tells you how far your lines are from their best, like \"4 changes could improve your lineup, 3 points short of your best\", or \"Your lineup is set.\" Tap it to see the ideas.",
+    "The coach panel remembers whether you left it open, and swap highlights only show while it is open. Works on even strength, the power play and the penalty kill.",
+  ] },
 ];
