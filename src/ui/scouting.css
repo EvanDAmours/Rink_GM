@@ -155,3 +155,88 @@ html.light .sc-assign-card { background: #0f172a08; }
 .sc-cover { margin: 6px 0 0; font-size: 14px; }
 .sc-cover b { color: #f1f5f9; font-weight: 800; }
 html.light .sc-cover b { color: #0f172a; }
+
+/* ---------- Scouting HQ (r11, Gridiron 3.71's layout): picks strip, Scout these next, Where the talent is, Your scouts ---------- */
+.app.app .hq2 { display: grid; gap: 12px; min-width: 0; }
+.app.app .hq-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; background: #ffffff0d; border-radius: 18px; padding: 12px 18px; min-width: 0; }
+.app.app .hq-strip-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.app.app .hq-strip-h b { font-size: 15px; font-weight: 800; color: #fff; }
+.app.app .hq-strip-h span { font-size: 13px; color: #94a3b8; }
+.app.app .hq-strip-picks { display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.app.app .hq-pk { display: inline-flex; align-items: baseline; gap: 6px; background: #ffffff0d; border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
+.app.app .hq-pk.first { background: #eab3081f; }
+.app.app .hq-pk small { font-size: 12px; font-weight: 800; color: #94a3b8; letter-spacing: 0; }
+.app.app .hq-pk b { font-size: 16px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; }
+.app.app .hq-pk.first b { color: #fde68a; }
+.app.app .hq-pk em { font-style: normal; font-size: 12px; color: #64748b; }
+.app.app.app button.hq-prompt { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: #3b82f622; border: 0; border-radius: 16px; padding: 12px 16px; color: #fff; min-height: 56px; }
+.app.app .hq-prompt span:first-child { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.app.app .hq-prompt b { font-size: 15px; font-weight: 800; }
+.app.app .hq-prompt small { font-size: 13px; color: #94a3b8; letter-spacing: 0; font-weight: 600; }
+.app.app .hq-chev { font-size: 22px; color: #7dd3fc; }
+.app.app .hq-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.app.app .hq-side { display: grid; gap: 12px; min-width: 0; }
+.app.app .hq-card { background: #ffffff0d; border-radius: 18px; padding: 16px 20px; min-width: 0; }
+.app.app .hq-h { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; min-height: 30px; }
+.app.app .hq-h > b { font-size: 16px; font-weight: 800; color: #fff; }
+.app.app .hq-sub { margin-left: auto; font-size: 13px; color: #94a3b8; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.app.app .hq-h .hq-sub + .hq-q { margin-left: 0; }
+.app.app.app button.hq-q { margin-left: auto; background: #ffffff12; color: #e2e8f0; border: 0; border-radius: 999px; font-size: 13px; font-weight: 700; padding: 5px 12px; min-height: 30px; white-space: nowrap; }
+.app.app.app button.hq-q:hover { background: #ffffff1f; color: #fff; }
+.app.app .hq-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #ffffff0a; min-width: 0; }
+.app.app .hq-rk { width: 38px; text-align: right; font-size: 13px; font-weight: 800; color: #94a3b8; font-variant-numeric: tabular-nums; flex: none; }
+.app.app .hq-row .gg-pos { flex: none; }
+.app.app.app button.hq-who { flex: 1; min-width: 0; display: grid; justify-items: start; justify-content: stretch; gap: 1px; text-align: left; background: transparent; border: 0; padding: 0; color: inherit; min-height: 0; }
+.app.app .hq-who b { max-width: 100%; font-size: 14.5px; font-weight: 800; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .hq-who b em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 800; color: #4ade80; }
+.app.app .hq-who span { max-width: 100%; font-size: 12.5px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .hq-cov { font-size: 12px; color: #67e8f9; font-weight: 700; white-space: nowrap; flex: none; }
+.app.app .hq-cov.none { color: #fcd34d; }
+.app.app.app button.hq-act { flex: none; background: #ffffff0f; color: #cbd5e1; border: 0; border-radius: 999px; font-size: 13px; font-weight: 700; padding: 6px 12px; min-height: 32px; white-space: nowrap; }
+.app.app.app button.hq-act:hover { background: #ffffff1a; color: #fff; }
+.app.app.app button.hq-act.on { background: #fff; color: #0b1220; }
+.app.app .hq-empty { font-size: 14px; color: #94a3b8; padding: 10px 0; }
+.app.app .hq-links { display: flex; gap: 8px; margin-top: 10px; }
+.app.app .hq-links .hq-q { margin-left: 0; }
+.app.app .hq-visits { padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid #ffffff12; }
+.app.app .hq-visits > b { display: block; font-size: 14px; color: #c4b5fd; margin-bottom: 4px; }
+.app.app.app button.hq-reg { display: grid; grid-template-columns: minmax(0, 1fr) 92px 92px 96px; align-items: center; gap: 6px; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid #ffffff0a; border-radius: 0; padding: 6px 0; min-height: 32px; color: inherit; font-size: 13px; }
+.app.app.app button.hq-reg:hover { background: #ffffff06; }
+.app.app .hq-reg b { font-weight: 700; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .hq-reg .up { color: #4ade80; font-weight: 800; white-space: nowrap; }
+.app.app .hq-reg .down { color: #f87171; font-weight: 800; white-space: nowrap; }
+.app.app .hq-reg .down i { color: #94a3b8; font-weight: 600; font-style: normal; }
+.app.app .hq-reg .hq-rcov { background: transparent; border: 0; padding: 0; font-size: 13px; letter-spacing: 0; text-transform: none; text-align: right; color: #67e8f9; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .hq-reg .hq-rcov.none { color: #fcd34d; }
+.app.app .hq-scout { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto 18px minmax(0, 150px); align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #ffffff0a; font-size: 13px; min-width: 0; }
+.app.app .hq-scout small { font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.app.app .hq-scout small.maj { color: #f5c542; } .app.app .hq-scout small.min { color: #60a5fa; }
+.app.app .hq-scout b { color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .hq-scout .grp { color: #67e8f9; font-weight: 800; text-align: center; }
+.app.app .hq-scout .regs { color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.app.app .hq-stars { color: #eab308; letter-spacing: 1px; font-size: 12px; white-space: nowrap; }
+.app.app .hq-stars i { font-style: normal; color: #334155; }
+.app.app .hq-views { margin-bottom: 2px; }
+@media (max-width: 1100px) { .app.app .hq-grid { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .app.app .hq-strip { padding: 12px 14px; }
+  .app.app .hq-strip-picks { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .app.app .hq-strip-picks::-webkit-scrollbar { display: none; }
+  .app.app .hq-card { padding: 14px 14px; }
+  .app.app .hq-cov { display: none; }
+  .app.app .hq-rk { width: 32px; }
+  .app.app.app button.hq-act { padding: 6px 10px; }
+  .app.app.app button.hq-reg { grid-template-columns: minmax(0, 1fr) 80px 80px; }
+  .app.app .hq-reg .hq-rcov { background: transparent; border: 0; padding: 0; font-size: 13px; letter-spacing: 0; text-transform: none; display: none; }
+  .app.app .hq-scout { grid-template-columns: 54px minmax(0, 1fr) auto 18px; }
+  .app.app .hq-scout .regs { grid-column: 2 / -1; text-align: left; margin-top: -4px; }
+  .app.app .hq-sub { display: none; }
+}
+html.light .app.app .hq-strip, html.light .app.app .hq-card, html.light .app.app .hq-pk { background: #0f172a0a; }
+html.light .app.app .hq-strip-h b, html.light .app.app .hq-h > b, html.light .app.app .hq-pk b, html.light .app.app .hq-who b, html.light .app.app .hq-scout b, html.light .app.app .hq-reg b { color: #0f172a; }
+html.light .app.app .hq-pk.first b { color: #a16207; }
+html.light .app.app.app button.hq-q, html.light .app.app.app button.hq-act { background: #0f172a10; color: #1e293b; }
+html.light .app.app.app button.hq-act.on { background: #0f172a; color: #fff; }
+html.light .app.app.app button.hq-prompt { color: #0f172a; background: #3b82f61a; }
+html.light .app.app .hq-cov, html.light .app.app .hq-reg .hq-rcov, html.light .app.app .hq-scout .grp { color: #0e7490; }
+html.light .app.app .hq-reg .up { color: #15803d; } html.light .app.app .hq-reg .down { color: #b91c1c; }

@@ -1,12 +1,13 @@
 import React from "react";
-import { useGame, PlayerName } from "./common.jsx";
+import { useGame, PlayerName, recordStr } from "./common.jsx";
 import {
-  prospectRead, scoutProspect, csRank, classPool, userNeeds, userPickAround, scoutsShortlist, interviewProspect, privateWorkout, atCombine,
-  crewStrength, SCOUT_GROUPS, SCOUT_ROLES, SCOUT_SLOTS, gradeClass, PRIVATE_WORKOUTS,
+  prospectRead, csRank, classPool, userNeeds, userPickAround, scoutsShortlist, interviewProspect, privateWorkout, atCombine,
+  SCOUT_GROUPS, SCOUT_ROLES, SCOUT_SLOTS, gradeClass, PRIVATE_WORKOUTS, scoutGroup, myList, onMyList, toggleMyList,
 } from "../engine/scouting.js";
+import { pickSlot } from "../engine/draft.js";
 import { POS_COLOR } from "./TradePage.jsx";
-import { REGIONS, regionOf, scoutAssignments } from "../engine/regions.js";
-import { ScoutButton, ScoutFlags, RoleTag } from "./scoutingBits.jsx";
+import { REGIONS, regionOf, scoutAssignments, regionCoverage, assignWindowOpen } from "../engine/regions.js";
+import { ScoutFlags, RoleTag } from "./scoutingBits.jsx";
 
 const NEED_WORD = { C: "centre", LW: "left wing", RW: "right wing", LD: "left D", RD: "right D", G: "goalie" };
 const Pos = ({ pos }) => <span className="gg-pos" style={{ background: POS_COLOR[pos] || "#64748b" }}>{pos}</span>;
@@ -77,55 +78,134 @@ export function CombineWeek() {
   );
 }
 
-// Scouting HQ (Gridiron 2.3): what to do next, with a button for each. Your thinnest positions,
-// where you pick (the one projected draft order), an area trip worth taking, the unscouted
-// prospects at your needs around your pick, your staff and its crews.
-export default function ScoutingHQ({ onBoard, onRegions, onList }) {
-  const { league, commit, toast, openPlayer } = useGame();
+// Scouting HQ (Gridiron 3.71's Scouting HQ): your picks if the season ended today, each with the
+// slice of the board it can reach; "Scout these next" (prospects in range of your picks, needs
+// first); where the talent is this year, region by region; your scouts and their regions.
+// Scouting is hands-off (regions.js), so the row's quiet action is your list, not a spend.
+export const pickWindow = (pick) => [Math.max(1, Math.round(pick - Math.max(4, pick * 0.25))), Math.round(pick + Math.max(10, pick * 0.45))];
+const SHORT = { OHL: "OHL", WHL: "WHL", QMJHL: "QMJHL", USA: "USHL", NCAA: "NCAA", Sweden: "SWE", Liiga: "FIN", Russia: "RUS", Europe: "C. EUR" };
+const GROUP_SHORT = { C: "C", W: "W", D: "D", G: "G" };
+const GROUP_WORD = { C: "Centres", W: "Wingers", D: "Defence", G: "Goalies" };
+export const scoutStars = (ev) => (ev >= 88 ? 5 : ev >= 80 ? 4 : ev >= 72 ? 3 : ev >= 64 ? 2 : 1);
+export function Stars({ ev }) {
+  const n = scoutStars(ev);
+  return <span className="hq-stars" title={`Evaluation ${ev}`} aria-label={`${n} of 5 stars`}>{"★".repeat(n)}<i>{"★".repeat(5 - n)}</i></span>;
+}
+
+// The picks strip: "If the season ended today  Oilers 12-5-2  R1 #24 #18–35 ...".
+export function PickStrip({ compact = false }) {
+  const { league } = useGame();
+  const t = league.teams[league.userTid];
+  const year = league.phase === "draft" && league.draft ? league.draft.year : league.draftClassYear;
+  const d = league.draft;
+  const live = d?.year === year && Array.isArray(d.slots);
+  const picks = live
+    ? d.slots.filter((x) => x.owner === t.id && !x.pid).map((x) => ({ key: `s${x.overall}`, round: x.round, orig: x.orig, overall: x.overall }))
+    : league.draftPicks.filter((pk) => pk.year === year && pk.owner === t.id).map((pk) => ({ key: pk.id, round: pk.round, orig: pk.orig, overall: pickSlot(league, pk)?.overall ?? null }));
+  picks.sort((x, y) => (x.overall ?? x.round * 100) - (y.overall ?? y.round * 100));
+  const rec = t.rec ? recordStr(t.rec) : "";
+  const label = live ? "Your picks" : ["regular", "playoffs"].includes(league.phase) ? "If the season ended today" : "Your picks in this draft";
+  return (
+    <div className={`hq-strip${compact ? " compact" : ""}`}>
+      <span className="hq-strip-h"><b>{label}</b>{rec && !live && <span>{t.name} {rec}{league.phase === "preseason" ? " · last season's order" : ""}</span>}</span>
+      {picks.length ? <span className="hq-strip-picks">
+        {picks.map((x, i) => { const via = x.orig !== t.id ? league.teams[x.orig]?.abbr : null; const w = x.overall ? pickWindow(x.overall) : null; return (
+          <span key={x.key} className={`hq-pk${i === 0 ? " first" : ""}`} title={`Round ${x.round}${via ? ` (from ${via})` : ""}${w ? `: scout prospects ranked #${w[0]}–${w[1]}` : ": the order is set after the season"}`}>
+            <small>R{x.round}{via ? ` ${via}` : ""}</small><b>{x.overall ? `#${x.overall}` : "TBD"}</b>{w && !compact && <em>#{w[0]}–{w[1]}</em>}
+          </span>); })}
+      </span> : <span className="muted">You have no picks in this draft.</span>}
+    </div>
+  );
+}
+
+// Each region's strength and weakness this year: the position group it has the most and the
+// fewest of among the top 96, against the class as a whole.
+export function talentMap(pool) {
+  const top = pool.filter((p) => csRank(p) <= 96);
+  const share = {};
+  for (const p of top) share[scoutGroup(p.pos)] = (share[scoutGroup(p.pos)] || 0) + 1 / Math.max(1, top.length);
+  return Object.fromEntries(Object.keys(REGIONS).map((k) => {
+    const mine = top.filter((p) => regionOf(p) === k);
+    const r1 = mine.filter((p) => csRank(p) <= 32).length;
+    if (mine.length < 4) return [k, { n: mine.length, r1, strong: null, weak: null }];
+    const by = Object.keys(GROUP_WORD).map((g) => ({ g, v: mine.filter((p) => scoutGroup(p.pos) === g).length / mine.length / Math.max(0.02, share[g] || 0) }));
+    by.sort((x, y) => y.v - x.v);
+    return [k, { n: mine.length, r1, strong: by[0].v > 1.15 ? by[0].g : null, weak: by[by.length - 1].v < 0.85 ? by[by.length - 1].g : null }];
+  }));
+}
+
+export default function ScoutingHQ({ onBoard, onRegions, onList, onScouts }) {
+  const { league, commit, openPlayer } = useGame();
   const t = league.teams[league.userTid];
   const cls = classPool(league);
   if (!cls.length) return null;
   const needs = userNeeds(league, 3);
-  const { slot, own } = userPickAround(league);
-  // Before the order exists (no games yet), your scouts work the middle of the first round.
-  const around = slot ?? 16;
-  const inRange = (p) => csRank(p) >= around - 10 && csRank(p) <= around + 24;
-  const targets = cls.filter((p) => needs.includes(p.pos) && inRange(p)).map((p) => ({ p, read: prospectRead(league, p) })).filter((x) => x.read.lvl < 2).sort((a, b) => csRank(a.p) - csRank(b.p)).slice(0, 6);
-  const closed = ["resign", "freeagency"].includes(league.phase) || (league.phase === "draft" && league.draft?.stage !== "combine");
+  const { slots } = userPickAround(league);
+  // The slices of the board your first three picks can reach (before an order: the middle of round 1).
+  const wins = (slots.length ? slots.slice(0, 3) : [16]).map(pickWindow);
+  const inRange = (p) => wins.some(([lo, hi]) => csRank(p) >= lo && csRank(p) <= hi);
+  const isNeed = (p) => needs.includes(p.pos);
+  const pool = cls.filter(inRange).map((p) => ({ p, read: prospectRead(league, p) })).filter((x) => x.read.lvl < 2);
+  const targets = pool.sort((a, b) => (isNeed(b.p) - isNeed(a.p)) || csRank(a.p) - csRank(b.p)).slice(0, 8);
   const assign = scoutAssignments(league, t);
-  const crews = crewStrength(league).filter((c) => c.n >= 2);
   const s = t.scouts || {};
+  const map = talentMap(cls);
+  const cov = regionCoverage(league, t);
+  const onIt = (k) => SCOUT_SLOTS.filter((r) => s[r] && assign[r].includes(k));
+  const prompt = league.phase === "preseason" && assignWindowOpen(league);
   return (
-    <section className="gg-card gg-hq sc-hq">
-      <div className="gg-k">Do this next <span className="right dim" style={{ letterSpacing: 0, textTransform: "none" }}>your biggest needs: {needs.length ? needs.map((k) => NEED_WORD[k]).join(", ") : "none pressing"} · {slot == null ? "the draft order takes shape once games are played (your scouts start around #16)" : own ? `your first pick lands around #${slot}` : `you've traded your picks; your record says #${slot}`}</span></div>
-      {atCombine(league) && <div className="gg-hq-row sc-hq-visit"><div><b>Your scouts' visit list <span className="dim small">interview and work out players who'll be there when you pick</span></b><VisitList compact /></div></div>}
-      {targets.map(({ p, read }) => (
-        <div key={p.id} className="gg-hq-row">
-          <Pos pos={p.pos} />
-          <div>
-            <b><button className="link" onClick={() => openPlayer(p.id)}>{p.name}</button> <span className="dim">#{csRank(p)} on Central Scouting's list · {p.bio?.team || "junior"} ({p.bio?.lg || "?"})</span> <RoleTag p={p} /> <ScoutFlags read={read} compact /></b>
-            <span>{read.lvl === 0 ? `No report yet. A ${NEED_WORD[p.pos]} in your range${read.cov === "office" ? ": no scout in his region" : ""}.` : "Reported. Your scout will work him up."}</span>
-          </div>
-          <ScoutButton p={p} read={read} className="small primary" />
-        </div>
-      ))}
-      {!targets.length && <div className="dim small" style={{ padding: "6px 0" }}>Every prospect at your need positions in your range has been scouted. Check the Big Board for more, or build Your list.</div>}
-      <div className="row" style={{ gap: 6, marginTop: 8 }}><button className="small" onClick={onBoard}>Big Board →</button><button className="small" onClick={onList}>Your list →</button><button className="small" onClick={onRegions}>Scout assignments →</button></div>
-      <div className="sc-hq-staff">
-        <div className="gg-k" style={{ marginTop: 12 }}>Your scouting staff {crews.length > 0 && <span className="dim" style={{ letterSpacing: 0, textTransform: "none" }}>· {crews.map((c) => `${c.n} scouts in ${c.name}`).join(", ")}</span>}</div>
-        <div className="sc-hq-scouts">
-          {SCOUT_SLOTS.map((r) => { const sc = s[r]; return (
-            <div key={r} className={`sc-hq-scout${sc ? "" : " empty"}`}>
-              <small className={r.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[r].name}</small>
-              {sc ? <><b>{sc.name}</b><span>{REGIONS[assign[r]]?.name} · grade <b>{sc.eval}</b></span></> : <span className="dim">Vacant</span>}
-            </div>); })}
+    <div className="hq2">
+      <PickStrip />
+      {prompt && (
+        <button type="button" className="hq-prompt" onClick={onRegions}>
+          <span><b>Send your scouts out</b><small>{cov.n < cov.of ? `They cover ${cov.n} of ${cov.of} regions. ` : ""}Pick their regions before the season starts; they stay put once it does.</small></span>
+          <span aria-hidden="true" className="hq-chev">›</span>
+        </button>
+      )}
+      <div className="hq-grid">
+        <section className="hq-card">
+          <div className="hq-h"><b>Scout these next</b><span className="hq-sub">in range of your picks{needs.length ? ` · needs: ${needs.join(", ")}` : ""}</span></div>
+          {atCombine(league) && <div className="hq-visits"><b>Combine visits</b><VisitList compact /></div>}
+          {targets.map(({ p, read }) => {
+            const listed = onMyList(league, p.id);
+            const who = read.scout ? `${read.scout.name.split(" ").at(-1)}'s region` : "No scout here";
+            return (
+              <div key={p.id} className="hq-row">
+                <span className="hq-rk">#{csRank(p)}</span>
+                <Pos pos={p.pos} />
+                <button type="button" className="hq-who" onClick={() => openPlayer(p.id)}>
+                  <b>{p.name}{isNeed(p) && <em>need</em>} <ScoutFlags read={read} compact /></b>
+                  <span>{p.bio?.team || "Junior"} · {p.bio?.lg || "?"} · {read.lvl === 1 ? `reported ${read.pot}` : read.grade ? `your read ${read.grade}` : "no read yet"}</span>
+                </button>
+                <span className={`hq-cov${read.scout ? "" : " none"}`}>{who}</span>
+                <button type="button" className={`hq-act${listed ? " on" : ""}`} aria-pressed={listed} onClick={() => { toggleMyList(league, p.id); commit(); }}>{listed ? "On your list" : "Add to list"}</button>
+              </div>
+            );
+          })}
+          {!targets.length && <div className="hq-empty">Everyone in range of your picks has a full workup. Check the Big Board for more.</div>}
+          <div className="hq-links"><button type="button" className="hq-q" onClick={onBoard}>Big Board →</button><button type="button" className="hq-q" onClick={onList}>Your list ({myList(league).ids.length}) →</button></div>
+        </section>
+        <div className="hq-side">
+          <section className="hq-card">
+            <div className="hq-h"><b>Where the talent is</b><button type="button" className="hq-q" onClick={onRegions}>Regions →</button></div>
+            {Object.entries(REGIONS).map(([k, r]) => { const m = map[k]; const on = onIt(k); return (
+              <button type="button" key={k} className="hq-reg" onClick={onRegions}>
+                <b>{r.name}</b>
+                <span className="up">{m.strong ? `▲ ${GROUP_WORD[m.strong]}` : ""}</span>
+                <span className="down">{m.weak ? `▼ ${GROUP_WORD[m.weak]}` : m.n < 4 ? <i>small</i> : ""}</span>
+                <span className={`hq-rcov${on.length ? "" : " none"}`}>{on.length ? on.map((x) => s[x].name.split(" ").at(-1)).join(" · ") : "no scout"}</span>
+              </button>); })}
+          </section>
+          <section className="hq-card">
+            <div className="hq-h"><b>Your scouts</b><span className="hq-sub">{cov.n} of {cov.of} regions</span><button type="button" className="hq-q" onClick={onScouts}>Manage →</button></div>
+            {SCOUT_SLOTS.map((r) => { const sc = s[r]; return (
+              <div key={r} className="hq-scout">
+                <small className={r.startsWith("major") ? "maj" : "min"}>{SCOUT_ROLES[r].short}</small>
+                {sc ? <><b>{sc.name}</b><Stars ev={sc.eval} /><span className="grp" title={`${SCOUT_GROUPS[sc.group]} specialist`}>{GROUP_SHORT[sc.group]}</span><span className="regs">{assign[r].map((k) => SHORT[k] || k).join(" · ")}</span></> : <span className="muted">Vacant</span>}
+              </div>); })}
+          </section>
         </div>
       </div>
-      <div className="gg-guide gg-guide-3">
-        <div><b>1. Assign</b><span>Before the season, send each scout to a region on the Scout assignments tab.</span></div>
-        <div><b>2. Season</b><span>They file reports there on their own. Nothing to spend, nothing stops the sim; one inbox note when the board updates.</span></div>
-        <div><b>3. Combine</b><span>Interviews and private workouts before the draft. Higher-graded scouts give tighter reads and find late-ranked gems.</span></div>
-      </div>
-    </section>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "./Select.jsx";
-import { useGame, PlayerName, TeamBadge, TeamName, Bar, PageHead } from "./common.jsx";
+import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
 import { currentSlot, draftDone, pickSlot } from "../engine/draft.js";
 import { teamNeeds } from "../engine/teamPlanning.js";
 import { POS_COLOR } from "./TradePage.jsx";
@@ -700,22 +700,24 @@ export default function DraftPage({ act, want, onView }) {
   const inDraft = league.phase === "draft" && !!league.draft;
   const combine = atCombine(league);
   const hasCombine = (league.draftClass || []).some((id) => league.players[id]?.combine);
-  const defaultView = inDraft ? (combine ? "combine" : "floor") : league.phase === "preseason" ? "regions" : phone ? "hq" : "board";
+  const defaultView = inDraft ? (combine ? "combine" : "floor") : "hq";
   // A tab you pick sticks until the draft moves on (combine → draft floor → done).
   const stageKey = `${league.phase}|${league.draft?.stage || ""}`;
   const [sel, setSel] = useState({ v: null, k: stageKey });
   const viewSel = sel.k === stageKey ? sel.v : null;
   const setView = (v) => setSel({ v, k: stageKey });
+  // Scouting's views, as Gridiron's Scouting HQ pill row: HQ, Big Board, Your list, the scouts'
+  // own board, Regions (the assignments) and Scouts (the staff).
   const views = [
     inDraft && !combine && ["floor", "Draft floor"],
+    ["hq", "Scouting HQ"],
     ["board", "Big Board"],
     ["list", `Your list (${myList(league).ids.length})`],
-    ["myscouts", "Your scouts"],
+    ["myscouts", "Scouts' board"],
     hasCombine && ["combine", "Combine"],
+    ["regions", "Regions"],
     ["scouts", "Scouts"],
-    ["regions", "Scout assignments"],
     ["recap", "Draft recap"],
-    phone && ["hq", "HQ"],
   ].filter(Boolean);
   const view = views.some(([k]) => k === viewSel) ? viewSel : defaultView;
   // The section header's tabs (Scouting / Draft / Draft Recap) pick a view from outside.
@@ -780,22 +782,10 @@ export default function DraftPage({ act, want, onView }) {
         {!live && <div className="scout-budget"><span>REPORTS FILED</span><strong>{user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0}</strong><small>by your scouts in their regions</small></div>}
       </div>}
       {onView && slot && <div className="pagehead"><span className="pill on">Round {slot.round} of {DRAFT_ROUNDS}</span></div>}
-      {phone && view !== "floor" && view !== "recap" && view !== "combine" ? (() => {
-        // Phones: three segments (HQ, Board, Scouts), each with its own small chips.
-        const seg = view === "hq" ? "hq" : view === "board" || view === "list" ? "board" : "scouts";
-        const subs = seg === "board" ? [["board", "Big Board"], ["list", `Your list (${myList(league).ids.length})`]] : seg === "scouts" ? [["regions", "Assignments"], ["myscouts", "Reports"], ["scouts", "Staff"]] : [];
-        return (
-          <>
-            <PageHead label="Scouting" pills={[["hq", "HQ", seg === "hq"], ["board", "Board", seg === "board"], ["scouts", "Scouts", seg === "scouts"]]} onPick={(k) => setView(k === "scouts" ? "regions" : k)}
-              title={seg === "hq" ? "Scouting" : seg === "board" ? "Big board" : "Your scouts"} sub={`${year} draft class · ${DRAFT_ROUNDS} rounds`} />
-            {subs.length > 0 && <div className="rk-subchips">{subs.map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}
-          </>
-        );
-      })() : <>{phone && <PageHead title={view === "recap" ? "Draft recap" : combine ? "Scouting combine" : "Draft"} sub={slot ? `${year} draft · round ${slot.round} of ${DRAFT_ROUNDS}` : `${year} draft · ${DRAFT_ROUNDS} rounds`} />}<div className="tabs">
-        {views.filter(([k]) => !onView || (view === "recap" ? false : view === "floor" || view === "combine" ? k === "floor" || k === "combine" : !["floor", "recap", "combine"].includes(k))).map(([k, label]) => (
-          <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>
-        ))}
-      </div></>}
+      {(() => {
+        const row = views.filter(([k]) => (view === "recap" ? false : view === "floor" || view === "combine" ? k === "floor" || k === "combine" : !["floor", "recap", "combine"].includes(k)));
+        return row.length > 1 && <div className="tabs hq-views">{row.map(([k, label]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>)}</div>;
+      })()}
       {live && <ClockBar phone={phone} hold={!!league.moments?.length || !!panel} onPick={onPick} onForPick={(o) => setPanel({ kind: "for", overall: o })} onTradeUp={() => setPanel({ kind: "up" })} />}
       {live && phone && panelEl}
       {announce != null && <PickIsIn overall={announce} onDone={() => setAnnounce(null)} />}
@@ -804,7 +794,6 @@ export default function DraftPage({ act, want, onView }) {
       {view === "myscouts" && <ScoutBoard />}
       {view === "board" && (
         <>
-          {!inDraft && !phone && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} />}
           {!(live && phone) && <PickTracker years={trackerYears} />}
           {live && phone && <DraftStatusLine />}
           {!(live && phone) && <Legend />}
@@ -817,7 +806,7 @@ export default function DraftPage({ act, want, onView }) {
           </div>
         </>
       )}
-      {view === "hq" && <><ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} /><PickTracker years={trackerYears} /></>}
+      {view === "hq" && <ScoutingHQ onBoard={() => setView("board")} onRegions={() => setView("regions")} onList={() => setView("list")} onScouts={() => setView("scouts")} />}
       {view === "list" && <MyListPanel onDraft={slot ? draft : null} canDraft={onClock} />}
       {view === "combine" && <CombineView />}
       {view === "scouts" && <ScoutsView />}
