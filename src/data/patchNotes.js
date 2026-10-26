@@ -401,4 +401,9 @@ export const PATCH_NOTES = [
   { v: "1.72", date: "2026-10-26", title: "Front Page, Centred", notes: [
     "The Rink Gazette is centred on the screen again.",
   ] },
+  { v: "1.73", date: "2026-10-26", title: "Lineup", notes: [
+    "The Lines screen is now Lineup: every line, pair and power-play unit is one clean row with its rating, role, ice time and a chemistry meter. Tap or hover the meter to see why.",
+    "A coach panel suggests the best change right now (a swap or a scratch to dress) and shows how each line improves. Make the swap applies it, and Next idea shows another.",
+    "Strength and Auto-set now live in two simple menus, and Line settings opens in its own panel. On a phone, every line fits three across with no sideways scrolling.",
+  ] },
 ];
