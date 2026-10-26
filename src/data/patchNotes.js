@@ -448,4 +448,8 @@ export const PATCH_NOTES = [
   { v: "1.83", date: "2026-10-26", title: "Know Who You're Developing", notes: [
     "Every player on the Development screens (lists, the focus player picker and the prospect sheets) now shows his position, his overall and, where known, the year and spot he was drafted.",
   ] },
+  { v: "1.84", date: "2026-10-26", title: "Development, Tightened", notes: [
+    "Development has a cleaner look: every player shows his age and position next to his name, a short note on how he's doing, and his overall with the change coming.",
+    "Prospects now fit on one screen, grouped by how each placement is going, with a one-tap Use every recommended placement in the preseason.",
+  ] },
 ];

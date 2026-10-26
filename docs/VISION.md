@@ -83,3 +83,4 @@ confirm the Pages deploy. Report real outcomes only.
 - 1.81 Home To do = reminder board: real blockers, then only essential unfinished reminders (focus player, hire scouts, scout regions, one grouped "key players need new deals" from mid-season with Not now). No contract nags/popups — Evan wanted reminders, not clutter.
 - 1.82 Special-game cards: no emoji art, no flavour one-liner — Evan disliked both; revisit holiday games later.
 - 1.83 Development rows/sheets show position chip, OVR and draft year/round/pick (Who component) — Evan: "so we actually KNOW who we are developing". Real players' draft data still to be imported.
+- 1.84 Development rows in Gridiron's format (name + age · POS inline, short status, big OVR + change); Prospects as a grouped 3-column grid on one screen; replaces the 1.83 chip line — Evan wanted it formatted like Gridiron, keeping ONE focus player (football's offence/defence split doesn't apply).
