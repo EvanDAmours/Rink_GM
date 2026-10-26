@@ -266,6 +266,22 @@
 .app.app .lnx .lx-coach p { margin: 0 0 16px; color: #cbd5e1; font-size: 13.5px; line-height: 1.55; }
 .app.app .lnx .lx-coach.calm { background: #ffffff0a; }
 .app.app .lnx .lx-coach.calm p { margin: 0; }
+/* closed by default: one calm line; tapping opens the ideas */
+.app.app .lnx .lx-coach.lx-closed { background: #ffffff0a; padding: 0; }
+.app.app .lnx .lx-coach.lx-closed.set { padding: 16px 20px; }
+.app.app .lnx .lx-coach.lx-closed.set .lx-ctog-t { color: #94a3b8; }
+.app.app.app .lnx button.lx-ctog { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; background: none; border: 0; border-radius: 18px; padding: 14px 20px; color: #e2e8f0; font: inherit; text-align: left; cursor: pointer; }
+.app.app.app .lnx button.lx-ctog:hover { background: #ffffff08; }
+.app.app.app .lnx button.lx-ctog:focus-visible { outline: 2px solid #4ade80; outline-offset: 2px; }
+.app.app .lnx .lx-ctog-t { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 600; line-height: 1.4; color: #e2e8f0; }
+.app.app .lnx .lx-ctog-a { flex: none; display: inline-flex; align-items: center; gap: 6px; color: #94a3b8; font-size: 13px; font-weight: 600; }
+.app.app .lnx .lx-chev { font-style: normal; font-size: 11px; transition: transform .15s; }
+.app.app .lnx .lx-ctog.open .lx-chev { transform: rotate(180deg); }
+.app.app.app .lnx .lx-coach:not(.lx-closed) > button.lx-ctog { margin: -12px -12px 12px; width: calc(100% + 24px); padding: 10px 12px; min-height: 0; border-bottom: 1px solid #ffffff10; border-radius: 12px 12px 0 0; }
+.app.app .lnx .lx-coach:not(.lx-closed) > .lx-ctog .lx-ctog-t { font-size: 13.5px; color: #cbd5e1; }
+.app.app .lnx .lx-ctog-t .lx-gap { display: block; margin-top: 2px; color: #94a3b8; font-size: 13px; font-weight: 500; }
+.app.app .lnx .lx-ctog-t .lx-dot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.app.app .lnx .lx-gapnote { color: #94a3b8; font-size: 12.5px; line-height: 1.45; margin: 0 0 12px; }
 .app.app .lnx .lx-ba { background: #ffffff0a; border-radius: 14px; padding: 12px 14px; }
 .app.app .lnx .lx-ba + .lx-ba { margin-top: 8px; }
 .app.app .lnx .lx-ba-h { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; color: #f1f5f9; }
@@ -322,6 +338,9 @@
   .app.app .lnx .lx-ph-r .lx-menu > .lx-btn { width: 100%; }
   .app.app .lnx .lx-split { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
   .app.app .lnx .lx-coach { padding: 18px 16px; }
+  .app.app .lnx .lx-coach.lx-closed { padding: 0; }
+  .app.app.app .lnx button.lx-ctog { padding: 14px 16px; flex-wrap: wrap; row-gap: 4px; }
+  .app.app .lnx .lx-coach.lx-closed .lx-ctog-a { margin-left: auto; }
   .app.app.app.app .lnx .lx-coach h3 { font-size: 21px; }
   .app.app .lnx .lx-gc { padding: 16px 12px; }
   .app.app .lnx button.lx-c { height: 50px; min-height: 50px; }

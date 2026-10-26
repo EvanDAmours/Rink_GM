@@ -173,3 +173,37 @@ export function applyIdea(lg, t, idea) {
 }
 
 export { ARCH_LEGEND, ARCH_ABBR };
+
+// How far the lines are from the best the coach can find: follow his best idea, again and again,
+// until no move helps (the same greedy run as tapping "Make the swap" each time). Works on a copy
+// of the lines; the club's lines are untouched. `moves` is the count of changes, `gain` the total
+// value gained in the coach's units (a line's average slot rating plus four per chemistry point,
+// weighted by ice time, so about one rating point on an average line), `points` that gain rounded
+// for the screen, `chem` the total chemistry-score change across the units touched.
+export function lineupGap(lg, t, mode = "es", maxMoves = 40) {
+  if (!t.lines) syncLines(lg, t);
+  const orig = t.lines;
+  const L = JSON.parse(JSON.stringify(orig));
+  const steps = [];
+  t.lines = L;
+  try {
+    while (steps.length < maxMoves) {
+      const i = coachIdeas(lg, t, mode, 1)[0];
+      if (!i) break;
+      const { a, b } = i;
+      if (i.kind === "swap") { const x = L[a.g][a.i][a.j]; L[a.g][a.i][a.j] = L[b.g][b.i][b.j]; L[b.g][b.i][b.j] = x; }
+      else L[a.g][a.i][a.j] = i.inId;
+      steps.push({ title: i.title, gain: i.gain, chem: i.chem });
+    }
+  } finally { t.lines = orig; }
+  const gain = Math.round(steps.reduce((s, x) => s + x.gain, 0) * 100) / 100;
+  return { moves: steps.length, gain, points: Math.round(gain), chem: steps.reduce((s, x) => s + x.chem, 0), steps, best: L };
+}
+
+// The one calm line the closed coach panel shows.
+export function gapSummary(gap, word = "lineup") {
+  if (!gap || !gap.moves) return `Your ${word} ${/s$/.test(word) ? "are" : "is"} set`;
+  const n = gap.moves, p = gap.points;
+  const short = p >= 1 ? `${p} point${p === 1 ? "" : "s"} short of your best` : "less than a point short of your best";
+  return `${n} change${n === 1 ? "" : "s"} could improve your ${word} · ${short}`;
+}

@@ -39,3 +39,26 @@ test("special-teams ideas keep units' shape and skip injured players", () => {
   assert.equal(phrase("Three of the same type (2WY)"), "three two-way forwards");
   assert.equal(phrase("Mix of left and right shots"), "a mix of left and right shots");
 });
+
+test("the closed coach summary counts the coach's greedy run and its total value", async () => {
+  const { lineupGap, gapSummary } = await import("../src/engine/lineCoach.js");
+  for (const mode of ["es", "pp", "pk", "st"]) {
+    const { lg, t } = setup();
+    const before = JSON.stringify(t.lines);
+    const gap = lineupGap(lg, t, mode);
+    assert.equal(JSON.stringify(t.lines), before, "working out the gap leaves the lines alone");
+    // Do it for real: tap "Make the swap" on the best idea until the coach runs out.
+    let n = 0, gain = 0, chem = 0;
+    while (n < 40) { const i = coachIdeas(lg, t, mode)[0]; if (!i) break; gain += i.gain; chem += i.chem; applyIdea(lg, t, i); n++; }
+    assert.equal(gap.moves, n, `${mode}: change count matches the greedy run`);
+    assert.ok(Math.abs(gap.gain - gain) < 0.02, `${mode}: value gap matches (${gap.gain} vs ${gain})`);
+    assert.equal(gap.points, Math.round(gap.gain));
+    assert.equal(gap.chem, chem);
+    assert.equal(JSON.stringify([t.lines.F, t.lines.D, t.lines.PP, t.lines.PK]), JSON.stringify([gap.best.F, gap.best.D, gap.best.PP, gap.best.PK]), `${mode}: same end lineup`);
+    assert.equal(lineupGap(lg, t, mode).moves, 0, "after the run nothing is left");
+    assert.equal(gapSummary(lineupGap(lg, t, mode)), "Your lineup is set");
+  }
+  assert.equal(gapSummary({ moves: 4, points: 6 }), "4 changes could improve your lineup · 6 points short of your best");
+  assert.equal(gapSummary({ moves: 1, points: 0 }, "power play"), "1 change could improve your power play · less than a point short of your best");
+  assert.equal(gapSummary({ moves: 0 }, "special teams"), "Your special teams are set");
+});

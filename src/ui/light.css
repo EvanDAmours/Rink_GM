@@ -367,6 +367,16 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .app.app.app.app .lnx .lx-coach h3 { color: #0f172a; }
 .app.app .lnx .lx-coach p { color: #334155; }
 .app.app .lnx .lx-coach.calm { background: #0f172a0a; }
+.app.app .lnx .lx-coach.lx-closed { background: #0f172a0a; }
+.app.app .lnx .lx-coach.lx-closed.set .lx-ctog-t { color: #475569; }
+.app.app.app .lnx button.lx-ctog { color: #1e293b; }
+.app.app.app .lnx button.lx-ctog:hover { background: #0f172a08; }
+.app.app .lnx .lx-ctog-t { color: #1e293b; }
+.app.app .lnx .lx-ctog-a { color: #475569; }
+.app.app.app .lnx .lx-coach:not(.lx-closed) > button.lx-ctog { border-bottom: 1px solid #0f172a10; }
+.app.app .lnx .lx-coach:not(.lx-closed) > .lx-ctog .lx-ctog-t { color: #334155; }
+.app.app .lnx .lx-ctog-t .lx-gap { color: #475569; }
+.app.app .lnx .lx-gapnote { color: #475569; }
 .app.app .lnx .lx-ba { background: #0f172a0a; }
 .app.app .lnx .lx-ba-h { color: #0f172a; }
 .app.app .lnx .lx-bars { background: #0f172a14; }

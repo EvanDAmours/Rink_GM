@@ -1,12 +1,12 @@
 import Select from "./Select.jsx";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useGame, ovrColor, Sheet } from "./common.jsx";
 import { usePhone } from "./mobile.js";
 import { resetNhlLines, syncLines, gameLines, healthy, lineupIds } from "../engine/lines.js";
 import { isGoalie, isDefense } from "../engine/constants.js";
 import { restShare, REST_OPTIONS } from "../engine/sim.js";
 import { chemistry, autofillByChemistry, autofillByOverall, autofillSpecialTeams } from "../engine/chemistry.js";
-import { coachIdeas, applyIdea } from "../engine/lineCoach.js";
+import { coachIdeas, applyIdea, lineupGap, gapSummary } from "../engine/lineCoach.js";
 import { injuryReturn } from "../engine/injuryReport.js";
 import { iceShare, goalieShare, lastName, offPosition } from "./linesView.js";
 import { slotRating, lineRoles, LINE_ROLES, PAIR_ROLES } from "../engine/roles.js";
@@ -27,6 +27,11 @@ const signed = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
 const CHEM_TONE = { Great: "#22c55e", Good: "#84cc16", Fair: "#eab308", Poor: "#ef4444" };
 const toneOf = (score) => CHEM_TONE[score >= 76 ? "Great" : score >= 58 ? "Good" : score >= 40 ? "Fair" : "Poor"];
 const STRENGTHS = [["es", "Even strength"], ["pp", "Power play"], ["pk", "Penalty kill"], ["sit", "Situations"]];
+// The coach panel is closed by default; each device remembers whether it was left open.
+const COACH_KEY = "rink.lineCoach.open";
+const readOpen = () => { try { return localStorage.getItem(COACH_KEY) === "1"; } catch { return false; } };
+const saveOpen = (v) => { try { localStorage.setItem(COACH_KEY, v ? "1" : "0"); } catch { /* storage blocked */ } };
+const GAP_WORD = { es: "lineup", pp: "power play", pk: "penalty kill", st: "special teams" };
 const POS_WORD = { LW: "left wing", C: "centre", RW: "right wing", LD: "left D", RD: "right D" };
 
 // A small menu: a popover on a computer, a Sheet on a phone.
@@ -60,6 +65,8 @@ export default function LinesPage({ onRoster }) {
   const [spots, setSpots] = useState(false);
   const [why, setWhy] = useState(null);
   const [idea, setIdea] = useState({ sig: "", i: 0 });
+  const [coachOpen, setCoachOpenState] = useState(readOpen);
+  const setCoachOpen = (v) => { setCoachOpenState(v); saveOpen(v); };
   const drag = useRef(null);
   const team = league.teams[viewTid];
   const mine = viewTid === league.userTid;
@@ -123,12 +130,15 @@ export default function LinesPage({ onRoster }) {
 
   // ---- the coach: best change right now ----
   const mode = tab === "sit" ? "st" : tab;
-  const ideas = mine ? coachIdeas(league, team, mode) : [];
   const sig = JSON.stringify([L.F, L.D, L.PP, L.PK, mode]);
+  // How far from the best lineup the coach can find (his greedy run, on a copy of the lines).
+  const gapKey = mine ? `${viewTid}|${sig}|${league.year}|${league.day}|${team.roster.join(",")}` : "";
+  const gap = useMemo(() => (mine ? lineupGap(league, team, mode) : null), [gapKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ideas = mine && coachOpen ? coachIdeas(league, team, mode) : [];
   const idx = idea.sig === sig && ideas.length ? idea.i % ideas.length : 0;
   const shown = ideas[idx] || null;
   const setIdx = (i) => setIdea({ sig, i });
-  const hl = new Set(shown ? [keyOf(shown.a), shown.kind === "swap" ? keyOf(shown.b) : `X${shown.inId}`] : []);
+  const hl = new Set(shown && coachOpen ? [keyOf(shown.a), shown.kind === "swap" ? keyOf(shown.b) : `X${shown.inId}`] : []);
   const makeIdea = () => { applyIdea(league, team, shown); setSel(null); setPick(false); setWhy(null); commit(); toast(`${shown.title}. Done.`); };
 
   // ---- one player cell: sweater, surname, slot rating ----
@@ -298,10 +308,26 @@ export default function LinesPage({ onRoster }) {
 
   // ---- the coach panel ----
   const word = tab === "es" ? "lines" : "units";
-  const coach = mine && (shown ? (() => {
+  const summary = gapSummary(gap, GAP_WORD[mode]);
+  // Two short lines: how many changes, then how far from your best (the dot is for screen readers).
+  const summaryText = summary.split(" · ").map((x, k) => (k ? <span key={k} className="lx-gap"><span className="lx-dot"> · </span>{x}</span> : <span key={k}>{x}</span>));
+  const gapNote = gap && gap.moves ? `Points are rating plus chemistry, weighted by ice time${gap.chem > 0 ? `. ${gap.moves === 1 ? "That change" : `All ${gap.moves} together`}: +${gap.chem} chemistry` : ""}.` : "";
+  const toggle = (open) => (
+    <button type="button" className={`lx-ctog${open ? " open" : ""}`} aria-expanded={open} onClick={() => setCoachOpen(!open)} title={gapNote || undefined}>
+      <span className="lx-ctog-t">{summaryText}</span>
+      <span className="lx-ctog-a" aria-hidden="true">{open ? "Hide" : "Show ideas"}<i className="lx-chev">▾</i></span>
+    </button>
+  );
+  const coach = mine && (!gap?.moves && !shown ? (
+    <aside className="lx-coach lx-closed set"><div className="lx-ctog-t">{summaryText}</div></aside>
+  ) : !coachOpen ? (
+    <aside className="lx-coach lx-closed">{toggle(false)}</aside>
+  ) : shown ? (() => {
     const others = ideas.map((x, k) => ({ x, k })).filter(({ k }) => k !== idx).slice(0, 3);
     return (
       <aside className="lx-coach" aria-live="polite">
+        {toggle(true)}
+        {gapNote && <div className="lx-gapnote">{gapNote}</div>}
         <div className="lx-eyb">Best change right now</div>
         <h3>{shown.title}</h3>
         <p>{shown.why}</p>
@@ -333,6 +359,7 @@ export default function LinesPage({ onRoster }) {
     );
   })() : (
     <aside className="lx-coach calm">
+      {toggle(true)}
       <div className="lx-eyb">Best change right now</div>
       <h3>Your {word} are set</h3>
       <p>No single swap makes these {word} better right now. Ideas show up here as soon as a move would help.</p>
