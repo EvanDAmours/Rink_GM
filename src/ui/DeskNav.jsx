@@ -1,9 +1,9 @@
 // Desktop navigation (the football game's "one clean bar"): six sections in one top bar, a season
 // button that opens the season at a glance, search, the live-window pills, the phase's buttons and
-// one ⋯ menu. Every section opens on the shared page header (common.jsx PageHead): quiet pills
-// for its screens, a plain title and one grey line.
+// one ⋯ menu. Every section opens on the section hero (common.jsx SectionHero, numbers in
+// heroStats.js) with its screens as underline tabs.
 import React, { useEffect, useRef, useState } from "react";
-import { TeamBadge, recordStr, money } from "./common.jsx";
+import { TeamBadge, recordStr } from "./common.jsx";
 import Icon from "./Icon.jsx";
 import { ROUND_NAMES } from "../engine/playoffs.js";
 import { lastDay } from "../engine/schedule.js";
@@ -16,7 +16,7 @@ export function sectionsFor(league, { deadlineOpen, frenzyOpen }) {
     { id: "standings", label: "Standings", screens: [["Standings", "standings"]] },
     { id: "season", label: "Season", screens: [["Schedule", "schedule"], ["Playoffs", "league", "playoffs", ["playoffs"]], ["Stats", "stats"]] },
     { id: "development", label: "Development", screens: [["Overview", "development", "overview", ["overview"]], ["Season plan", "development", "plan", ["plan"]], ["Prospects", "development", "prospects", ["prospects"]]] },
-    { id: "draft", label: "Draft", screens: [["Scouting", "draft", "board", ["board", "list", "myscouts", "scouts", "regions"]], ["Draft", "draft", "floor", ["floor", "combine"]], ["Draft Recap", "draft", "recap", ["recap"]]] },
+    { id: "draft", label: "Draft", screens: [["Scouting", "draft", "hq", ["hq", "board", "list", "myscouts", "scouts", "regions"]], ["Draft", "draft", "floor", ["floor", "combine"]], ["Draft Recap", "draft", "recap", ["recap"]]] },
     { id: "market", label: "Trades & FA", screens: [["Trade", "trade", "trade", ["trade"]], ["Trade Block", "trade", "block", ["block"]], [league.phase === "resign" ? "Re-sign" : "Free Agency", "trade", "fa", ["fa"]], ...(deadlineOpen ? [["Deadline Day", "trade", "deadline", ["deadline"]]] : []), ...(frenzyOpen ? [["July 1 Frenzy", "trade", "frenzy", ["frenzy"]]] : [])] },
     { id: "office", label: "Front Office", screens: [["Front Office", "frontoffice"], ["League", "league", "teams", ["teams", "retired", "standings"]], ["Franchise History", "legacy", "club", ["club", "case", "gm"]], ["Record Book", "league", "records", ["records"]], ["League History", "league", "awards", ["awards"]], ["Transactions", "league", "tx", ["tx"]], ["Legacy Hall", "legacy", "hall", ["hall", "trophies", "awards"]]] },
   ];
@@ -34,22 +34,6 @@ export function screenOn(scr, tab, sub) {
 export function sectionOf(sections, tab, sub) {
   for (const s of sections) for (const scr of s.screens) if (screenOn(scr, tab, sub)) return { section: s, screen: scr };
   return null;
-}
-
-// The section's one grey line under the title: the hero's numbers, as plain words.
-export function heroLine(id, league, user, h) {
-  const rec = user.rec || { w: 0, l: 0, otl: 0, pts: 0 };
-  const gp = rec.w + rec.l + rec.otl;
-  const cap = h.capSpace >= 0 ? `${money(h.capSpace)} in cap space` : `${money(-h.capSpace)} over the cap`;
-  const pts = rec.pts ?? rec.w * 2 + rec.otl;
-  const gd = h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff);
-  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-  if (id === "team") return [`${user.city} ${user.name}`, recordStr(rec), `${h.active} on the roster`, cap, h.injured ? `${h.injured} injured` : "nobody injured"].join(" · ");
-  if (id === "standings" || id === "season") return [recordStr(rec), n(pts, "point", "points"), `${gp} of 82 played`, gp ? `goal difference ${gd}` : null].filter(Boolean).join(" · ");
-  if (id === "draft") return [`${h.draftYear} draft`, n(h.picks, "pick", "picks"), h.firstPick ? `first in ${h.firstPick.toLowerCase()}` : null, n(h.reports, "report filed", "reports filed")].filter(Boolean).join(" · ");
-  if (id === "market") return [cap, `${h.active} on the roster`, n(h.offers, "trade offer", "trade offers"), n(league.freeAgents?.length || 0, "free agent", "free agents")].join(" · ");
-  if (id === "office") return [cap, `${money(h.payroll)} payroll`, `${h.expiring} expiring`, `fans ${h.fans}%`].join(" · ");
-  return "";
 }
 
 const PHASE_STAGES = [["preseason", "Preseason"], ["regular", "Regular season"], ["playoffs", "Playoffs"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];

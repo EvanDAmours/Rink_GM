@@ -415,24 +415,15 @@ export default function LinesPage({ onRoster }) {
     </Sheet>
   );
 
-  const sectionTabs = (
-    <nav className="lx-sectabs" aria-label="Team">
-      <button type="button" className="on" aria-current="page">Lines</button>
-      {onRoster && <button type="button" onClick={onRoster}>Roster</button>}
-      <button type="button" onClick={() => go("coaching")}>Coaching</button>
-    </nav>
-  );
-
   const main = tab === "es" ? <>{forwards}{defence}</> : tab === "sit" ? <section className="lx-gc"><h2 className="lx-gh">Situations</h2><SituationsPanel team={team} mine={mine} /></section> : stView();
   const side = <>{coach}{tab === "es" && !phone && <section className="lx-gc lx-gkc">{goalRow}</section>}</>;
 
   return (
     <div className="lnx lx2">
-      {sectionTabs}
-      <div className="lx-ph">
+      {/* The section hero above names the screen; this row keeps the strength and Auto-set menus. */}
+      <div className="lx-ph lx-ph-bare">
         <div className="lx-ph-t">
-          <h1>Lineup</h1>
-          <div className="lx-s2">{mine ? `${strName} · ideas update every time you move someone` : `${team.city} ${team.name} · ${strName.toLowerCase()} · tap a player for his card`}</div>
+          <div className="lx-s2">{mine ? `${strName} · tap a player, then where he goes` : `${team.city} ${team.name} · ${strName.toLowerCase()} · tap a player for his card`}</div>
         </div>
         <div className="lx-ph-r">
           {!mine && <button type="button" className="lx-btn quiet" onClick={() => { setViewTid(league.userTid); setSel(null); }}>Your lines</button>}

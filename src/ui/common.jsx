@@ -134,6 +134,47 @@ export function PageHead({ pills, onPick, label, title, sub, right, className = 
   );
 }
 
+// The section hero (Gridiron's Team header): a band in the club's colours with a faint logo, a small
+// eyebrow, the section's block title, the screen's 3–5 numbers on the right and the section's
+// screens as underline tabs inside the band. One component for every section, desktop and phone
+// (compact: eyebrow, title, the first three numbers, tabs that scroll). Numbers: heroStats.js.
+const heroLum = (hex) => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return 0.2;
+  const n = parseInt(m[1], 16), f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * f(n >> 16) + 0.7152 * f((n >> 8) & 255) + 0.0722 * f(n & 255);
+};
+export function heroColor(team) {
+  const [a, b] = team?.colors || [];
+  // A near-black primary (or a pale one) tints nothing: use the second colour when it has more life.
+  const la = heroLum(a), lb = heroLum(b);
+  const c = (la < 0.006 || la > 0.6) && b && lb >= 0.006 && lb <= 0.6 ? b : a || "#1e3a8a";
+  const l = heroLum(c);
+  return { c, a: l > 0.35 ? "66" : l < 0.03 ? "ff" : "b3" };
+}
+export function SectionHero({ team, eyebrow, title, stats = [], tabs = [], onTab, compact = false }) {
+  const { c, a } = heroColor(team);
+  const shown = (compact ? stats.slice(0, 3) : stats).filter(Boolean);
+  return (
+    <section className={`keep-dark rk-hero${compact ? " compact" : ""}`} aria-label={title}
+      style={{ backgroundImage: `radial-gradient(140% 220% at 0% 0%, ${c}${a} 0%, ${c}2e 46%, transparent 78%)` }}>
+      <span aria-hidden="true" className="rk-hero-mark"><TeamBadge team={team} size={compact ? 190 : 300} decorative /></span>
+      <div className="rk-hero-top">
+        <div className="rk-hero-id">
+          {eyebrow && <div className="rk-hero-eye">{eyebrow}</div>}
+          <h1 className="rk-hero-title">{title}</h1>
+        </div>
+        {shown.length > 0 && <div className="rk-hero-stats">
+          {shown.map(([l, v, tone]) => <div key={l} className={tone ? `t-${tone}` : undefined}><b>{v}</b><span>{l}</span></div>)}
+        </div>}
+      </div>
+      {tabs.length > 1 ? <nav className="rk-hero-tabs" aria-label={title}>
+        {tabs.map(([k, l, on, badge]) => <button key={k} type="button" className={on ? "on" : ""} aria-current={on ? "page" : undefined} onClick={() => onTab(k)}>{l}{badge && <span className="badge">{badge}</span>}</button>)}
+      </nav> : <div className="rk-hero-pad" />}
+    </section>
+  );
+}
+
 // Sortable table. columns: [{ key, label, render(row), sort(row) -> value, num, title }]
 export function Table({ columns, rows, initialSort, rowClass, limit, empty = "Nothing to show.", dense }) {
   const [sort, setSort] = useState(initialSort || null);

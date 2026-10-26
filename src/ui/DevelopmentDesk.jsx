@@ -1,5 +1,5 @@
-// Development: its own section, three calm views (Overview · Season plan · Prospects) in the shell
-// of the Lineup screen. One question per screen, answered in one big sentence; lists, not
+// Development: its own section, three calm views (Overview · Season plan · Prospects) under the
+// section hero (its tabs pick the view). One question per screen, answered in one big sentence; lists, not
 // dashboards; the detail one tap away in a sheet. The engine is developmentPlan.js.
 import React, { useMemo, useState } from "react";
 import { useGame, Dialog, DBtn } from "./common.jsx";
@@ -26,9 +26,6 @@ export default function DevelopmentHub({ sub, onSub }) {
   const cur = devView(sub);
   return (
     <div className="dvx">
-      <nav className="dv-pills" aria-label="Development">
-        {VIEWS.map(([k, l]) => <button key={k} type="button" className={cur === k ? "on" : ""} aria-current={cur === k ? "page" : undefined} onClick={() => onSub(k)}>{l}</button>)}
-      </nav>
       {cur === "plan" ? <SeasonPlan onSub={onSub} /> : cur === "prospects" ? <Prospects /> : <Overview onSub={onSub} />}
     </div>
   );

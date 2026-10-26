@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useGame, TeamBadge, PageHead } from "./common.jsx";
-import { usePhone } from "./mobile.js";
+import { useGame } from "./common.jsx";
 import LinesPage from "./LinesPage.jsx";
 import RosterPage from "./RosterPage.jsx";
 import FrontOfficePage from "./FrontOfficePage.jsx";
@@ -20,25 +19,13 @@ import CapOverview, { CapGuide } from "./CapOverview.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
-// One header for a family of screens. On a phone it is the shared page header (PageHead: quiet
-// pills for the hub's screens, a big plain title, one grey line), the same as Lineup and
-// Development. On a computer the section header above (App's PageHead) carries the pills and the
-// title, so only the inner views stay, as a small segmented filter (deskTabs: the ones it keeps).
+// One body for a family of screens. The section hero above (App: common.jsx SectionHero) carries
+// the section's screens as tabs, the title and the numbers, on phones and computers alike, so a
+// hub only keeps its inner views as a small segmented filter (deskTabs: the ones it keeps).
 // The screens inside render without their own title (see .gg-embed in gridiron.css).
-export function Hub({ title, status, tabs, sub, onSub, badges = {}, right, children, deskTabs }) {
-  const phone = usePhone();
+export function Hub({ tabs, sub, onSub, badges = {}, right, children, deskTabs }) {
   const cur = tabs.some(([k]) => k === sub) ? sub : tabs[0][0];
   const chips = !deskTabs ? tabs : tabs.filter(([k]) => deskTabs.includes(k));
-  const curLabel = tabs.find(([k]) => k === cur)?.[1];
-  if (phone) {
-    return (
-      <div className="stack gg-hub">
-        <PageHead label={title} pills={tabs.map(([k, l]) => [k, l, cur === k, badges[k]])} onPick={onSub}
-          title={!curLabel || /^overview$/i.test(curLabel) ? title : curLabel} sub={status} right={right} />
-        <div className="gg-embed">{typeof children === "function" ? children(cur) : children}</div>
-      </div>
-    );
-  }
   const showHead = chips.length > 1 || right;
   return (
     <div className="stack gg-hub">

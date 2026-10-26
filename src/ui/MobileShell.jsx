@@ -4,7 +4,7 @@
 // with every other screen and the settings. App.jsx decides what goes in each; these draw it.
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { TeamBadge, money, recordStr } from "./common.jsx";
+import { TeamBadge, money } from "./common.jsx";
 import { Hub } from "./hubs.jsx";
 import StandingsPage from "./StandingsPage.jsx";
 import StatsPage from "./StatsPage.jsx";
@@ -165,10 +165,8 @@ export function TapTips() {
 // Phones: the standings, stats, schedule and playoffs on one screen, a chip for each.
 export const SEASON_TABS = [["standings", "Standings"], ["stats", "Stats"], ["schedule", "Schedule"], ["playoffs", "Playoffs"]];
 export function SeasonHub({ league, sub, onSub, act }) {
-  const user = league.teams[league.userTid];
-  const status = `${league.year}-${String(league.year + 1).slice(2)} · ${user.abbr} ${recordStr(user.rec)}`;
   return (
-    <Hub title="Season" status={status} tabs={SEASON_TABS} sub={sub || (league.phase === "playoffs" ? "playoffs" : "standings")} onSub={onSub} badges={{ playoffs: league.phase === "playoffs" ? "ON" : null }}>
+    <Hub tabs={SEASON_TABS} sub={sub || (league.phase === "playoffs" ? "playoffs" : "standings")} onSub={onSub} deskTabs={[]}>
       {(cur) => (cur === "stats" ? <StatsPage /> : cur === "schedule" ? <SchedulePage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : <StandingsPage />)}
     </Hub>
   );

@@ -8,7 +8,8 @@ import { capForYear } from "./engine/constants.js";
 import { capYear } from "./engine/roster.js";
 import { lastDay } from "./engine/schedule.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GameCtx, TeamBadge, recordStr, money, PageHead } from "./ui/common.jsx";
+import { GameCtx, TeamBadge, recordStr, money, SectionHero } from "./ui/common.jsx";
+import { heroStats, heroEyebrow } from "./ui/heroStats.js";
 import StanleyCup3D from "./ui/StanleyCup3D.jsx";
 import ActivityPage from "./ui/ActivityPage.jsx";
 import CommandPalette from "./ui/CommandPalette.jsx";
@@ -74,7 +75,7 @@ import { applyTheme, getTheme } from "./ui/theme.js";
 import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
-import { DeskBar, sectionsFor, sectionOf, screenOn, heroLine } from "./ui/DeskNav.jsx";
+import { DeskBar, sectionsFor, sectionOf, screenOn } from "./ui/DeskNav.jsx";
 import { frenzyFor } from "./engine/frenzy.js";
 import { payroll } from "./engine/roster.js";
 import { capOverview } from "./engine/capOverview.js";
@@ -787,23 +788,20 @@ export default function App({ resume = false }) {
       actions={live ? null : <OfflineChip />} ff={live ? null : <>{deskMain}{deskFF.length > 0 && <div className="gg-ff"><button className="gg-ff-btn rk-quiet" aria-haspopup="menu" aria-expanded={ffOpen} title="Fast forward" onClick={() => setFfOpen((v) => !v)}>⏩</button>{ffOpen && <><div className="rk-scrim" onClick={() => setFfOpen(false)} /><div className="gg-ffmenu" role="menu">{deskFF.map(([l, f]) => <button key={l} role="menuitem" onClick={() => { setFfOpen(false); f(); }}>{l}</button>)}</div></>}</div>}</>}
       menu={deskMenu} />
   );
-  const heroH = where && where.section.id !== "home" && !phone && !live ? (() => {
-    const c = counts(league, user);
-    const inj = user.roster.map((id) => league.players[id]).filter((p) => p && p.injury > 0).length;
-    const mine = league.schedule.filter((g) => g.played && (g.h === user.id || g.a === user.id));
-    const goalDiff = mine.reduce((s2, g) => s2 + (g.h === user.id ? g.hs - g.as : g.as - g.hs), 0);
-    const dy = league.phase === "draft" && league.draft ? league.draft.year : league.draftClassYear;
-    const picks = league.draftPicks.filter((p) => p.owner === user.id && p.year === dy);
-    const first = picks.slice().sort((a, b) => a.round - b.round)[0];
-    return { capSpace: space, active: c.active, injured: inj, goalDiff, draftYear: dy, picks: picks.length, firstPick: first ? `Round ${first.round}` : null, reports: user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0, offers: userOffers(league).length, payroll: payroll(league, user), expiring: capOverview(league, user).expiring, fans: Math.round(user.owner?.fanSupport ?? 60) };
-  })() : null;
-  // The Lineup and Development screens have their own plain title and section pills, so no hero there.
-  const bareLines = (tab === "lines" && (sub.lines || "lines") === "lines") || tab === "development";
-  // Every section opens the same way as Lineup and Development: quiet section pills, a plain title, one grey line.
-  const hero = heroH && !bareLines && <PageHead className="rk-sechead" label={where.section.label}
-    pills={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}
-    onPick={(l) => openScreen(where.section.screens.find((x) => x[0] === l))}
-    title={where.screen[0]} sub={heroLine(where.section.id, league, user, heroH)} />;
+  // Every section opens on the same hero (common.jsx SectionHero, Gridiron's Team header): the club's
+  // colours, the section's block title, the screen's own numbers (heroStats.js) and the section's
+  // screens as underline tabs. Phones get the compact band; their Season hub is one section.
+  const heroSpec = live || tab === "dashboard" ? null : phone && tab === "season" ? (() => {
+    const cur = sub.season || (league.phase === "playoffs" ? "playoffs" : "standings");
+    return { id: "season", label: "Season", key: cur, tabs: SEASON_TABS.map(([k, l]) => [k, l, k === cur, k === "playoffs" && league.phase === "playoffs" ? "ON" : null]), onTab: (k) => setSub("season", k) };
+  })() : where && where.section.id !== "home" ? {
+    id: where.section.id, label: where.section.label,
+    key: where.screen[2] || where.screen[1],
+    tabs: where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : scr[1] === "draft" && scr[2] === "floor" ? badgeFor("draft") : null]),
+    onTab: (l) => openScreen(where.section.screens.find((x) => x[0] === l)),
+  } : null;
+  const hero = heroSpec && <SectionHero team={user} compact={phone} eyebrow={heroEyebrow(heroSpec.id, league, user)} title={heroSpec.label}
+    stats={heroStats(heroSpec.id, heroSpec.key, league, user)} tabs={heroSpec.tabs} onTab={heroSpec.onTab} />;
 
   return (
     <GameCtx.Provider value={ctx}>
@@ -812,7 +810,7 @@ export default function App({ resume = false }) {
         deskBar)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
-          <div className={`main${hero ? " rk-heroed" : ""}${!phone && !live && tab !== "dashboard" && !bareLines ? " rk-paged" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className={`main${hero ? " rk-heroed" : ""}${!phone && !live && tab !== "dashboard" ? " rk-paged" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (
@@ -832,7 +830,7 @@ export default function App({ resume = false }) {
                 {tab === "development" && <DevelopmentHub sub={sub.development} onSub={(k) => setSub("development", k)} />}
                 {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
-                {tab === "legacy" && <TrophyRoom {...(phone ? {} : { view: sub.legacy || "hall", onView: (k) => setSub("legacy", k) })} />}
+                {tab === "legacy" && <TrophyRoom view={sub.legacy || "hall"} onView={(k) => setSub("legacy", k)} />}
                 {tab === "updates" && <GameUpdates />}
               </>
             )}

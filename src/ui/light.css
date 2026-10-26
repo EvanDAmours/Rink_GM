@@ -576,6 +576,43 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .sc-regrow span { color: #475569; }
 .sc-regrow em { color: #15803d; }
 .sc-regrow small { color: #b45309; }
+.sc-assign-card small .sc-slots { color: #475569; }
+.sc-cover b { color: #0f172a; }
+.app.app .hq-strip { background: #0f172a0d; }
+.app.app .hq-strip-h span { color: #475569; }
+.app.app .hq-pk { background: #0f172a0d; }
+.app.app .hq-pk small { color: #475569; }
+.app.app .hq-pk.first b { color: #a16207; }
+.app.app .hq-prompt small { color: #475569; }
+.app.app .hq-chev { color: #0369a1; }
+.app.app .hq-card { background: #0f172a0d; }
+.app.app .hq-sub { color: #475569; }
+.app.app.app button.hq-q { background: #0f172a12; color: #1e293b; }
+.app.app.app button.hq-q:hover { background: #0f172a1f; color: #0f172a; }
+.app.app .hq-row { border-top: 1px solid #0f172a0a; }
+.app.app .hq-rk { color: #475569; }
+.app.app .hq-who b { color: #0f172a; }
+.app.app .hq-who b em { color: #15803d; }
+.app.app .hq-who span { color: #475569; }
+.app.app .hq-cov.none { color: #a16207; }
+.app.app.app button.hq-act { background: #0f172a0f; color: #334155; }
+.app.app.app button.hq-act:hover { background: #0f172a1a; color: #0f172a; }
+.app.app .hq-empty { color: #475569; }
+.app.app .hq-visits { border-bottom: 1px solid #0f172a12; }
+.app.app .hq-visits > b { color: #6d28d9; }
+.app.app.app button.hq-reg { border-top: 1px solid #0f172a0a; }
+.app.app.app button.hq-reg:hover { background: #0f172a06; }
+.app.app .hq-reg b { color: #1e293b; }
+.app.app .hq-reg .up { color: #15803d; }
+.app.app .hq-reg .down { color: #dc2626; }
+.app.app .hq-reg .down i { color: #475569; }
+.app.app .hq-reg .hq-rcov.none { color: #a16207; }
+.app.app .hq-scout { border-top: 1px solid #0f172a0a; }
+.app.app .hq-scout small.maj { color: #a16207; }
+.app.app .hq-scout small.min { color: #2563eb; }
+.app.app .hq-scout b { color: #0f172a; }
+.app.app .hq-scout .regs { color: #475569; }
+.app.app .hq-stars { color: #a16207; }
 
 /* src/ui/standings.css */
 .app .gg-clinch.y { color: #0284c7; }
@@ -1679,6 +1716,13 @@ body .app { background: #eef1f6 !important; }
 .app.app.app .gg-stat small,
 .app.app.app .ct-tile small,
 .app.app.app .gg-coach-hero small { color: #475569; }
+.app.app .main .rk-hero,
+.app.app .rk-hero { background-color: #f4f6fa; color: #0f172a; }
+.app.app .rk-hero-stats .t-good b { color: #15803d; }
+.app.app .rk-hero-stats .t-bad b { color: #dc2626; }
+.app.app .rk-hero-stats .t-warn b { color: #b45309; }
+.app.app .rk-hero-stats .t-gold b { color: #a16207; }
+.app.app.app .rk-hero-tabs button:hover:not(.on) { border-bottom-color: #0f172a40; }
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }
