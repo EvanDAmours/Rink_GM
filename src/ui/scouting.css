@@ -146,3 +146,7 @@
 .sc-regions-more > summary { cursor: pointer; font-weight: 800; color: #fff; padding: 8px 2px; font-size: 15px; }
 html.light .app .main button.sc-regrow.on:not(.x) { background: #0f172a; color: #fff; }
 html.light .sc-regions-more > summary { color: #0f172a; }
+html.light .app .main button.sc-regrow:not(.x) { color: #0f172a; }
+html.light .sc-regrow span { color: #475569; }
+html.light .sc-regrow.on span { color: #cbd5e1; }
+html.light .sc-assign-card { background: #0f172a08; }

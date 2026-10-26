@@ -243,3 +243,6 @@ html.light .app .main .rk-seg3 button.on, html.light .app .main .rk-subchips but
 .rk-phone-app .gg-dealbar .gg-deal-col:last-child { text-align: right; align-items: flex-end; }
 .rk-phone-app .gg-dealbar .gg-deal-opts { gap: 4px 12px; }
 .rk-phone-app .gg-dealbar .gg-deal-opts label { min-height: 36px; }
+html.light .app .rk-mnav button.on, html.light .rk-mnav button.on .rk-mnav-lbl { color: #0f172a; }
+html.light .rk-mnav button.on .rk-mnav-ico { background: #0f172a14; }
+html.light .rk-phone-app .gg-trade > .gg-dealbar { background: #fffffff7; box-shadow: 0 -8px 28px #0f172a33; }
