@@ -174,7 +174,7 @@ function MyOffers({ onRaise }) {
             <MugPos p={p} team={null} />
             <span className="gg-faname"><b><PlayerName p={p} /></b><small>{p.age} yrs · <span style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span> OVR{st.mine ? ` · your offer ${money(st.mine.aav)} × ${st.mine.yrs}` : n.mineAav ? ` · your offer ${money(n.mineAav)} × ${n.mineYrs}` : ""}</small></span>
             <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.when}` : ""}</span>
-            <span className="gg-offer-says">{st.says}</span>
+            <span className="gg-offer-says">{st.says}{(() => { const neg = league.negotiations?.[p.id]; const top = (neg?.bids || []).filter((b) => b.tid !== league.userTid && b.aav).sort((x, y) => y.aav - x.aav)[0]; return st.status === "pending" ? <b className="gg-offer-rival"> {top ? `Top rival bid: ${money(top.aav)} × ${top.yrs}.` : "No rival bids yet."}</b> : null; })()}</span>
             <span className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
               {(st.status === "pending" || st.status === "counter") && <button className="small primary" onClick={() => onRaise(p.id)}>{st.status === "counter" ? "Reply" : "Raise"}</button>}
               {st.status === "pending" && <button className="small ghost" onClick={() => { const r = withdrawBid(league, p.id); toast(r.msg); commit(); }}>Withdraw</button>}

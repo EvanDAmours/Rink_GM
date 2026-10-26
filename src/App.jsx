@@ -594,17 +594,17 @@ export default function App({ resume = false }) {
   const linesSub = sub.lines || "lines";
   const tradeSub = sub.trade || "trade";
   const PHASE_ITEM = {
-    preseason: { key: "camp", icon: "🏕️", label: "Camp", on: tab === "lines" && linesSub === "roster", onClick: () => go("lines", "roster") },
-    regular: { key: "season", icon: "📊", label: "Standings", on: tab === "season", onClick: () => go("season", sub.season || "standings") },
-    playoffs: { key: "season", icon: "🏆", label: "Playoffs", on: tab === "season", onClick: () => go("season", "playoffs") },
-    draft: { key: "trade", icon: "🔁", label: "Trade", on: tab === "trade" && tradeSub === "trade", onClick: () => go("trade", "trade") },
-    resign: { key: "fa", icon: "✍️", label: "Re-sign", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
-    freeagency: { key: "fa", icon: "✍️", label: "Free Agency", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
+    preseason: { key: "camp", icon: "camp", label: "Camp", on: tab === "lines" && linesSub === "roster", onClick: () => go("lines", "roster") },
+    regular: { key: "season", icon: "standings", label: "Standings", on: tab === "season", onClick: () => go("season", sub.season || "standings") },
+    playoffs: { key: "season", icon: "trophies", label: "Playoffs", on: tab === "season", onClick: () => go("season", "playoffs") },
+    draft: { key: "trade", icon: "trade", label: "Trade", on: tab === "trade" && tradeSub === "trade", onClick: () => go("trade", "trade") },
+    resign: { key: "fa", icon: "freeagency", label: "Re-sign", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
+    freeagency: { key: "fa", icon: "freeagency", label: "Free Agency", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
   };
   const phoneNav = [
-    { key: "home", icon: "🏠", label: "Home", on: tab === "dashboard", onClick: () => go("dashboard") },
-    { key: "lines", icon: "🏒", label: "Lines", on: tab === "lines" && !(league.phase === "preseason" && linesSub === "roster"), onClick: () => go("lines", "lines") },
-    { key: "draft", icon: league.phase === "draft" ? "🎯" : "🔎", label: league.phase === "draft" ? "Draft" : "Scouting", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") },
+    { key: "home", icon: "home", label: "Home", on: tab === "dashboard", onClick: () => go("dashboard") },
+    { key: "lines", icon: "lines", label: "Lines", on: tab === "lines" && !(league.phase === "preseason" && linesSub === "roster"), onClick: () => go("lines", "lines") },
+    { key: "draft", icon: league.phase === "draft" ? "draft" : "search", label: league.phase === "draft" ? "Draft" : "Scouting", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") },
     PHASE_ITEM[league.phase] || PHASE_ITEM.regular,
   ];
   // The day's main action, then the rest behind the ▾ (the same act functions as the top bar's).
@@ -623,8 +623,8 @@ export default function App({ resume = false }) {
           A.push({ label: "Sim Game", onClick: act.simDay, tone: "blue" });
         } else A.push({ label: "Sim Day", onClick: act.simDay, tone: "blue" });
         A.push({ label: "Sim Week", onClick: () => act.simDays(7, "Simulating a week"), tone: "blue" });
-        if (league.day < league.deadlineDay) A.push({ label: "Sim to Deadline", onClick: act.simToDeadline, tone: "red" });
-        A.push({ label: "Sim to End of Season", onClick: act.simToEnd, tone: "violet" });
+        if (league.day < league.deadlineDay) A.push({ label: "Sim to Deadline", onClick: act.simToDeadline, tone: "red", confirm: true });
+        A.push({ label: "Sim to End of Season", onClick: act.simToEnd, tone: "violet", confirm: true });
       }
     }
     if (ph === "playoffs") {
@@ -633,7 +633,7 @@ export default function App({ resume = false }) {
         if (userSeries(league)) A.push({ label: "▶ Play Live", onClick: act.playPlayoffLive });
         A.push({ label: "Sim Day", onClick: act.simPlayoffDay, tone: "blue" });
         A.push({ label: "Sim Round", onClick: act.simPlayoffRound, tone: "gold" });
-        A.push({ label: "Sim to the Final", onClick: act.simPlayoffsAll, tone: "violet" });
+        A.push({ label: "Sim to the Final", onClick: act.simPlayoffsAll, tone: "violet", confirm: true });
       }
     }
     if (ph === "draft") {
@@ -729,13 +729,14 @@ export default function App({ resume = false }) {
     if (next) next.onClick();
   };
   const moreActions = [
-    { label: "💾 Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
-    { label: injOn ? "🩹 Injuries: on (tap to turn off)" : "🩹 Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
-    { label: "✈️ Offline play", onClick: () => { go("settings"); setTimeout(() => document.getElementById("rk-offline")?.scrollIntoView({ block: "start" }), 120); } },
-    { label: themeNow === "light" ? "🌙 Theme: light (tap for dark)" : themeNow === "dark" ? "☀️ Theme: dark (tap for auto)" : "🌗 Theme: auto (tap for light)", onClick: () => { setThemeNow(applyTheme(themeNow === "light" ? "dark" : themeNow === "dark" ? "auto" : "light")); } },
-    { label: "🧭 Take the tour", onClick: () => { setMoreOpen(false); setTour("run"); } },
-    { label: "📝 Game updates", onClick: () => go("updates") },
-    { label: "🖥 Computer layout", onClick: () => { flushSave(); window.location.href = desktopUrl(); } },
+    { label: "Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
+    { label: injOn ? "Injuries: on (tap to turn off)" : "Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
+    { label: "Offline play", onClick: () => { go("settings"); setTimeout(() => document.getElementById("rk-offline")?.scrollIntoView({ block: "start" }), 120); } },
+    { label: themeNow === "light" ? "Theme: light (tap for dark)" : themeNow === "dark" ? "Theme: dark (tap for auto)" : "Theme: auto (tap for light)", onClick: () => { setThemeNow(applyTheme(themeNow === "light" ? "dark" : themeNow === "dark" ? "auto" : "light")); } },
+    { label: "Take the tour", onClick: () => { setMoreOpen(false); setTour("run"); } },
+    { label: "Game updates", onClick: () => go("updates") },
+    { label: "Settings", onClick: () => go("settings") },
+    { label: "Computer layout", onClick: () => { flushSave(); window.location.href = desktopUrl(); } },
   ];
 
   // ---------- Desktop: the bar and each section's header ----------
@@ -745,6 +746,17 @@ export default function App({ resume = false }) {
   const where = sectionOf(sections, tab, draftSub);
   const openScreen = (scr) => { const [, t, k] = scr; if (t === "draft" && k) { setDraftWant({ v: k, n: Date.now() }); setTab("draft"); } else { setTab(t); if (k) setSub(t, k); } setMoreOpen(false); };
   for (const s of sections) s.badge = s.id === "draft" ? badgeFor("draft") : s.id === "market" ? badgeFor("trade") : s.id === "season" ? badgeFor("league") : null;
+  // Phones: the More sheet in the bar's groups (the season screens open on the phone's Season hub).
+  const moreGroups = [
+    ...sections.filter((sec) => sec.id !== "home").map((sec) => ({ label: sec.label, items: sec.screens.map((scr) => {
+      const [label, t, k] = scr;
+      const seasonKey = PHONE_ALIAS[t] ? t : t === "league" && k === "playoffs" ? "playoffs" : null;
+      return { key: `${t}-${k || ""}-${label}`, label, badge: sec.id === "draft" && k === "floor" ? badgeFor("draft") : t === "trade" && (k === "deadline" || k === "fa") ? badgeFor("trade") : null,
+        on: seasonKey ? tab === "season" && (sub.season || "standings") === seasonKey : screenOn(scr, tab, draftSub),
+        onClick: () => (seasonKey ? go(seasonKey) : openScreen(scr)) };
+    }) })),
+    { label: "Your club", items: [{ key: "activity", label: unread ? `News & inbox (${unread})` : "News & inbox", on: tab === "activity", onClick: () => go("activity") }] },
+  ];
   const deskMenu = [
     <button key="n" role="menuitem" onClick={() => go("activity")}>News & inbox{unread > 0 && <span className="badge">{unread}</span>}</button>,
     <button key="sv" role="menuitem" onClick={() => { flushSave(); showToast("Game saved in this browser."); }}>Save game</button>,
@@ -826,7 +838,7 @@ export default function App({ resume = false }) {
         {/* The big moments wait until the sim has stopped, no live game is on and no other popup is open. */}
         {league.moments?.length > 0 && !busy && !live && !modal && <Moment key={league.moments[0].key || league.moments.length} m={league.moments[0]} onClose={() => { const done = closeMoment(league); commit(); if (done?.then) setModal(done.then); }} />}
         {/* The weekly injury report (Gridiron 3.70): app-wide so it tracks spots whatever tab the sim ran from. */}
-        {!live && !busy && <InjuryReportCard />}
+        {!live && !busy && !phone && <InjuryReportCard />}
         {tour === "welcome" && !live && <TourWelcome onTour={() => { league.settings.tourSeen = true; commit(); setTour("run"); }} onSkip={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {tour === "run" && !live && <Tour onDone={() => { league.settings.tourSeen = true; commit(); setTour(null); }} />}
         {!modal && !live && !busy && league.ownerReviewPending != null && !league.playoffs?.papers?.some((p) => !p.seen) && <OwnerReview onClose={() => { delete league.ownerReviewPending; commit(); }} />}
@@ -844,8 +856,8 @@ export default function App({ resume = false }) {
           </div>
         )}
         <div id="rk-dock" className="rk-dock" />
-        {phone && moreOpen && !live && <MoreSheet screens={moreScreens} jumps={moreJumps} actions={moreActions} onClose={() => setMoreOpen(false)} />}
-        {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
+        {phone && moreOpen && !live && <MoreSheet groups={moreGroups} actions={moreActions} onClose={() => setMoreOpen(false)} />}
+        {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && !(tab === "trade" && tradeSub === "trade") && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
         {phone && !live && <MobileNav items={phoneNav} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />}
         {phone && <TapTips />}
         {confirmEl}

@@ -23,6 +23,9 @@ const shapes={
  chevron:<path d="m9 5 7 7-7 7"/>,
  close:<path d="m6 6 12 12M18 6 6 18"/>,
  check:<path d="m4 12 5 5L20 6"/>,
+ home:<><path d="M3 11 12 4l9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></>,
+ menu:<path d="M4 7h16M4 12h16M4 17h16"/>,
+ camp:<><path d="M2 12h2m16 0h2M6 8v8M18 8v8M4 10v4m16-4v4M6 12h12"/></>,
  bell:<><path d="M6 10a6 6 0 0 1 12 0v6l2 3H4l2-3v-6Zm4 11h4"/></>,
 };
 export default function Icon({name,size=20,...props}){return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>{shapes[name==="activity"?"bell":name==="analysis"?"stats":name] || shapes.trophies}</svg>;}

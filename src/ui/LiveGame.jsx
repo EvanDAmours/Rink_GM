@@ -373,7 +373,7 @@ export default function LiveGame({ spec, onDone }) {
         </div>
 
         <div className="lv-charts">
-          <WinProbChart series={series} home={home} away={away} live={!done} />
+          {!phone && <WinProbChart series={series} home={home} away={away} live={!done} />}
           <ShotMap log={s.shotLog} home={home} away={away} s={s} />
         </div>
 

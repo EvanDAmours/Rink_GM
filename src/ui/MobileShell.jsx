@@ -11,6 +11,7 @@ import StatsPage from "./StatsPage.jsx";
 import SchedulePage from "./SchedulePage.jsx";
 import PlayoffsPage from "./PlayoffsPage.jsx";
 import { OfflineChip } from "./OfflinePanel.jsx";
+import Icon from "./Icon.jsx";
 
 // The slim phone header: your club, the season, record and cap room, and search and news.
 export function PhoneHeader({ team, season, record, cap, live, unread, onSearch, onInbox }) {
@@ -21,24 +22,23 @@ export function PhoneHeader({ team, season, record, cap, live, unread, onSearch,
         <div className="rk-phead-name"><span>{team.city} {team.name}</span><OfflineChip /></div>
         <div className="rk-phead-sub">{live ? "Live game" : <>{season} · {record} · Cap room <b className={cap < 0 ? "neg" : ""}>{money(cap)}</b></>}</div>
       </div>
-      <button className="rk-phead-btn" disabled={!!live} onClick={onSearch} aria-label="Search players, teams and screens">🔍</button>
-      <button className="rk-phead-btn" disabled={!!live} onClick={onInbox} aria-label="Club news and inbox">🔔{unread > 0 && <span className="rk-phead-dot" />}</button>
+      <button className="rk-phead-btn" disabled={!!live} onClick={onSearch} aria-label="Search players, teams and screens"><Icon name="search" size={20} /></button>
+      <button className="rk-phead-btn" disabled={!!live} onClick={onInbox} aria-label="Club news and inbox"><Icon name="bell" size={20} />{unread > 0 && <span className="rk-phead-dot" />}</button>
     </header>
   );
 }
 
-// items: [{ key, icon, label, on, onClick, badge }]; the More button is added last.
+// items: [{ key, icon, label, on, onClick, badge }] (icon = an Icon name); the More button is added last.
 export function MobileNav({ items, moreOpen, onMore }) {
   return (
     <nav className="rk-mnav" aria-label="Main" data-tour="nav">
-      {[...items, { key: "more", icon: "☰", label: "More", more: true }].map((it) => {
+      {[...items, { key: "more", icon: "menu", label: "More", more: true }].map((it) => {
         const on = it.more ? moreOpen : !moreOpen && it.on;
         return (
           <button key={it.key} className={on ? "on" : ""} aria-current={on && !it.more ? "page" : undefined} aria-expanded={it.more ? moreOpen : undefined} onClick={it.more ? onMore : it.onClick}>
-            <span className="rk-mnav-ico" aria-hidden="true">{it.icon}</span>
+            <span className="rk-mnav-ico" aria-hidden="true"><Icon name={it.icon} size={22} /></span>
             <span className="rk-mnav-lbl">{it.label}</span>
             {it.badge && <span className="rk-mnav-badge">{it.badge}</span>}
-            <span className="rk-mnav-bar" aria-hidden="true" />
           </button>
         );
       })}
@@ -46,10 +46,10 @@ export function MobileNav({ items, moreOpen, onMore }) {
   );
 }
 
-// Every other screen. screens: [{ key, label, on, onClick, badge }];
-// jumps: [{ label, items: [{ key, label, on, onClick }] }] (the sections inside each screen);
-// actions: [{ label, onClick }].
-export function MoreSheet({ screens, jumps, actions, onClose }) {
+// Every other screen, grouped like the computer's bar (Team, Season, Draft, Trades & FA,
+// Front Office), then saving and the settings. One column, nothing wider than the screen.
+// groups: [{ label, items: [{ key, label, on, onClick, badge }] }]; actions: [{ label, onClick }].
+export function MoreSheet({ groups, actions, onClose }) {
   const ref = useRef(null);
   useEffect(() => {
     ref.current?.focus();
@@ -61,23 +61,21 @@ export function MoreSheet({ screens, jumps, actions, onClose }) {
     <div className="rk-msheet" role="dialog" aria-label="More" ref={ref} tabIndex={-1}>
       <div className="rk-msheet-head">
         <span>More</span>
-        <button className="rk-msheet-x" onClick={onClose} aria-label="Close">✕</button>
+        <button className="rk-msheet-x" onClick={onClose} aria-label="Close"><Icon name="close" size={20} /></button>
       </div>
-      <div className="rk-msheet-grid">
-        {screens.map((s) => <button key={s.key} className={s.on ? "on" : ""} onClick={s.onClick}>{s.label}{s.badge && <span className="badge">{s.badge}</span>}</button>)}
-      </div>
-      <div className="rk-msheet-k">GO STRAIGHT TO</div>
-      <div className="rk-msheet-jumps">
-        {jumps.map((g) => (
-          <div key={g.label} className="rk-msheet-jump">
-            <b>{g.label}</b>
-            <div>{g.items.map((it) => <button key={it.key} className={it.on ? "on" : ""} onClick={it.onClick}>{it.label}</button>)}</div>
+      {groups.map((g) => (
+        <div key={g.label} className="rk-msheet-group">
+          <div className="rk-msheet-k">{g.label}</div>
+          <div className="rk-msheet-list">
+            {g.items.map((it) => <button key={it.key} className={it.on ? "on" : ""} onClick={it.onClick}><span>{it.label}</span>{it.badge && <span className="badge">{it.badge}</span>}<Icon name="chevron" size={16} /></button>)}
           </div>
-        ))}
-      </div>
-      <div className="rk-msheet-k">SETTINGS</div>
-      <div className="rk-msheet-acts">
-        {actions.map((a) => <button key={a.label} onClick={a.onClick}>{a.label}</button>)}
+        </div>
+      ))}
+      <div className="rk-msheet-group">
+        <div className="rk-msheet-k">Settings & help</div>
+        <div className="rk-msheet-list">
+          {actions.map((a) => <button key={a.label} onClick={a.onClick}><span>{a.label}</span><Icon name="chevron" size={16} /></button>)}
+        </div>
       </div>
     </div>
   );
@@ -91,6 +89,7 @@ export function MoreSheet({ screens, jumps, actions, onClose }) {
 // dock (#rk-dock), outside the screen, so the screen's button styles don't reach it.
 export function MobileActionBar({ actions }) {
   const [open, setOpen] = useState(false);
+  const [arm, setArm] = useState(null); // a big jump (Sim to Deadline, Sim to End) takes a second tap
   const [dock, setDock] = useState(null);
   useEffect(() => { setDock(document.getElementById("rk-dock")); }, []);
   if (!actions?.length) return null;
@@ -98,15 +97,15 @@ export function MobileActionBar({ actions }) {
   const bar = (
     <>
       {open && rest.length > 0 && (
-        <div className="rk-abar-scrim" onClick={() => setOpen(false)}>
+        <div className="rk-abar-scrim" onClick={() => { setOpen(false); setArm(null); }}>
           <div className="rk-abar-menu" role="menu" onClick={(e) => e.stopPropagation()}>
-            {rest.map((a) => <button key={a.label} role="menuitem" className={a.tone ? `t-${a.tone}` : ""} onClick={() => { setOpen(false); a.onClick(); }}>{a.label}</button>)}
+            {rest.map((a) => <button key={a.label} role="menuitem" className={`${a.tone ? `t-${a.tone}` : ""}${arm === a.label ? " armed" : ""}`} onClick={() => { if (a.confirm && arm !== a.label) { setArm(a.label); return; } setArm(null); setOpen(false); a.onClick(); }}>{arm === a.label ? `Tap again: ${a.label}` : a.label}</button>)}
           </div>
         </div>
       )}
       <div className={`rk-abar${main.small ? " small" : ""}`} data-tour="actions">
         <button className={`rk-abar-main${main.tone ? ` t-${main.tone}` : ""}`} onClick={main.onClick}>{main.label}</button>
-        {rest.length > 0 && <button className={`rk-abar-more${open ? " on" : ""}`} onClick={() => setOpen((o) => !o)} aria-label="More actions" aria-expanded={open}>{open ? "✕" : "▾"}</button>}
+        {rest.length > 0 && <button className={`rk-abar-more${open ? " on" : ""}`} onClick={() => { setOpen((o) => !o); setArm(null); }} aria-label="More actions" aria-expanded={open}>{open ? "✕" : "▾"}</button>}
       </div>
     </>
   );
