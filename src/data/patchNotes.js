@@ -413,4 +413,11 @@ export const PATCH_NOTES = [
     "Choose Your Team is organised by conference and division.",
     "On the Lineup screen, tapping a player no longer opens a pop-up: tap one player, then tap where he goes. Best fits is still there in the bar at the bottom if you want it.",
   ] },
+  { v: "1.76", date: "2026-10-26", title: "Development, Rebuilt", notes: [
+    "Development has its own section: Overview, Season plan and Prospects, all in one place.",
+    "Each preseason, make three choices: one focus player (young players with a strong trait gain the most), a camp priority, and where each prospect plays. They lock when the season starts.",
+    "Prospect placements are a gamble you can see: every option shows the odds he thrives or struggles. By week 4 you know how it's going, and a struggling kid can slip.",
+    "No more focus slots or Season Points camp chores. Preseason games stay, just for fun and form.",
+    "Home has one Development line, and a monthly report lands in your inbox without stopping the sim. Farm goalies now pick up wins, and NHL rookies are graded against NHL scoring.",
+  ] },
 ];
