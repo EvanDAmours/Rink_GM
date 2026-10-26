@@ -2,7 +2,7 @@
 // spotlight stage. Gridiron 3.71's holiday cards, translated to the Winter Classic and friends.
 import React, { useEffect } from "react";
 import { useGame, TeamBadge } from "../common.jsx";
-import Jersey from "../Jersey.jsx";
+import Headshot from "../Headshot.jsx";
 import { SPECIAL_EVENTS } from "../../engine/specialGames.js";
 import "./special.css";
 
@@ -78,7 +78,7 @@ export function SpecialResult({ m, onClose }) {
       <div className="sp-stage" onClick={(x) => x.stopPropagation()}>
         <div className="sp-bignum" aria-hidden>{us}–{them}</div>
         <div className="sp-figure">
-          {p ? <Jersey team={me} player={p} size={300} decorative /> : <span className="sp-art big" aria-hidden>{e.art}</span>}
+          {p ? <Headshot p={p} team={me} size={300} decorative /> : <span className="sp-art big" aria-hidden>{e.art}</span>}
         </div>
         <div className="sp-text">
           <div className="sp-k">{e.name} · Final{m.ot ? ` (${m.ot})` : ""}</div>
