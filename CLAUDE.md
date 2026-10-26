@@ -1,5 +1,7 @@
 # Claude project instructions
 
+**Read `docs/VISION.md` first, before building or changing anything, and add an entry to its decision log (what changed and why) with every change.** It holds the owner's two goals (calm, polished screens people want to stay on; the most real-world simulation), the reference look, and every past decision.
+
 Read `CLAUDE_HANDOFF.md` before changes. This is an already implemented NHL franchise game. The immediate objective is to import and publish it in `EvanDAmours/Rink_GM`, with working desktop and `/mobile/` links. Preserve its engine, features, saves, embedded assets and sourced ratings. Do not replace it with a prototype, recreate it from screenshots, or port it to another framework just to deploy it.
 
 Use `npm ci`, `npm test`, `npm run test:render`, and `npm run build:pages`. Copy package contents to the repository root and retain `.github/workflows/pages.yml`. `prebuilt/` and `PLAY-RINK-GM.html` are supplied ready-built outputs; the source build remains authoritative after any source changes.
