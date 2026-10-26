@@ -10,10 +10,10 @@
 .rk-bc-club { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .rk-bc-side.r .rk-bc-club { align-items: flex-end; }
 .rk-bc-club small { margin-top: 14px; font-size: 13px; font-weight: 800; letter-spacing: .12em; color: #ffffffb3; }
-.app .main .rk-bc-club h2 { margin: 0; font: 900 46px/1 var(--font-display, inherit); letter-spacing: .01em; color: #fff; white-space: nowrap; }
+.app .main .rk-bc-club .rk-bc-name { margin: 0; font: 800 56px/.95 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; letter-spacing: .01em; color: #fff; white-space: nowrap; }
 .rk-bc-club > span { color: #ffffffcc; font-size: 15px; font-weight: 600; }
 .app .main button.rk-bc-star:not(.x) { display: flex; flex-direction: column; gap: 1px; margin-top: 22px; background: none; border: 0; padding: 0; color: #fff; text-align: inherit; cursor: pointer; align-items: inherit; }
-.app .main button.rk-bc-star:not(.x) b { font: 900 24px/1.05 var(--font-display, inherit); }
+.app .main button.rk-bc-star:not(.x) b { font: 900 24px/1.05 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; }
 .app .main button.rk-bc-star:not(.x) span { font-size: 14px; color: #ffffffcc; font-weight: 600; }
 .app .main button.rk-bc-star:not(.x) em { font-style: normal; font-size: 14px; font-weight: 800; color: #fde68a; }
 .app .main button.rk-bc-star:not(.x):hover b { text-decoration: underline; }
@@ -52,7 +52,7 @@
 .rk-ph-mark { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); opacity: .9; }
 .rk-ph-txt { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
 .rk-ph-txt > small { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: #ffffffb3; }
-.app .main .rk-ph-txt h2 { margin: 0; font: 900 44px/1.05 var(--font-display, inherit); color: #fff; }
+.app .main .rk-ph-txt .rk-ph-title { margin: 0; font: 800 54px/1 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; color: #fff; }
 .rk-ph-stats { display: flex; gap: 28px; margin-top: 8px; }
 .rk-ph-stats div { display: flex; flex-direction: column; }
 .rk-ph-stats b { font-size: 24px; color: #fff; font-weight: 800; }
@@ -61,7 +61,7 @@
 .rk-bc-home .ct-plan { border-radius: 18px; }
 
 @media (max-width: 1180px) {
-  .app .main .rk-bc-club h2 { font-size: 34px; }
+  .app .main .rk-bc-club .rk-bc-name { font-size: 34px; }
   .rk-bc-art svg, .rk-bc-art img { width: 150px !important; height: auto !important; }
 }
 
@@ -83,7 +83,7 @@
 .rk-pbc-stars span { font-size: 11px; color: #ffffffb3; }
 .rk-ph-home .rk-ph { padding: 22px 18px; min-height: 0; }
 .rk-ph-home .rk-ph-mark { right: 14px; top: 18px; transform: none; opacity: .5; }
-.rk-ph-home .app .main .rk-ph-txt h2 { font-size: 28px; }
+.app .main .rk-ph-home .rk-ph-txt .rk-ph-title { font-size: 28px; }
 .rk-ph-home .rk-ph-stats { gap: 18px; }
 .rk-ph-home .rk-ph-stats b { font-size: 18px; }
 .rk-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -107,3 +107,6 @@ html.light .app .main button.rk-bc-todo:not(.x), html.light .app .main button.rk
 .rk-bc-cards .rk-phase-row { background: #ffffff0b; border: 0; border-radius: 12px; }
 .app .main button.rk-tile2:not(.x) { align-items: flex-start; justify-content: flex-start; }
 .app .main button.rk-tile2.wide:not(.x) { align-items: center; justify-items: start; }
+.app .main button.rk-bc-need:not(.x) .gg-pos { flex: 0 0 36px; width: 36px; max-width: 36px; padding: 2px 0; color: #fff; }
+.rk-bc-home .ct-plan, .rk-ph-home .ct-plan { border: 0; background: #ffffff0d; border-radius: 18px; }
+.app .main .rk-ph-btns button.rk-bc-btn:not(.x):not(.go) { background: #00000040; }

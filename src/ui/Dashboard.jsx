@@ -248,7 +248,7 @@ export default function Dashboard({ act = {} }) {
       <TeamBadge team={t} size={phone ? 64 : 120} decorative className="rk-ph-mark" />
       <div className="rk-ph-txt">
         <small>{t.city.toUpperCase()} {t.name.toUpperCase()} · {lg.year}-{String(lg.year + 1).slice(2)}</small>
-        <h2>{heroTitle(lg, t)}</h2>
+        <div className="rk-ph-title">{heroTitle(lg, t)}</div>
         <div className="rk-ph-stats">{statLine.map(([k, v]) => <div key={k}><b>{v}</b><small>{k}</small></div>)}</div>
         {!phone && primary.length > 0 && <div className="rk-ph-btns">{primary.map((b, i) => <button key={b.label} className={`rk-b rk-bc-btn${i === 0 ? " go" : ""}`} onClick={b.onClick}>{stripEmoji(b.label)}</button>)}</div>}
       </div>
@@ -325,7 +325,7 @@ function BcSide({ lg, team, road, right, onPlayer }) {
       <div className="rk-bc-club">
         <TeamBadge team={team} size={72} decorative />
         <small>{team.city.toUpperCase()}</small>
-        <h2>{team.name.toUpperCase()}</h2>
+        <div className="rk-bc-name">{team.name.toUpperCase()}</div>
         <span>{rec(team.rec)}</span>
         {p && <button className="rk-b rk-bc-star" onClick={() => onPlayer?.(p.id)}><b>{p.name.toUpperCase()}</b><span>{p.pos} · {p.ovr} OVR</span><em>{seasonLine(p)}</em></button>}
       </div>
