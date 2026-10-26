@@ -35,6 +35,13 @@
 .app .main button.rk-bc-todo:not(.x) b { font-size: 14px; font-weight: 700; }
 .app .main button.rk-bc-todo:not(.x) small { color: #94a3b8; font-size: 13px; }
 .app .main button.rk-bc-todo:not(.x) svg { color: #64748b; flex: none; }
+/* The reminder board (r12): one row each, a short title, one dim reason line, a quiet way in. */
+.rk-bc-rem { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #ffffff10; }
+.rk-bc-rem:last-of-type { border-bottom: 0; }
+.app .main .rk-bc-rem button.rk-bc-todo:not(.x) { border-bottom: 0; flex: 1; min-width: 0; }
+.app .main button.rk-bc-todo:not(.x) small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; margin-top: 1px; }
+.app .main button.rk-bc-later:not(.x) { flex: none; background: none; border: 0; color: #64748b; font-size: 13px; font-weight: 600; padding: 8px 4px; min-height: 44px; cursor: pointer; }
+.app .main button.rk-bc-later:not(.x):hover { color: #cbd5e1; }
 .app .main button.rk-bc-need:not(.x) b { font-size: 14px; min-width: 96px; }
 .app .main button.rk-bc-need:not(.x) span { color: #94a3b8; font-size: 13px; flex: 1; min-width: 0; }
 .rk-bc-links { margin-top: auto; padding-top: 6px; display: flex; gap: 16px; flex-wrap: wrap; }
@@ -100,6 +107,7 @@
 html.light .rk-bc-card, html.light .app .main button.rk-tile2:not(.x) { background: #0f172a0a; }
 html.light .rk-bc-h, html.light .rk-bc-plan b, html.light .app .main button.rk-bc-story:not(.x), html.light .app .main button.rk-tile2:not(.x) { color: #0f172a; }
 html.light .app .main button.rk-bc-todo:not(.x), html.light .app .main button.rk-bc-need:not(.x) { color: #1e293b; border-color: #0f172a12; }
+html.light .rk-bc-rem { border-color: #0f172a12; }
 
 .rk-bc-need .gg-pos { flex: none; width: 34px; text-align: center; }
 .rk-bc-cards .rk-phase { background: #ffffff0d; border: 0; border-radius: 18px; padding: 16px 18px; margin: 0; }

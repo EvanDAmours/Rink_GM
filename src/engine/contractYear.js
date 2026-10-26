@@ -198,8 +198,8 @@ export function contractYearDay(lg) {
   if (t.rec.gp >= CY_DECIDE_GP) {
     for (const p of t.roster.map((id) => lg.players[id])) {
       if (!inContractYear(p) || p.ovr < CY_MIN_OVR || p.holdout || (p.cyr?.year === lg.year && p.cyr.choice)) continue;
+      // Quietly (Evan, r12): no inbox nag. The Home reminder board carries the key deals.
       playItOut(lg, p.id, { auto: true });
-      lg.inbox.push({ year: lg.year, day: lg.day, pid: p.id, text: `✍️ Contract year: no answer from you, so ${p.name} (${p.pos} ${p.ovr}) plays out his deal. You can still extend him; his price will follow the season he has.` });
     }
   }
   const w = lg.contractWeek;

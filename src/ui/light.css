@@ -26,6 +26,8 @@ html.light :where(.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-ban
 .app .main button.rk-bc-todo:not(.x),
 .app .main button.rk-bc-need:not(.x) { border-bottom: 1px solid #0f172a10; }
 .app .main button.rk-bc-todo:not(.x) small { color: #475569; }
+.rk-bc-rem { border-bottom: 1px solid #0f172a10; }
+.app .main button.rk-bc-later:not(.x):hover { color: #334155; }
 .app .main button.rk-bc-need:not(.x) span { color: #475569; }
 .app .main .rk-bc-links button.rk-link:not(.x) { color: #2563eb; }
 .rk-bc-plan { color: #334155; }

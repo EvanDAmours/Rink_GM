@@ -31,7 +31,8 @@ test("Needs Attention: a legal club in the preseason has nothing on the list (no
   const items = needsAttention(lg);
   for (const k of ["paperpreview:2026:1", "devfocus", "camp", "plan", "expiring"]) assert.ok(!items.some((x) => x.key === k), `${k} is a nag`);
   assert.ok(!items.some((x) => /^cy/.test(x.key)), "no contract-year nags");
-  for (const it of items) assert.equal(it.tone, "urgent", `${it.key} is not a blocker`);
+  // r12: the only non-blockers are the reminder board's rows (tests/reminders.test.js).
+  for (const it of items) assert.ok(it.tone === "urgent" || /^rm/.test(it.key), `${it.key} is not a blocker or a reminder`);
 });
 
 test("Needs Attention: over the cap is one urgent item, not two", () => {
