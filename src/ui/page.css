@@ -1,0 +1,64 @@
+/* The shared page look (r9 consistency pass). Every screen follows the Lineup / Development
+   pattern: quiet section pills, a big plain sentence-case title with one grey line, soft cards,
+   calm lists, small segmented filters and one green primary. Loaded after soft.css and before
+   mobile.css; the phone rules sit at the bottom of this file. Light mode is at the end. */
+
+/* ---------- Section pills (common.jsx SectionPills; Development's and Lineup's are the same) ---------- */
+.app.app .rk-pills, .app.app .dvx .dv-pills, .app.app .lnx .lx-sectabs { display: flex; gap: 4px; margin: 0 0 14px; flex-wrap: wrap; }
+.app.app.app .rk-pills button, .app.app.app .dvx .dv-pills button, .app.app.app .lnx .lx-sectabs button {
+  background: transparent; border: 0; border-radius: 999px; color: #94a3b8; font-size: 13.5px; font-weight: 700; padding: 7px 12px; min-height: 32px;
+  text-transform: none; letter-spacing: 0; font-family: inherit; box-shadow: none;
+}
+.app.app.app .rk-pills button.on, .app.app.app .dvx .dv-pills button.on, .app.app.app .lnx .lx-sectabs button.on { background: #ffffff14; color: #f1f5f9; }
+.app.app.app .rk-pills button:hover:not(.on), .app.app.app .dvx .dv-pills button:hover:not(.on), .app.app.app .lnx .lx-sectabs button:hover:not(.on) { color: #e2e8f0; background: #ffffff0a; }
+.app.app .rk-pills .badge { font-size: 9px; background: #16a34a; color: #fff; border-radius: 6px; padding: 1px 5px; font-weight: 900; margin-left: 6px; vertical-align: 2px; }
+
+/* ---------- Page header (common.jsx PageHead) ---------- */
+.app.app .rk-pg { display: block; min-width: 0; }
+.app.app .rk-pg-row { display: flex; align-items: flex-end; gap: 16px; margin: 0 0 22px; }
+.app.app .rk-pg-t { flex: 1 1 auto; min-width: 0; }
+.app.app.app .rk-pg h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: #f1f5f9; text-transform: none; font-family: inherit; line-height: 1.15; }
+.app.app .rk-pg-s { color: #94a3b8; font-weight: 600; margin-top: 4px; font-size: 14px; line-height: 1.45; }
+.app.app .rk-pg-r { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* On a computer every section screen lines up with Lineup and Development (26px in, 18px down). */
+.app.app .main.rk-heroed { padding-left: 26px; padding-right: 26px; }
+.app.app .rk-sechead { padding-top: 10px; }
+
+/* ---------- Inner views and filters: one small segmented control ---------- */
+.app.app.app .gg-chips, .app.app.app .main .tabs:not(.lx-tabs) { display: inline-flex; flex-wrap: wrap; gap: 2px; background: #ffffff0d; border: 0; border-radius: 999px; padding: 4px; max-width: 100%; align-self: flex-start; }
+.app.app.app .gg-chips button, .app.app.app .main .tabs:not(.lx-tabs) button, .app.app.app .main .tabs:not(.lx-tabs) button:not(.link) {
+  background: transparent; color: #cbd5e1; border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; min-height: 30px; text-transform: none; letter-spacing: 0; box-shadow: none; white-space: nowrap;
+}
+.app.app.app .gg-chips button:hover:not(:disabled):not(.on), .app.app.app .main .tabs:not(.lx-tabs) button:hover:not(:disabled):not(.on) { background: #ffffff10; color: #fff; }
+.app.app.app .gg-chips button.on, .app.app.app .main .tabs:not(.lx-tabs) button.on, .app.app.app .main .tabs:not(.lx-tabs) button[aria-pressed=true], .app.app.app .gg-chips button.on:hover { background: #fff; color: #0b1220; }
+/* The hub's inner views sit under the title, on the left, like every other filter. */
+.app.app .gg-hub-head { justify-content: flex-start; margin-bottom: 4px; }
+.app.app .gg-hub-chips { margin-left: 0; }
+.app.app.app .gg-hub-chips button { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 999px; }
+
+/* ---------- Old headings: plain, sentence case, one size ---------- */
+.app.app.app .main .gg-sec, .app.app.app .main .gg-sechead, .app.app.app .main .sechead { text-transform: none; letter-spacing: 0; }
+
+/* ---------- Phone ---------- */
+@media (max-width: 760px) {
+  .app.app .rk-pills { margin-bottom: 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .app.app .rk-pills::-webkit-scrollbar { display: none; }
+  .app.app.app .rk-pills button, .app.app.app .dvx .dv-pills button, .app.app.app .lnx .lx-sectabs button { font-size: 15px; padding: 9px 15px; min-height: 40px; flex: 0 0 auto; white-space: nowrap; }
+  .app.app .rk-pg-row { flex-wrap: wrap; align-items: flex-start; margin-bottom: 16px; gap: 12px; }
+  .app.app.app .rk-pg h1 { font-size: 26px; }
+  .app.app .rk-pg-r { margin-left: 0; width: 100%; }
+  .app.app.app .gg-chips, .app.app.app .main .tabs:not(.lx-tabs) { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; border-radius: 999px; }
+  .app.app.app .gg-chips::-webkit-scrollbar, .app.app.app .main .tabs:not(.lx-tabs)::-webkit-scrollbar { display: none; }
+  .app.app.app .gg-chips button, .app.app.app .main .tabs:not(.lx-tabs) button { flex: 0 0 auto; min-height: 36px; font-size: 14px; padding: 7px 14px; }
+}
+
+/* ---------- Light mode ---------- */
+html.light .app.app.app .rk-pills button, html.light .app.app.app .dvx .dv-pills button, html.light .app.app.app .lnx .lx-sectabs button { color: #475569; }
+html.light .app.app.app .rk-pills button.on, html.light .app.app.app .dvx .dv-pills button.on, html.light .app.app.app .lnx .lx-sectabs button.on { background: #0f172a12; color: #0f172a; }
+html.light .app.app.app .rk-pills button:hover:not(.on) { background: #0f172a0a; color: #0f172a; }
+html.light .app.app.app .rk-pg h1 { color: #0f172a; }
+html.light .app.app .rk-pg-s { color: #475569; }
+html.light .app.app.app .gg-chips, html.light .app.app.app .main .tabs:not(.lx-tabs) { background: #0f172a0d; }
+html.light .app.app.app .gg-chips button:not(.on), html.light .app.app.app .main .tabs:not(.lx-tabs) button:not(.on) { background: transparent; color: #334155; }
+html.light .app.app.app .gg-chips button.on, html.light .app.app.app .main .tabs:not(.lx-tabs) button.on { background: #0f172a; color: #fff; }
