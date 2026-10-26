@@ -12,6 +12,7 @@
 //   game results and records → engine/momentsResults.js + ui/moments/results.jsx
 import { seasonDayMoments } from "./momentsSeason.js";
 import { resultDayMoments } from "./momentsResults.js";
+import { specialDayMoments } from "./specialGames.js";
 
 const SEEN_CAP = 400;
 
@@ -52,6 +53,7 @@ export function afterGameDay(league, ids, games) {
   try {
     for (const m of seasonDayMoments(league, ids, games) || []) queueMoment(league, m);
     for (const m of resultDayMoments(league, ids, games) || []) queueMoment(league, m);
+    for (const m of specialDayMoments(league, games) || []) queueMoment(league, m);
   } catch (e) {
     // A moment must never break the sim.
     console.error("Moment hook failed", e);

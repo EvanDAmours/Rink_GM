@@ -1,0 +1,52 @@
+/* Special games: the title card and the spotlight result (moments/special.jsx). */
+.sp-overlay { position: fixed; inset: 0; z-index: 2600; overflow: hidden auto; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; background: radial-gradient(ellipse at 50% 30%, #1e293b 0%, #0b1120 55%, #020617 100%); font-family: var(--gg-f, system-ui); }
+.sp-overlay.sp-halloween { background: radial-gradient(ellipse at 50% 25%, #3b1d0a, #120a05 60%, #050505); }
+.sp-overlay.sp-thanksgiving { background: radial-gradient(ellipse at 40% 20%, #3a1e0b, #0f0a07 60%), linear-gradient(120deg, transparent 60%, #0c4a6e55); }
+.sp-overlay.sp-nye { background: radial-gradient(ellipse at 50% 20%, #312e81, #0b0820 60%, #020617); }
+.sp-overlay.sp-heritage, .sp-overlay.sp-hockeyday { background: radial-gradient(ellipse at 50% 20%, #4c0519, #120309 60%, #050505); }
+.sp-sky { position: absolute; inset: 0; pointer-events: none; }
+.sp-p { position: absolute; top: -20px; border-radius: 50%; background: #fff; opacity: .7; animation: spFall linear infinite; }
+.sp-p.leaf { border-radius: 70% 0; background: #c2410c; opacity: .65; }
+.sp-halloween .sp-p.leaf { background: #ea580c; }
+.sp-p.spark { background: #fde68a; box-shadow: 0 0 8px #facc15; }
+@keyframes spFall { from { transform: translateY(-5vh) rotate(0) } to { transform: translateY(110vh) rotate(300deg) } }
+.sp-intro { position: relative; text-align: center; max-width: 760px; width: 100%; }
+.sp-art { font-size: 64px; line-height: 1; display: inline-block; filter: drop-shadow(0 8px 20px #000a); animation: spBob 4s ease-in-out infinite; }
+.sp-art.big { font-size: 180px; }
+@keyframes spBob { 50% { transform: translateY(-8px) } }
+.sp-eyebrow { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 22px; font-size: 11px; font-weight: 800; letter-spacing: .32em; text-transform: uppercase; color: #fbbf24; }
+.sp-eyebrow span { width: 44px; height: 1px; background: #fbbf2499; }
+.sp-name { margin: 10px 0 26px; font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: clamp(44px, 9vw, 92px); line-height: .95; letter-spacing: .01em; text-transform: uppercase; text-shadow: 0 6px 30px #0009; }
+.sp-match { display: flex; align-items: center; justify-content: center; gap: clamp(16px, 6vw, 64px); }
+.sp-club { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 18px; border-radius: 18px; background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--sp-c) 30%, transparent), transparent 70%); min-width: 120px; }
+.sp-club small { font-size: 10px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: #cbd5e1; margin-top: 6px; }
+.sp-club b { font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-size: 30px; line-height: 1; text-transform: uppercase; }
+.sp-at { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fbbf24; font-weight: 800; letter-spacing: .2em; font-size: 13px; }
+.sp-at span { width: 1px; height: 26px; background: #fbbf2466; }
+.sp-line { margin: 22px auto 0; color: #cbd5e1; font-size: 14px; max-width: 460px; }
+.sp-tap { position: absolute; bottom: max(18px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: none !important; border: 0 !important; color: #94a3b8 !important; font-size: 11px; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; white-space: nowrap; }
+/* the result: a spotlight stage */
+.sp-res { background: radial-gradient(ellipse at 72% 40%, color-mix(in srgb, var(--sp-team) 75%, #020617), #020617 72%) !important; }
+.sp-stage { position: relative; width: min(1160px, 100%); min-height: min(640px, 92dvh); display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 24px; }
+.sp-bignum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: clamp(140px, 26vw, 380px); color: #ffffff0d; pointer-events: none; white-space: nowrap; }
+.sp-figure { order: 2; display: flex; justify-content: center; align-items: flex-end; position: relative; }
+.sp-figure::after { content: ""; position: absolute; bottom: -10px; width: 70%; height: 40px; background: radial-gradient(ellipse, #fff3, transparent 70%); }
+.sp-figure > * { filter: drop-shadow(0 30px 40px #000c); }
+.sp-text { order: 1; position: relative; }
+.sp-k { font-size: 11px; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; color: #fbbf24; }
+.sp-head { margin: 10px 0 14px; font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-weight: 800; font-size: clamp(48px, 7vw, 92px); line-height: .92; text-transform: uppercase; }
+.sp-score { display: flex; align-items: center; gap: 12px; font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-size: 48px; }
+.sp-score i { color: #ffffff66; font-style: normal; }
+.sp-sub { color: #cbd5e1; margin: 8px 0 16px; padding-bottom: 16px; border-bottom: 1px solid #ffffff22; max-width: 420px; }
+.sp-pog b { display: block; font-family: 'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif; font-size: 32px; text-transform: uppercase; margin-top: 6px; }
+.sp-pog small { color: #cbd5e1; }
+.app button.sp-cta, button.sp-cta { margin-top: 22px; background: #fff; color: #0f172a; border: 0; border-radius: 10px; padding: 12px 22px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
+@media (max-width: 760px) {
+  .sp-overlay.sp-res { justify-content: flex-start; }
+  .sp-stage { grid-template-columns: 1fr; gap: 6px; min-height: 0; }
+  .sp-figure { order: 1; } .sp-figure svg { width: 220px; height: auto; }
+  .sp-text { order: 2; }
+  .sp-bignum { align-items: flex-start; padding-top: 40px; }
+  .sp-club { min-width: 0; padding: 10px; } .sp-club b { font-size: 22px; }
+  .app button.sp-cta, button.sp-cta { width: 100%; }
+}
