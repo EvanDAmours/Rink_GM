@@ -357,4 +357,11 @@ export const PATCH_NOTES = [
     "Popups are rebuilt: centred dialogs on a computer, slide-up sheets on a phone, always on top and always closable.",
     "Search sits in the bar (press / or Ctrl+K), and Trade Deadline and Free Agency pills appear while those windows are open.",
   ] },
+  { v: "1.64", date: "2026-10-26", title: "Broadcast Home", notes: [
+    "Home is now a broadcast: the next game in both clubs' colours with each team's star and his season line, then To do, Game plan and Top story. Off-season Home shows your phase, biggest needs and a Build your 23 checklist.",
+    "Phones got a clean Home with to-dos and tiles, line icons in the tab bar, and a grouped More menu that always fits the screen.",
+    "Scouting assignments are set scout by scout. Each region says what it's deep at and who covers it, and picking a taken region swaps the two scouts.",
+    "On phones, your trade sits in a tray pinned above the tab bar, free agency shows the top rival bid on each of your offers, and big sims like Sim to Deadline take a second tap.",
+    "Fixed: Draft Recap no longer crashes before your first draft, and League awards keeps the Legacy Hall header.",
+  ] },
 ];
