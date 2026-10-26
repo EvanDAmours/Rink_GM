@@ -45,7 +45,7 @@ export default function PlayerModal({ pid }) {
 
   if (p.tid === -2) {
     return (
-      <Modal title={p.name} onClose={closeModal} head={<span className="pill">{league.draftClassYear} draft prospect</span>}>
+      <Modal title={p.name} onClose={closeModal} className="rk-prospect-sheet" head={<span className="pill">{league.draftClassYear} draft prospect</span>}>
         <ProspectProfile p={p} />
       </Modal>
     );

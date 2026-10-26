@@ -246,3 +246,9 @@ html.light .app .main .rk-seg3 button.on, html.light .app .main .rk-subchips but
 html.light .app .rk-mnav button.on, html.light .rk-mnav button.on .rk-mnav-lbl { color: #0f172a; }
 html.light .rk-mnav button.on .rk-mnav-ico { background: #0f172a14; }
 html.light .rk-phone-app .gg-trade > .gg-dealbar { background: #fffffff7; box-shadow: 0 -8px 28px #0f172a33; }
+/* Phones: chip rows wrap instead of hiding half a chip off the edge */
+.rk-phone-app .gg-chips, .rk-phone-app .gg-tabs2, .app.rk-phone-app .main .tabs { flex-wrap: wrap; overflow-x: visible; }
+.app.rk-phone-app .gg-hub-chips button { flex: 0 1 auto; }
+/* Phones: a prospect's page fills the screen */
+@media (max-width: 760px) { .app .modalbg.rk-sheetbg > .modal.rk-sheet.rk-prospect-sheet { height: 100dvh; max-height: 100dvh; border-radius: 0; } }
+.rk-phone-app .modal.rk-prospect-sheet .row { flex-wrap: wrap; }
