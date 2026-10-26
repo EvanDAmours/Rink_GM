@@ -154,7 +154,9 @@ export function heroColor(team) {
 }
 export function SectionHero({ team, eyebrow, title, stats = [], tabs = [], onTab, compact = false }) {
   const { c, a } = heroColor(team);
-  const shown = (compact ? stats.slice(0, 3) : stats).filter(Boolean);
+  const all = stats.filter(Boolean);
+  // Phones: three numbers that fit (long values give way to the next ones).
+  const shown = compact ? [...all.filter(([, v]) => String(v).length <= 10), ...all.filter(([, v]) => String(v).length > 10)].slice(0, 3) : all;
   return (
     <section className={`keep-dark rk-hero${compact ? " compact" : ""}`} aria-label={title}
       style={{ backgroundImage: `radial-gradient(140% 220% at 0% 0%, ${c}${a} 0%, ${c}2e 46%, transparent 78%)` }}>

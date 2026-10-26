@@ -1722,7 +1722,9 @@ body .app { background: #eef1f6 !important; }
 .app.app .rk-hero-stats .t-bad b { color: #dc2626; }
 .app.app .rk-hero-stats .t-warn b { color: #b45309; }
 .app.app .rk-hero-stats .t-gold b { color: #a16207; }
+@media (hover: hover) {
 .app.app.app .rk-hero-tabs button:hover:not(.on) { border-bottom-color: #0f172a40; }
+}
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }

@@ -183,7 +183,7 @@ html.light .app.app.app button.rk-sb.on { background: #0f172a; color: #fff; }
 .app.app .rk-hero-stats .t-gold b { color: #fde68a; }
 .app.app .rk-hero-tabs { display: flex; gap: 6px; margin-top: 20px; }
 .app.app.app .rk-hero-tabs button { background: transparent; border: 0; border-radius: 0; box-shadow: none; border-bottom: 3px solid transparent; color: #ffffffa8; font-size: 15.5px; font-weight: 700; padding: 8px 16px 13px; min-height: 0; text-transform: none; letter-spacing: 0; font-family: inherit; white-space: nowrap; }
-.app.app.app .rk-hero-tabs button:hover:not(.on) { color: #fff; background: transparent; border-bottom-color: #ffffff40; }
+@media (hover: hover) { .app.app.app .rk-hero-tabs button:hover:not(.on) { color: #fff; background: transparent; border-bottom-color: #ffffff40; } }
 .app.app.app .rk-hero-tabs button.on { color: #fff; border-bottom-color: #fff; background: transparent; }
 .app.app .rk-hero-tabs .badge { font-size: 9px; background: #16a34a; color: #fff; border-radius: 6px; padding: 1px 5px; font-weight: 900; margin-left: 6px; vertical-align: 2px; }
 .app.app .rk-hero-pad { height: 24px; }
@@ -194,10 +194,10 @@ html.light .app.app.app button.rk-sb.on { background: #0f172a; color: #fff; }
   .app.app .rk-hero-top { flex-direction: column; align-items: stretch; gap: 12px; }
   .app.app .rk-hero-eye { font-size: 11px; }
   .app.app.app h1.rk-hero-title { font-size: 38px; margin-top: 4px; }
-  .app.app .rk-hero-stats { margin-left: 0; gap: 18px; justify-content: flex-start; }
+  .app.app .rk-hero-stats { margin-left: 0; gap: 16px; justify-content: flex-start; }
   .app.app .rk-hero-stats > div { text-align: left; flex: 0 1 auto; }
   .app.app .rk-hero-stats b { font-size: 23px; overflow: hidden; text-overflow: ellipsis; }
-  .app.app .rk-hero-stats span { font-size: 10px; letter-spacing: .1em; overflow: hidden; text-overflow: ellipsis; }
+  .app.app .rk-hero-stats span { font-size: 9.5px; letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; }
   .app.app .rk-hero-tabs { margin: 10px -16px 0; padding: 0 8px; overflow-x: auto; scrollbar-width: none; gap: 0; }
   .app.app .rk-hero-tabs::-webkit-scrollbar { display: none; }
   .app.app.app .rk-hero-tabs button { font-size: 15px; padding: 10px 12px 12px; min-height: 44px; flex: 0 0 auto; }
