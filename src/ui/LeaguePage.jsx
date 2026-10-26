@@ -16,6 +16,7 @@ export default function LeaguePage({ view: forced }) {
   const { league, openTeam, openPlayer } = useGame();
   const [txKind, setTxKind] = useState("all"), [txClub, setTxClub] = useState("all"), [txYear, setTxYear] = useState("all");
   const [viewState, setView] = useState("teams");
+  const [more, setMore] = useState(false); // Teams: the line ratings and payroll are one tap away
   const view = forced || viewState;
   const awardsNow = league.awards;
   return (
@@ -29,6 +30,7 @@ export default function LeaguePage({ view: forced }) {
         </div>}
       </div>
 
+      {view === "teams" && <div className="row" style={{ justifyContent: "flex-end" }}><button type="button" className="rk-morecols" aria-pressed={more} onClick={() => setMore((v) => !v)}>{more ? "Fewer columns" : "More columns"}</button></div>}
       {view === "teams" && (
         <Table
           columns={[
@@ -43,7 +45,7 @@ export default function LeaguePage({ view: forced }) {
             { key: "pay", label: "Payroll", num: true, render: (t) => money(payroll(league, t)), sort: (t) => payroll(league, t) },
             { key: "space", label: "Cap Space", num: true, render: (t) => money(capSpace(league, t)), sort: (t) => capSpace(league, t) },
             { key: "go", label: "", render: (t) => <button className="tiny" onClick={() => openTeam(t.id)}>Roster</button> },
-          ]}
+          ].filter((c) => more || !["f", "d", "g", "pay"].includes(c.key))}
           rows={leagueTable(league)}
           initialSort={{ key: "ovr", dir: "desc" }}
           rowClass={(t) => (t.id === league.userTid ? "me" : "")}

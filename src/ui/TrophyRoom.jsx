@@ -2,7 +2,7 @@ import { CUP_HISTORY, CUP_HISTORY_SOURCE } from "../data/cupHistory.js";
 import { TROPHY_HISTORY } from "../data/trophyHistory.js";
 import { HISTORICAL_RECORDS } from "../data/historicalRecords.js";
 import React, { useEffect, useState } from "react";
-import { useGame, TeamName, TeamBadge, PlayerName } from "./common.jsx";
+import { useGame, TeamName, TeamBadge, PlayerName, PageHead } from "./common.jsx";
 import { AWARD_NAMES, AWARD_BLURB, ALL_STAR_LABEL, computeAwards, conferenceTrophies } from "../engine/awards.js";
 import { titleMeaning } from "../engine/momentsCup.js";
 import { trophyUrl, TROPHY_ORDER, TROPHY_NAMESAKE } from "./trophies.js";
@@ -91,8 +91,8 @@ export default function TrophyRoom({ view: forced, onView }) {
 
   return (
     <div className="stack gg-trophyroom">
+      {!forced && <PageHead className="rk-own" title="Legacy Hall" sub={`${club.city} ${club.name} · ${caseWon} of ${TROPHY_ORDER.length} trophies won at least once · real NHL history included`} />}
       <div className="gg-pagehead">
-        <div>{!forced && <h2>Legacy Hall · {club.name}</h2>}<div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
         <div className="gg-chips">{TROPHY_VIEWS.filter(([k]) => !forced || (HISTORY_VIEWS.includes(forced) ? HISTORY_VIEWS : HALL_VIEWS).includes(k)).map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
       </div>
 

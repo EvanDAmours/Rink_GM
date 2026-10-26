@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { PATCH_NOTES } from "../data/patchNotes.js";
 import ActivityPage from "./ActivityPage.jsx";
+import { PageHead } from "./common.jsx";
 import "./prep.css";
 
 const RECENT = 15;
@@ -20,10 +21,6 @@ export function PatchNotes() {
   return (
     <div className="rk-gu">
       <div className="rk-gu-head">
-        <div>
-          <h2>Game Updates</h2>
-          <p>Patch notes: every change to Rink GM, newest first. Current version {all[0].v}.</p>
-        </div>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search patch notes" aria-label="Search patch notes" />
       </div>
       {shown.map((p, i) => (
@@ -50,12 +47,8 @@ export default function GameUpdates() {
   const [tab, setTab] = useState("updates");
   return (
     <div className="stack gg-hub rk-gu-page">
-      <div className="gg-pagehead gg-hub-head">
-        <b className="gg-pagelabel">Game Updates</b>
-        <div className="gg-chips gg-hub-chips">
-          {[["updates", "Patch notes"], ["timeline", "News & timeline"]].map(([k, l]) => <button key={k} aria-pressed={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}
-        </div>
-      </div>
+      <PageHead label="Game updates" pills={[["updates", "Patch notes", tab === "updates"], ["timeline", "News & timeline", tab === "timeline"]]} onPick={setTab}
+        title="Game updates" sub={tab === "updates" ? `Every change to Rink GM, newest first. Current version ${PATCH_NOTES[PATCH_NOTES.length - 1].v}.` : "Your club's news and the league wire, newest first."} />
       <div className="gg-embed">{tab === "updates" ? <PatchNotes /> : <ActivityPage />}</div>
     </div>
   );

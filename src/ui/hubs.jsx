@@ -54,10 +54,12 @@ export function Hub({ title, status, tabs, sub, onSub, badges = {}, right, child
 export function LinesHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["lines", "Lines"], ["roster", "Roster"]];
+  const { go } = useGame();
+  // Coaching is its own screen; the pill is here so the phone's Team pills match Lineup's.
+  const tabs = [["lines", "Lines"], ["roster", "Roster"], ["coaching", "Coaching"]];
   const cur = sub || "lines";
   if (cur === "lines") return <LinesPage onRoster={() => onSub("roster")} />;
-  return <Hub title="Roster" status={`${t.city} ${t.name} · manage the people who define your season`} tabs={tabs} sub={cur} onSub={onSub} deskTabs={[]}><RosterPage /></Hub>;
+  return <Hub title="Roster" status={`${t.city} ${t.name} · manage the people who define your season`} tabs={tabs} sub={cur} onSub={(k) => (k === "coaching" ? go("coaching") : onSub(k))} deskTabs={[]}><RosterPage /></Hub>;
 }
 
 export function CoachingHub({ sub, onSub }) {

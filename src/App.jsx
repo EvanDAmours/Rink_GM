@@ -812,7 +812,7 @@ export default function App({ resume = false }) {
         deskBar)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
-          <div className={`main${hero ? " rk-heroed" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className={`main${hero ? " rk-heroed" : ""}${!phone && !live && tab !== "dashboard" && !bareLines ? " rk-paged" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (

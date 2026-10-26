@@ -22,8 +22,8 @@
 .app.app .rk-pg-r { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 /* On a computer every section screen lines up with Lineup and Development (26px in, 18px down). */
-.app.app .main.rk-heroed { padding-left: 26px; padding-right: 26px; }
-.app.app .rk-sechead { padding-top: 10px; }
+.app.app .main.rk-paged { padding-left: 26px; padding-right: 26px; padding-top: 18px; }
+.app.app .main.rk-paged .rk-pg:first-child { padding-top: 0; }
 
 /* ---------- Inner views and filters: one small segmented control ---------- */
 .app.app.app .gg-chips, .app.app.app .main .tabs:not(.lx-tabs) { display: inline-flex; flex-wrap: wrap; gap: 2px; background: #ffffff0d; border: 0; border-radius: 999px; padding: 4px; max-width: 100%; align-self: flex-start; }
@@ -62,3 +62,68 @@ html.light .app.app .rk-pg-s { color: #475569; }
 html.light .app.app.app .gg-chips, html.light .app.app.app .main .tabs:not(.lx-tabs) { background: #0f172a0d; }
 html.light .app.app.app .gg-chips button:not(.on), html.light .app.app.app .main .tabs:not(.lx-tabs) button:not(.on) { background: transparent; color: #334155; }
 html.light .app.app.app .gg-chips button.on, html.light .app.app.app .main .tabs:not(.lx-tabs) button.on { background: #0f172a; color: #fff; }
+
+/* A screen's own header (PageHead className="rk-own") steps aside when the section header or a
+   hub header above it already says the same thing. */
+.app.app .main.rk-heroed .rk-pg.rk-own, .app.app .gg-embed .rk-pg.rk-own { display: none; }
+
+/* ---------- Game updates: soft cards ---------- */
+.app.app .rk-gu-head { justify-content: flex-start; }
+.app.app .rk-gu-card { background: var(--soft-card); border: 0; border-radius: 18px; padding: 16px 20px; margin-bottom: 12px; }
+.app.app .rk-gu-card.latest { box-shadow: inset 0 0 0 1px #22c55e66; }
+.app.app .rk-gu-v { border: 0; background: #ffffff12; color: #cbd5e1; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 800; }
+.app.app.app .rk-gu .rk-gu-head input[type=search] { background: var(--soft-inner); border: 1px solid #ffffff10; border-radius: 10px; padding: 9px 12px; width: 280px; }
+.app.app.app .rk-gu .rk-gu-older:not(.link) { background: var(--soft-card); border: 0; border-radius: 14px; }
+.app.app .rk-gu-card ul { color: #cbd5e1; }
+
+/* ---------- Club activity: a calm list ---------- */
+.app.app .activity-page .roster-controls { margin-bottom: 4px; }
+.app.app .activity-page .roster-search, .app.app .gg-roster .roster-search { background: var(--soft-inner); border: 1px solid #ffffff10; border-radius: 10px; color: #94a3b8; }
+.app.app .activity-page .activity-feed { padding: 4px 22px; }
+.app.app .activity-story { gap: 14px; padding: 16px 0; border-bottom: 1px solid #ffffff10; }
+.app.app .activity-symbol { width: 34px; height: 34px; border: 0; border-radius: 10px; background: #ffffff0d; color: #94a3b8; }
+.app.app .activity-story-meta { font-size: 12px; letter-spacing: 0; text-transform: none; color: #94a3b8; font-weight: 600; gap: 8px; }
+.app.app .activity-story-meta span + span::before { content: "·"; margin-right: 8px; }
+.app.app .activity-story p, .app.app .activity-feed p { font-size: 15px; line-height: 1.5; color: #f1f5f9; margin: 4px 0 8px; }
+.app.app .activity-count { background: #ffffff14; color: inherit; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
+.app.app.app .activity-story .row button.small { border-radius: 999px; padding: 5px 12px; }
+@media (max-width: 760px) { .app.app .activity-page .activity-feed { padding: 2px 16px; } .app.app .activity-story p, .app.app .activity-feed p { font-size: 14.5px; } .app.app .activity-story-meta { font-size: 11.5px; } }
+html.light .app.app .activity-story p, html.light .app.app .activity-feed p { color: #0f172a; }
+html.light .app.app .activity-symbol { background: #0f172a0a; }
+
+/* Filters always start on the left (an embedded screen's head used to push them right). */
+.app.app.app .gg-embed > .stack > .gg-pagehead:first-child, .app.app.app .gg-embed > .stack > .pagehead:first-child { justify-content: flex-start; }
+.app.app.app .gg-chips:empty, .app.app.app .main .tabs:empty { display: none; }
+/* Phone sub-filters (the draft's) are the same segmented control. */
+.app.app .main .rk-subchips { display: inline-flex; gap: 2px; background: #ffffff0d; border-radius: 999px; padding: 4px; margin-top: 0; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+.app.app.app .main .rk-subchips button { background: transparent; min-height: 34px; flex: 0 0 auto; }
+.app.app.app .main .rk-subchips button.on { background: #fff; color: #0b1220; }
+html.light .app.app .main .rk-subchips { background: #0f172a0d; }
+/* One green primary: the phone's day button is the same green as the desktop's. */
+.app.app .rk-abar button.t-blue, .app.app .rk-abar-menu button.t-blue { background: #16a34a; }
+/* Every other small switch (Settings' theme and size, rk-seg) is the same segmented control. */
+.app.app.app .rk-seg { background: #ffffff0d; border: 0; border-radius: 999px; padding: 4px; gap: 2px; }
+.app.app.app .rk-seg button, .app.app.app .main .rk-seg button:not(.link) { background: transparent; color: #cbd5e1; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; min-height: 30px; }
+.app.app.app .rk-seg button:hover:not(:disabled):not(.on) { background: #ffffff10; color: #fff; }
+.app.app.app .rk-seg button.on, .app.app.app .main .rk-seg button.on:not(.link) { background: #fff; color: #0b1220; }
+html.light .app.app.app .rk-seg { background: #0f172a0d; }
+html.light .app.app.app .rk-seg button:not(.on) { color: #334155; }
+html.light .app.app.app .rk-seg button.on, html.light .app.app.app .main .rk-seg button.on:not(.link) { background: #0f172a; color: #fff; }
+.app.app .main .rk-subchips { align-self: flex-start; width: max-content; }
+
+/* ---------- Legacy Hall and Franchise History: plain headings over the themed rafters ---------- */
+.app.app .lg-h span { text-transform: none; letter-spacing: 0; font-size: 18px; font-weight: 800; }
+.app.app .lg-wall-k, .app.app .gg-shelf-h span { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 800; }
+
+/* ---------- "More columns": data-heavy tables open calm ---------- */
+.app.app.app button.rk-morecols { background: transparent; color: #94a3b8; font-size: 13px; font-weight: 700; border-radius: 999px; padding: 6px 12px; min-height: 30px; margin-left: auto; }
+.app.app.app button.rk-morecols:hover { background: #ffffff0a; color: #e2e8f0; }
+.app.app.app button.rk-morecols[aria-pressed=true] { background: #ffffff14; color: #f1f5f9; }
+html.light .app.app.app button.rk-morecols { color: #475569; }
+
+/* ---------- Group headings inside screens (Forwards, Defence...): plain, sentence case ---------- */
+.app.app .gg-roster-h { margin: 14px 0 8px; align-items: center; }
+.app.app .gg-roster-h b { text-transform: none; letter-spacing: 0; font-size: 16px; font-weight: 800; color: #f1f5f9; }
+.app.app .gg-roster-h span { background: #ffffff12; border-radius: 999px; padding: 1px 8px; color: #94a3b8; font-size: 12px; }
+html.light .app.app .gg-roster-h b { color: #0f172a; }
+.app.app .roster-controls .rk-morecols { margin-left: auto; }
