@@ -406,4 +406,7 @@ export const PATCH_NOTES = [
     "A coach panel suggests the best change right now (a swap or a scratch to dress) and shows how each line improves. Make the swap applies it, and Next idea shows another.",
     "Strength and Auto-set now live in two simple menus, and Line settings opens in its own panel. On a phone, every line fits three across with no sideways scrolling.",
   ] },
+  { v: "1.74", date: "2026-10-26", title: "Clean Lineup", notes: [
+    "The Lineup screen drops the sweater pictures: each spot now shows just the jersey number, name and rating.",
+  ] },
 ];

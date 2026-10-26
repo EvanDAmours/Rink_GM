@@ -1,5 +1,4 @@
 import Select from "./Select.jsx";
-import Jersey from "./Jersey.jsx";
 import React, { useRef, useState } from "react";
 import { useGame, ovrColor, Sheet } from "./common.jsx";
 import { usePhone } from "./mobile.js";
@@ -150,7 +149,7 @@ export default function LinesPage({ onRoster }) {
         className={`lx-c${isSel ? " sel" : ""}${target ? " target" : ""}${same(over, a) ? " over" : ""}${lit ? " hl" : ""}${out ? " out" : ""}${off ? " off" : ""}${p ? "" : " empty"}`}
         onClick={() => act(a)} aria-pressed={mine ? isSel : undefined}
         title={p ? `${p.name} · ${p.pos} · ${p.ovr} OVR${off ? ` · playing ${POS_WORD[pos] || pos}, off position` : ""}${out ? ` · ${inj?.text || "injured"}` : ""}` : "Empty spot"}>
-        <span className="lx-jz" style={{ width: jz }}>{p && <Jersey team={team} player={p} size={jz} decorative />}</span>
+        <span className="lx-num">{p && (p.number ?? p.num) != null ? p.number ?? p.num : ""}</span>
         <span className="lx-nm">
           <b>{p ? lastName(p.name) : mine ? "Empty" : "—"}{off && <i className="lx-offm" aria-label="off position">{pos}</i>}</b>
           {out && <small className="lx-inj">{inj?.short || "Out"}{sub ? ` · ${lastName(sub.name)} in` : ""}</small>}
@@ -201,7 +200,7 @@ export default function LinesPage({ onRoster }) {
           <div className="lx-pick-l">
             {pool.map((p) => { const v = score(p), off = pos && offPosition(p, pos); return (
               <button type="button" key={p.id} className="lx-pk" onClick={() => take(p)}>
-                <span className="lx-jz" style={{ width: 28 }}><Jersey team={team} player={p} size={28} decorative /></span>
+                <span className="lx-num">{(p.number ?? p.num) ?? ""}</span>
                 <span className="lx-pk-n"><b className={off ? "off" : ""}>{lastName(p.name)}</b><small>{p.pos}{off ? " · off position" : ""} · {where(p)}</small></span>
                 <b className="lx-pk-v" style={{ color: ovrColor(v) }}><small>→</small> {v}</b>
               </button>); })}

@@ -350,3 +350,6 @@
   .app.app .lnx .lx-selbar { left: 12px; right: 12px; transform: none; bottom: calc(140px + env(safe-area-inset-bottom, 0px)); white-space: normal; font-size: 12.5px; border-radius: 16px; padding: 8px 8px 8px 14px; }
   .app.app .lnx .lx-selbar > span { flex: 1; min-width: 0; }
 }
+
+/* Lineup cells: jersey number in place of the sweater art (v1.74). */
+.app .main .lnx .lx-num { flex: 0 0 auto; min-width: 22px; text-align: right; font-size: 12px; font-weight: 700; color: #94a3b8; font-variant-numeric: tabular-nums; }

@@ -384,6 +384,7 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .app.app .lnx .lx-pk-n small { color: #475569; }
 .app.app .lnx .lx-rest { color: #1e293b; }
 .app.app .lnx.lx-settings .lx-card { background: #0f172a09; }
+.app .main .lnx .lx-num { color: #475569; }
 
 /* src/ui/live.css */
 .lv-bside { background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #ffffff) 70%, #ffffff 100%); }
