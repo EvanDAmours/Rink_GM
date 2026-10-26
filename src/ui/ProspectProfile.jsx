@@ -102,7 +102,7 @@ export default function ProspectProfile({ p }) {
         <div className="muted small" style={{ margin: "10px 0" }}>{explain(read, p)}</div>
         <div className="row">
           <ScoutButton p={p} read={read} className="small primary" />
-          {combine && read.lvl < 2 && <button className="small" disabled={!(d.workoutsLeft > 0)} title="Combine week: a free full workup" onClick={workout}>🏋️ Private workout ({d.workoutsLeft || 0} left)</button>}
+          {combine && read.lvl < 2 && <button className="small" disabled={!(d.workoutsLeft > 0)} title="Combine week: a free full workup" onClick={workout}>Private workout ({d.workoutsLeft || 0} left)</button>}
         </div>
       </div>
 

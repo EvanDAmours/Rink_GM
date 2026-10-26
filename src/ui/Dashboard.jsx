@@ -151,20 +151,20 @@ export default function Dashboard({ act = {} }) {
     : lg.phase === "draft" ? (atCombine(lg) ? "Off-season: Scouting Combine" : "Off-season: Entry Draft")
     : lg.phase === "resign" ? "Off-season: Re-sign Window" : "Off-season: Free Agency";
   const primary = [];
-  if (lg.phase === "regular" && seasonOver(lg) && act.startPlayoffs) primary.push({ label: "Start Playoffs 🏆", onClick: act.startPlayoffs });
+  if (lg.phase === "regular" && seasonOver(lg) && act.startPlayoffs) primary.push({ label: "Start the playoffs", onClick: act.startPlayoffs });
   if (lg.phase === "playoffs") {
     if (champ != null) { if (act.toDraft) primary.push({ label: "Go to the Draft →", onClick: act.toDraft }); primary.push({ label: "Bracket", onClick: () => go("playoffs") }); }
     else if (series) { if (act.playPlayoffLive) primary.push({ label: `▶ Play Game ${series.games.length + 1}`, onClick: act.playPlayoffLive }); if (act.simPlayoffDay) primary.push({ label: "Sim Day", onClick: act.simPlayoffDay }); if (act.simPlayoffRound) primary.push({ label: "Sim Round", onClick: act.simPlayoffRound }); }
     else { primary.push({ label: "Bracket", onClick: () => go("playoffs") }); if (act.simPlayoffsAll) primary.push({ label: "Sim to the Final", onClick: act.simPlayoffsAll }); }
   }
   if (lg.phase === "draft") {
-    if (atCombine(lg)) { primary.push({ label: "🔍 Go to the Combine", onClick: () => go("draft") }); if (act.startDraft) primary.push({ label: "Start the Draft →", onClick: act.startDraft }); }
+    if (atCombine(lg)) { primary.push({ label: "Go to the Combine", onClick: () => go("draft") }); if (act.startDraft) primary.push({ label: "Start the Draft →", onClick: act.startDraft }); }
     else if (draftDone(lg)) { if (act.toResign) primary.push({ label: "Continue to Re-signing →", onClick: act.toResign }); primary.push({ label: "Draft recap", onClick: () => go("draft") }); }
     else primary.push({ label: slot ? `Go to the draft · pick #${slot.overall}` : "Go to the draft", onClick: () => go("draft") });
   }
-  if (lg.phase === "resign") { primary.push({ label: "✍️ Re-sign your players", onClick: () => go("freeagency") }); if (act.toFA) primary.push({ label: "Finish → Free Agency", onClick: act.toFA }); }
+  if (lg.phase === "resign") { primary.push({ label: "Re-sign your players", onClick: () => go("freeagency") }); if (act.toFA) primary.push({ label: "Finish → Free Agency", onClick: act.toFA }); }
   if (lg.phase === "freeagency") {
-    primary.push({ label: "💼 Go to Free Agency", onClick: () => go("freeagency") });
+    primary.push({ label: "Go to Free Agency", onClick: () => go("freeagency") });
     if ((lg.fa?.day ?? 0) < FA_DAYS && act.faDay) primary.push({ label: "Next day", onClick: act.faDay });
     if (act.nextSeason) primary.push({ label: `Start ${lg.year + 1}-${String(lg.year + 2).slice(2)} →`, onClick: act.nextSeason });
   }

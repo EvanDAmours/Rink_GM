@@ -282,7 +282,7 @@ export default function LinesPage({ onRoster }) {
           {TABS.map(([k, l, s]) => <button type="button" key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => { setTab(k); setSel(null); }}><span className="l">{l}</span><span className="s">{s}</span></button>)}
         </div>
         <div className="lx-bar-r">
-          {mine && <button type="button" className={`lx-ghost${drawer ? " on" : ""}`} aria-expanded={drawer} onClick={() => setDrawer(!drawer)}>⚙ Line settings</button>}
+          {mine && <button type="button" className={`lx-ghost${drawer ? " on" : ""}`} aria-expanded={drawer} onClick={() => setDrawer(!drawer)}>Line settings</button>}
           {mine && <button type="button" className="lx-auto" onClick={() => { autoLines(league, team); setSel(null); commit(); toast("Coach set the lines."); }}>Auto lines</button>}
         </div>
       </div>
@@ -294,7 +294,7 @@ export default function LinesPage({ onRoster }) {
             <label className="lx-rest">Starter rests <Select value={Math.round(rest * 100)} onChange={(e) => { team.restPct = Number(e.target.value); team.autoGoalie = team.restPct > 0; commit(); }} aria-label="How often the starter rests">{REST_OPTIONS.map((r) => <option key={r} value={r}>{r === 0 ? "never" : `${r}%`} · ~{starts(r)} starts{r === 20 ? " (typical)" : r >= 40 ? " (1A/1B)" : ""}</option>)}</Select></label>
           </div>
           <div className="lx-roles">
-            <span className="lx-k">ROLES</span>
+            <span className="lx-k">Roles</span>
             {["F", "D"].flatMap((g) => roles[g].map((cur, i) => (
               <label key={`${g}${i}`} className="lx-role"><small>{g === "F" ? `L${i + 1}` : `D${i + 1}`}</small>
                 <Select value={cur} aria-label={`${g === "F" ? "Line" : "Pair"} ${i + 1} role`} onChange={(e) => { team.lineRoles = { ...roles, [g]: roles[g].map((r, k) => (k === i ? e.target.value : r)) }; commit(); }}>

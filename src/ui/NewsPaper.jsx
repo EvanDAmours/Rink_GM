@@ -9,6 +9,9 @@ export default function NewsPaper({ paper, onClose }) {
   const { league } = useGame();
   const team = (tid) => (tid != null ? league.teams[tid] : null);
   const p1 = team(paper.photo?.tid), p2 = team(paper.photo2?.tid);
+  const closeRef = React.useRef(onClose); closeRef.current = onClose;
+  // Escape closes the paper like every other dialog.
+  React.useEffect(() => { const k = (e) => { if (e.key === "Escape" && !document.querySelector(".mm-overlay, .an-overlay, .sp-overlay, .cw-overlay, .rn-overlay")) closeRef.current(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
   return (
     <Portal><div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`gg-paper kind-${paper.kind}`} role="dialog" aria-label={`${paper.edition} newspaper`}>

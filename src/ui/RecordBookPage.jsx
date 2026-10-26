@@ -138,14 +138,14 @@ export default function RecordBookPage() {
           <div className="gg-card gg-rec-log">{(() => {
             const rows = [];
             // Ties this season (a share of the mark, not the record itself).
-            if (inSeason) for (const t of league.teams) { const ps = Object.values(league.players).filter((p) => p.tid === t.id && p.stats.gp); for (const d of SEASON_MARKS.filter((x) => !x.team)) { const rec = seasonMark(league, "franchise", d.key, t.abbr); const p = ps.filter((x) => isGoalie(x.pos) === d.goalie).sort((a, b) => b.stats[d.stat] - a.stats[d.stat])[0]; if (rec && p && p.stats[d.stat] === rec.value && String(rec.pid) !== String(p.id)) rows.push({ k: `tie-${t.abbr}-${d.key}`, mine: t.id === league.userTid, text: `🤝 ${p.name} tied the ${t.name} single-season ${d.label.toLowerCase()} record (${rec.name}, ${fmt(rec.value)}).` }); } }
+            if (inSeason) for (const t of league.teams) { const ps = Object.values(league.players).filter((p) => p.tid === t.id && p.stats.gp); for (const d of SEASON_MARKS.filter((x) => !x.team)) { const rec = seasonMark(league, "franchise", d.key, t.abbr); const p = ps.filter((x) => isGoalie(x.pos) === d.goalie).sort((a, b) => b.stats[d.stat] - a.stats[d.stat])[0]; if (rec && p && p.stats[d.stat] === rec.value && String(rec.pid) !== String(p.id)) rows.push({ k: `tie-${t.abbr}-${d.key}`, mine: t.id === league.userTid, text: `${p.name} tied the ${t.name} single-season ${d.label.toLowerCase()} record (${rec.name}, ${fmt(rec.value)}).` }); } }
             for (const e of [...(league.recordBook?.marks?.history || [])].reverse()) {
               const club = e.club ? league.teams.find((t) => t.abbr === e.club) : null;
               const where = e.scope === "nhl" ? "NHL" : `${club?.name || e.club}`;
               const cur = seasonMark(league, e.scope, e.key, e.club);
               const holds = cur && !cur.real && cur.year === e.year && String(cur.pid ?? cur.tid) === String(e.pid ?? e.tid) && cur.value > e.value ? ` (now ${fmt(cur.value)})` : "";
               const mine = e.pid != null ? league.players[e.pid]?.tid === league.userTid : e.tid === league.userTid;
-              rows.push({ k: `${e.scope}-${e.club}-${e.key}-${e.year}-${e.day}-${e.pid ?? e.tid}`, mine, text: `${e.scope === "nhl" ? "🏆" : "🏅"} ${seasonLabel(e.year)}: ${e.name} set the ${where} single-season ${e.label.toLowerCase()} record with ${fmt(e.value)}${holds}${e.prev ? `, passing ${poss(e.prev.name)} ${fmt(e.prev.value)}${e.prev.season ? ` (${e.prev.season})` : ""}` : ""}.` });
+              rows.push({ k: `${e.scope}-${e.club}-${e.key}-${e.year}-${e.day}-${e.pid ?? e.tid}`, mine, text: `${seasonLabel(e.year)}: ${e.name} set the ${where} single-season ${e.label.toLowerCase()} record with ${fmt(e.value)}${holds}${e.prev ? `, passing ${poss(e.prev.name)} ${fmt(e.prev.value)}${e.prev.season ? ` (${e.prev.season})` : ""}` : ""}.` });
             }
             return rows.length ? rows.slice(0, 60).map((r) => <div key={r.k} className={`small${r.mine ? " mine" : ""}`}>{r.text}</div>) : <div className="dim">No records have fallen yet. When one does, it's written here.</div>;
           })()}</div>

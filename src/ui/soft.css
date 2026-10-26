@@ -188,3 +188,14 @@ html:not(.light) .app.app .main .lnx .lx-card { background: var(--soft-inner); b
 .rk-bar-right > * { flex-shrink: 0; }
 .rk-bar-nav { flex: 1 1 auto; overflow: hidden; }
 @media (max-width: 1250px) { .app.app.app .rk-bar-nav button { padding: 8px 8px; font-size: 14px; } .rk-seasonbtn b { font-size: 15px; } }
+
+/* ---------- Section kickers read as plain sentence-case headings (r6 sweep) ---------- */
+.app.app.app .dr-k, .app.app.app .dd-war-k, .app.app.app .main .lnx .lx-k, .app.app.app .lx-usage .lx-k, .app.app.app .main .lnx .lx-plan-k,
+.app.app.app .rk-prep-k, .app.app.app .rk-prep-sub, .app.app.app .gg-pc-k, .app.app.app .ct-plan-k, .app.app.app .rk-off-k, .app.app.app .eyebrow,
+.app.app.app .rk-inj-k, .app.app.app .rk-rep-sub { letter-spacing: 0; text-transform: none; font-size: 14px; font-weight: 800; }
+html:not(.light) .app.app.app .dr-k, html:not(.light) .app.app.app .dd-war-k, html:not(.light) .app.app.app .main .lnx .lx-k, html:not(.light) .app.app.app .main .lnx .lx-plan-k,
+html:not(.light) .app.app.app .rk-prep-k, html:not(.light) .app.app.app .gg-pc-k, html:not(.light) .app.app.app .ct-plan-k, html:not(.light) .app.app.app .eyebrow { color: #f1f5f9; }
+/* Operations' inner views: soft chips like every other tab row. */
+.app.app.app .gg-ops-nav { gap: 8px; }
+.app.app.app .gg-ops-nav button { text-transform: none; letter-spacing: 0; border: 0; border-radius: 999px; background: #ffffff12; color: #cbd5e1; font-size: 13px; font-weight: 700; padding: 8px 14px; min-height: 36px; }
+.app.app.app .gg-ops-nav button.on { background: #fff; color: #0b1220; }

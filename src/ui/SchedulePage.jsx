@@ -80,7 +80,7 @@ export default function SchedulePage() {
       <div className="gg-pagehead">
         <div><h2>Schedule</h2><div className="gg-status">{league.scheduleInfo?.label || "Franchise schedule"} · {mine.length} games · {mine.filter((g) => g.h === user.id).length} home · trade deadline {dayToDate(league.year, league.deadlineDay, league.scheduleStart)}</div></div>
         <div className="gg-chips">
-          <button className={view === "calendar" ? "on" : ""} onClick={() => setView("calendar")}>📅 Calendar</button>
+          <button className={view === "calendar" ? "on" : ""} onClick={() => setView("calendar")}>Calendar</button>
           <button className={view === "list" ? "on" : ""} onClick={() => setView("list")}>List</button>
           <button className={view === "day" ? "on" : ""} onClick={() => setView("day")}>League scoreboard</button>
           {league.phase === "preseason" && <><button disabled={loading} onClick={refreshOfficial}>{loading ? "Refreshing…" : "Refresh from NHL"}</button><button onClick={() => setImportOpen(!importOpen)}>Import</button></>}

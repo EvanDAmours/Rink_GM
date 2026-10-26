@@ -140,7 +140,7 @@ export default function PlayerModal({ pid }) {
         {career.length > 0 && (
           <div className="panel">
             <h3>Career (Rink GM)</h3>
-            {milestones.length > 0 && <div className="gg-miles">{milestones.map((m) => <span key={m.key + m.mark} className="gg-mile">🏅 {m.label}</span>)}</div>}
+            {milestones.length > 0 && <div className="gg-miles">{milestones.map((m) => <span key={m.key + m.mark} className="gg-mile">{m.label}</span>)}</div>}
             <div className="tablewrap">
               <table className="t">
                 <thead>

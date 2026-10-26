@@ -8,15 +8,76 @@ html.light {
   --gg-gn: #15803d; --gg-bl: #2563eb; --gg-gd: #a16207; --gg-am: #b45309; --gg-rd: #dc2626;
 }
 html.light body { background: radial-gradient(1200px 600px at 10% -10%, #e2e8f0 0%, transparent 60%), #eef1f6; color: #0f172a; }
-html.light :where(input, select, textarea):where(:not(.keep-dark *, .lx-pc *, .lg-wall *, .lg-banner *, .gg-head *, .rk-phead *, .rk-hm *, .mm-overlay *, .rinkwrap *, .lr-stage *, .gg-paper-frame *, .gg-paper *, .rkt *, .gg-splash *, .lv-bug *, .rk-tour-card *, .keep-dark, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card)) { background: #fff; color: #0f172a; border-color: #cbd2dc; }
-html.light :where(.keep-dark, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card) {
+html.light :where(input, select, textarea):where(:not(.keep-dark *, .rk-bc *, .rk-pbc *, .rk-ph *, .lx-pc *, .lg-wall *, .lg-banner *, .gg-head *, .rk-phead *, .rk-hm *, .mm-overlay *, .rinkwrap *, .lr-stage *, .gg-paper-frame *, .gg-paper *, .rkt *, .gg-splash *, .lv-bug *, .rk-tour-card *, .keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card)) { background: #fff; color: #0f172a; border-color: #cbd2dc; }
+html.light :where(.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card) {
   color-scheme: dark; color: #e0e6f0;
   --bg: #111827; --bg2: #edf2f7; --panel: #111827; --panel2: #eaf0f6; --line: #334155;
   --text: #e0e6f0; --muted: #cbd5e1; --dim: #60a5fa; --accent: #fbbf24; --good: #4ade80; --warn: #fbbf24; --bad: #f87171; --ice: #111827;
   --gg-bg: #080c14; --gg-cd: #111827; --gg-bd: #1e293b; --gg-tx: #e0e6f0; --gg-mt: #64748b; --gg-sl: #94a3b8;
   --gg-gn: #22c55e; --gg-bl: #3b82f6; --gg-gd: #eab308; --gg-am: #f59e0b; --gg-rd: #ef4444;
 }
-@scope (html.light) to (.keep-dark, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card) {
+@scope (html.light) to (.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-banner, .gg-head, .rk-phead, .rk-hm, .mm-overlay, .rinkwrap, .lr-stage, .gg-paper-frame, .gg-paper, .rkt, .gg-splash, .lv-bug, .rk-tour-card) {
+
+/* src/ui/broadcast.css */
+.app .main button.rk-bc-star:not(.x) em { color: #a16207; }
+.app .main button.rk-bc-btn:not(.x) { background: #0f172a1f; color: #0f172a; }
+.rk-bc-card { background: #0f172a0d; }
+.rk-bc-n { color: #475569; }
+.app .main button.rk-bc-todo:not(.x),
+.app .main button.rk-bc-need:not(.x) { border-bottom: 1px solid #0f172a10; }
+.app .main button.rk-bc-todo:not(.x) small { color: #475569; }
+.app .main button.rk-bc-need:not(.x) span { color: #475569; }
+.app .main .rk-bc-links button.rk-link:not(.x) { color: #2563eb; }
+.rk-bc-plan { color: #334155; }
+.rk-bc-plan > span { color: #475569; }
+.app .main button.rk-tile2:not(.x) { background: #0f172a0d; color: #0f172a; }
+.app .main button.rk-tile2:not(.x) > svg:first-child { color: #2563eb; background: #0f172a10; }
+.app .main button.rk-tile2:not(.x) span { color: #475569; }
+.rk-bc-cards .rk-phase { background: #0f172a0d; }
+.rk-bc-cards .rk-phase-row { background: #0f172a0b; }
+.rk-bc-home .ct-plan,
+.rk-ph-home .ct-plan { background: #0f172a0d; }
+
+/* src/ui/negotiate.css */
+.ng-who small { color: #475569; }
+.ng-who > span { color: #334155; }
+.ng-ovr small { color: #475569; }
+.ng-chip { background: var(--soft-quiet, #0f172a0d); }
+.ng-chip small { color: #475569; }
+.ng-chip b em { color: #475569; }
+.ng-chip > em { color: #475569; }
+.ng-pat i { background: #0f172a1f; }
+.ng-note { background: var(--soft-quiet, #0f172a0d); color: #334155; }
+.ng-n.up { color: #a16207; }
+.ng-n.down { color: #c2410c; }
+.ng-n.loyal { color: #be185d; }
+.ng-box { background: var(--soft-quiet, #0f172a0d); }
+.ng-k { color: #334155; }
+.ng-k small { color: #475569; }
+.ng-small { color: #475569; }
+.app.app button.ng-term { background: var(--soft-quiet, #0f172a12); color: #1e293b; }
+.app.app button.ng-term small { color: #475569; }
+.ng-money > div small { color: #475569; }
+.app.app .ng-money button { background: #0f172a14; color: #1e293b; }
+.ng-tick { color: #334155; }
+.ng-row { color: #475569; }
+.app.app .ng-chips button { background: #0f172a12; color: #1e293b; }
+.ng-bars small { color: #475569; }
+.ng-bar { background: #0f172a0a; }
+.ng-b.agent { background: #0f172a12; color: #1e293b; }
+.ng-b.accept { color: #15803d; }
+.ng-b.counter,
+.ng-b.kept { color: #b45309; }
+.ng-b.walk { color: #dc2626; }
+.ng-want { color: #334155; }
+.ng-dots i { background: #0f172a26; }
+.ng-fit.y { color: #15803d; }
+.ng-fit { color: #475569; }
+.ng-rank.gold { color: #b45309; }
+.ng-lrow { color: #334155; }
+.ng-lrow em { color: #1d4ed8; }
+.ng-reasons { color: #b91c1c; }
+.ng-foot { background: linear-gradient(transparent, var(--panel, #f4f6fa) 30%); }
 
 /* src/ui/callup.css */
 .cu-modal .cu-why { color: var(--gg-tx, #0f172a); }
@@ -445,6 +506,12 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .sc-assign-card { background: #ffffff; border: 1px solid #0f172a10; }
 .sc-assign-card small.maj { color: #a16207; }
 .sc-assign-card small.min { color: #2563eb; }
+.sc-assign-card { background: #0f172a0d; }
+.app .main button.sc-regrow:not(.x) { color: #1e293b; }
+.app .main button.sc-regrow:not(.x):hover:not(:disabled) { background: #0f172a10; }
+.sc-regrow span { color: #475569; }
+.sc-regrow em { color: #15803d; }
+.sc-regrow small { color: #b45309; }
 
 /* src/ui/standings.css */
 .app .gg-clinch.y { color: #0284c7; }
@@ -1496,6 +1563,7 @@ body .app { background: #eef1f6 !important; }
 .app.app.app .rk-shero-tabs button:hover:not(:disabled) { border-bottom: 3px solid #0f172a55; }
 .app.app .gg-coach-who .gg-k,
 .app.app span.gg-k { color: #475569; }
+.app.app.app .gg-ops-nav button { background: #0f172a12; color: #334155; }
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }
@@ -1537,4 +1605,15 @@ body .app { background: #eef1f6 !important; }
 .app button.rk-off-link { color: #1d4ed8; }
 .rk-off-done { color: #15803d; }
 .app.rk-phone-app .lv-game .lv-rinkbox { background: var(--gg-bg, #eef1f6); }
+.rk-mnav { background: #eef1f6f5; border-top: 1px solid #0f172a10; }
+.rk-mnav button.on .rk-mnav-ico { background: #0f172a1a; }
+.rk-msheet { background: #eef1f6; }
+.app .rk-msheet .rk-msheet-x { background: #0f172a14; }
+.rk-msheet-list { background: #0f172a0d; }
+.app .rk-msheet-list button { border-bottom: 1px solid #0f172a0d; }
+.app .rk-msheet-list button.on { background: #0f172a10; color: #0f172a; }
+.rk-seg3 { background: #0f172a0d; }
+.app .main .rk-seg3 button { color: #334155; }
+.app .main .rk-subchips button { background: #0f172a12; color: #1e293b; }
+.rk-phone-app .gg-trade > .gg-dealbar { background: #fffffff7; }
 }

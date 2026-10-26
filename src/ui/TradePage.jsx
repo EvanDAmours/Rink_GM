@@ -69,9 +69,9 @@ function TradeFinder({ league, user, onLoad }) {
         return (
           <div key={`${p.id}-${q.id}`} className="gg-idea">
             <TeamBadge team={t} size={22} />
-            <span className="dim small">YOU GET</span><PosBadge pos={q.pos} /><b>{q.name}<AbilityChip p={q} /></b><b style={{ color: ovrColor(q.ovr) }}>{q.ovr}</b>
+            <span className="dim small">You get</span><PosBadge pos={q.pos} /><b>{q.name}<AbilityChip p={q} /></b><b style={{ color: ovrColor(q.ovr) }}>{q.ovr}</b>
             <span className="dim">⇄</span>
-            <span className="dim small">YOU SEND</span><PosBadge pos={p.pos} /><b>{p.name}<AbilityChip p={p} /></b><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
+            <span className="dim small">You send</span><PosBadge pos={p.pos} /><b>{p.name}<AbilityChip p={p} /></b><b style={{ color: ovrColor(p.ovr) }}>{p.ovr}</b>
             <span className="gg-tag" style={{ color: col, borderColor: col }}>{lab}</span>
             <button className="small" onClick={() => onLoad(t.id, p.id, q.id)}>Load →</button>
           </div>
@@ -209,7 +209,7 @@ export default function TradePage({ seed }) {
     <div className="stack gg-trade">
       <div className="gg-pagehead">
         <div><h2>Trade Center</h2><div className="gg-status">{league.phase === "regular" ? `Deadline ${dayToDate(league.year, league.deadlineDay, league.scheduleStart)} · ` : ""}pick a partner, tap assets on both sides, then check the deal bar</div></div>
-        <div className="gg-chips"><button className={finder ? "on" : ""} onClick={() => setFinder(!finder)} aria-expanded={finder}>🔍 Trade Finder</button></div>
+        <div className="gg-chips"><button className={finder ? "on" : ""} onClick={() => setFinder(!finder)} aria-expanded={finder}>Trade Finder</button></div>
       </div>
       {closed && <div className="notice warn">Trading is frozen until the playoffs end.</div>}
       {deadlineActive(league) && <div className="notice">⏰ Trade Deadline Day: it's {fmtClock(league.deadline.minute)} ET. Deals close at 3:00 PM. <span className="link" onClick={() => go("deadline")}>Back to the deadline desk →</span></div>}
@@ -254,8 +254,8 @@ export default function TradePage({ seed }) {
       </div>
 
       <div className="gg-sides">
-        <Side title="YOU SEND" color="#22c55e" team={user} viewer={ai} mine sel={give} setSel={setGive} selPicks={givePicks} setSelPicks={setGivePicks} />
-        <Side title="YOU GET" color="#3b82f6" team={ai} viewer={ai} sel={get} setSel={setGet} selPicks={getPicks} setSelPicks={setGetPicks} />
+        <Side title="You send" color="#22c55e" team={user} viewer={ai} mine sel={give} setSel={setGive} selPicks={givePicks} setSelPicks={setGivePicks} />
+        <Side title="You get" color="#3b82f6" team={ai} viewer={ai} sel={get} setSel={setGet} selPicks={getPicks} setSelPicks={setGetPicks} />
       </div>
 
       {league.tradeHistory?.length > 0 && (

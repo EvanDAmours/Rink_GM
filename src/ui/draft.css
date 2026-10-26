@@ -183,7 +183,7 @@
 .dd-filters .gg-select.gg-select { min-width: 0; }
 .app .main .dd-filters .gg-select-btn { padding: 6px 8px; gap: 4px; }
 .dd-filters.wrap { flex-wrap: wrap; } .dd-filters.wrap input { flex: 1 1 100%; }
-.app .main button.dd-mag:not(.link) { flex: 0 0 44px; min-height: 38px; padding: 0; font-size: 16px; }
+.app .main button.dd-mag:not(.link) { flex: 0 0 auto; min-height: 38px; padding: 0 12px; font-size: 13px; }
 .dd-plist { display: flex; flex-direction: column; gap: 4px; }
 .dd-prow { display: flex; align-items: center; gap: 5px; background: #080c14; border: 1px solid #ffffff10; border-radius: 8px; padding: 4px 6px 4px 4px; min-height: 46px; cursor: pointer; }
 .dd-prow.live { border-color: #22c55e66; } .dd-prow.gone { opacity: .5; }

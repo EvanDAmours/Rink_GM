@@ -69,7 +69,7 @@ function Board({ league, onOffer }) {
           <div key={r.p.id} className={`dd-brow${r.mine ? " ff-mine" : ""}`}>
             <span className="posbadge">{r.p.pos}</span>
             <div className="dd-bwho">
-              <div><PlayerName p={r.p} />{r.hot && <span className="ff-hot" title="Several clubs are after him"> 🔥</span>}</div>
+              <div><PlayerName p={r.p} />{r.hot && <span className="ff-hot" title="Several clubs are after him"> · Hot</span>}</div>
               <div className="muted small">Age {r.p.age} · asks {deal(r.ask.aav, r.ask.yrs)} · interest in you <b className={r.interest === "High" ? "good" : r.interest === "Low" ? "bad" : ""}>{r.interest}</b></div>
               <div className="muted small">
                 {r.suitors.length ? <>{r.suitors.length} suitor{r.suitors.length === 1 ? "" : "s"}: {r.suitors.slice(0, 4).map((tid) => league.teams[tid].abbr).join(", ")}</> : r.market ? "No offers yet" : "Takes the first fair deal"}
@@ -151,7 +151,7 @@ export default function FrenzyPage() {
       commit(30000);
       if (fz.done) { setRunning(false); save(); return; }
       const fresh = [...openCalls(league), ...userOffers(league)].filter((x) => !before.has(x.id));
-      if (fresh.length) { setRunning(false); save(); toast("📞 Your phone is ringing. The clock is paused.", 4500); return; }
+      if (fresh.length) { setRunning(false); save(); toast("Your phone is ringing. The clock is paused.", 4500); return; }
       timer.current = setTimeout(step, fz.signed > signed ? BUSY_MS : QUIET_MS);
     };
     timer.current = setTimeout(step, QUIET_MS);

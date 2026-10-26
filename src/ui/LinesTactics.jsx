@@ -24,11 +24,11 @@ export function IdentityPanel({ team, mine }) {
   const matchOn = m >= 0;
   return (
     <div className="lx-idn">
-      <div className="lx-k">TEAM IDENTITY <span>· sets the default ice time and what the coaches lean toward in the game plan</span></div>
+      <div className="lx-k">Team identity <span>· sets the default ice time and what the coaches lean toward in the game plan</span></div>
       <div className="lx-plan-open">
         {Object.entries(IDENTITIES).map(([k, v]) => (
           <button type="button" key={k} disabled={!mine} className={`lx-style${id === k ? " on" : ""}`} aria-pressed={id === k} onClick={() => { if (k === "balanced") delete team.identity; else team.identity = k; commit(); toast(`Identity: ${v.name}.`); }}>
-            <b>{v.icon} {v.name}</b><small>{v.desc}</small><small className="lx-idn-sh">F {v.F.join("/")} · D {v.D.join("/")}</small>
+            <b>{v.name}</b><small>{v.desc}</small><small className="lx-idn-sh">F {v.F.join("/")} · D {v.D.join("/")}</small>
           </button>
         ))}
       </div>
@@ -60,7 +60,7 @@ export function IceTimeSliders({ team, mine }) {
   };
   return (
     <div className="lx-icebox">
-      <div className="lx-k">ICE TIME <span>· share of even-strength minutes{own ? " · your settings" : ` · ${IDENTITIES[identityOf(team)].name} defaults`}</span>
+      <div className="lx-k">Ice time <span>· share of even-strength minutes{own ? " · your settings" : ` · ${IDENTITIES[identityOf(team)].name} defaults`}</span>
         {mine && own && <button type="button" className="lx-linkbtn" onClick={() => { resetShares(team); commit(); }}>Reset</button>}
       </div>
       {L.F.map((_, i) => row("F", i))}
@@ -133,7 +133,7 @@ export function SituationsPanel({ team, mine }) {
               })}
             </div>
             {open && (
-              <div className="lx-card-f lx-instead"><span className="lx-k">PUT IN INSTEAD</span>
+              <div className="lx-card-f lx-instead"><span className="lx-k">Put in instead</span>
                 <div className="lx-rows">{pool.map((p) => (
                   <button type="button" key={p.id} className="lx-row bench" onClick={() => put(kind, sel.j, p.id)}>
                     <i className="lx-slot" style={{ background: POS_COLOR[p.pos] }}>{p.pos}</i>
@@ -167,7 +167,7 @@ export function TacticUsage({ team }) {
   const u = Object.entries(t.units || {}).filter(([, s]) => s > 0);
   return (
     <div className="lx-usage">
-      <div className="lx-k">LAST GAME{opp ? ` vs ${opp.abbr}` : ""} <span>· how the plan was used</span></div>
+      <div className="lx-k">Last game{opp ? ` vs ${opp.abbr}` : ""} <span>· how the plan was used</span></div>
       <div className="lx-usage-g">{bits.map(([k, v, why]) => <span key={k}><small>{k}</small><b>{v}</b>{why && <em>{why}</em>}</span>)}</div>
       {u.length > 0 && <div className="lx-dim">Situational units: {u.map(([k, s]) => `${UNIT_WORD[k] || k} ${Math.round(s)}s`).join(" · ")}</div>}
     </div>
@@ -190,13 +190,12 @@ export function PlanStrip({ team, mine, inDrawer = false }) {
   const plan = opp ? gamePlan(league, team, opp) : null;
   const auto = team.autoPlan !== false;
   const tab = (k, label) => <button type="button" key={k} className={`lx-plan-tab${open === k ? " on" : ""}`} aria-expanded={open === k} onClick={() => setOpen(open === k ? null : k)}>{label} {open === k ? "▴" : "▾"}</button>;
-  const icon = { attack: "⚡", defend: "🛡️", balanced: "⚖️" };
   return (
     <div className="lx-planwrap">
       <div className="lx-plan">
-        <span className="lx-plan-k">📋 GAME PLAN</span>
+        <span className="lx-plan-k">Game plan</span>
         <span>System <b>{COACH_STYLES[style].name}</b></span>
-        <span>Identity <b>{IDENTITIES[identityOf(team)].icon} {IDENTITIES[identityOf(team)].name}</b></span>
+        <span>Identity <b>{IDENTITIES[identityOf(team)].name}</b></span>
         <span title={`${fits} of ${dressed.length} dressed skaters suit a ${COACH_STYLES[style].name} identity; each gets +0.7 to his game ratings.`}>System fit <b className={fits * 2 >= dressed.length ? "good" : ""}>{fits}/{dressed.length}</b></span>
         {opp ? <span>vs {opp.abbr} <b>{planWords(plan)}</b> <em>{mine ? (auto ? "coaches' pick" : "your call") : ""}</em></span> : <span className="lx-dim">No game on the schedule</span>}
         {mine && <span className="lx-plan-tabs">{tab("system", "System")}{!inDrawer && tab("identity", "Identity")}{!inDrawer && tab("ice", "Ice time")}{opp && tab("plan", "Game plan")}<button type="button" className="lx-plan-tab" onClick={() => go("coaching", "coaching")}>Coaching →</button></span>}
@@ -207,7 +206,7 @@ export function PlanStrip({ team, mine, inDrawer = false }) {
         <div className="lx-plan-open">
           {Object.entries(COACH_STYLES).map(([k, v]) => (
             <button type="button" key={k} className={`lx-style${style === k ? " on" : ""}`} aria-pressed={style === k} onClick={() => { team.strategy = k; commit(); toast(`System: ${v.name}.`); }}>
-              <b>{icon[k]} {v.name}</b><small>{v.desc}</small>
+              <b>{v.name}</b><small>{v.desc}</small>
             </button>
           ))}
         </div>

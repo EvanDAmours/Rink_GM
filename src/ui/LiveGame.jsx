@@ -304,7 +304,7 @@ export default function LiveGame({ spec, onDone }) {
         <div className="lv-ctrls">
           {!done ? (
             <>
-              <button className={`lv-tvbtn${tv ? " on" : ""}`} onClick={toggleTv} title="Switch between the TV view (big rink, each play captioned under it) and the full desk (play-by-play and box score beside the rink)">{tv ? "📺 TV view" : "📊 Full desk"}</button>
+              <button className={`lv-tvbtn${tv ? " on" : ""}`} onClick={toggleTv} title="Switch between the TV view (big rink, each play captioned under it) and the full desk (play-by-play and box score beside the rink)">{tv ? "TV view" : "Full desk"}</button>
               <button className="lv-speed" onClick={cycleSpeed} title="Time between steps of the game: Slow, Normal, Fast or Turbo">⏱ {speedName}</button>
               <button className="lv-step" onClick={() => { doStep(); stepInfo.current.paused = true; }} disabled={!paused} title="Play the next ten seconds">Step</button>
               <button className={`lv-play ${paused ? "go" : "stop"}`} onClick={() => setPaused((p) => !p)}>{paused ? "▶ Resume" : "⏸ Pause"}</button>
@@ -325,7 +325,7 @@ export default function LiveGame({ spec, onDone }) {
           <span className="lv-mom" title="How the club is rolling: its share of the last five minutes of shot attempts, with goals and shots on goal counting more">
             {s[momSide].abbr} momentum
             <span className="lv-mom-bar"><i style={{ width: `${mom.value}%`, background: momColor }} /></span>
-            <b style={{ color: momColor }}>{mom.label === "Hot" ? "🔥 Hot" : mom.label === "Cold" ? "🧊 Cold" : "Even"}</b>
+            <b style={{ color: momColor }}>{mom.label === "Hot" ? "Hot" : mom.label === "Cold" ? "Cold" : "Even"}</b>
           </span>
         </div>
       )}

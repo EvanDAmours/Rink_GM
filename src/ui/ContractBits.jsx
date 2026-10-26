@@ -54,7 +54,7 @@ export function BuildYour23({ onPick, foot = true }) {
   return (
     <section className="ct-plan" aria-label="Build your 23">
       <div className="ct-plan-h">
-        <span className="ct-plan-k">BUILD YOUR 23</span>
+        <span className="ct-plan-k">Build your 23</span>
         <b className="ct-plan-n" style={{ color: plan.open ? "#eab308" : "#22c55e" }}>{plan.count}/{plan.target}</b>
         <span className="ct-plan-bar"><i style={{ width: `${pct}%`, background: plan.open ? "#eab308" : "#22c55e" }} /></span>
         <span className="ct-plan-sub">{plan.open ? `${plan.open} spot${plan.open > 1 ? "s" : ""} to fill` : "Full roster"} for next season · <b style={{ color: room >= 0 ? "#22c55e" : "#ef4444" }}>{money(room)}</b> cap space</span>

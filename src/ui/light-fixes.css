@@ -11,3 +11,14 @@ html.light .app.app.app .gg-chips button.on, html.light .app.app.app .tabs butto
 html.light .app.app.app .rk-bar-nav button, html.light .app button.rk-seasonbtn { background: transparent; border: 0; box-shadow: none; color: #334155; }
 html.light .app.app.app .rk-bar-nav button.on { background: #0f172a12; color: #0f172a; }
 html.light .app button.rk-dbtn:not(.primary):not(.danger):not(.gold) { background: #0f172a12; color: #0f172a; }
+/* r6 sweep: soft-style white headings and values that stayed white on light cards. */
+html.light .app.app.app.app .main h3:not(.keep-dark *):not(.rk-bc *):not(.rk-pbc *):not(.rk-ph *), html.light .app.app.app.app .modal h3:not(.keep-dark *),
+html.light .app.app.app .rk-bc-cards .rk-phase .rk-box-h, html.light .app.app .rk-phase-row b, html.light .app.app.app .dr-k, html.light .app.app.app .dd-war-k { color: #0f172a; }
+html.light .app.app.app .main .panel:not(.keep-dark *) { background: #ffffff; box-shadow: 0 1px 2px #0f172a0f; }
+html.light .app.app.app .main .lnx .lx-line-h .lx-line-r { color: #cbd5e1; }
+html.light .app .notice.warn { color: #92400e; background: #f59e0b1a; }
+html.light .app.app .main .lnx button.lx-chem b, html.light .app.app .main .lnx button.lx-chem em { color: color-mix(in srgb, var(--chem) 62%, #000); }
+html.light .app .main .lnx .lx-chempanel .lx-staff { color: #3730a3; }
+html.light .app .rk-rb.rb-ltir { color: #7e22ce; }
+html.light .app.app.app .gg-ops-nav button { background: #0f172a0f; color: #334155; border: 0; }
+html.light .app.app.app .gg-ops-nav button.on { background: #0f172a; color: #fff; }

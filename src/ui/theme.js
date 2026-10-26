@@ -6,7 +6,7 @@
 // keep their own look (KEEP_DARK).
 const KEY = "rk_theme";
 export const THEMES = [["dark", "Dark"], ["light", "Light"], ["auto", "Auto"]];
-export const KEEP_DARK = [".keep-dark", ".lx-pc", ".lg-wall", ".lg-banner", ".gg-head", ".rk-phead", ".rk-hm", ".mm-overlay", ".rinkwrap", ".lr-stage", ".gg-paper-frame", ".gg-paper", ".rkt", ".gg-splash", ".lv-bug", ".rk-tour-card"];
+export const KEEP_DARK = [".keep-dark", ".rk-bc", ".rk-pbc", ".rk-ph", ".lx-pc", ".lg-wall", ".lg-banner", ".gg-head", ".rk-phead", ".rk-hm", ".mm-overlay", ".rinkwrap", ".lr-stage", ".gg-paper-frame", ".gg-paper", ".rkt", ".gg-splash", ".lv-bug", ".rk-tour-card"];
 
 const hasDoc = () => typeof document !== "undefined" && typeof window !== "undefined";
 const store = () => { try { return globalThis.localStorage || null; } catch { return null; } };
