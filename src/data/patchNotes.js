@@ -420,4 +420,10 @@ export const PATCH_NOTES = [
     "No more focus slots or Season Points camp chores. Preseason games stay, just for fun and form.",
     "Home has one Development line, and a monthly report lands in your inbox without stopping the sim. Farm goalies now pick up wins, and NHL rookies are graded against NHL scoring.",
   ] },
+  { v: "1.77", date: "2026-10-26", title: "One Look", notes: [
+    "Every screen now opens the same way: a row of section tabs, a clear title and one line of what matters, just like Lineup and Development.",
+    "Filters and tabs are one simple switch everywhere, and the screens are easier to read: no more all-caps labels or emoji.",
+    "Stats, Roster, Teams and Contracts open with just the key columns; tap More columns for everything else.",
+    "One green button per screen, calmer empty pages, and the top bar fits every phase of the season on a laptop.",
+  ] },
 ];

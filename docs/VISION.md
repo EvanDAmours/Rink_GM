@@ -72,5 +72,8 @@ confirm the Pages deploy. Report real outcomes only.
 - 1.75 Team picker grouped by division; tapping a player on Lineup no longer opens a pop-up (move freely).
 - 1.76 Development rebuilt (round-3 calm design): own tab; Overview / Season plan / Prospects; one focus player
   (trait-scaled, Gridiron-style), camp priority, prospect placement gamble; SP camp chores removed (user-only inflation).
-- Pending: whole-game visual consistency pass; Lineup coach suggestions collapsed by default behind
-  "N changes could improve your lineup" (gap vs the optimal lineup).
+- 1.77 One look: every section uses the Lineup/Development header (PageHead + SectionPills in common.jsx, page.css);
+  team-colour SectionHero removed; one segmented filter style; sentence case, no emoji; dense tables open with key
+  columns + "More columns" — Evan asked for consistency across all screens. Still dense (need mockups first):
+  Trade Center, Hockey Operations, combine table, team-roster sheet, Game plan.
+- Pending: Lineup coach suggestions collapsed by default behind "N changes could improve your lineup" (gap vs the optimal lineup).
