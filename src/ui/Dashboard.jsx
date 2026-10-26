@@ -195,7 +195,10 @@ export default function Dashboard({ act = {} }) {
     <section className="rk-bc-card">
       <div className="rk-bc-h">To do {todo.length > 0 && <span className="rk-bc-n">{todo.length}</span>}</div>
       {todo.length ? todo.slice(0, n).map((it) => (
-        <button key={it.key} className="rk-b rk-bc-todo" onClick={it.onOpen}><i style={{ background: TONE_C[it.tone] }} /><span><b>{stripEmoji(it.title)}</b>{phone && it.sub && <small>{it.sub}</small>}</span><Icon name="chevron" size={16} /></button>
+        <div key={it.key} className="rk-bc-rem">
+          <button className="rk-b rk-bc-todo" onClick={it.onOpen}><i style={{ background: TONE_C[it.tone] }} /><span><b>{stripEmoji(it.title)}</b>{it.sub && <small>{it.sub}</small>}</span>{!it.onDismiss && <Icon name="chevron" size={16} />}</button>
+          {it.onDismiss && <button className="rk-b rk-bc-later" onClick={it.onDismiss}>{it.dismissLabel || "Not now"}</button>}
+        </div>
       )) : <div className="rk-hm-quiet good">All set: nothing needs you.</div>}
       {todo.length > n && <div className="rk-bc-links"><button className="rk-b rk-link" onClick={() => setInboxOpen(true)}>See all {todo.length}</button></div>}
     </section>
@@ -253,7 +256,7 @@ export default function Dashboard({ act = {} }) {
           </section>
         ) : phaseHero}
         <DevStrip phone onOpen={() => setLabOpen(true)} />
-        {todoCard(3)}
+        {todoCard(4)}
         <div className="rk-tiles">
           <button className="rk-b rk-tile2 wide" onClick={() => go("roster", "injured")}><Icon name="operations" /><b>Injuries</b><span style={{ color: injN ? "#f97316" : undefined }}>{lg.settings?.injuries === false ? "Turned off" : injN ? `${injN} out${starters.length ? ` · ${starters.length} key` : ""}` : "All healthy"}</span></button>
           <button className="rk-b rk-tile2 wide" onClick={() => go("standings")}><Icon name="standings" /><b>Standings</b><span>{ORD(divRank)} in the {t.div}{odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}</span><Icon name="chevron" size={16} /></button>
@@ -281,7 +284,7 @@ export default function Dashboard({ act = {} }) {
           </div>
         </section>
       ) : phaseHero}
-      {hasGame ? <div className="rk-bc-cards">{todoCard(3)}{planCard}{storyCard}</div>
+      {hasGame ? <div className="rk-bc-cards">{todoCard(4)}{planCard}{storyCard}</div>
         : <><div className="rk-bc-cards">{needsCard}{todoCard(4)}{PhaseCard({ lg, t, go, slot, series }) || storyCard}</div>
           <BuildYour23 onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} /></>}
       <DevStrip onOpen={() => setLabOpen(true)} />
@@ -400,7 +403,7 @@ function NeedsAttention({ items, onClose }) {
               </div>
               <div className="rk-inbox-side">
                 {it.onOpen && <button className={`rk-cta t-${it.tone}`} onClick={it.onOpen}>{it.cta || "Open"}</button>}
-                {it.onDismiss && <button className="rk-dismiss" onClick={it.onDismiss}>Dismiss</button>}
+                {it.onDismiss && <button className="rk-dismiss" onClick={it.onDismiss}>{it.dismissLabel || "Dismiss"}</button>}
               </div>
             </div>
           ))}

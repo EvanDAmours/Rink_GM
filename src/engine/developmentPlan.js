@@ -238,7 +238,7 @@ export function migrateDevSystem(league) {
   if (t) {
     delete t.devPlan;
     ensureDevPlan(league);
-    if (first) { t.devPlan.focus = first; t.devPlan.by = "you"; }
+    if (first) { t.devPlan.focus = first; t.devPlan.by = "you"; t.devPlan.focusSet = true; }
   }
 }
 export function setFocus(league, pid) {
@@ -246,7 +246,7 @@ export function setFocus(league, pid) {
   const plan = ensureDevPlan(league);
   if (!p || p.tid !== t.id) return { ok: false, msg: "Choose one of your players." };
   if (!planOpen(league, t)) return { ok: false, msg: "The focus player is set for the season." };
-  plan.focus = pid; plan.by = "you";
+  plan.focus = pid; plan.by = "you"; plan.focusSet = true;
   return { ok: true, msg: `${p.name} is your focus player: about +${focusExpected(p, weeksLeft(league)).toFixed(1)} by spring.` };
 }
 export function setCampPriority(league, key) {

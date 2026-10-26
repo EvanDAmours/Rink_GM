@@ -118,7 +118,8 @@ export default function App({ resume = false }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [themeNow, setThemeNow] = useState(getTheme);
   // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
-  const go = useCallback((id, k) => { const [t, kk] = (phoneRef.current && PHONE_ALIAS[id]) || ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); setMoreOpen(false); }, [setSub]);
+  // The Draft screen picks its tab from `draftWant` (Home's reminders open Scout assignments, Scouts).
+  const go = useCallback((id, k) => { const [t, kk] = (phoneRef.current && PHONE_ALIAS[id]) || ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); if (t === "draft" && (kk || k)) setDraftWant({ v: kk || k, n: Date.now() }); setMoreOpen(false); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [ffOpen,setFfOpen]=useState(false);

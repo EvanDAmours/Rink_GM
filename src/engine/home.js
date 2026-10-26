@@ -12,6 +12,10 @@ import { headCoachLines } from "./lines.js";
 import { automaticallyHandleRoster } from "./autoRoster.js";
 import { dayToDate } from "./schedule.js";
 import { holdouts, playItOut, holdFirm } from "./contractYear.js";
+import { isRFA } from "./players.js";
+import { elcMax } from "./hockeyRules.js";
+import { staffWindowOpen, SCOUT_SLOTS } from "./scouting.js";
+import * as Regions from "./regions.js";
 
 // Urgent first, then decisions, then news; the order items are added in breaks ties.
 export const TONE_RANK = { urgent: 0, action: 1, info: 2 };
@@ -68,9 +72,11 @@ export function needsAttention(lg) {
     cta: "Talk contract", to: { player: p.id }, fixes: p.holdout.firm ? [] : [{ label: "✋ Hold firm", fix: `holdFirm:${p.id}` }] }));
   const sheets = lg.offerSheets?.filter((s) => !s.done && s.from === t.id).length || 0;
   if (sheets) add({ key: "sheets", icon: "📝", tone: "action", title: `${plural(sheets, "offer sheet")} awaiting a decision`, sub: "Match it or take the compensation.", cta: "Review", to: ["operations"] });
+  const keyDeals = contractReminder(lg);
   if (lg.phase === "resign") {
     const left = [...t.roster, ...t.prospects].map((id) => lg.players[id]).filter((p) => p && p.signed !== false && p.yrs === 0).length;
-    if (left) add({ key: "resign", icon: "✍️", tone: "action", title: `${plural(left, "expiring contract")}: the re-sign window is open`, sub: "Only you can talk to them this week. Anyone you don't re-sign reaches free agency.", cta: "Re-sign", to: ["freeagency"] });
+    // The grouped key-player reminder below says the same thing with names; one row, not two.
+    if (left && !keyDeals) add({ key: "resign", icon: "✍️", tone: "action", title: `${plural(left, "expiring contract")}: the re-sign window is open`, sub: "Only you can talk to them this week. Anyone you don't re-sign reaches free agency.", cta: "Re-sign", to: ["freeagency"] });
   }
   // A short roster in the off-season (the football game's Build Your 53).
   const signed = signedForNextSeason(lg, t);
@@ -78,7 +84,82 @@ export function needsAttention(lg) {
   // His head coach's last two seasons before he retires (coachContracts.js): a dismissible note.
   const hc = coachRetirementNotice(lg);
   if (hc) add({ key: "hcRetire", icon: "👔", tone: "info", title: `${t.coach.name} retires after ${hc.last}-${String(hc.last + 1).slice(2)}`, sub: `${hc.text} Line up his successor on the Coaching page.`, cta: "Coaching", to: ["frontoffice", "coaching"], dismiss: "hcNote" });
+  // The reminder board (Evan, r12): the few things a GM forgets, each gone once it's done.
+  reminders(lg, keyDeals).forEach(add);
   return sortAttention(items);
+}
+
+// ---------- Reminders ----------
+// Calm, essential, below the blockers: the season plan's focus player, open scout jobs and
+// regions, and one grouped line for the key contracts. No popups, no inbox; each disappears
+// once it's done (the contracts line can also be put off for a month or until the next phase).
+export function reminders(lg, keyDeals = contractReminder(lg)) {
+  const t = lg.teams[lg.userTid];
+  if (!t) return [];
+  const out = [];
+  // 1. Development: the focus player, while the season plan is still open.
+  const plan = t.devPlan;
+  if (lg.phase === "preseason" && !(plan?.year === lg.year && (plan.locked || plan.focusSet))) {
+    const staff = plan?.year === lg.year ? lg.players[plan.focus] : null;
+    out.push({ key: "rmFocus", icon: "🎯", tone: "info", title: "Pick your focus player", sub: staff ? `Staff pick for now: ${staff.name}.` : "One player gets the staff's extra work.", cta: "Season plan", to: ["development", "plan"] });
+  }
+  // 2. Scouting: open jobs (while you can hire), then scouts without a full set of regions.
+  if (staffWindowOpen(lg)) {
+    const open = SCOUT_SLOTS.filter((k) => !t.scouts?.[k]).length;
+    if (open) out.push({ key: "rmScoutHire", icon: "🔭", tone: "info", title: open === 1 ? "Hire a scout" : `Hire ${open} scouts`, sub: `${plural(open, "scouting job")} open.`, cta: "Scouts", to: ["draft", "scouts"] });
+  }
+  const unset = scoutsWithoutRegions(lg, t);
+  if (unset && Regions.assignWindowOpen(lg)) out.push({ key: "rmScoutRegions", icon: "🗺️", tone: "info", title: "Set your scouts' regions", sub: unset === 1 ? "1 scout still needs a region." : `${unset} scouts still need regions.`, cta: "Assignments", to: ["draft", "regions"] });
+  // 3. Contracts: one grouped row for the deals worth acting on.
+  if (keyDeals) out.push(keyDeals);
+  return out;
+}
+
+// A hired scout counts as unset with no region, an empty list, or fewer regions than his slots
+// (multi-region scouting gives seats several slots; read the cap if regions.js has one).
+const slotCap = (role) => {
+  for (const f of ["regionSlots", "regionCap", "scoutRegionSlots", "slotsFor", "regionSlotCount"]) if (typeof Regions[f] === "function") { const n = Number(Regions[f](role)); if (Number.isFinite(n)) return n; }
+  for (const c of ["REGION_SLOTS", "SCOUT_REGION_SLOTS", "REGION_CAPS"]) if (Regions[c] && Number.isFinite(Number(Regions[c][role]))) return Number(Regions[c][role]);
+  return 1;
+};
+export function scoutsWithoutRegions(lg, t = lg.teams[lg.userTid]) {
+  const raw = t?.scoutRegions && typeof t.scoutRegions === "object" ? t.scoutRegions : {};
+  return SCOUT_SLOTS.filter((role) => t?.scouts?.[role]).filter((role) => {
+    const v = raw[role];
+    const list = Array.isArray(v) ? v.filter((r) => Regions.REGIONS[r]) : Regions.REGIONS[v] ? [v] : [];
+    return list.length < Math.max(1, slotCap(role));
+  }).length;
+}
+
+// The players whose next deal matters: coming off an entry-level deal (RFA next summer), or top
+// talent (top-6 forward, top-4 defenseman, the starting goalie, or 85+) whose deal runs out.
+export const CONTRACT_SNOOZE_DAYS = 30;
+const isElc = (lg, p) => !!p.elc || (p.age <= 24 && isRFA(p) && (p.cap || 0) <= elcMax(lg.year) + 0.001);
+export function keyContracts(lg, t = lg.teams[lg.userTid]) {
+  const resign = lg.phase === "resign";
+  const ending = (p) => p && p.signed !== false && !p.extension && !p.holdout && (resign ? p.yrs === 0 : p.yrs === 1);
+  const roster = t.roster.map((id) => lg.players[id]).filter(Boolean);
+  const best = (f, n) => roster.filter(f).sort((a, b) => b.ovr - a.ovr).slice(0, n);
+  const top = new Set([...best((p) => /^(C|LW|RW)$/.test(p.pos), 6), ...best((p) => isDefenseman(p), 4), ...best((p) => isGoalie(p.pos), 1)].map((p) => p.id));
+  const pool = resign ? [...t.roster, ...t.prospects].map((id) => lg.players[id]) : roster;
+  return pool.filter(ending).filter((p) => p.ovr >= 85 || top.has(p.id) || (isElc(lg, p) && (p.ovr >= 75 || p.pot >= 82))).sort((a, b) => b.ovr - a.ovr);
+}
+const isDefenseman = (p) => p.pos === "D" || p.pos === "LD" || p.pos === "RD";
+// From the second half (or the trade deadline) through the playoffs and draft, and always in re-sign week.
+export function contractReminderDue(lg, t = lg.teams[lg.userTid]) {
+  if (lg.phase === "resign" || lg.phase === "playoffs" || lg.phase === "draft") return true;
+  return lg.phase === "regular" && ((t?.rec?.gp || 0) >= 41 || (lg.deadlineDay != null && lg.day >= lg.deadlineDay));
+}
+const snoozed = (lg) => { const s = lg.reminderSnooze?.contracts; return !!s && s.year === lg.year && s.phase === lg.phase && (lg.day || 0) - (s.day || 0) < CONTRACT_SNOOZE_DAYS; };
+export function contractReminder(lg) {
+  const t = lg.teams[lg.userTid];
+  if (!t || !contractReminderDue(lg, t) || snoozed(lg)) return null;
+  const ps = keyContracts(lg, t);
+  if (!ps.length) return null;
+  const last = (p) => p.name.split(" ").slice(1).join(" ") || p.name;
+  const names = ps.slice(0, 3).map(last).join(", ") + (ps.length > 3 ? ` +${ps.length - 3}` : "");
+  const resign = lg.phase === "resign";
+  return { key: "rmContracts", icon: "✍️", tone: resign ? "action" : "info", title: ps.length === 1 ? `${ps[0].name} needs a new deal` : `${ps.length} key players need new deals`, sub: names, cta: resign ? "Re-sign" : "Contracts", to: resign ? ["freeagency"] : ["frontoffice", "contracts"], dismiss: "contractsLater", dismissLabel: "Not now", pids: ps.map((p) => p.id) };
 }
 
 // Run a one-tap fix from Needs Attention. Returns { ok, msg }.
@@ -94,6 +175,7 @@ export function runFix(lg, fix) {
   if (kind === "sendDown") return automaticallyHandleRoster(lg, t, { allowWaivers: false });
   if (kind === "hireCoach") return hireCoach(lg, arg);
   if (kind === "hcNote") { const n = coachRetirementNotice(lg); if (n) lg.hcNoteDismissed = n.key; return { ok: true, msg: "" }; }
+  if (kind === "contractsLater") { (lg.reminderSnooze ||= {}).contracts = { year: lg.year, phase: lg.phase, day: lg.day || 0 }; return { ok: true, msg: "" }; }
   if (kind === "talkDown") return talkDown(lg, arg);
   if (kind === "shop") return shopPlayer(lg, arg);
   if (kind === "playItOut") return playItOut(lg, arg);
