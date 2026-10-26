@@ -433,6 +433,13 @@ export function worthKnowing(league, t = league.teams[league.userTid]) {
     const ready = t.prospects.map((id) => league.players[id]).filter(Boolean).map((p) => ({ p, r: readyFor(league, t, p) })).filter((x) => x.r).sort((a, b) => b.p.ovr - a.p.ovr)[0];
     if (ready) add(ready.p, `Ready. He out-rates ${ready.r.label}.`, String(ready.p.ovr));
   }
+  // A young player out of the lineup: minutes are what grow him.
+  if (league.phase === "regular" || league.phase === "preseason") {
+    let dressed = null;
+    try { const L = gameLines(league, t); dressed = new Set([...L.F.flat(), ...L.D.flat(), ...L.G.slice(0, 1)].filter(Boolean)); } catch { /* lines not set */ }
+    const sat = dressed && t.roster.map((id) => league.players[id]).filter((p) => p && p.age <= 24 && p.injury <= 0 && !dressed.has(p.id) && !isGoalie(p.pos) && (p.pot || 0) - p.ovr >= 3).sort((a, b) => b.pot - a.pot)[0];
+    if (sat) add(sat, "Out of the lineup. Regular minutes would speed up his growth.", "+0.7", "up");
+  }
   if (league.phase === "regular") {
     const big = t.roster.map((id) => league.players[id]).filter(Boolean).map((p) => ({ p, m: milestonePace(league, p) })).filter((x) => x.m).sort((a, b) => b.m.pace - a.m.pace)[0];
     if (big) add(big.p, big.m.text, "+1", "up");
@@ -446,8 +453,8 @@ export function worthKnowing(league, t = league.teams[league.userTid]) {
   } else if (league.phase === "preseason") {
     const rows2 = (league.devReport?.year === league.year ? league.devReport.rows : []).filter((r) => r.tid === t.id && r.kinds.some((k) => k === "breakout" || k === "cornerstone"));
     for (const r of rows2.slice(0, 1)) add(league.players[r.pid], r.kinds.includes("cornerstone") ? "A cornerstone season paid off this summer." : "A breakout summer.", sgn(r.to - r.from), "up");
-    const gambleP = t.prospects.map((id) => league.players[id]).filter((p) => p?.placement?.year === league.year && p.placement.st >= 50).sort((a, b) => b.placement.st - a.placement.st)[0];
-    if (gambleP) add(gambleP, `Long shot: ${placeText(gambleP.placement.level, gambleP.placement.role)} at ${gambleP.age}. ${gambleP.placement.st}% he struggles.`, `${gambleP.placement.st}%`, "down");
+    const gambleP = t.prospects.map((id) => league.players[id]).filter((p) => p?.placement?.year === league.year && p.placement.st >= 35).sort((a, b) => b.placement.st - a.placement.st)[0];
+    if (gambleP) add(gambleP, `${statusWord(gambleP.placement)}: ${placeText(gambleP.placement.level, gambleP.placement.role)} at ${gambleP.age}. ${gambleP.placement.st}% he struggles.`, `${gambleP.placement.st}%`, gambleP.placement.st >= 50 ? "down" : "");
   }
   // The biggest drop coming always makes the list.
   const top = rows.slice(0, 4);

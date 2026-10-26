@@ -224,7 +224,7 @@ test("the read-outs: up since camp, worth knowing, a monthly inbox line to Devel
   assert.equal(rows[0].pid, ensureDevPlan(lg).focus, "the focus player leads");
   const note = lg.inbox.find((m) => /^📈 Development/.test(m.text));
   assert.ok(note, "a monthly line");
-  assert.deepEqual(note.open, { tab: "development", sub: "overview" });
+  assert.equal(note.open.tab, "development"); assert.equal(note.open.sub, "overview");
   assert.ok(!/Front Office → Development/.test(note.text));
   assert.ok(lg.moments.every((m) => !/development/i.test(m.kind || "") || lg.phase !== "regular"), "no development popups in season");
   void t;

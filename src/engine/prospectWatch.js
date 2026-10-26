@@ -96,6 +96,8 @@ export function prospectReport(league, t, p) {
     if (p.stats.gp >= 10 && p.stats.toi / Math.max(1, p.stats.gp) < 600 && p.age <= 21 && t.prospects.length) { flags.push("Low minutes"); next = { kind: "senddown", label: "Minutes in the AHL would help" }; }
     else if (delta >= 2) flags.push("Rising");
   }
+  // Placements are set for the season once it starts: a level or role change is next season's.
+  if (next && (next.kind === "role" || next.kind === "assign") && league.phase !== "preseason") next = { ...next, label: `${next.label} next season` };
   if (p.injury > 0) { flags.unshift(`Injured ${p.injury}g`); }
   const trend = delta >= 3 ? "surging" : delta >= 1 ? "up" : delta <= -1 ? "down" : "flat";
   return { p, farm, level, line, start, delta, recent, trend, prod, flags, next, eta: etaText(p), path, role, drafted: p.draft ? `${p.draft.year} R${p.draft.round} #${p.draft.pick}` : null, focus: t.devPlan?.year === league.year && t.devPlan.focus === p.id };
@@ -158,7 +160,7 @@ export function prospectReportNote(league, moved = []) {
   if (league.prospectNoteWeek[league.year] === week) return;
   league.prospectNoteWeek[league.year] = week;
   const mine = moved.filter((m) => m.tid === t.id);
-  league.inbox?.push({ year: league.year, day: league.day, open: { tab: "development", sub: "overview" }, text: monthlyNote(league) });
+  league.inbox?.push({ year: league.year, day: league.day, open: { tab: "development", sub: "overview", label: "Open Development" }, text: monthlyNote(league) });
   league.news ||= [];
   const star = mine.sort((a, b) => b.to - a.to)[0];
   if (star) league.news.unshift({ year: league.year, day: league.day, type: "prospect", pid: star.pid, text: `Prospect watch: ${star.name} is up to ${star.to} overall after a strong month${star.farm ? ` in the ${leagueLabel(league.players[star.pid])}` : ""}.` });
