@@ -14,7 +14,7 @@
 .app.app .dv-hs { font-size: 38px; font-weight: 800; letter-spacing: -.015em; line-height: 1.15; margin: 22px 0 8px; color: #f1f5f9; font-family: inherit; text-transform: none; text-wrap: balance; }
 .app.app .dv-hs .up, .app.app .dv-sheet .up, .app.app .dv-strip .up { color: #4ade80; }
 .app.app .dv-hs .down, .app.app .dv-sheet .down, .app.app .dv-strip .down { color: #f87171; }
-.app.app .dv-hsub { color: #94a3b8; font-size: 15px; font-weight: 600; margin: 0 0 34px; line-height: 1.45; }
+.app.app .dv-hsub { color: #94a3b8; font-size: 15px; font-weight: 600; margin: 0 0 24px; line-height: 1.45; }
 .app.app .dv-lbl { color: #94a3b8; font-size: 13px; font-weight: 700; margin: 0 0 0 2px; }
 .app.app .dv-segw { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px 0; min-height: 38px; gap: 10px; }
 
@@ -23,7 +23,7 @@
 .app.app .dv-list.inset { background: #ffffff09; }
 .app.app.app button.dv-li { display: flex; align-items: center; gap: 16px; width: 100%; padding: 18px 0; background: transparent; border: 0; border-radius: 0; text-align: left; color: inherit; min-height: 0; cursor: pointer; }
 .app.app.app button.dv-li:hover { background: transparent; }
-@media (hover: hover) { .app.app.app button.dv-li:hover .dv-tx b { text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 3px; } }
+@media (hover: hover) { .app.app.app button.dv-li:hover .dv-tx .dv-nm b, .app.app.app button.dv-li:hover .dv-tx > b { text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 3px; } }
 .app.app.app .dv-li + .dv-li { border-top: 1px solid #ffffff10; }
 .app.app .dv-tx { flex: 1; min-width: 0; display: block; }
 .app.app .dv-tx b { display: block; font-size: 16px; font-weight: 700; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -126,9 +126,40 @@
 .app.app .dv-sheet div.dv-li { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
 @media (max-width: 700px) { .app.app .dv-pre-r { width: 100%; } .app.app .dv-pre-r button.dv-btn { flex: 1; } }
 
-/* Who he is: position chip, overall, draft line (v1.83). */
-.app.app .dv-tx > .dv-who { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12.5px; color: #94a3b8; white-space: nowrap; overflow: hidden; }
-.app.app .dv-who .gg-pos { display: inline-block; font-size: 10px; font-weight: 800; color: #fff; border-radius: 4px; padding: 1px 5px; line-height: 15px; }
-.app.app .dv-tx .dv-who b { display: inline; margin: 0; color: #f1f5f9; font-weight: 800; font-size: 13px; }
-.app.app .dv-who i { font-style: normal; font-size: 10.5px; color: #64748b; margin-left: -3px; }
-.app.app .dv-who > span:last-child { display: inline; margin: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+/* Rows in Gridiron's format (v1.84): name with "age · POS" inline, one short status line, a big
+   overall and a coloured change, then a chevron. Denser rows so a list fits without scrolling. */
+.app.app.app button.dv-li { padding: 11px 0; gap: 12px; }
+.app.app .dv-tx .dv-nm { display: flex; align-items: baseline; gap: 7px; min-width: 0; margin: 0; }
+.app.app .dv-tx .dv-nm b { display: block; flex: 0 1 auto; min-width: 0; font-size: 16px; font-weight: 800; }
+.app.app .dv-ap { flex: none; color: #94a3b8; font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: 0; }
+.app.app .dv-tx b .dv-ap { margin-left: 8px; font-size: 14px; }
+.app.app .dv-tx > .dv-st { margin-top: 2px; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .dv-st b { display: inline; font-size: inherit; font-weight: 700; color: #f1f5f9; }
+.app.app .dv-st b.up { color: #4ade80; } .app.app .dv-st b.down { color: #f87171; } .app.app .dv-st b.warn { color: #fbbf24; }
+.app.app .dv-ovr { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; color: #f1f5f9; flex: none; min-width: 36px; text-align: right; }
+.app.app .dv-d { font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; color: #cbd5e1; flex: none; width: 46px; text-align: right; }
+.app.app .dv-d.up { color: #4ade80; } .app.app .dv-d.down { color: #f87171; }
+.app.app .dv-big { display: flex; align-items: baseline; gap: 6px; flex: none; }
+.app.app .dv-big .dv-ovr { font-size: 36px; }
+.app.app .dv-big .dv-d { width: auto; font-size: 16px; }
+.app.app .dv-opt .dv-ovr { font-size: 28px; }
+.app.app .dv-opt .dv-d { width: 40px; }
+.app.app .dv-opt .dv-nm b { font-size: 16px; }
+
+/* Prospects: every prospect on one screen, up to three cards side by side */
+.app.app .dv-wrap.dv-wall { max-width: 1400px; }
+.app.app .dv-grid { display: grid; gap: 18px; align-items: start; }
+.app.app .dv-grid.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.app.app .dv-grid.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.app.app .dv-act { display: flex; justify-content: center; margin-top: 20px; }
+.app.app.app .dv-act button.dv-btn { height: 44px; padding: 0 28px; font-size: 14.5px; }
+@media (max-width: 1100px) { .app.app .dv-grid.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .app.app .dv-grid.c2, .app.app .dv-grid.c3 { grid-template-columns: minmax(0, 1fr); }
+  .app.app.app button.dv-li { padding: 11px 0; gap: 10px; }
+  .app.app .dv-ovr { font-size: 28px; min-width: 30px; }
+  .app.app .dv-d { width: 40px; font-size: 14px; }
+  .app.app .dv-big .dv-ovr { font-size: 30px; }
+  .app.app.app .dv-act button.dv-btn { width: 100%; }
+}
+.app.app .dv-stp .dv-tx b small.dv-ap { display: inline; margin-left: 9px; font-size: 14px; color: #94a3b8; }

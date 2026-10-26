@@ -415,51 +415,51 @@ export function milestonePace(league, p) {
   return null;
 }
 const sgn = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : "±0");
-// "Worth knowing this month": three to five rows of { pid, name, why, num, tone }.
+// "Worth knowing this month": three to five rows of { pid, name, why, num, tone, tag } (tag: the short status line).
 export function worthKnowing(league, t = league.teams[league.userTid]) {
   const plan = ensureDevPlan(league) || {};
   const rows = [], seen = new Set();
-  const add = (p, why, num, tone = "") => { if (!p || seen.has(p.id)) return; seen.add(p.id); rows.push({ pid: p.id, name: p.name, why, num, tone }); };
+  const add = (p, why, num, tone = "", tag = why) => { if (!p || seen.has(p.id)) return; seen.add(p.id); rows.push({ pid: p.id, name: p.name, why, num, tone, tag }); };
   const inSeason = ["regular", "playoffs", "draft", "resign", "freeagency"].includes(league.phase) && plan.campOvrs;
   const f = league.players[plan.focus];
   if (f && f.tid === t.id) {
-    if (league.phase === "preseason") add(f, `Your focus player. About +${focusExpected(f).toFixed(1)} by spring.`, `+${focusExpected(f).toFixed(1)}`, "up");
+    if (league.phase === "preseason") add(f, `Your focus player. About +${focusExpected(f).toFixed(1)} by spring.`, `+${focusExpected(f).toFixed(1)}`, "up", "Focus player");
     else {
       const pace = Math.round((plan.gained || 0) + focusExpected(f, weeksLeft(league)));
-      add(f, league.phase === "regular" ? `Your focus player. On pace for ${sgn(pace)} by spring.` : `Your focus player gained ${sgn(plan.gained || 0)} this season.`, sgn(plan.gained || 0), plan.gained ? "up" : "");
+      add(f, league.phase === "regular" ? `Your focus player. On pace for ${sgn(pace)} by spring.` : `Your focus player gained ${sgn(plan.gained || 0)} this season.`, sgn(plan.gained || 0), plan.gained ? "up" : "", league.phase === "regular" ? `Focus player · on pace for ${sgn(pace)}` : "Focus player");
     }
   }
   if (league.phase === "regular" || league.phase === "preseason") {
     const ready = t.prospects.map((id) => league.players[id]).filter(Boolean).map((p) => ({ p, r: readyFor(league, t, p) })).filter((x) => x.r).sort((a, b) => b.p.ovr - a.p.ovr)[0];
-    if (ready) add(ready.p, `Ready. He out-rates ${ready.r.label}.`, String(ready.p.ovr));
+    if (ready) add(ready.p, `Ready. He out-rates ${ready.r.label}.`, String(ready.p.ovr), "", `Ready · out-rates ${ready.r.vs.name.split(" ").slice(-1)[0]}`);
   }
   // A young player out of the lineup: minutes are what grow him.
   if (league.phase === "regular" || league.phase === "preseason") {
     let dressed = null;
     try { const L = gameLines(league, t); dressed = new Set([...L.F.flat(), ...L.D.flat(), ...L.G.slice(0, 1)].filter(Boolean)); } catch { /* lines not set */ }
     const sat = dressed && t.roster.map((id) => league.players[id]).filter((p) => p && p.age <= 24 && p.injury <= 0 && !dressed.has(p.id) && !isGoalie(p.pos) && (p.pot || 0) - p.ovr >= 3).sort((a, b) => b.pot - a.pot)[0];
-    if (sat) add(sat, "Out of the lineup. Regular minutes would speed up his growth.", "+0.7", "up");
+    if (sat) add(sat, "Out of the lineup. Regular minutes would speed up his growth.", "+0.7", "up", "Scratched · needs minutes");
   }
   if (league.phase === "regular") {
     const big = t.roster.map((id) => league.players[id]).filter(Boolean).map((p) => ({ p, m: milestonePace(league, p) })).filter((x) => x.m).sort((a, b) => b.m.pace - a.m.pace)[0];
-    if (big) add(big.p, big.m.text, "+1", "up");
+    if (big) add(big.p, big.m.text, "+1", "up", big.m.text.split(". ")[0]);
   }
   if (inSeason) {
     const base = plan.campOvrs || {};
     const risers = mine(league, t).filter((p) => base[p.id] != null && p.ovr - base[p.id] >= 1).sort((a, b) => (b.ovr - base[b.id]) - (a.ovr - base[a.id]) || b.ovr - a.ovr);
-    for (const p of risers.slice(0, 2)) add(p, t.prospects.includes(p.id) ? `Up ${p.ovr - base[p.id]} since camp in the ${LEVELS[p.placement?.level]?.name || "AHL"}.` : `Up ${p.ovr - base[p.id]} since camp.`, sgn(p.ovr - base[p.id]), "up");
+    for (const p of risers.slice(0, 2)) add(p, t.prospects.includes(p.id) ? `Up ${p.ovr - base[p.id]} since camp in the ${LEVELS[p.placement?.level]?.name || "AHL"}.` : `Up ${p.ovr - base[p.id]} since camp.`, sgn(p.ovr - base[p.id]), "up", t.prospects.includes(p.id) ? `Up since camp · ${LEVELS[p.placement?.level]?.name || "AHL"}` : "Up since camp");
     const thriving = t.prospects.map((id) => league.players[id]).filter((p) => p?.placement?.year === league.year && p.placement.outcome === "thrive").sort((a, b) => b.ovr - a.ovr)[0];
-    if (thriving) { const v = Math.round(projectSummer(league, t, thriving)); add(thriving, `Thriving in the ${LEVELS[thriving.placement.level]?.name} ${ROLES[thriving.placement.role].name} role. He'll grow faster this summer.`, sgn(v), v > 0 ? "up" : ""); }
+    if (thriving) { const v = Math.round(projectSummer(league, t, thriving)); add(thriving, `Thriving in the ${LEVELS[thriving.placement.level]?.name} ${ROLES[thriving.placement.role].name} role. He'll grow faster this summer.`, sgn(v), v > 0 ? "up" : "", `Thriving · ${placeText(thriving.placement.level, thriving.placement.role)}`); }
   } else if (league.phase === "preseason") {
     const rows2 = (league.devReport?.year === league.year ? league.devReport.rows : []).filter((r) => r.tid === t.id && r.kinds.some((k) => k === "breakout" || k === "cornerstone"));
-    for (const r of rows2.slice(0, 1)) add(league.players[r.pid], r.kinds.includes("cornerstone") ? "A cornerstone season paid off this summer." : "A breakout summer.", sgn(r.to - r.from), "up");
+    for (const r of rows2.slice(0, 1)) add(league.players[r.pid], r.kinds.includes("cornerstone") ? "A cornerstone season paid off this summer." : "A breakout summer.", sgn(r.to - r.from), "up", r.kinds.includes("cornerstone") ? "Cornerstone season" : "Breakout summer");
     const gambleP = t.prospects.map((id) => league.players[id]).filter((p) => p?.placement?.year === league.year && p.placement.st >= 35).sort((a, b) => b.placement.st - a.placement.st)[0];
-    if (gambleP) add(gambleP, `${statusWord(gambleP.placement)}: ${placeText(gambleP.placement.level, gambleP.placement.role)} at ${gambleP.age}. ${gambleP.placement.st}% he struggles.`, `${gambleP.placement.st}%`, gambleP.placement.st >= 50 ? "down" : "");
+    if (gambleP) add(gambleP, `${statusWord(gambleP.placement)}: ${placeText(gambleP.placement.level, gambleP.placement.role)} at ${gambleP.age}. ${gambleP.placement.st}% he struggles.`, `${gambleP.placement.st}%`, gambleP.placement.st >= 50 ? "down" : "", `${statusWord(gambleP.placement)} · ${placeText(gambleP.placement.level, gambleP.placement.role)}`);
   }
   // The biggest drop coming always makes the list.
   const top = rows.slice(0, 4);
   const drop = nextSummer(league, t).decline.find((r) => !seen.has(r.p.id));
-  if (drop && drop.v <= -2) top.push({ pid: drop.p.id, name: drop.p.name, why: `${drop.p.age}. Expect a drop next summer.`, num: sgn(Math.round(drop.v)), tone: "down" });
+  if (drop && drop.v <= -2) top.push({ pid: drop.p.id, name: drop.p.name, why: `${drop.p.age}. Expect a drop next summer.`, num: sgn(Math.round(drop.v)), tone: "down", tag: "Expect a drop" });
   return top.slice(0, 5);
 }
 // The one line Home and the report use: "Up +11 since camp".

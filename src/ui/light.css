@@ -452,8 +452,16 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .app.app.app button.dv-ch.on { background: #fee2e2; color: #b91c1c; }
 .app.app.app button.dv-inlink { color: #1e293b; }
 .app.app .dv-sheet .dv-list .dv-li + .dv-li { border-top: 1px solid #0f172a10; }
-.app.app .dv-tx > .dv-who { color: #475569; }
-.app.app .dv-tx .dv-who b { color: #0f172a; }
+.app.app .dv-ap { color: #475569; }
+.app.app .dv-st b { color: #0f172a; }
+.app.app .dv-st b.up { color: #15803d; }
+.app.app .dv-st b.down { color: #dc2626; }
+.app.app .dv-st b.warn { color: #b45309; }
+.app.app .dv-ovr { color: #0f172a; }
+.app.app .dv-d { color: #334155; }
+.app.app .dv-d.up { color: #15803d; }
+.app.app .dv-d.down { color: #dc2626; }
+.app.app .dv-stp .dv-tx b small.dv-ap { color: #475569; }
 
 /* src/ui/live.css */
 .lv-bside { background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #ffffff) 70%, #ffffff 100%); }
