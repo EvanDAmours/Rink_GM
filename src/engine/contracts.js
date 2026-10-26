@@ -44,8 +44,8 @@ export function askFor(league, p, yrs, kind) {
 // The term a player will even discuss: veterans stop at two or three years, young stars
 // want a real commitment.
 export function termWindow(p, kind) {
-  const max = kind === "fa" ? 6 : 7;
-  // (A holdout's deal and a re-signing are with his own club: up to seven years.)
+  const max = kind === "fa" ? 7 : 8;
+  // (A holdout's deal and a re-signing are with his own club: up to eight years, as the CBA allows.)
   const age = p.age + (kind === "fa" ? 0 : 1);
   let lo = 1, hi = max;
   if (age >= 35) hi = 1; else if (age >= 33) hi = 2; else if (age >= 31) hi = 3; else if (age >= 29) hi = 5;

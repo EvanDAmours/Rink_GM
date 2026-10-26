@@ -90,6 +90,6 @@ export function assignProspect(lg,pid,where) {
   if(!p || !t.prospects.includes(pid) || !["ahl","junior","college","europe"].includes(where))return {ok:false,msg:"Choose one of your prospects and a development assignment."};
   if(where==="ahl" && p.age<20 && ["OHL","WHL","QMJHL"].includes(p.bio?.lg))return {ok:false,msg:"This CHL prospect must return to juniors until 20 in this gameplay model."};
   if(where==="college" && p.signed!==false)return {ok:false,msg:"A signed professional cannot be assigned to NCAA hockey."};
-  if(where==="ahl" && p.signed===false){if(contractCount(lg,t)>=50)return {ok:false,msg:"No available NHL contract slot."};p.cap=elcSalary(lg.year);p.yrs=elcTerm(p.age);p.signed=true;p.elc={signedAge:p.age,year:lg.year};}
+  if(where==="ahl" && p.signed===false){if(contractCount(lg,t)>=50)return {ok:false,msg:"No available NHL contract slot."};p.cap=elcSalary(lg.year,p.draft?.pick);p.yrs=elcTerm(p.age);p.signed=true;p.elc={signedAge:p.age,year:lg.year};}
   p.assignment=where;return {ok:true,msg:`${p.name} assigned to ${where.toUpperCase()}.`};
 }

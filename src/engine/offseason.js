@@ -32,6 +32,7 @@ import { aiMarketDay, aiDepthDay, decidingToday } from "./faMarket.js";
 import { runFrenzy } from "./frenzy.js";
 import { settleRFARights } from "./contractYear.js";
 import { termWindow } from "./contracts.js";
+import { MAX_TERM_RESIGN, MAX_TERM_UFA } from "./marketPay.js";
 
 const diff = (league) => DIFFICULTY[league.settings.difficulty] || DIFFICULTY.normal;
 
@@ -61,7 +62,7 @@ export function resignAsk(league, p, yrs, { start } = {}) {
   const year = start ?? league.year + 1;
   const base = contractAsk(p, year, { mood: p.mood ?? 0.5, mult: diff(league).faAskMult * rolePay(p) });
   const pref = veteranTerm(p, base.yrs);
-  const term = Math.min(7, yrs ?? pref);
+  const term = Math.min(MAX_TERM_RESIGN, yrs ?? pref);
   const aav = round2(clamp(base.aav * (1 + 0.025 * Math.abs(term - pref)) * perfFactor(league, p, term, "resign") * loyalDiscount(league, p, "resign"), minSalaryForYear(year), maxSalaryForYear(year)));
   return { aav, yrs: term, prefYrs: pref };
 }
@@ -155,6 +156,8 @@ export function endResign(league) {
       if (isRFA(p)) keep += 0.2;
       // Clubs under next season's cap floor hang on to more of their own players.
       if (payroll(league, t) < capFloorForYear(league.year + 1)) keep += 0.25;
+      // Clubs with room to spend keep more of their own players (real clubs spend 85-100% of the cap).
+      else if (payroll(league, t) < capForYear(league.year + 1) * 0.85) keep += 0.15;
       if (p.age >= 35) keep *= 0.5;
       const ask = resignAsk(league, p);
       // A franchise player is never let go while the club can fit him: it clears cap room if it
@@ -195,7 +198,7 @@ export function endResign(league) {
 // A franchise player's new deal: his ask, on a long term while he's young.
 function franchiseDeal(league, p) {
   const win = termWindow(p, "resign");
-  const yrs = Math.min(win.hi, 7, Math.max(resignAsk(league, p).yrs, p.age <= 27 ? 6 : 3));
+  const yrs = Math.min(win.hi, MAX_TERM_RESIGN, Math.max(resignAsk(league, p).yrs, p.age <= 27 ? 6 : 3));
   return resignAsk(league, p, yrs);
 }
 // Make cap room for a franchise player: send waiver-exempt depth contracts to the farm, then buy
@@ -224,8 +227,8 @@ export function faAsk(league, p, yrs) {
   const day = offseason ? league.fa?.day || 0 : FA_DAYS + 10;
   const floor = p.ovr >= 88 ? 0.92 : p.ovr >= 82 ? 0.88 : 0.82;
   const decay = Math.max(floor, Math.pow(0.992, day));
-  const pref = veteranTerm(p, Math.min(6, base.yrs));
-  const term = Math.min(6, yrs ?? pref);
+  const pref = veteranTerm(p, Math.min(MAX_TERM_UFA, base.yrs));
+  const term = Math.min(MAX_TERM_UFA, yrs ?? pref);
   const aav = round2(clamp(base.aav * decay * (1 + 0.025 * Math.abs(term - pref)), minSalaryForYear(year), maxSalaryForYear(year)));
   return { aav, yrs: term, prefYrs: pref };
 }

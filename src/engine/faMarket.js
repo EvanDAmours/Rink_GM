@@ -160,6 +160,9 @@ export function clubPlan(lg, t) {
 // crack its lineup, and by how much) that it can still pay after its open offers, up to `perTeam`
 // new offers a day (one more for a club with lots of room or under the cap floor). Not every club
 // chases every player, and a player only draws so many suitors. Returns the number of offers made.
+// A club with a lot of cap room outbids the market: up to 15% over his ask, the way NHL clubs
+// with space spend it on July 1 (real clubs spend 85-100% of the cap).
+export const richBid = (room, cap) => 1 + clamp((room / cap - 0.08) * 1.25, 0, 0.15);
 export function aiMarketDay(lg, { perTeam = 1, salt = "", only = null } = {}) {
   if (!marketOpen(lg)) return 0;
   const day = marketDay(lg), yr = lg.year, cy = capYear(lg);
@@ -182,7 +185,7 @@ export function aiMarketDay(lg, { perTeam = 1, salt = "", only = null } = {}) {
     // Contenders chase proven veterans on short deals; rebuilding clubs chase young players and
     // give them term, and mostly pass on players past 31.
     const plan = clubPlan(lg, t);
-    const wants = pool.filter((p) => p.tid === -1 && (plan !== "rebuild" || p.age <= 31 || p.ovr >= 86)).map((p) => [p, depthValue(p) - bar(groupOf(p))]).filter(([, g]) => g >= 2)
+    const wants = pool.filter((p) => p.tid === -1 && (plan !== "rebuild" || p.age <= 31 || p.ovr >= 86)).map((p) => [p, depthValue(p) - bar(groupOf(p))]).filter(([, g]) => g >= (flush ? 1 : 2))
       .map(([p, g]) => [p, g + (plan === "contend" ? (p.age >= 28 ? 1.5 : 0) : plan === "rebuild" ? (p.age <= 26 ? 2 : p.age >= 30 ? -2 : 0) : 0)]).sort((a, b) => b[1] - a[1]);
     let placed = 0;
     for (const [p] of wants) {
@@ -196,7 +199,7 @@ export function aiMarketDay(lg, { perTeam = 1, salt = "", only = null } = {}) {
       const pref = faAsk(lg, p).prefYrs;
       const lean = plan === "contend" && p.age >= 29 ? -1 : plan === "rebuild" && p.age <= 27 ? 1 : 0;
       const yrs = clamp(veteranTerm(p, pref + lean + (r.next() < 0.25 ? 1 : 0) - (r.next() < 0.25 ? 1 : 0)), win.lo, win.hi);
-      const aav = r2(clamp(faAsk(lg, p, yrs).aav * (0.9 + r.next() * 0.22) * (floorGap > 0 ? 1.08 : 1), minSalaryForYear(cy), maxSalaryForYear(cy)));
+      const aav = r2(clamp(faAsk(lg, p, yrs).aav * (0.9 + r.next() * 0.22) * (floorGap > 0 ? 1.08 : richBid(room, capForYear(cy))), minSalaryForYear(cy), maxSalaryForYear(cy)));
       if (aav > room) continue;
       (open || marketEntry(lg, p)).bids.push({ tid: t.id, aav, yrs, ai: true, day, role: projectedRole(lg, t, p) });
       room -= aav; placed++; made++;

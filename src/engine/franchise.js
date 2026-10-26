@@ -1,5 +1,6 @@
 import {REAL_COACHES,COACH_SOURCE} from "../data/realCoaches.js";
 import {ensureDevelopment} from "./development.js";
+import {ensureCoachContracts,ensureCoachContract} from "./coachContracts.js";
 import { stream, clamp } from "./rng.js";
 import { teamRatings } from "./lines.js";
 import { isGoalie, isDefense } from "./constants.js";
@@ -37,6 +38,7 @@ export function ensureFranchise(league) {
     }
   }
   league.coachMarket ||= Array.from({length:8},(_,i)=>coach(`${league.year}|market|${i}`));
+  ensureCoachContracts(league);
   league.news ||= [];
   league.achievements ||= [];
 }
@@ -45,7 +47,7 @@ export function hireCoach(league, id) {
   if (!interim && !["preseason","resign","freeagency"].includes(league.phase)) return {ok:false,msg:"Change your head coach during the offseason or preseason, or dismiss him first to hire in season."};
   const c=league.coachMarket.find(c=>c.id===id);if(!c)return {ok:false,msg:"That coach is no longer available."};
   const t=league.teams[league.userTid],old=t.coach;
-  t.coach={...c,hiredYear:league.year};league.coachMarket=league.coachMarket.filter(x=>x.id!==id);if(old)league.coachMarket.push(old);
+  t.coach={...c,hiredYear:league.year};delete t.coach.yrs;delete t.coach.announced;delete t.coach.tickYear;ensureCoachContract(league,t.coach);league.coachMarket=league.coachMarket.filter(x=>x.id!==id);if(old)league.coachMarket.push(old);
   logTx(league,`${t.abbr} hire ${c.name} as head coach`,[t.id]);return {ok:true,msg:`${c.name} is your new head coach.`};
 }
 // Jobs on a club's staff that need a hire: the head coach when an interim runs the bench (or
@@ -96,7 +98,7 @@ export function aiCoachingChanges(league) {
     if (!next) return;
     const old=t.coach;
     league.coachMarket=league.coachMarket.filter(c=>c.id!==next.id);league.coachMarket.push({...old,firedYear:league.year});
-    t.coach={...next,hiredYear:league.year,changedYear:league.year,tenure:[]};
+    t.coach={...next,hiredYear:league.year,changedYear:league.year,tenure:[]};delete t.coach.yrs;delete t.coach.announced;delete t.coach.tickYear;ensureCoachContract(league,t.coach);
     league.coachChanges[league.year]=(league.coachChanges[league.year] || 0)+1;
     logTx(league,`${t.abbr} fire head coach ${old.name}, hire ${next.name}`,[t.id]);
     league.news ||= [];league.news.unshift({year:league.year,day:league.day,type:"coach",text:`${t.city} fire ${old.name} after a ${t.rec.w}-${t.rec.l}-${t.rec.otl} start. ${next.name} takes over behind the bench.`});

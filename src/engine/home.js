@@ -1,3 +1,4 @@
+import { coachRetirementNotice } from "./coachContracts.js";
 // Home screen logic (the football game's HomeScreen and inbox, translated to hockey): the Needs
 // Attention list, the one-tap fixes it offers, the matchup's star players and kickoff line, and
 // the off-season board. Pure functions of the league, so the screen and the tests share them.
@@ -74,6 +75,9 @@ export function needsAttention(lg) {
   // A short roster in the off-season (the football game's Build Your 53).
   const signed = signedForNextSeason(lg, t);
   if (["resign", "freeagency"].includes(lg.phase) && signed < MAX_ROSTER) add({ key: "short", icon: "🧩", tone: lg.phase === "freeagency" && (lg.fa?.day ?? 0) >= FA_DAYS - 5 ? "urgent" : "action", title: `${signed} of ${MAX_ROSTER} NHL spots signed for next season`, sub: `${plural(MAX_ROSTER - signed, "spot")} to fill. ${lg.phase === "freeagency" ? "Sign free agents, trade, or let camp fill them from the farm." : "Re-sign your own players first; free agency opens next."}`, cta: lg.phase === "freeagency" ? "Free agency" : "Re-sign", to: ["freeagency"] });
+  // His head coach's last two seasons before he retires (coachContracts.js): a dismissible note.
+  const hc = coachRetirementNotice(lg);
+  if (hc) add({ key: "hcRetire", icon: "👔", tone: "info", title: `${t.coach.name} retires after ${hc.last}-${String(hc.last + 1).slice(2)}`, sub: `${hc.text} Line up his successor on the Coaching page.`, cta: "Coaching", to: ["frontoffice", "coaching"], dismiss: "hcNote" });
   return sortAttention(items);
 }
 
@@ -88,6 +92,7 @@ export function runFix(lg, fix) {
   if (kind === "callUps") { ensureMinimums(lg, t, { notify: true }); const left = rosterIssues(lg, t).filter((i) => /^Need /.test(i)); return { ok: !left.length, msg: left.length ? left[0] : "Called up from the AHL: the lineup is full." }; }
   if (kind === "sendDown") return automaticallyHandleRoster(lg, t, { allowWaivers: false });
   if (kind === "hireCoach") return hireCoach(lg, arg);
+  if (kind === "hcNote") { const n = coachRetirementNotice(lg); if (n) lg.hcNoteDismissed = n.key; return { ok: true, msg: "" }; }
   if (kind === "talkDown") return talkDown(lg, arg);
   if (kind === "shop") return shopPlayer(lg, arg);
   if (kind === "playItOut") return playItOut(lg, arg);
