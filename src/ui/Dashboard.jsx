@@ -20,16 +20,18 @@ import { deadlinePending } from "../engine/market.js";
 import { useDialogFocus } from "./accessibility.js";
 import Icon from "./Icon.jsx";
 import { composites } from "../engine/ratings.js";
-import { savePct } from "../engine/players.js";
+import { savePct, gaa } from "../engine/players.js";
+import { usePhone } from "./mobile.js";
 import { prospectWatch } from "../engine/prospectWatch.js";
 import { myOffers } from "../engine/negotiations.js";
-import { needsAttention, runFix, topPlayer, kickoffText, primeTime, offseasonBoard, signedForNextSeason } from "../engine/home.js";
+import { needsAttention, runFix, topPlayer, kickoffText, primeTime, offseasonBoard, signedForNextSeason, NEED_NAME } from "../engine/home.js";
 import { BuildYour23, faStart } from "./ContractBits.jsx";
 import { Sparkline } from "./ProspectWatch.jsx";
 import { POS_COLOR } from "./TradePage.jsx";
 import GamePlanPicker from "./GamePlanPicker.jsx";
 import GamePrep from "./GamePrep.jsx";
 import "./home.css";
+import "./broadcast.css";
 
 // Home, laid out like the football game's: the franchise tiles on top, then one panel with
 // three columns. On the left, this week's main job and the Needs Attention list; in the middle,
@@ -40,8 +42,6 @@ const ORD = (n) => n + (["st", "nd", "rd"][((n + 90) % 100 - 10) % 10 - 1] || "t
 const PosBadge = ({ pos }) => <span className="gg-pos" style={{ background: POS_COLOR[pos] || "#64748b" }}>{pos}</span>;
 const rec = (x) => `${x.w}-${x.l}-${x.otl}`;
 const TONE_C = { urgent: "#ef4444", action: "#eab308", info: "#38bdf8" };
-const SHOW_KEY = "rinkgm_matchup_details";
-const readShow = () => { try { return localStorage.getItem(SHOW_KEY) === "1"; } catch { return false; } };
 const ROUND_UP = (r) => (ROUND_NAMES[r] || "Playoffs").toUpperCase();
 
 function lastResults(league, t, n = 5) {
@@ -80,21 +80,17 @@ export default function Dashboard({ act = {} }) {
   const odds = lg.phase === "regular" ? playoffOdds(lg)[t.id] : null;
   const fans = t.owner?.fanSupport ?? 60, trust = t.owner?.trust ?? 65;
   const focused = Object.keys(t.training?.assignments || {}).filter((id) => lg.players[id]?.tid === t.id);
-  const [pick, setPick] = useState(0);
+  const phone = usePhone();
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [labOpen, setLabOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
-  const [more, setMore] = useState(readShow);
-  const [rightTab, setRightTab] = useState("stories");
   const [labPick, setLabPick] = useState("");
   const [labSort, setLabSort] = useState("pos"); // "pos": grouped by position; "growth": one list, fastest growers first
-  const [labFlash, setLabFlash] = useState(false);
-  const labRef = useRef(null);
-  const toggleMore = () => setMore((m) => { try { localStorage.setItem(SHOW_KEY, m ? "0" : "1"); } catch { /* private mode */ } return !m; });
   const offseason = ["draft", "resign", "freeagency"].includes(lg.phase);
 
   // ---- Needs Attention (engine/home.js): urgent first, each with a way in and its one-tap fixes ----
   // After the list closes (and gives focus back), so the scroll isn't undone.
-  const toLab = () => { setInboxOpen(false); setTimeout(() => { labRef.current?.scrollIntoView?.({ block: "center", behavior: "smooth" }); setLabFlash(true); setTimeout(() => setLabFlash(false), 1600); }, 80); };
+  const toLab = () => { setInboxOpen(false); setLabOpen(true); };
   const attention = needsAttention(lg).map((it) => ({
     ...it,
     onOpen: () => { const to = it.to; setInboxOpen(false); if (Array.isArray(to)) go(to[0], to[1]); else if (to?.player) openPlayer?.(to.player); else if (to?.paper) openPaper?.(to.paper); else if (to?.lab) toLab(); },
@@ -113,7 +109,7 @@ export default function Dashboard({ act = {} }) {
   const deadline = lg.phase === "regular" && deadlinePending(lg);
 
   // ---- The matchup: the selected upcoming game, or the next game of your playoff series ----
-  const sel = series ? null : upcoming[Math.min(pick, upcoming.length - 1)];
+  const sel = series ? null : upcoming[0];
   const pGame = series ? nextGame(lg, series) : null;
   const homeT = series ? lg.teams[pGame.home] : sel ? lg.teams[sel.h] : null;
   const awayT = series ? lg.teams[pGame.away] : sel ? lg.teams[sel.a] : null;
@@ -182,126 +178,177 @@ export default function Dashboard({ act = {} }) {
   // Growth ranking for the focus picker: the development desk's own score (young, room to grow, trait).
   const growth = new Map(focusCandidates(lg, t).map(({ p, score }) => [p.id, score]));
   const labOption = (p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot}){p.injury > 0 ? " · injured" : p.age <= 24 ? " · ~fast" : p.age >= 31 ? " · slow" : ""}</option>;
-  const watch = prospectWatch(lg, t);
-
-  const thisWeek = (
-    <div className="rk-hm-list">
-      {/* In season the sim buttons are the main job; off-season the phase's one job leads. */}
-      {lg.phase !== "preseason" && lg.phase !== "regular" && <button className="rk-b rk-wk-first" onClick={first.onClick}><b>{first.label}</b><span>{first.sub}</span></button>}
-      {deadline && <button className="rk-b rk-wk-item" style={{ "--tone": TONE_C.urgent }} onClick={() => go("deadline")}><b>⏰ Trade Deadline Day</b><span>Make your moves before 3:00 PM ET.</span></button>}
-      {attention.slice(0, 7).map((it) => (
-        <div key={it.key} className="rk-wk-item rk-wk-row" style={{ "--tone": TONE_C[it.tone] }}>
-          <button className="rk-b rk-wk-open" onClick={it.onOpen} title={it.sub}><b>{it.icon} {it.title}</b>{it.sub && <span>{it.sub}</span>}</button>
-          {it.actions.length > 0 && <div className="rk-wk-fixes">{it.actions.map((a) => <button key={a.label} className="rk-b rk-fix" onClick={a.onClick}>{a.label}</button>)}</div>}
-        </div>
-      ))}
-      {attention.length > 7 && <button className="rk-b rk-wk-item" style={{ "--tone": TONE_C.info }} onClick={() => setInboxOpen(true)}><b>+{attention.length - 7} more in Needs Attention</b></button>}
-      {!attention.length && !deadline && <div className="rk-hm-quiet good">✓ All set: nothing needs you.</div>}
-    </div>
+  const lab = (
+    <section className="gg-lab rk-lab" id="dev-focus" data-tour="devfocus">
+      <div className="rk-dsub">Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.</div>
+      {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in focus yet. Pick a player below.</div>}
+      {focused.length < FOCUS_SLOTS && (<>
+        <div className="rk-lab-pick"><span>{FOCUS_SLOTS - focused.length} slot{FOCUS_SLOTS - focused.length === 1 ? "" : "s"} open</span><span className="rk-sort"><small>Sort</small>{[["pos", "Position"], ["growth", "Growth"]].map(([k, l]) => <button key={k} className={labSort === k ? "on" : ""} aria-pressed={labSort === k} onClick={() => setLabSort(k)}>{l}</button>)}</span></div>
+        <Select value={labPick} onChange={(e) => labAdd(e.target.value)} aria-label="Add a development focus player" placeholder="Choose a player" style={{ width: "100%" }}>
+          <option value="">Choose a player</option>
+          {labSort === "growth"
+            ? roster.filter((p) => !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)
+            : ["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)}</optgroup>)}
+        </Select>
+      </>)}
+    </section>
   );
 
   // Roster health: a short roster in the off-season counts against you before injuries do.
   const short = (lg.phase === "resign" || lg.phase === "freeagency") && signedNext < MAX_ROSTER;
 
-  return (
-    <div className="gg-home rk-home">
-      <div className="gg-status-row">
-        <section className={`gg-stat rk-attn ${urgentN ? "alert" : attention.length ? "warn" : "ok"}`} onClick={() => setInboxOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setInboxOpen(true))} aria-label={`Needs attention: ${attention.length} items`}><small>NEEDS ATTENTION</small><div className="gg-stat-line"><b>{attention.length ? `${attention.length} item${attention.length > 1 ? "s" : ""}` : "All clear"}</b><span>{attention[0]?.title || "Nothing needs you"}</span></div></section>
-        <section className="gg-stat" onClick={() => go("standings")}><small>RECORD</small><div className="gg-stat-line"><b>{rec(t.rec)}</b><span>{t.rec.gp ? `${ORD(divRank)} in the ${t.div}${odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}` : `${ORD(divRank)} in the ${t.div}`}</span></div></section>
-        <section className="gg-stat" onClick={() => go("frontoffice", "contracts")}><small>CAP SPACE</small><div className="gg-stat-line"><b style={{ color: room < 0 ? "#ef4444" : room < 3 ? "#eab308" : "#22c55e" }}>{money(room)}</b><span>{expiring ? `${expiring} expiring deal${expiring === 1 ? "" : "s"}` : "No deals expiring"}</span></div></section>
-        <section className={`gg-stat ${starters.length || short ? "warn" : ""}`} onClick={() => (short ? go("freeagency") : go("roster"))}><small>ROSTER HEALTH</small><div className="gg-stat-line"><b style={{ color: short ? "#eab308" : starters.length ? "#ef4444" : injured.length ? "#eab308" : "#22c55e" }}>{short ? `${signedNext}/${MAX_ROSTER}` : injured.length ? `${injured.length} injured` : "Healthy"}</b><span>{short ? `${MAX_ROSTER - signedNext} spot${MAX_ROSTER - signedNext === 1 ? "" : "s"} to fill` : starters.length ? `${starters.length} starter-level out` : `${signed} on the roster`}</span></div></section>
-        <section className="gg-stat" onClick={() => go("frontoffice", "owner")}><small>OWNER & LOCKER ROOM</small><div className="gg-stat-line"><b style={{ color: trust >= 60 ? "#22c55e" : trust >= 40 ? "#eab308" : "#ef4444" }}>{trust >= 60 ? "Secure" : trust >= 40 ? "Watchful" : "Hot seat"}</b><span>Morale {Math.round(t.morale)} · Fans {fans}% · Rep {rep.label}</span></div></section>
+  // ---- The game's buttons, on the broadcast card (the same act functions as the top bar's) ----
+  const gameBtns = [];
+  if (hasGame) {
+    if (series) { if (act.playPlayoffLive) gameBtns.push({ label: `Play game ${series.games.length + 1}`, onClick: act.playPlayoffLive, go: 1 }); if (act.simPlayoffDay) gameBtns.push({ label: "Sim day", onClick: act.simPlayoffDay }); }
+    else if (lg.phase === "preseason") { if (act.startSeason) gameBtns.push({ label: "Start season", onClick: act.startSeason, go: 1 }); }
+    else if (deadline) gameBtns.push({ label: "Open deadline day", onClick: () => go("deadline"), go: 1 });
+    else if (today) { if (act.playLive) gameBtns.push({ label: "Play", onClick: act.playLive, go: 1 }); if (act.simDay) gameBtns.push({ label: "Sim game", onClick: act.simDay }); }
+    else if (act.simDay) gameBtns.push({ label: "Sim to game day", onClick: act.simDay, go: 1 });
+  }
+  const line = prob == null ? null : Math.abs(prob - 0.5) < 0.03 ? "Pick 'em" : `${prob >= 0.5 ? t.abbr : opp.abbr} ${Math.round(Math.max(prob, 1 - prob) * 100)}%`;
+  const eyebrow = hasGame ? [cardLabel.replace(/^REGULAR SEASON · /, ""), prime, opp.div === t.div && !series ? "Division" : null, rival ? "Rivalry" : null, kickoff].filter(Boolean) : [];
+  const storyTeam = stories[0] ? teamOfStory(stories[0]) : null;
+  const top = stories[0] ? { team: storyTeam, head: stripEmoji((stories[0].text || stories[0].title || "").split(". ")[0]) } : null;
+  const todo = [...(deadline ? [{ key: "dl", tone: "urgent", title: "Trade deadline day", sub: "Make your moves before 3:00 PM ET.", onOpen: () => go("deadline"), actions: [] }] : []), ...attention];
+  const L1 = (() => { try { const gl = gameLines(lg, t); return { f: gl.F[0].map((id) => lg.players[id]).filter(Boolean), d: gl.D[0].map((id) => lg.players[id]).filter(Boolean), g: lg.players[gl.G[0]] }; } catch { return null; } })();
+  const plan = t.autoPlan !== false ? null : t.gamePlan;
+  const injN = lg.settings?.injuries === false ? 0 : injured.length;
+
+  const todoCard = (n = 3) => (
+    <section className="rk-bc-card">
+      <div className="rk-bc-h">To do {todo.length > 0 && <span className="rk-bc-n">{todo.length}</span>}</div>
+      {todo.length ? todo.slice(0, n).map((it) => (
+        <button key={it.key} className="rk-b rk-bc-todo" onClick={it.onOpen}><i style={{ background: TONE_C[it.tone] }} /><span><b>{stripEmoji(it.title)}</b>{phone && it.sub && <small>{it.sub}</small>}</span><Icon name="chevron" size={16} /></button>
+      )) : <div className="rk-hm-quiet good">All set: nothing needs you.</div>}
+      <div className="rk-bc-links">{todo.length > n && <button className="rk-b rk-link" onClick={() => setInboxOpen(true)}>See all {todo.length}</button>}<button className="rk-b rk-link" onClick={() => setLabOpen(true)}>Development focus</button></div>
+    </section>
+  );
+  const planCard = (
+    <section className="rk-bc-card">
+      <div className="rk-bc-h">Game plan</div>
+      <div className="rk-bc-plan">
+        <span>{plan ? `${plan.forecheck || "balanced"} forecheck · ${plan.neutral === "trap" ? "trap" : "balanced neutral zone"} · ${plan.attack || "balanced"} attack` : "Your coaches adapt the system to each opponent."}</span>
+        {L1 && <><small>TOP LINE</small><b>{L1.f.map((p) => p.name.split(" ").at(-1)).join(" – ") || "—"}</b><small>TOP PAIR · STARTER</small><b>{L1.d.map((p) => p.name.split(" ").at(-1)).join(" – ") || "—"}{L1.g ? ` · ${L1.g.name.split(" ").at(-1)}` : ""}</b></>}
       </div>
+      <div className="rk-bc-links"><button className="rk-b rk-link" onClick={() => go("lines", "lines")}>Lines</button>{hasGame && <button className="rk-b rk-link" onClick={() => setPrepOpen(true)}>Game prep</button>}<button className="rk-b rk-link" onClick={() => go("coaching", "plan")}>System</button></div>
+    </section>
+  );
+  const storyCard = (
+    <section className="rk-bc-card">
+      <div className="rk-bc-h">Top story</div>
+      {top ? <button className="rk-b rk-bc-story" onClick={() => go("activity")}>{top.team && <TeamBadge team={top.team} size={40} decorative />}<b>{top.head}</b></button> : <div className="rk-hm-quiet">Quiet around the league so far. Stories arrive after every game day.</div>}
+      {top && <div className="rk-bc-links"><button className="rk-b rk-link" onClick={() => go("activity")}>All news</button></div>}
+    </section>
+  );
+  const needsCard = <NeedsCard lg={lg} t={t} go={go} openPlayer={openPlayer} />;
+  const statLine = [["RECORD", rec(t.rec)], ["CAP SPACE", money(room)], [offseason ? "SIGNED" : "ROSTER", `${signedNext}/${MAX_ROSTER}`]];
+  const phaseHero = !hasGame && (
+    <section className="rk-ph" style={{ "--c1": t.colors[0], "--c2": t.colors[1] || "#111827" }}>
+      <TeamBadge team={t} size={phone ? 64 : 120} decorative className="rk-ph-mark" />
+      <div className="rk-ph-txt">
+        <small>{t.city.toUpperCase()} {t.name.toUpperCase()} · {lg.year}-{String(lg.year + 1).slice(2)}</small>
+        <h2>{heroTitle(lg, t)}</h2>
+        <div className="rk-ph-stats">{statLine.map(([k, v]) => <div key={k}><b>{v}</b><small>{k}</small></div>)}</div>
+        {!phone && primary.length > 0 && <div className="rk-ph-btns">{primary.map((b, i) => <button key={b.label} className={`rk-b rk-bc-btn${i === 0 ? " go" : ""}`} onClick={b.onClick}>{stripEmoji(b.label)}</button>)}</div>}
+      </div>
+    </section>
+  );
 
-      <div className="rk-hm" style={{ "--hm-team": t.colors[0] }}>
-        <aside className="rk-hm-menu gg-home-left">
-          <div className="rk-hm-h">This week</div>
-          <div className="rk-hm-scroll"><div className="rk-hm-scroll-in">{thisWeek}</div></div>
-        </aside>
+  const dialogs = (
+    <>
+      {inboxOpen && <NeedsAttention items={todo} onClose={() => setInboxOpen(false)} />}
+      {prepOpen && <GamePrep onClose={() => setPrepOpen(false)} onPlay={lg.phase === "playoffs" ? act.playPlayoffLive : act.playLive} onSim={lg.phase === "playoffs" ? act.simPlayoffDay : act.simDay} />}
+      {labOpen && <Sheet title="Development focus" onClose={() => setLabOpen(false)}>{lab}</Sheet>}
+    </>
+  );
 
-        <section className="rk-hm-main gg-home-main">
-          <div className="rk-hm-top">
-            <h3 className="rk-hm-label">{label}</h3>
-            {primary.length > 0 && <div className="rk-hm-primary">{primary.map((b, i) => <button key={b.label} className={`rk-b rk-pbtn${i === 0 ? " go" : ""}`} onClick={b.onClick}>{b.label}</button>)}</div>}
-            {!series && (lg.phase === "preseason" || lg.phase === "regular") && games.length > 0 && <WeekStrip lg={lg} t={t} played={played.slice(-2)} upcoming={upcoming.slice(0, Math.max(3, 5 - Math.min(2, played.length)))} pick={pick} onPick={setPick} onBox={openBox} />}
-          </div>
-
-          {hasGame ? (
-            <>
-              <MatchupCard lg={lg} away={awayT} home={homeT} label={cardLabel} kickoff={kickoff} venue={venue} prime={prime} rival={rival}
-                ratingAway={rateOf(awayT)} ratingHome={rateOf(homeT)} onPrep={() => setPrepOpen(true)} />
-              <div className={`rk-stakes${stake ? "" : " bare"}`}>
-                {stake && <div className="rk-stakes-txt"><small>{series ? "THE SERIES" : "WHAT'S AT STAKE"}</small><b>{stake[0]}</b><span>{stake[1]}</span></div>}
-                <button className="rk-b rk-more" onClick={toggleMore} aria-expanded={more} title="Form, the line, injuries, key matchups and the game plan">{more ? "▲ Less on this matchup" : "▼ More on this matchup"}</button>
-              </div>
-              {more && (
-                <div className="rk-details">
-                  <div className="rk-details-row">
-                    <section className="rk-box"><div className="rk-box-h">Form · last 5</div>
-                      {[[awayT, awayT.id === t.id ? formUs : formThem], [homeT, homeT.id === t.id ? formUs : formThem]].map(([team, f]) => <div key={team.id} className="rk-form"><TeamBadge team={team} size={20} decorative /><b>{team.abbr}</b>{f.length ? f.map((r, i) => <i key={i} className={`rk-pill ${r}`}>{r === "O" ? "OT" : r}</i>) : <span className="dim">No games yet</span>}</div>)}
-                    </section>
-                    <section className="rk-box"><div className="rk-box-h">The line</div><div className="rk-line">{Math.abs(prob - 0.5) < 0.03 ? "PICK 'EM" : `${prob >= 0.5 ? t.abbr : opp.abbr} ${Math.round(Math.max(prob, 1 - prob) * 100)}%`}</div><span className="rk-box-sub">{prob >= 0.55 ? "You're the favourite." : prob <= 0.45 ? "You're the underdog." : "A coin flip."} Offence {mine.off > theirs.off + 1 ? "edge you" : theirs.off > mine.off + 1 ? `edge ${opp.abbr}` : "even"} · goaltending {mine.goalie > theirs.goalie + 1 ? "edge you" : theirs.goalie > mine.goalie + 1 ? `edge ${opp.abbr}` : "even"}.</span></section>
-                    <section className="rk-box"><div className="rk-box-h">Injuries</div>
-                      {[opp, t].map((team) => { const out = team.roster.map((id) => lg.players[id]).filter((p) => p && p.injury > 0 && p.ovr >= 78).sort((a, b) => b.ovr - a.ovr).slice(0, 3); return <div key={team.id} className="rk-box-sub"><b>{team.abbr}</b> {out.length ? out.map((p) => `${p.name.split(" ").at(-1)} (${p.pos}, ${p.ltir ? "LTIR" : "OUT"})`).join(", ") : <span className="dim">no key players out</span>}</div>; })}
-                    </section>
-                  </div>
-                  <section className="rk-box"><div className="rk-box-h">Key matchups</div>
-                    {[[myScorer, theirD, "Your top scorer vs their best defender", (a, b) => edge(composites(a).off, composites(b).def)], [myD, theirScorer, "Your best defender vs their top scorer", (a, b) => edge(composites(a).def, composites(b).off)], [myG, theirG, "Goaltending", (a, b) => edge(a.ovr, b.ovr)]].filter(([a, b]) => a && b).map(([a, b, l, f]) => { const [txt, c] = f(a, b); const gl = (p) => (isGoalie(p.pos) && p.stats.gp ? `${savePct(p.stats).toFixed(3).slice(1)} SV%` : `${p.pos} ${p.ovr}`); return <div key={l} className="rk-km"><span>{l}</span><b><PlayerName p={a} showInj={false} /></b><em>{gl(a)}</em><i>vs</i><b><PlayerName p={b} showInj={false} /></b><em>{gl(b)}</em><strong style={{ color: c }}>{txt}</strong></div>; })}
-                  </section>
-                  <GamePlanPicker opp={opp} compact />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="rk-hero">
-                <TeamBadge team={t} size={88} decorative className="rk-hero-logo" />
-                <div>
-                  <div className="rk-hero-title">{heroTitle(lg, t)}</div>
-                  <div className="rk-hero-sub">{t.city} {t.name} · {rec(t.rec)}{t.playoffResult && (lg.phase === "playoffs" || offseason) ? ` · ${t.playoffResult}` : ""}</div>
-                </div>
-              </div>
-              <OffseasonBoard lg={lg} go={go} openPlayer={openPlayer} />
-              <BuildYour23 onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} />
-              <PhaseCard lg={lg} t={t} go={go} slot={slot} series={series} />
-            </>
-          )}
-        </section>
-
-        <aside className="rk-hm-side gg-home-right">
-          <div className="rk-tabs" role="tablist">{[["stories", "Top Stories"], ["injuries", "Injury Report"], ["prospects", "Prospects"]].map(([k, l]) => <button key={k} role="tab" aria-selected={rightTab === k} className={`rk-b rk-tab${rightTab === k ? " on" : ""}`} onClick={() => setRightTab(k)}>{l}</button>)}</div>
-          <div className="rk-side-scroll"><div className="rk-side-scroll-in">
-            {rightTab === "stories" && <Stories stories={stories} teamOf={teamOfStory} userTid={t.id} onAll={() => go("activity")} />}
-            {rightTab === "injuries" && <InjuryList lg={lg} t={t} onRoster={() => go("roster", "injured")} />}
-            {rightTab === "prospects" && (
-              <>
-                <div className="rk-box-h rk-side-h">Prospect watch <button className="rk-b rk-link" onClick={() => go("development")}>All →</button></div>
-                {watch.filter((r) => r.farm || r.p.age <= 22).slice(0, 6).map((r) => <div key={r.p.id} className="gg-home-watch-row"><PosBadge pos={r.p.pos} /><div><b><PlayerName p={r.p} /></b><span className="dim small">{r.level} · {r.line.text}</span></div><Sparkline path={r.path} width={64} height={22} color={r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8"} /><b style={{ color: r.delta > 0 ? "#22c55e" : r.delta < 0 ? "#ef4444" : "#94a3b8" }}>{r.delta > 0 ? "+" : ""}{r.delta}</b></div>)}
-                {!watch.length && <div className="rk-hm-quiet">No young players to follow yet.</div>}
-                {t.rec.gp > 0 && <><div className="rk-box-h rk-side-h" style={{ marginTop: 12 }}>Club leaders</div>{leaders.map(([k, p, f]) => p ? <div key={k} className="rk-inj-row"><span className="gg-pill">{k}</span><b><PlayerName p={p} /></b><span className="rk-inj-n">{f(p)}</span></div> : null)}</>}
-              </>
-            )}
-          </div></div>
-          <section className={`gg-lab rk-lab${labFlash ? " rk-flash" : ""}`} id="dev-focus" data-tour="devfocus" ref={labRef}>
-            <div className="rk-box-h" title="Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.">Development focus <span className="rk-info" aria-hidden="true">ⓘ</span></div>
-            {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in the lab. Pick a player below.</div>}
-            {focused.length < FOCUS_SLOTS && (<>
-              <div className="rk-lab-pick"><span>{FOCUS_SLOTS - focused.length} SLOT{FOCUS_SLOTS - focused.length === 1 ? "" : "S"} OPEN</span><span className="rk-sort"><small>Sort</small>{[["pos", "Position"], ["growth", "Growth"]].map(([k, l]) => <button key={k} className={labSort === k ? "on" : ""} aria-pressed={labSort === k} onClick={() => setLabSort(k)}>{l}</button>)}</span></div>
-              <Select value={labPick} onChange={(e) => labAdd(e.target.value)} aria-label="Add a development focus player" placeholder="— choose a player —" style={{ width: "100%" }}>
-                <option value="">— choose a player —</option>
-                {labSort === "growth"
-                  ? roster.filter((p) => !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)
-                  : ["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)}</optgroup>)}
-              </Select>
-            </>)}
+  if (phone) {
+    return (
+      <div className="rk-ph-home">
+        {hasGame ? (
+          <section className="rk-pbc" style={{ "--a": awayT.colors[0], "--h": homeT.colors[0] }}>
+            <div className="rk-pbc-eye">{eyebrow.slice(0, 2).join(" · ")}</div>
+            <div className="rk-pbc-row">
+              {[awayT, null, homeT].map((x, i) => x ? <div key={i} className="rk-pbc-team"><TeamBadge team={x} size={64} decorative /><b>{x.name}</b><span>{rec(x.rec)}</span></div>
+                : <div key={i} className="rk-pbc-mid"><span>{series ? "" : kickoff.split(" · ")[0]}</span><b>{series ? kickoff : kickoff.split(" · ")[1] || "@"}</b>{line && <em>{line}</em>}</div>)}
+            </div>
+            <div className="rk-pbc-stars">{[awayT, homeT].map((x) => { const p = topPlayer(lg, x); return p ? <button key={x.id} className="rk-b" onClick={() => openPlayer?.(p.id)}><b>{p.name}</b><span>{p.pos} · {p.ovr} OVR · {seasonLine(p)}</span></button> : null; })}</div>
           </section>
-        </aside>
+        ) : phaseHero}
+        {todoCard(3)}
+        <div className="rk-tiles">
+          <button className="rk-b rk-tile2" onClick={() => go("roster", "injured")}><Icon name="operations" /><b>Injuries</b><span style={{ color: injN ? "#f97316" : undefined }}>{lg.settings?.injuries === false ? "Turned off" : injN ? `${injN} out${starters.length ? ` · ${starters.length} key` : ""}` : "All healthy"}</span></button>
+          <button className="rk-b rk-tile2" onClick={() => setLabOpen(true)}><Icon name="stats" /><b>Development</b><span>{focused.length ? `${focused.length} of ${FOCUS_SLOTS} in focus` : "Not set"}</span></button>
+          <button className="rk-b rk-tile2 wide" onClick={() => go("standings")}><Icon name="standings" /><b>Standings</b><span>{ORD(divRank)} in the {t.div}{odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}</span><Icon name="chevron" size={16} /></button>
+          <button className="rk-b rk-tile2 wide" onClick={() => go("frontoffice", "contracts")}><Icon name="frontoffice" /><b>Cap space {money(room)}</b><span>{expiring ? `${expiring} expiring` : "No deals expiring"}</span><Icon name="chevron" size={16} /></button>
+        </div>
+        {!hasGame && needsCard}
+        {!hasGame && <BuildYour23 foot={false} onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} />}
+        {storyCard}
+        {dialogs}
       </div>
-      {inboxOpen && <NeedsAttention items={attention} onClose={() => setInboxOpen(false)} />}
-      {prepOpen && <GamePrep onClose={() => setPrepOpen(false)}
-        onPlay={lg.phase === "playoffs" ? act.playPlayoffLive : act.playLive}
-        onSim={lg.phase === "playoffs" ? act.simPlayoffDay : act.simDay} />}
+    );
+  }
+
+  return (
+    <div className="rk-bc-home">
+      {hasGame ? (
+        <section className={`rk-bc${prime ? " prime" : ""}`} style={{ "--a": awayT.colors[0], "--h": homeT.colors[0] }} aria-label={`${awayT.city} ${awayT.name} at ${homeT.city} ${homeT.name}`}>
+          <div className="rk-bc-eye">{eyebrow.join(" · ").toUpperCase()}</div>
+          <BcSide lg={lg} team={awayT} road onPlayer={openPlayer} />
+          <BcSide lg={lg} team={homeT} onPlayer={openPlayer} right />
+          <div className="rk-bc-foot">
+            {venue && <span className="rk-bc-tag">{venue}</span>}
+            {line && <span className="rk-bc-tag">{line}</span>}
+            {gameBtns.map((b) => <button key={b.label} className={`rk-b rk-bc-btn${b.go ? " go" : ""}`} onClick={b.onClick}>{b.label}</button>)}
+          </div>
+        </section>
+      ) : phaseHero}
+      {hasGame ? <div className="rk-bc-cards">{todoCard(3)}{planCard}{storyCard}</div>
+        : <><div className="rk-bc-cards">{needsCard}{todoCard(4)}{PhaseCard({ lg, t, go, slot, series }) || storyCard}</div>
+          <BuildYour23 onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} /></>}
+      {dialogs}
     </div>
+  );
+}
+
+const stripEmoji = (s) => String(s || "").replace(/^[\s\p{Extended_Pictographic}️‍]+/u, "").trim();
+const seasonLine = (p) => (isGoalie(p.pos) ? (p.stats?.gp ? `${gaa(p.stats).toFixed(2)} GAA · ${savePct(p.stats).toFixed(3).slice(1)}` : "no starts yet") : p.stats?.gp ? `${p.stats.g}-${p.stats.a}-${p.stats.pts}` : "no games yet");
+
+// One club on the broadcast card: its name and record, and its star in the club's sweater.
+function BcSide({ lg, team, road, right, onPlayer }) {
+  const p = topPlayer(lg, team);
+  const kit = { ...team, uniform: { ...(team.uniform || {}), home: !road } };
+  return (
+    <div className={`rk-bc-side${right ? " r" : ""}`}>
+      <div className="rk-bc-club">
+        <TeamBadge team={team} size={72} decorative />
+        <small>{team.city.toUpperCase()}</small>
+        <h2>{team.name.toUpperCase()}</h2>
+        <span>{rec(team.rec)}</span>
+        {p && <button className="rk-b rk-bc-star" onClick={() => onPlayer?.(p.id)}><b>{p.name.toUpperCase()}</b><span>{p.pos} · {p.ovr} OVR</span><em>{seasonLine(p)}</em></button>}
+      </div>
+      <div className="rk-bc-art">{p ? <Headshot p={p} team={kit} size={190} decorative /> : null}</div>
+    </div>
+  );
+}
+
+// Biggest needs: every row says why; with no real hole, the weakest spots by their best player.
+function NeedsCard({ lg, t, go, openPlayer }) {
+  const b = offseasonBoard(lg);
+  const nav = (to) => (Array.isArray(to) ? go(to[0], to[1]) : to?.player != null && openPlayer?.(to.player));
+  let rows = b.needs.map((n) => ({ k: n.pos, pos: n.pos, name: n.name, why: n.why || `${n.have} healthy of ${n.target}`, to: n.to }));
+  if (!rows.length) {
+    const ps = t.roster.map((id) => lg.players[id]).filter(Boolean);
+    rows = ["C", "LW", "RW", "LD", "RD", "G"].map((pos) => [pos, ps.filter((p) => p.pos === pos).sort((a, b2) => b2.ovr - a.ovr)[0]]).filter(([, p]) => p).sort((a, b2) => a[1].ovr - b2[1].ovr).slice(0, 3)
+      .map(([pos, p]) => ({ k: pos, pos, name: NEED_NAME[pos], why: `${p.name} rated ${p.ovr}`, to: { player: p.id } }));
+  }
+  return (
+    <section className="rk-bc-card">
+      <div className="rk-bc-h">Biggest needs</div>
+      {rows.map((n) => <button key={n.k} className="rk-b rk-bc-need" onClick={() => nav(n.to)}><PosBadge pos={n.pos} /><b>{n.name}</b><span>{n.why}</span></button>)}
+    </section>
   );
 }
 
@@ -314,168 +361,18 @@ function heroTitle(lg, t) {
   return "Off-season";
 }
 
-// Last results and the next games, one small tile each: tap a result for its box score, an
-// upcoming game to preview it below.
-function WeekStrip({ lg, t, played, upcoming, pick, onPick, onBox }) {
-  const tiles = [...played.map((g) => ({ g, done: true })), ...upcoming.map((g, i) => ({ g, i }))].slice(0, 5);
-  return (
-    <div className="rk-strip" aria-label="Recent and upcoming games">
-      {tiles.map(({ g, done, i }) => {
-        const home = g.h === t.id, o = lg.teams[home ? g.a : g.h];
-        const us = home ? g.hs : g.as, them = home ? g.as : g.hs;
-        const r = done ? (us > them ? "W" : g.ot ? "OTL" : "L") : null;
-        const cur = !done && i === pick;
-        return (
-          <button key={g.id} className={`rk-b rk-tile${cur ? " on" : ""}${done ? " done" : ""}`} style={cur ? { "--c1": t.colors[0] } : undefined}
-            onClick={() => (done ? onBox(g) : onPick(i))} title={`${home ? "vs" : "at"} ${o.city} ${o.name} · ${dayToDate(lg.year, g.day, lg.scheduleStart)}${done ? ` · ${r} ${us}-${them}` : ""}`}>
-            <span className="rk-tile-box"><TeamBadge team={o} size={22} decorative /></span>
-            <span className={`rk-tile-k${r ? ` r-${r}` : ""}`}>{done ? `${r === "OTL" ? "OT" : r} ${us}-${them}` : `${home ? "" : "@ "}${dayToDate(lg.year, g.day, lg.scheduleStart).toUpperCase()}`}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// The gameday card (the football game's matchup portraits): both clubs' best players in their
-// home or road sweaters either side of the logos, puck drop and arena, then each club's record
-// and team ratings, the higher of each pair in green.
-function Portrait({ p, team, road }) {
-  const kit = { ...team, uniform: { ...(team.uniform || {}), home: !road } };
-  return (
-    <figure className="rk-mx-player" style={{ "--c1": team.colors[0], "--c2": team.colors[1] || "#ffffff" }}>
-      <div className="rk-mx-face">{p ? <Headshot p={p} team={kit} size={128} decorative /> : <TeamBadge team={team} size={96} decorative />}</div>
-      <figcaption>
-        <strong>{p ? <PlayerName p={p} showInj={false} /> : `${team.abbr} skaters`}</strong>
-        {p && <span>{p.pos} • {p.ovr} OVR</span>}
-      </figcaption>
-    </figure>
-  );
-}
-function TeamSummary({ team, rating, other }) {
-  const long = team.name.length >= 11;
-  return (
-    <section className="rk-mx-team" aria-label={`${team.city} ${team.name} team ratings`}>
-      <span className="rk-mx-city">{team.city}</span>
-      <h3 className={long ? "long" : ""} title={`${team.city} ${team.name}`}><span>{team.name}</span></h3>
-      <p className="rk-mx-rec">{rec(team.rec)}</p>
-      <div className="rk-mx-ratings">
-        {[["ovr", "OVR"], ["fwd", "OFF"], ["def", "DEF"], ["g", "G"]].map(([k, l]) => <div key={k} className={`rk-mx-rating${(rating?.[k] ?? 0) >= (other?.[k] ?? 0) ? " ahead" : ""}`}><strong>{rating?.[k] ?? "—"}</strong><span>{l}</span></div>)}
-      </div>
-    </section>
-  );
-}
-function MatchupCard({ lg, away, home, label, kickoff, venue, prime, rival, ratingAway, ratingHome, onPrep }) {
-  return (
-    <article className={`rk-mx${prime ? " prime" : ""}${rival ? " rival" : ""}`} style={{ "--mx-a": away.colors[0], "--mx-h": home.colors[0] }} aria-label={`${away.city} ${away.name} at ${home.city} ${home.name}`}>
-      <header className="rk-mx-label">
-        <span>{label}</span>
-        <span className="rk-mx-badges">
-          {rival && <span className="rk-mx-badge rival">RIVALRY</span>}
-          {prime && <span className="rk-mx-badge prime">★ {prime.toUpperCase()}</span>}
-          <button className="rk-b rk-prep" onClick={onPrep} title="Opponent report, game plan and a ready check">🎯 Game prep</button>
-        </span>
-      </header>
-      <div className="rk-mx-field">
-        <div className="rk-mx-matchup">
-          <Portrait p={topPlayer(lg, away)} team={away} road />
-          <div className="rk-mx-logos" aria-hidden="true"><TeamBadge team={away} size={96} decorative /><b>AT</b><TeamBadge team={home} size={96} decorative /></div>
-          <Portrait p={topPlayer(lg, home)} team={home} />
-        </div>
-      </div>
-      <div className="rk-mx-kickoff">{kickoff && <strong>{kickoff}</strong>}{venue && <span>{venue}</span>}</div>
-      <div className="rk-mx-teams">
-        <TeamSummary team={away} rating={ratingAway} other={ratingHome} />
-        <TeamSummary team={home} rating={ratingHome} other={ratingAway} />
-      </div>
-    </article>
-  );
-}
-
-// Top stories: the newest first, as a feature with the club's colours; the rest as cards.
-function Stories({ stories, teamOf, userTid, onAll }) {
-  const icon = (n) => ({ injury: "🚑", scoring: "📈", hot: "🔥", pressure: "👔", milestone: "🏅", coach: "🪑", allstar: "⭐", cup: "🏆", award: "🎖️", prospect: "🌱", draft: "🎯" }[n.type] || "📰");
-  if (!stories.length) return <div className="rk-hm-quiet">Quiet around the league so far. Stories arrive after every week.</div>;
-  return (
-    <>
-      {stories.map((n, i) => {
-        const team = teamOf(n), head = (n.text || "").split(". ")[0], rest = (n.text || "").split(". ").slice(1).join(". ");
-        return (
-          <div key={i} className={`rk-story${i === 0 ? " lead" : ""}${team?.id === userTid ? " mine" : ""}`} style={i === 0 && team ? { "--c1": team.colors[0] } : undefined}>
-            {(team || i === 0) && <div className="rk-story-top">{team && <TeamBadge team={team} size={i === 0 ? 36 : 22} decorative />}{team?.id === userTid && <span className="rk-story-mine">YOUR TEAM</span>}</div>}
-            <b>{icon(n)} {head}</b>
-            {rest && <span>{rest}</span>}
-          </div>
-        );
-      })}
-      <button className="rk-b rk-link" onClick={onAll}>Full log →</button>
-    </>
-  );
-}
-
-// Your injured players, then the biggest names out around the league.
-function InjuryList({ lg, t, onRoster }) {
-  const tag = (p) => (p.ltir ? ["LTIR", "#a855f7"] : p.injury >= 4 ? ["IR", "#ef4444"] : ["OUT", "#f97316"]);
-  const row = (p, team) => { const [k, c] = tag(p); return (
-    <div key={p.id} className="rk-inj-row">
-      {team && <TeamBadge team={team} size={22} decorative />}
-      <div className="rk-inj-who"><b><PlayerName p={p} showInj={false} /> <em>{p.pos} {p.ovr}</em></b><span><i style={{ "--c": c }}>{k}</i>{p.injuryNote ? ` ${p.injuryNote}` : ""} · {p.injury} game{p.injury === 1 ? "" : "s"}</span></div>
-    </div>
-  ); };
-  const mine = t.roster.map((id) => lg.players[id]).filter((p) => p && p.injury > 0).sort((a, b) => b.ovr - a.ovr);
-  const league = lg.teams.filter((x) => x.id !== t.id).flatMap((x) => x.roster.map((id) => lg.players[id]).filter((p) => p && p.injury > 0 && p.ovr >= 78).map((p) => [p, x])).sort((a, b) => b[0].ovr - a[0].ovr).slice(0, 8);
-  if (lg.settings?.injuries === false) return <div className="rk-hm-quiet">Injuries are turned off in Settings.</div>;
-  return (
-    <>
-      <div className="rk-box-h rk-side-h">Your team · {mine.length}</div>
-      {mine.length ? mine.map((p) => row(p, null)) : <div className="rk-hm-quiet good">Fully healthy.</div>}
-      <div className="rk-box-h rk-side-h" style={{ marginTop: 14 }}>Around the league</div>
-      {league.length ? league.map(([p, x]) => row(p, x)) : <div className="rk-hm-quiet">No big names out.</div>}
-      {mine.length > 0 && <button className="rk-b rk-link" onClick={onRoster}>Manage roster →</button>}
-    </>
-  );
-}
-
-// The off-season board: your biggest needs (and why) beside the deals ending, or the young core
-// once free agency opens. Each row opens the screen where you'd act on it.
-function OffseasonBoard({ lg, go, openPlayer }) {
-  const b = offseasonBoard(lg);
-  const nav = (to) => (Array.isArray(to) ? go(to[0], to[1]) : to?.player != null && openPlayer?.(to.player));
-  return (
-    <div className="rk-board">
-      <div className="rk-box">
-        <div className="rk-box-h">Biggest needs</div>
-        {b.needs.length ? b.needs.map((n) => (
-          <button key={n.pos} className="rk-b rk-board-row" onClick={() => nav(n.to)} title={`${n.name}: ${n.have} healthy of ${n.target}`}>
-            <PosBadge pos={n.pos} /><b>{n.name}</b><span className="rk-board-why">{n.why}</span>
-          </button>
-        )) : <div className="rk-hm-quiet">No glaring holes. Build depth and stay young.</div>}
-      </div>
-      <div className="rk-box">
-        <div className="rk-box-h">{b.title}</div>
-        {b.list.map(({ p, note, to }) => (
-          <button key={p.id} className="rk-b rk-board-row" onClick={() => nav(to)} title={note}>
-            <PosBadge pos={p.pos} /><span className="rk-board-name">{p.name}</span><span className="rk-board-age">{p.age}</span><b className="rk-board-ovr" style={{ color: p.ovr >= 85 ? "#22c55e" : p.ovr >= 79 ? "#84cc16" : p.ovr >= 73 ? "#eab308" : "#f97316" }}>{p.ovr}</b>
-          </button>
-        ))}
-        {!b.list.length && <div className="rk-hm-quiet">Nobody yet.</div>}
-      </div>
-    </div>
-  );
-}
-
 // The phase in numbers: the playoff run, the draft, re-signing or free agency.
 function PhaseCard({ lg, t, go, slot, series }) {
   const row = (k, v) => <div key={k} className="rk-phase-row"><small>{k}</small><b>{v}</b></div>;
   let head = null, rows = [], links = [];
   if (lg.phase === "regular" && seasonOver(lg)) {
     const conf = lg.teams.filter((x) => x.conf === t.conf).sort((a, b) => b.rec.pts - a.rec.pts || b.rec.rw - a.rec.rw), rank = conf.findIndex((x) => x.id === t.id) + 1;
-    head = "REGULAR SEASON COMPLETE"; rows = [row("Points", `${t.rec.pts} pts`), row("Finish", `${ORD(rank)} in the ${t.conf}`), row("Playoffs", rank <= 8 ? "Qualified" : "Missed")];
+    head = "Regular season complete"; rows = [row("Points", `${t.rec.pts} pts`), row("Finish", `${ORD(rank)} in the ${t.conf}`), row("Playoffs", rank <= 8 ? "Qualified" : "Missed")];
   } else if (lg.phase === "playoffs") {
     const po = lg.playoffs, champ = po?.champion != null ? lg.teams[po.champion] : null;
     const mine = (po?.rounds || []).flatMap((r, i) => r.filter((x) => x.top === t.id || x.bot === t.id).map((x) => ({ ...x, round: i })));
     const last = mine.at(-1), out = last && last.winner != null && last.winner !== t.id;
-    head = `STANLEY CUP PLAYOFFS · ${champ ? "COMPLETE" : ROUND_UP(po.round)}`;
+    head = `Stanley Cup playoffs · ${champ ? "complete" : ROUND_NAMES[po.round] || ""}`;
     if (series && series.winner == null) rows.push(row("Your series", `${ROUND_NAMES[series.round]} vs ${lg.teams[series.top === t.id ? series.bot : series.top].abbr}`));
     if (out) rows.push(row("Your run", `Out in the ${ROUND_NAMES[last.round]} to ${lg.teams[last.winner].abbr}, ${last.top === t.id ? last.wTop : last.wBot}-${last.top === t.id ? last.wBot : last.wTop}`));
     if (!mine.length) rows.push(row("Your run", "Missed the playoffs"));
@@ -486,16 +383,16 @@ function PhaseCard({ lg, t, go, slot, series }) {
     const taken = Object.values(lg.players).filter((p) => p.draft?.year === lg.draft?.year && p.draft.tid === t.id).sort((a, b) => a.draft.pick - b.draft.pick);
     const picks = (lg.draftPicks || []).filter((p) => p.owner === t.id && p.year === lg.draft?.year).length;
     const grade = done ? teamDraftGrade(lg, t.id) : null;
-    head = `${lg.draft?.year} ENTRY DRAFT${done ? " · COMPLETE" : atCombine(lg) ? " · COMBINE" : ""}`;
+    head = `${lg.draft?.year} Entry Draft${done ? " · complete" : atCombine(lg) ? " · combine" : ""}`;
     rows = done ? [row("Your class", `${taken.length} player${taken.length === 1 ? "" : "s"}${grade ? ` · analysts say ${grade}` : ""}`), ...(taken[0] ? [row("First pick", `${taken[0].name} (#${taken[0].draft.pick})`)] : [])]
       : [row("Your next pick", slot ? `#${slot.overall} overall (round ${slot.round})` : "No picks left"), row("Picks this year", picks)];
   } else if (lg.phase === "resign") {
     const exp = expiringPlayers(lg, t).sort((a, b) => b.ovr - a.ovr);
-    head = `RE-SIGN WINDOW · ${exp.length} EXPIRING`;
+    head = `Re-sign window · ${exp.length} expiring`;
     rows = [row("Cap space next year", money(capSpace(lg, t))), ...exp.slice(0, 3).map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, p.willing === false ? "testing the market" : `asks ${money(resignAsk(lg, p).aav)}`))];
   } else if (lg.phase === "freeagency") {
     const best = (lg.freeAgents || []).map((id) => lg.players[id]).filter(Boolean).sort((a, b) => b.ovr - a.ovr).slice(0, 2);
-    head = `FREE AGENCY · DAY ${lg.fa?.day ?? 0} OF ${FA_DAYS}`;
+    head = `Free agency · day ${lg.fa?.day ?? 0} of ${FA_DAYS}`;
     rows = [row("Cap space", money(capSpace(lg, t))), ...myOffers(lg).slice(0, 4).map(({ p, standing: st }) => row(`Your offer: ${p.name}`, <span className={`gg-bid ${st.standing || st.status}`}>{st.label}{st.status === "pending" ? ` · ${st.daysLeft}d` : ""}</span>)), ...best.map((p) => row(`${p.name} (${p.pos} ${p.ovr})`, `asks ${money(faAsk(lg, p).aav)}`))];
   }
   if (!head) return null;
