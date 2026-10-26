@@ -376,4 +376,9 @@ export const PATCH_NOTES = [
     "The Winter Classic, Stadium Series, Heritage Classic, Hockey Day in Canada, Thanksgiving Showdown, New Year's Eve and Halloween games now get a title card the night before puck drop.",
     "After a special game, the player of the game takes the spotlight in his sweater with the final score behind him. These cards wait until your sim finishes and never stop it.",
   ] },
+  { v: "1.67", date: "2026-10-26", title: "Real Deadline Prices", notes: [
+    "The trade market now follows real NHL deals: a deadline rental goes for about what clubs really paid (Guentzel for a first and prospects, Tanev for a second, a third and a prospect).",
+    "Pending free agents sell at about half their value once the season starts, and older players signed for more years lose value faster after 29.",
+    "Draft picks carry more weight in trades, and stars no longer come with two stacked asking premiums.",
+  ] },
 ];
