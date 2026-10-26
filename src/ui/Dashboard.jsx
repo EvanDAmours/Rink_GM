@@ -204,7 +204,7 @@ export default function Dashboard({ act = {} }) {
     else if (lg.phase === "preseason") { if (act.startSeason) gameBtns.push({ label: "Start season", onClick: act.startSeason, go: 1 }); }
     else if (deadline) gameBtns.push({ label: "Open deadline day", onClick: () => go("deadline"), go: 1 });
     else if (today) { if (act.playLive) gameBtns.push({ label: "Play", onClick: act.playLive, go: 1 }); if (act.simDay) gameBtns.push({ label: "Sim game", onClick: act.simDay }); }
-    else if (act.simDay) gameBtns.push({ label: "Sim to game day", onClick: act.simDay, go: 1 });
+    else if (act.simDay) gameBtns.push({ label: "Sim to next game", onClick: act.simDay, go: 1 });
   }
   const line = prob == null ? null : Math.abs(prob - 0.5) < 0.03 ? "Pick 'em" : `${prob >= 0.5 ? t.abbr : opp.abbr} ${Math.round(Math.max(prob, 1 - prob) * 100)}%`;
   const eyebrow = hasGame ? [cardLabel.replace(/^REGULAR SEASON · /, ""), prime, opp.div === t.div && !series ? "Division" : null, rival ? "Rivalry" : null, kickoff].filter(Boolean) : [];

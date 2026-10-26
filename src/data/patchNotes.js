@@ -391,4 +391,8 @@ export const PATCH_NOTES = [
     "The result card after a holiday or outdoor game now only appears if you played that game live. Simmed special games no longer pop up afterwards.",
     "Fixed the Halloween headline that called a road win a win for the home crowd.",
   ] },
+  { v: "1.70", date: "2026-10-26", title: "Game to Game", notes: [
+    "Simming now goes game to game: Sim game plays your game and skips the off days, landing you on your next game day with Play and Sim game ready. No more pressing Sim day through empty days.",
+    "On a day without a game, the button reads Sim to next game. It still stops at the trade deadline and the end of the season.",
+  ] },
 ];

@@ -399,7 +399,11 @@ export default function App({ resume = false }) {
     },
     simDay: () => {
       if (blockers()) return;
-      L.simDay(league);
+      // One press = one game: sim today, then skip the off days so you land on your next game day
+      // (Play or Sim game ready). Stops at the deadline, season's end or anything that needs you.
+      const toNext = () => { while (league.phase === "regular" && !L.seasonOver(league) && !deadlinePending(league) && !L.userGameOnDay(league) && league.schedule.some((g) => !g.played && (g.h === league.userTid || g.a === league.userTid))) L.simDay(league); };
+      if (league.phase === "regular" && !L.userGameOnDay(league)) toNext();
+      else { L.simDay(league); toNext(); }
       commit();
       // Your game's result card (compact, full or off in Settings) is queued by the engine
       // (engine/momentsResults.js) and shows as a moment; its Box score button opens the box.
@@ -623,7 +627,7 @@ export default function App({ resume = false }) {
           const opp = league.teams[ug.h === user.id ? ug.a : ug.h];
           A.push({ label: `▶ Play Live ${ug.h === user.id ? "vs" : "@"} ${opp.abbr}`, onClick: act.playLive });
           A.push({ label: "Sim Game", onClick: act.simDay, tone: "blue" });
-        } else A.push({ label: "Sim Day", onClick: act.simDay, tone: "blue" });
+        } else A.push({ label: "Sim to next game", onClick: act.simDay, tone: "blue" });
         A.push({ label: "Sim Week", onClick: () => act.simDays(7, "Simulating a week"), tone: "blue" });
         if (league.day < league.deadlineDay) A.push({ label: "Sim to Deadline", onClick: act.simToDeadline, tone: "red", confirm: true });
         A.push({ label: "Sim to End of Season", onClick: act.simToEnd, tone: "violet", confirm: true });
@@ -672,7 +676,7 @@ export default function App({ resume = false }) {
           const opp = league.teams[ug.h === user.id ? ug.a : ug.h];
           deskMain.push(btn("live", `Play ${ug.h === user.id ? "vs" : "@"} ${opp.abbr}`, act.playLive, true));
           deskMain.push(btn("sg", "Sim game", act.simDay));
-        } else deskMain.push(btn("sd", "Sim day", act.simDay, true));
+        } else deskMain.push(btn("sd", "Sim to next game", act.simDay, true));
         deskFF.push(["Sim week", () => act.simDays(7, "Simulating a week")]);
         if (league.day < league.deadlineDay) deskFF.push(["Sim to deadline", act.simToDeadline]);
         deskFF.push(["Sim to end of season", act.simToEnd]);
