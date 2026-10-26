@@ -442,4 +442,7 @@ export const PATCH_NOTES = [
     "Home's To do is now a calm reminder board. Anything that would stop the sim stays at the top, then a few short reminders: pick your focus player, hire a scout, set your scouts' regions. Each one disappears once it's done.",
     "Key contracts get one quiet line from mid-season on, such as \"3 key players need new deals\" with their names. Tap it for Contracts, or Not now to hide it for a month. No more contract-year nags in the inbox.",
   ] },
+  { v: "1.82", date: "2026-10-26", title: "Plainer Holidays", notes: [
+    "Holiday and outdoor game cards drop the emoji art and the extra one-liner (\"One more game before the ball drops\"): just the event, the two clubs and the result.",
+  ] },
 ];

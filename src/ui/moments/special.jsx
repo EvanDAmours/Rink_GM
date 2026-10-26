@@ -46,7 +46,6 @@ export function SpecialIntro({ m, onClose }) {
     <div className={`sp-overlay sp-${m.ev}`} onClick={onClose} role="dialog" aria-modal="true" aria-label={`${e.name}: ${away.name} at ${home.name}`}>
       <Sky ev={m.ev} />
       <div className="sp-intro">
-        <div className="sp-art" aria-hidden>{e.art}</div>
         <div className="sp-eyebrow"><span />{e.eyebrow}<span /></div>
         <div className="sp-name" role="heading" aria-level={1}>{e.name}</div>
         <div className="sp-match">
@@ -54,7 +53,6 @@ export function SpecialIntro({ m, onClose }) {
           <div className="sp-at"><span />AT<span /></div>
           <Club team={home} />
         </div>
-        <p className="sp-line">{e.line}</p>
       </div>
       <button type="button" className="sp-tap" onClick={onClose} autoFocus>Tap for puck drop</button>
     </div>
@@ -78,7 +76,7 @@ export function SpecialResult({ m, onClose }) {
       <div className="sp-stage" onClick={(x) => x.stopPropagation()}>
         <div className="sp-bignum" aria-hidden>{us}–{them}</div>
         <div className="sp-figure">
-          {p ? <Headshot p={p} team={me} size={300} decorative /> : <span className="sp-art big" aria-hidden>{e.art}</span>}
+          {p && <Headshot p={p} team={me} size={300} decorative />}
         </div>
         <div className="sp-text">
           <div className="sp-k">{e.name} · Final{m.ot ? ` (${m.ot})` : ""}</div>
