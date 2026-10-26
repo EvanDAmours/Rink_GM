@@ -273,24 +273,30 @@ export function retirementChance(p) {
 export const REPLACEMENT_OVR = 72;
 const valueCurve = (o) => Math.exp((o - 70) / 6.2);
 const POT_WEIGHT = (age) => (age <= 19 ? 0.55 : age <= 21 ? 0.5 : age === 22 ? 0.4 : age === 23 ? 0.3 : age === 24 ? 0.2 : age === 25 ? 0.1 : 0);
+export const RENTAL_SHARE = 0.48;
+// Hockey players age about two years later than the football curve this is based on.
+export const AGE_TRADE_MULT = (age) => (age <= 28 ? 1 : age === 29 ? 0.92 : age === 30 ? 0.85 : age === 31 ? 0.78 : age === 32 ? 0.68 : age === 33 ? 0.58 : age === 34 ? 0.48 : 0.4);
 export function tradeValue(p, year, { contending = false, rental = 0 } = {}) {
   const eff = p.ovr + Math.max(0, (p.pot ?? p.ovr) - p.ovr) * POT_WEIGHT(p.age);
   let v = valueCurve(eff) - valueCurve(REPLACEMENT_OVR);
   // At or below replacement level: a small negative for the roster spot.
   if (v <= 0) return Math.max(-0.4, v * 0.5);
-  if (p.age >= 35) v *= 0.55;
-  else if (p.age >= 34) v *= 0.65;
-  else if (p.age >= 32) v *= 0.75;
-  else if (p.age >= 29) v *= 0.9;
   // A player in the last year of his deal is a rental once the season is under way: the
-  // buyer gets what is left of it, not a contract. At the deadline that is about 0.64.
+  // buyer gets the rest of this season, not a contract, so he sells at about half his value
+  // (real deadline rentals go for roughly that). His age matters little for a few months.
   // Young expiring players are RFAs: the rights come with them, so no rental discount.
-  if (rental > 0 && p.yrs <= 1 && p.age >= 24) v *= 1 - 0.45 * rental;
-  if (p.yrs > 0) {
-    // Contract: cap hit against what he'd earn, stretched by the years left on it.
-    const surplus = marketValue(p, year) - p.cap;
-    const term = Math.min(Math.max(0, p.yrs - 1), 4);
-    v *= clamp(1 + surplus * 0.05 * (1 + term * 0.15), 0.55, 1.45);
+  const isRental = rental > 0 && p.yrs <= 1 && p.age >= 24;
+  if (isRental) v *= RENTAL_SHARE;
+  else {
+    // Signed beyond this season: value falls fast once a player is past 29.
+    v *= AGE_TRADE_MULT(p.age);
+    if (p.yrs > 0) {
+      // Contract: cap hit against today's market ask, stretched by the years left. Worked
+      // out only when a trade is weighed (it reads this year's cap) and never stored.
+      const surplus = marketValue(p, year) - p.cap;
+      const term = Math.min(Math.max(0, p.yrs - 1), 4);
+      v *= clamp(1 + surplus * 0.05 * (1 + term * 0.15), 0.6, 1.15);
+    }
   }
   if (isGoalie(p.pos)) v *= 0.9;
   // Contenders want help now; rebuilders want youth and pass on veterans.
