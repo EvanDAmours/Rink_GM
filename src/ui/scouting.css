@@ -130,3 +130,19 @@
 .region-card.on { border-color: #22c55e55; }
 @media (max-width: 900px) { .sc-assign-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .sc-assign-grid { grid-template-columns: 1fr; } }
+/* Assignments by scout: each card picks its region from a list that says what the region is deep at */
+.sc-assign-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.sc-assign-card { background: #ffffff0d; border: 0; border-radius: 18px; }
+.sc-regpick { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 6px; }
+.app .main button.sc-regrow:not(.x) { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; text-align: left; gap: 0 8px; padding: 7px 10px; min-height: 44px; border-radius: 12px; background: transparent; border: 0; color: #e2e8f0; cursor: pointer; }
+.app .main button.sc-regrow:not(.x):hover:not(:disabled) { background: #ffffff10; }
+.app .main button.sc-regrow.on:not(.x) { background: #fff; color: #0b1220; }
+.sc-regrow b { font-size: 13px; }
+.sc-regrow span { grid-column: 1; font-size: 11.5px; color: #94a3b8; }
+.sc-regrow.on span { color: #334155; }
+.sc-regrow em { font-style: normal; color: #22c55e; font-weight: 800; }
+.sc-regrow small { grid-column: 2; grid-row: 1 / 3; align-self: center; font-size: 11px; color: #fbbf24; font-weight: 700; }
+.sc-regrow:disabled { opacity: .45; }
+.sc-regions-more > summary { cursor: pointer; font-weight: 800; color: #fff; padding: 8px 2px; font-size: 15px; }
+html.light .app .main button.sc-regrow.on:not(.x) { background: #0f172a; color: #fff; }
+html.light .sc-regions-more > summary { color: #0f172a; }

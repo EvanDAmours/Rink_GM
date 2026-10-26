@@ -857,7 +857,7 @@ export default function App({ resume = false }) {
         )}
         <div id="rk-dock" className="rk-dock" />
         {phone && moreOpen && !live && <MoreSheet groups={moreGroups} actions={moreActions} onClose={() => setMoreOpen(false)} />}
-        {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
+        {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && !(tab === "trade" && tradeSub === "trade") && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
         {phone && !live && <MobileNav items={phoneNav} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />}
         {phone && <TapTips />}
         {confirmEl}

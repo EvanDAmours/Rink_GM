@@ -212,3 +212,34 @@ html.light .rk-msheet { background: #f8fafc; }
 html.light .rk-msheet-list { background: #fff; }
 html.light .app .rk-msheet-list button { color: #0f172a; border-bottom-color: #0f172a0d; }
 html.light .rk-msheet-head > span { color: #0f172a; }
+/* Phones: three-way segments with small chips under them (Scouting: HQ / Board / Scouts) */
+.rk-seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #ffffff0d; border-radius: 14px; padding: 4px; }
+.app .main .rk-seg3 button { min-height: 40px; border-radius: 10px; background: transparent; color: #cbd5e1; font-size: 14px; font-weight: 700; border: 0; }
+.app .main .rk-seg3 button.on { background: #fff; color: #0b1220; }
+.rk-subchips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.app .main .rk-subchips button { min-height: 36px; border-radius: 999px; padding: 0 14px; background: #ffffff12; color: #e2e8f0; font-size: 13px; font-weight: 700; border: 0; }
+.app .main .rk-subchips button.on { background: #fff; color: #0b1220; }
+html.light .rk-seg3 { background: #0f172a0d; }
+html.light .app .main .rk-seg3 button.on, html.light .app .main .rk-subchips button.on { background: #0f172a; color: #fff; }
+/* Phones: the deal sits in a tray pinned above the tab bar while you pick players */
+.rk-phone-app .gg-trade { display: flex; flex-direction: column; }
+.rk-phone-app .gg-trade > .gg-sides { order: 5; }
+.rk-phone-app .gg-trade > .gg-dealbar { order: 6; position: fixed; left: 8px; right: 8px; top: auto; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); max-height: 46dvh; overflow-y: auto; z-index: 30; margin: 0; border: 0; border-radius: 18px 18px 14px 14px; padding: 10px 12px; background: #111827f7; box-shadow: 0 -8px 28px #000a; }
+.rk-phone-app .gg-trade > :not(.gg-sides):not(.gg-dealbar) { order: 1; }
+.rk-phone-app .gg-trade > .gg-dealbar ~ *:not(.gg-sides) { order: 7; }
+.rk-phone-app .gg-dealbar .gg-deal-cols { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; }
+.rk-phone-app .gg-dealbar .gg-deal-mid { min-width: 64px; }
+.rk-phone-app .gg-dealbar .gg-deal-mid .gg-bar { width: 60px !important; }
+.rk-phone-app .gg-dealbar .gg-deal-net { font-size: 18px; }
+.rk-phone-app .gg-dealbar .gg-deal-actions > .dim { display: none; }
+.rk-phone-app .gg-dealbar .gg-deal-actions button { flex: 1; min-height: 44px; }
+.rk-phone-app .gg-dealbar.empty .gg-deal-actions { display: none; }
+.rk-phone-app .gg-trade { padding-bottom: 130px; }
+.rk-phone-app .gg-trade:has(.gg-dealbar:not(.empty)) { padding-bottom: 300px; }
+.rk-phone-app .gg-dealbar .gg-deal-chips { max-height: 64px; overflow-y: auto; }
+.rk-phone-app .gg-dealbar.empty .gg-deal-chips .dim { font-size: 11px; }
+.rk-phone-app .gg-dealbar .gg-deal-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+.rk-phone-app .gg-dealbar .gg-deal-mid { grid-column: 1 / -1; order: -1; flex-direction: row; justify-content: center; gap: 10px; }
+.rk-phone-app .gg-dealbar .gg-deal-col:last-child { text-align: right; align-items: flex-end; }
+.rk-phone-app .gg-dealbar .gg-deal-opts { gap: 4px 12px; }
+.rk-phone-app .gg-dealbar .gg-deal-opts label { min-height: 36px; }

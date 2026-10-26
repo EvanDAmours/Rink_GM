@@ -46,7 +46,7 @@ function RecapView() {
   const [pos, setPos] = useState("all");
   const [teamF, setTeamF] = useState(-1);
   const year = years.includes(pickYr) ? pickYr : years[0];
-  const slotsKey = league.draft?.year === year ? league.draft.idx : -1;
+  const slotsKey = league.draft && league.draft.year === year ? league.draft.idx : -1;
   const rec = useMemo(() => (year ? draftRecap(league, year) : null), [league, year, slotsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const me = league.userTid;
 
