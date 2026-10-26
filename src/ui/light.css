@@ -1614,7 +1614,6 @@ body .app { background: #eef1f6 !important; }
 .rk-sm-legend .l { background: #fee2e2; color: #b91c1c; }
 .rk-sm-legend .o { background: #fef3c7; color: #a16207; }
 .rk-sm-stages span { background: #0f172a0d; color: #475569; }
-.app.app.app .rk-shero-tabs button:hover:not(:disabled) { border-bottom: 3px solid #0f172a55; }
 .app.app .gg-coach-who .gg-k,
 .app.app span.gg-k { color: #475569; }
 .app.app.app .gg-ops-nav button { background: #0f172a12; color: #334155; }
@@ -1659,6 +1658,14 @@ body .app { background: #eef1f6 !important; }
 .app.app.app button.rk-morecols[aria-pressed=true] { background: #0f172a14; color: #0f172a; }
 .app.app .gg-roster-h b { color: #0f172a; }
 .app.app .gg-roster-h span { background: #0f172a12; color: #475569; }
+.app.app.app .gg-tiles small,
+.app.app.app .gg-pagehead .gg-tiles small { color: #475569; }
+.app.app.app span.gg-k { color: #475569; }
+.app.app.app .gg-plan-row small { color: #475569; }
+.app.app .gg-empty b { color: #0f172a; }
+.app.app.app .gg-cal-months { background: #0f172a0d; }
+.app.app.app .gg-cal-months button { color: #334155; }
+.app.app.app button.rk-sb { background: #0f172a12; color: #334155; }
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }

@@ -106,7 +106,7 @@ html, body, body .app { background: #080c14 !important; }
 .app.app.app .rk-bar-nav button { background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; padding: 8px 14px; border-radius: 999px; white-space: nowrap; position: relative; }
 .app.app.app .rk-bar-nav button.on { background: #ffffff14; color: #fff; }
 .app.app.app .rk-bar-nav button:hover:not(:disabled) { color: #fff; background: #ffffff0f; }
-.rk-bar-nav .badge, .rk-shero-tabs .badge, .rk-moremenu .badge { font-size: 9px; background: #16a34a; color: #fff; border-radius: 6px; padding: 1px 5px; font-weight: 900; margin-left: 6px; vertical-align: 2px; }
+.rk-bar-nav .badge, .rk-moremenu .badge { font-size: 9px; background: #16a34a; color: #fff; border-radius: 6px; padding: 1px 5px; font-weight: 900; margin-left: 6px; vertical-align: 2px; }
 .rk-bar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .rk-bar-actions { display: flex; align-items: center; gap: 6px; }
 .app.app.app .rk-bar-actions button { font-size: 14px; font-weight: 800; padding: 8px 16px; border-radius: 999px; min-height: 36px; }
@@ -142,22 +142,8 @@ html, body, body .app { background: #080c14 !important; }
 .rk-sm-links { display: flex; gap: 6px; }
 .app.app.app .rk-sm-links button { font-size: 13px; padding: 7px 14px; border-radius: 999px; }
 
-/* ---------- Section header ---------- */
-.rk-shero { position: relative; border-radius: 20px; overflow: hidden; margin-bottom: 14px; padding: 22px 28px 0; color: #fff; }
-.rk-shero-mark { position: absolute; right: -30px; top: -60px; opacity: .07; pointer-events: none; transform: rotate(-8deg); filter: grayscale(1) brightness(4); }
-.rk-shero-top { position: relative; display: flex; align-items: flex-end; gap: 30px; flex-wrap: wrap; }
-.rk-shero-sub { font-size: 12px; font-weight: 900; letter-spacing: 1.8px; color: #ffffffb3; text-transform: uppercase; }
-.app h1.rk-shero-title { font-size: 46px; font-weight: 700; line-height: 1; text-transform: uppercase; margin: 4px 0 0; color: #fff; letter-spacing: .5px; }
-.rk-shero-stats { display: flex; gap: 30px; margin-left: auto; align-items: flex-end; }
-.rk-shero-stats > div { text-align: right; }
-.rk-shero-stats b { display: block; font-size: 26px; font-weight: 900; line-height: 1; color: #fff; }
-.rk-shero-stats span { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1.2px; color: #ffffffb3; margin-top: 5px; text-transform: uppercase; }
-.rk-shero-tabs { position: relative; display: flex; gap: 4px; margin-top: 18px; flex-wrap: wrap; }
-.app.app.app .rk-shero-tabs button { background: transparent; border-radius: 0; border-bottom: 3px solid transparent; color: #ffffffa6; padding: 8px 14px 12px; font-size: 15px; font-weight: 800; }
-.app.app.app .rk-shero-tabs button:hover:not(:disabled) { background: transparent; color: #fff; border-bottom: 3px solid #ffffff55; }
-.app.app.app .rk-shero-tabs button.on { color: #fff; border-bottom: 3px solid #fff; }
-@media (max-width: 1100px) { .rk-shero-stats { gap: 18px; } .rk-shero-stats b { font-size: 20px; } .app .rk-bar-nav button { padding: 8px 9px; font-size: 14px; } .rk-bar { gap: 10px; } }
-
+/* ---------- Section header: common.jsx PageHead (styles in page.css) ---------- */
+@media (max-width: 1100px) { .app .rk-bar-nav button { padding: 8px 9px; font-size: 14px; } .rk-bar { gap: 10px; } }
 /* With a section header on top, a screen's own title, status line and number tiles repeat it. */
 .app.app .main.rk-heroed .gg-pagehead h2, .app.app .main.rk-heroed .gg-pagehead .gg-status, .app.app .main.rk-heroed .gg-pagehead .gg-tiles,
 .app.app .main.rk-heroed > .stack > .pagehead > h2, .app.app .main.rk-heroed .gg-embed .pagehead > h2 { display: none; }

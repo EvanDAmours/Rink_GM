@@ -163,7 +163,7 @@ export default function TradeBlockPage() {
             Around the league
             <span className="right row" style={{ gap: 4 }}>
               {[["all", "All"], ["F", "Forwards"], ["D", "Defense"], ["G", "Goalies"]].map(([k, l]) => (
-                <button key={k} className={`tiny${pos === k ? " primary" : ""}`} onClick={() => setPos(k)}>{l}</button>
+                <button key={k} className={`tiny rk-sb${pos === k ? " on" : ""}`} onClick={() => setPos(k)}>{l}</button>
               ))}
             </span>
           </h3>

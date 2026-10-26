@@ -46,7 +46,7 @@ export default function BoxScoreModal({ game }) {
             <div className="list">
               {g.stars.map((id, i) => (
                 <div className="item" key={id}>
-                  <span>{"⭐".repeat(3 - i)}</span>
+                  <span>{"★".repeat(3 - i)}</span>
                   <PlayerName p={name(id)} />
                   <span className="muted small">{name(id) ? league.teams[name(id).tid]?.abbr : ""}</span>
                 </div>

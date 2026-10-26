@@ -115,7 +115,7 @@ export default function LeaguePage({ view: forced }) {
                 <span>{t.text}</span>
               </div></React.Fragment>
             ); })}
-            {!league.transactions.length && <div className="gg-empty"><i>📰</i><b>No transactions yet</b>Signings, trades, waivers and call-ups around the league land here.</div>}
+            {!league.transactions.length && <div className="gg-empty"><b>No transactions yet</b>Signings, trades, waivers and call-ups around the league land here.</div>}
           </div>
         </div>
       )}

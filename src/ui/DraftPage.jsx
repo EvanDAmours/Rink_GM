@@ -169,7 +169,7 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
       </h3>
       <div className="row" style={{ gap: 4, marginBottom: 8 }}>
         {POSITIONS.map((x) => (
-          <button key={x} className={`small${pos === x ? " primary" : ""}`} onClick={() => { setPos(x); setN(PAGE); }}>{x === "all" ? "All" : x}</button>
+          <button key={x} className={`small rk-sb${pos === x ? " on" : ""}`} onClick={() => { setPos(x); setN(PAGE); }}>{x === "all" ? "All" : x}</button>
         ))}
       </div>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
@@ -676,7 +676,7 @@ function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, o
             <h3>Draft order</h3>
             <div className="row" style={{ gap: 4, marginBottom: 8 }}>
               {Array.from({ length: DRAFT_ROUNDS }, (_, i) => i + 1).map((r) => (
-                <button key={r} className={`small${round === r ? " primary" : ""}`} onClick={() => setRound(r)}>{phone ? `R${r}` : `Round ${r}`}</button>
+                <button key={r} className={`small rk-sb${round === r ? " on" : ""}`} onClick={() => setRound(r)}>{phone ? `R${r}` : `Round ${r}`}</button>
               ))}
             </div>
             <div className="dorder">{d.slots.filter((s) => s.round === round).map(slotLine)}</div>

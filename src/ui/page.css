@@ -133,3 +133,32 @@ html.light .app.app .gg-roster-h b { color: #0f172a; }
 .app.app.app .gg-tiles small, .app.app.app .gg-pagehead .gg-tiles small { font-size: 12px; font-weight: 700; color: #94a3b8; }
 .app.app.app span.gg-k { letter-spacing: 0; text-transform: none; font-size: 13px; font-weight: 700; color: #94a3b8; }
 .app.app.app .gg-rec small { font-size: 12px; font-weight: 700; }
+.app.app.app .gg-plan-row small { font-size: 13px; font-weight: 700; color: #94a3b8; }
+
+/* ---------- Empty states: one calm card, a plain line and a grey sentence ---------- */
+.app.app .gg-empty { border: 0; background: var(--soft-card); border-radius: 18px; padding: 26px 18px; color: #94a3b8; font-size: 14px; }
+.app.app .gg-empty b { text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 800; color: #f1f5f9; }
+.app.app .gg-empty i { display: none; }
+html.light .app.app .gg-empty b { color: #0f172a; }
+
+/* ---------- Trade partner: the quick-pick logos alone (the record and cap live on the card below) ---------- */
+.app.app .gg-partner-logos .gg-pl-rec, .app.app .gg-partner-logos .gg-pl-cap { display: none; }
+
+/* ---------- Schedule months: the same segmented control ---------- */
+.app.app.app .gg-cal-months { display: inline-flex; flex-wrap: wrap; gap: 2px; background: #ffffff0d; border-radius: 999px; padding: 4px; }
+.app.app.app .gg-cal-months button { background: transparent; border: 0; border-radius: 999px; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 700; color: #cbd5e1; padding: 5px 12px; min-height: 28px; }
+.app.app.app .gg-cal-months button.on { background: #fff; color: #0b1220; }
+html.light .app.app.app .gg-cal-months { background: #0f172a0d; }
+html.light .app.app.app .gg-cal-months button.on { background: #0f172a; color: #fff; }
+@media (max-width: 760px) { .app.app.app .gg-cal-months { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; scrollbar-width: none; } .app.app.app .gg-cal-months button { flex: 0 0 auto; } }
+
+/* ---------- The desktop bar: search folds to its icon below 1600px so all eight sections fit beside the phase's buttons ---------- */
+@media (max-width: 1599px) { .app.app.app button.rk-search { width: 38px; height: 38px; padding: 0; justify-content: center; } .app.app .rk-search-t, .app.app .rk-search kbd { display: none; } }
+
+/* Small filter buttons (draft rounds, positions, recap filters): selected white like every chip, never green. */
+.app.app.app button.rk-sb { background: #ffffff12; color: #cbd5e1; border: 0; border-radius: 999px; font-weight: 700; }
+.app.app.app button.rk-sb.on { background: #fff; color: #0b1220; }
+html.light .app.app.app button.rk-sb { background: #0f172a0f; color: #334155; }
+html.light .app.app.app button.rk-sb.on { background: #0f172a; color: #fff; }
+/* Phones show the roster as cards, so the table's column toggle has nothing to do there. */
+.app.rk-phone-app .gg-roster .rk-morecols { display: none; }

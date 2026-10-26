@@ -212,7 +212,7 @@ export default function TradePage({ seed }) {
         <div className="gg-chips"><button className={finder ? "on" : ""} onClick={() => setFinder(!finder)} aria-expanded={finder}>Trade Finder</button></div>
       </div>
       {closed && <div className="notice warn">Trading is frozen until the playoffs end.</div>}
-      {deadlineActive(league) && <div className="notice">⏰ Trade Deadline Day: it's {fmtClock(league.deadline.minute)} ET. Deals close at 3:00 PM. <span className="link" onClick={() => go("deadline")}>Back to the deadline desk →</span></div>}
+      {deadlineActive(league) && <div className="notice">Trade Deadline Day: it's {fmtClock(league.deadline.minute)} ET. Deals close at 3:00 PM. <span className="link" onClick={() => go("deadline")}>Back to the deadline desk →</span></div>}
       {finder && <TradeFinder league={league} user={user} onLoad={(tid, pid, qid) => { setPartner(tid); setGive([pid]); setGet([qid]); setGivePicks([]); setGetPicks([]); setFinder(false); }} />}
 
       <div className="gg-partner">
