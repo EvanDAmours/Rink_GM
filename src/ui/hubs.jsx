@@ -15,8 +15,7 @@ import { frenzyFor } from "../engine/frenzy.js";
 import StandingsPage from "./StandingsPage.jsx";
 import PlayoffsPage from "./PlayoffsPage.jsx";
 import LeaguePage from "./LeaguePage.jsx";
-import DevelopmentPage from "./DevelopmentPage.jsx";
-import PipelinePage from "./PipelinePage.jsx";
+import DevelopmentDesk from "./DevelopmentDesk.jsx";
 import CapOverview, { CapGuide } from "./CapOverview.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
@@ -73,17 +72,9 @@ export function FrontOfficeHub({ sub, onSub }) {
   );
 }
 
-// Player development gets its own front door: the plan, the prospect watch and the pipeline.
+// Development is its own section: Overview · Season plan · Prospects (DevelopmentDesk.jsx).
 export function DevelopmentHub({ sub, onSub }) {
-  const { league } = useGame();
-  const t = league.teams[league.userTid];
-  const rising = [...t.roster, ...t.prospects].map((id) => league.players[id]).filter((p) => p && (p.lastChange || 0) >= 2).length;
-  const tabs = [["development", "Development"], ["pipeline", "Pipeline"]];
-  return (
-    <Hub title="Player Development" status={`${t.prospects.length} on the farm · ${rising} players up 2+ since last season · focus slots, the prospect watch and the pipeline`} tabs={tabs} sub={sub} onSub={onSub}>
-      {(cur) => (cur === "pipeline" ? <PipelinePage /> : <DevelopmentPage />)}
-    </Hub>
-  );
+  return <DevelopmentDesk sub={sub} onSub={onSub} />;
 }
 
 export function TradeHub({ sub, onSub, seed }) {

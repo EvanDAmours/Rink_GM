@@ -11,7 +11,7 @@ import { SURFACES, TEXT, BORDERS, KEEP_DARK } from "../src/ui/theme.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // load order: the screens' own stylesheets (imported with App), then main.jsx's.
 export const FILES = [
-  "src/ui/broadcast.css", "src/ui/negotiate.css", "src/ui/callup.css", "src/ui/contracts.css", "src/ui/draft.css", "src/ui/home.css", "src/ui/legacy.css", "src/ui/lines.css", "src/ui/live.css",
+  "src/ui/broadcast.css", "src/ui/negotiate.css", "src/ui/callup.css", "src/ui/contracts.css", "src/ui/draft.css", "src/ui/home.css", "src/ui/legacy.css", "src/ui/lines.css", "src/ui/dev.css", "src/ui/live.css",
   "src/ui/prep.css", "src/ui/scouting.css", "src/ui/standings.css",
   "src/styles.css", "src/ui/premium.css", "src/ui/clubhouse.css", "src/ui/gridiron.css", "src/ui/soft.css", "src/ui/mobile.css",
 ];

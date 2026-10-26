@@ -31,7 +31,7 @@ function lineSlots(team) {
 }
 // Status badges beside a name (the football game's roster badges), so the whole roster reads
 // at a glance: hurt (IR or out), LTIR, on waivers, a trade request, the last year of his deal
-// (or an extension signed), a rookie, and a development focus slot.
+// (or an extension signed), a rookie, and your focus player.
 export function rosterBadges(league, team, p) {
   const b = [];
   if (p.ltir) b.push(["rb-ltir", "LTIR", `Long-term injured reserve${p.injury > 0 ? `: out ${p.injury} more game${p.injury === 1 ? "" : "s"}` : ""}. His cap hit comes off the cap while he's out.`]);
@@ -41,7 +41,7 @@ export function rosterBadges(league, team, p) {
   if (p.extension) b.push(["rb-ext", "EXTENDED", `Extended: ${p.extension.yrs} more year${p.extension.yrs === 1 ? "" : "s"} at ${money(p.extension.aav)} from next season.`]);
   else if (p.signed !== false && p.yrs <= 1 && team?.roster.includes(p.id)) b.push(["rb-exp", p.yrs === 0 ? "EXPIRED" : "EXPIRING", p.yrs === 0 ? "His contract is up: re-sign him or he reaches free agency." : "Contract year: the last season of his deal."]);
   if (p.rookie) b.push(["rb-rook", "ROOKIE", "First NHL season: Calder-eligible."]);
-  if (team?.training?.assignments?.[p.id]) b.push(["rb-dev", "FOCUS", "Development focus: banks training work each week."]);
+  if (team?.devPlan?.year === league.year && team.devPlan.focus === p.id) b.push(["rb-dev", "FOCUS", "Your focus player: a weekly chance of +1 OVR all season."]);
   return b;
 }
 function RosterBadges({ p, team }) {
@@ -187,7 +187,7 @@ export default function RosterPage() {
         </div>
       )}
       <div className="gg-chips gg-ro-tabs" role="tablist" aria-label="Roster views">
-        {[["roster", `NHL Roster (${c.active}/${MAX_ROSTER})`], ["minors", `Minors & Prospects (${minors.length})`], ["injured", `Injured & LTIR (${injured.length})`], ["contracts", "Contracts"], ...(league.phase === "preseason" ? [["camp", "Training camp"]] : [])].map(([k, l]) => <button key={k} role="tab" aria-selected={shown === k} className={shown === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
+        {[["roster", `NHL Roster (${c.active}/${MAX_ROSTER})`], ["minors", `Minors & Prospects (${minors.length})`], ["injured", `Injured & LTIR (${injured.length})`], ["contracts", "Contracts"], ...(league.phase === "preseason" ? [["camp", "Preseason games"]] : [])].map(([k, l]) => <button key={k} role="tab" aria-selected={shown === k} className={shown === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
       </div>
 
       {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small rk-rlegend">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor · <span className="rk-rb rb-inj">OUT</span> injured · <span className="rk-rb rb-ltir">LTIR</span> · <span className="rk-rb rb-wv">WAIVERS</span> · <span className="rk-rb rb-tr">TRADE REQ</span> · <span className="rk-rb rb-exp">EXPIRING</span> · <span className="rk-rb rb-rook">ROOKIE</span></span></div>}

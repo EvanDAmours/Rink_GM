@@ -66,6 +66,7 @@ import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js
 import { staffGapText } from "./engine/franchise.js";
 import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
+import { devView } from "./ui/DevelopmentDesk.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
 import { usePhone, desktopUrl, phoneUrl, swipeHandlers } from "./ui/mobile.js";
@@ -80,7 +81,7 @@ import { capOverview } from "./engine/capOverview.js";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"standings",label:"Standings",short:"Standings"},
-  {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Player Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
+  {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
   {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
   {id:"league",label:"League",short:"League"},{id:"legacy",label:"Legacy Hall",short:"Legacy Hall",tiny:"Legacy"},
 ];
@@ -88,7 +89,7 @@ const NAV = [
 const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:"Game updates"},{id:"settings",label:"Settings"}];
 // Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
 const ALIAS = { roster:["lines","roster"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], frenzy:["trade","frenzy"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], development:["development","development"], pipeline:["development","pipeline"] };
+  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], frenzy:["trade","frenzy"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], pipeline:["development","prospects"] };
 // Phones keep the standings, stats, schedule and playoffs on one screen with a chip for each.
 const PHONE_ALIAS = { standings:["season","standings"], stats:["season","stats"], schedule:["season","schedule"], playoffs:["season","playoffs"] };
 
@@ -610,7 +611,9 @@ export default function App({ resume = false }) {
   const phoneNav = [
     { key: "home", icon: "home", label: "Home", on: tab === "dashboard", onClick: () => go("dashboard") },
     { key: "lines", icon: "lines", label: "Lines", on: tab === "lines" && !(league.phase === "preseason" && linesSub === "roster"), onClick: () => go("lines", "lines") },
-    { key: "draft", icon: league.phase === "draft" ? "draft" : "search", label: league.phase === "draft" ? "Draft" : "Scouting", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") },
+    // Development is the middle tab; the Draft takes its place while the draft runs.
+    league.phase === "draft" ? { key: "draft", icon: "draft", label: "Draft", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") }
+      : { key: "development", icon: "stats", label: "Development", on: tab === "development", onClick: () => go("development") },
     PHASE_ITEM[league.phase] || PHASE_ITEM.regular,
   ];
   // The day's main action, then the rest behind the ▾ (the same act functions as the top bar's).
@@ -719,12 +722,12 @@ export default function App({ resume = false }) {
   const openSub = (t, k) => { setTab(t); setSub(t, k); setMoreOpen(false); };
   const jump = (t, k, label, cur) => ({ key: `${t}-${k}`, label, on: tab === t && cur === k, onClick: () => openSub(t, k) });
   const moreJumps = [
-    { label: "Lines", items: [jump("lines", "lines", "Lines", linesSub), jump("lines", "roster", league.phase === "preseason" ? "Roster & camp" : "Roster", linesSub)] },
+    { label: "Lines", items: [jump("lines", "lines", "Lines", linesSub), jump("lines", "roster", league.phase === "preseason" ? "Roster & preseason games" : "Roster", linesSub)] },
     { label: "Season", items: SEASON_TABS.map(([k, l]) => jump("season", k, l, sub.season || "standings")) },
     { label: "Trade & Market", items: [jump("trade", "trade", "Trade Center", tradeSub), jump("trade", "block", "Trade Block", tradeSub), jump("trade", "fa", league.phase === "resign" ? "Re-sign" : "Free Agency", tradeSub), ...(tradeDeadlineOpen ? [jump("trade", "deadline", "Deadline Day", tradeSub)] : [])] },
     { label: "Front Office", items: [["overview", "Overview"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]].map(([k, l]) => jump("frontoffice", k, l, sub.frontoffice || "overview")) },
     { label: "Coaching", items: [jump("coaching", "coaching", "Head coach", sub.coaching || "coaching"), jump("coaching", "plan", "Game plan", sub.coaching || "coaching")] },
-    { label: "Development", items: [jump("development", "development", "Development", sub.development || "development"), jump("development", "pipeline", "Pipeline", sub.development || "development")] },
+    { label: "Development", items: [["overview", "Overview"], ["plan", "Season plan"], ["prospects", "Prospects"]].map(([k, l]) => jump("development", k, l, devView(sub.development))) },
     { label: "League", items: [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]].map(([k, l]) => jump("league", k, l, sub.league || "standings")) },
   ];
   // phones: swipe sideways to the next or previous section of the hub you're in
@@ -794,8 +797,8 @@ export default function App({ resume = false }) {
     const first = picks.slice().sort((a, b) => a.round - b.round)[0];
     return { capSpace: space, active: c.active, injured: inj, goalDiff, draftYear: dy, picks: picks.length, firstPick: first ? `Round ${first.round}` : null, reports: user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0, offers: userOffers(league).length, payroll: payroll(league, user), expiring: capOverview(league, user).expiring, fans: Math.round(user.owner?.fanSupport ?? 60) };
   })() : null;
-  // The Lineup screen has its own plain title and section tabs (LinesPage), so no hero there.
-  const bareLines = tab === "lines" && (sub.lines || "lines") === "lines";
+  // The Lineup and Development screens have their own plain title and section pills, so no hero there.
+  const bareLines = (tab === "lines" && (sub.lines || "lines") === "lines") || tab === "development";
   const hero = heroH && !bareLines && <SectionHero team={user} sub={`${user.city} ${user.name}`} title={where.section.label}
     stats={heroStats(where.section.id, league, user, heroH)}
     tabs={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}

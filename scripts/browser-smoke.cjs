@@ -26,8 +26,8 @@ const args=process.env.CHROMIUM_SERVERLESS==='1'?require(process.env.CHROMIUM_MO
  await page.getByRole('button',{name:'Club news and inbox',exact:true}).click();assert.ok(await page.getByRole('heading',{name:'Club activity',exact:true}).isVisible());await page.getByRole('button',{name:/^Transactions/}).click();assert.ok(await page.locator('.activity-feed').isVisible());
  console.log('Keyboard search, modal focus/Escape, roster filtering/sorting and club inbox passed');
  await nav('Front Office');await page.locator('.gg-hub-chips').getByRole('button',{name:'Operations',exact:true}).click();
- for(const label of ['Roster & rights','Agents & offers','Development','Career & arena','Events & legacy','Draft lab']){await page.locator('.gg-ops').getByRole('button',{name:label,exact:true}).click();assert.ok((await page.locator('.main').innerText()).length>300);console.log('Desktop operations:',label);}
- await page.locator('.gg-ops').getByRole('button',{name:'Development',exact:true}).click();await page.getByRole('button',{name:'Run camp battles',exact:true}).click();
+ for(const label of ['Roster & rights','Agents & offers','Career & arena','Events & legacy','Draft lab']){await page.locator('.gg-ops').getByRole('button',{name:label,exact:true}).click();assert.ok((await page.locator('.main').innerText()).length>300);console.log('Desktop operations:',label);}
+ 
  await page.locator('.gg-ops').getByRole('button',{name:'Career & arena',exact:true}).click();await page.getByRole('button',{name:'Upgrade',exact:true}).first().click();assert.ok(await page.getByText('Level 1/3',{exact:true}).count());
  await page.screenshot({path:qaDir+'/career-desktop.png',fullPage:true});
  await nav('League');await page.locator('.gg-hub-chips').getByRole('button',{name:'Legacy Hall',exact:true}).click();await page.waitForTimeout(200);await page.screenshot({path:qaDir+'/cup-desktop.png',fullPage:true});

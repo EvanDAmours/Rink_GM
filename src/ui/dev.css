@@ -1,0 +1,127 @@
+/* Development (round 3, "calm"): the Lineup shell (section pills, a sentence-case title, soft
+   cards) with one big sentence per screen, plain lists and sheets for the detail.
+   Scoped under .app.app .dvx (the page), .dv-sheet (its sheets) and .dv-strip (Home's one line). */
+.app.app .dvx { display: flex; flex-direction: column; padding: 10px 14px 40px; color: #f1f5f9; min-width: 0; }
+.app.app.app .dvx button, .app.app.app .dv-sheet button.dv-opt, .app.app.app .dv-sheet button.dv-li, .app.app.app .dv-sheet button.dv-qlink, .app.app.app .dv-strip button { font-family: inherit; text-transform: none; letter-spacing: 0; }
+
+/* section pills */
+.app.app .dvx .dv-pills { display: flex; gap: 4px; margin: 0 0 14px; }
+.app.app.app .dvx .dv-pills button { background: transparent; border: 0; border-radius: 999px; color: #94a3b8; font-size: 13.5px; font-weight: 700; padding: 7px 12px; min-height: 32px; }
+.app.app.app .dvx .dv-pills button.on { background: #ffffff14; color: #f1f5f9; }
+.app.app.app .dvx .dv-pills button:hover:not(.on) { color: #e2e8f0; background: #ffffff0a; }
+
+/* the one big sentence */
+.app.app .dv-hs { font-size: 38px; font-weight: 800; letter-spacing: -.015em; line-height: 1.15; margin: 22px 0 8px; color: #f1f5f9; font-family: inherit; text-transform: none; text-wrap: balance; }
+.app.app .dv-hs .up, .app.app .dv-sheet .up, .app.app .dv-strip .up { color: #4ade80; }
+.app.app .dv-hs .down, .app.app .dv-sheet .down, .app.app .dv-strip .down { color: #f87171; }
+.app.app .dv-hsub { color: #94a3b8; font-size: 15px; font-weight: 600; margin: 0 0 34px; line-height: 1.45; }
+.app.app .dv-lbl { color: #94a3b8; font-size: 13px; font-weight: 700; margin: 0 0 0 2px; }
+.app.app .dv-segw { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px 0; min-height: 38px; gap: 10px; }
+
+/* lists: a name, one plain reason, one number or one word */
+.app.app .dv-list { background: #ffffff0d; border-radius: 18px; padding: 4px 22px; }
+.app.app .dv-list.inset { background: #ffffff09; }
+.app.app.app button.dv-li { display: flex; align-items: center; gap: 16px; width: 100%; padding: 18px 0; background: transparent; border: 0; border-radius: 0; text-align: left; color: inherit; min-height: 0; cursor: pointer; }
+.app.app.app button.dv-li:hover { background: transparent; }
+@media (hover: hover) { .app.app.app button.dv-li:hover .dv-tx b { text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 3px; } }
+.app.app.app .dv-li + .dv-li { border-top: 1px solid #ffffff10; }
+.app.app .dv-tx { flex: 1; min-width: 0; display: block; }
+.app.app .dv-tx b { display: block; font-size: 16px; font-weight: 700; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app.app .dv-tx > span { display: block; color: #94a3b8; font-size: 13.5px; font-weight: 500; margin-top: 3px; line-height: 1.4; }
+.app.app .dv-n { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; color: #f1f5f9; flex: none; }
+.app.app .dv-n.up, .app.app .dv-w.up { color: #4ade80; }
+.app.app .dv-n.down, .app.app .dv-w.down { color: #f87171; }
+.app.app .dv-w { font-weight: 800; font-size: 14px; color: #e2e8f0; min-width: 84px; text-align: right; flex: none; }
+.app.app .dv-w.warn { color: #fbbf24; }
+.app.app .dv-w.dim { color: #94a3b8; font-weight: 700; }
+.app.app .dv-chev { color: #64748b; font-weight: 800; font-size: 18px; flex: none; }
+.app.app .dv-empty { color: #94a3b8; font-size: 14px; padding: 18px 0; }
+.app.app.app button.dv-qlink { background: transparent; border: 0; padding: 0; margin: 14px 2px 0; min-height: 0; color: #94a3b8; font-weight: 700; font-size: 14px; cursor: pointer; }
+.app.app.app button.dv-qlink:hover { color: #e2e8f0; background: transparent; }
+.app.app.app button.dv-qlink.sm { margin-top: 12px; font-size: 13px; }
+
+/* Overview: two columns on a computer */
+.app.app .dv-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.app.app .dv-seg { display: inline-flex; background: #ffffff0d; border-radius: 999px; padding: 4px; gap: 2px; }
+.app.app.app .dv-seg button { background: transparent; border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: #cbd5e1; min-height: 30px; white-space: nowrap; }
+.app.app.app .dv-seg button.on { background: #fff; color: #0b1220; }
+.app.app.app button.dv-planline { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 14px 22px; background: #ffffff09; border: 0; border-radius: 16px; color: inherit; text-align: left; min-height: 0; }
+.app.app.app button.dv-planline:hover { background: #ffffff10; }
+.app.app .dv-planline .dv-k { color: #94a3b8; font-size: 13px; font-weight: 700; flex: none; }
+.app.app .dv-planline b { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Season plan: three calm cards and one button */
+.app.app .dv-top3 { text-align: center; }
+.app.app .dv-top3 .dv-hs { margin-top: 26px; }
+.app.app .dv-wrap { max-width: 720px; width: 100%; margin: 0 auto; }
+.app.app .dv-wrap.wide { max-width: 760px; }
+.app.app .dv-stp { display: flex; align-items: center; gap: 18px; background: #ffffff0d; border-radius: 18px; padding: 22px 24px; }
+.app.app .dv-stp + .dv-stp { margin-top: 12px; }
+.app.app .dv-no2 { width: 30px; height: 30px; border-radius: 99px; background: #ffffff14; display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #cbd5e1; flex: none; }
+.app.app .dv-stp .dv-tx small { display: block; color: #94a3b8; font-size: 13px; font-weight: 700; }
+.app.app .dv-stp .dv-tx b { font-size: 20px; font-weight: 800; margin-top: 4px; white-space: normal; }
+.app.app .dv-stp .dv-tx > span { font-size: 14px; font-weight: 500; }
+.app.app.app button.dv-ch { color: #cbd5e1; font-weight: 700; font-size: 14px; background: #ffffff10; border: 0; border-radius: 999px; padding: 8px 16px; min-height: 36px; flex: none; }
+.app.app.app button.dv-ch:hover { background: #ffffff1c; color: #fff; }
+.app.app .dv-lockb { margin-top: 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.app.app.app button.dv-btn { height: 48px; padding: 0 40px; border-radius: 999px; font-size: 15px; font-weight: 700; border: 0; }
+.app.app.app button.dv-btn.primary { background: #16a34a; color: #fff; }
+.app.app.app button.dv-btn.primary:hover { background: #15803d; }
+.app.app.app button.dv-btn.quiet { background: #ffffff14; color: #e2e8f0; }
+
+/* Sheets */
+.app .modal.dv-sheet .modal-title { font-size: 22px; font-weight: 800; }
+.app .modal.dv-sheet .rk-dsub { font-size: 14px; font-weight: 600; margin: -2px 2px 16px; }
+.app.app .dv-opts { display: flex; flex-direction: column; gap: 8px; }
+.app.app .dv-opts.scroll { max-height: 52vh; overflow-y: auto; }
+.app.app .dv-opt { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: #ffffff09; border: 0; color: inherit; text-align: left; width: 100%; min-height: 0; }
+.app.app.app button.dv-opt { cursor: pointer; }
+.app.app.app button.dv-opt:hover { background: #ffffff10; }
+.app.app .dv-opt.on, .app.app.app button.dv-opt.on:hover { box-shadow: inset 0 0 0 2px #22c55e; background: #16a34a12; }
+.app.app .dv-opt .dv-tx b { white-space: normal; }
+.app.app .dv-opt .dv-tx b em { font-style: normal; color: #94a3b8; font-weight: 600; font-size: 14px; }
+.app.app .dv-opt .dv-n { font-size: 24px; }
+.app.app .dv-note { color: #94a3b8; font-size: 13px; font-weight: 600; margin: 12px 2px 0; }
+.app .modal.dv-report .dv-list { padding: 2px 18px; }
+.app .modal.dv-report .modal-title { font-size: 28px; letter-spacing: -.01em; }
+
+/* Home: the one line */
+.app.app .dv-strip { display: flex; align-items: center; gap: 14px; background: #ffffff0d; border-radius: 18px; padding: 14px 20px; margin-top: 16px; }
+.app.app .dv-strip-k { color: #94a3b8; font-size: 14px; font-weight: 600; }
+.app.app .dv-strip b { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; color: #f1f5f9; }
+.app.app .dv-strip b .up, .app.app .dv-strip b .down { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-size: 20px; }
+
+@media (max-width: 700px) {
+  .app.app .dvx { padding: 4px 4px 28px; }
+  .app.app .dvx .dv-pills { margin-bottom: 8px; }
+  .app.app.app .dvx .dv-pills button { font-size: 15px; padding: 9px 15px; min-height: 40px; }
+  .app.app .dv-hs { font-size: 30px; margin-top: 18px; }
+  .app.app .dv-hsub { margin-bottom: 26px; font-size: 14px; }
+  .app.app .dv-two { display: block; }
+  .app.app .dv-two > div + div { margin-top: 28px; }
+  .app.app .dv-segw { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .app.app .dv-list { padding: 2px 16px; }
+  .app.app.app button.dv-li { padding: 16px 0; }
+  .app.app .dv-top3 { text-align: left; }
+  .app.app .dv-top3 .dv-hs { margin-top: 18px; }
+  .app.app .dv-stp { padding: 18px 16px; gap: 12px; }
+  .app.app .dv-stp .dv-tx b { font-size: 17px; }
+  .app.app.app .dv-lockb button.dv-btn { width: 100%; }
+  .app.app .dv-strip { margin-top: 0; padding: 14px 16px; }
+  .app.app .dv-planline { padding: 14px 16px; }
+}
+
+/* Roster › Preseason games */
+.app.app .dv-pre { display: flex; flex-direction: column; gap: 16px; margin-top: 6px; }
+.app.app .dv-pre-h { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.app.app .dv-pre-h > div:first-child { flex: 1 1 320px; min-width: 0; }
+.app.app .dv-pre-h h2 { margin: 0; font-size: 24px; font-weight: 800; color: #f1f5f9; font-family: inherit; text-transform: none; letter-spacing: -.01em; }
+.app.app .dv-pre-h p { margin: 4px 0 0; color: #94a3b8; font-size: 14px; font-weight: 600; line-height: 1.45; }
+.app.app .dv-pre-r { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.app.app.app button.dv-ch.on { background: #7f1d1d; color: #fecaca; }
+.app.app.app button.dv-btn.sm { height: 40px; padding: 0 22px; font-size: 14px; }
+.app.app.app button.dv-btn:disabled { opacity: .5; }
+.app.app.app button.dv-inlink { background: transparent; border: 0; padding: 0; min-height: 0; color: #e2e8f0; font-weight: 700; font-size: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.app.app .dv-sheet .dv-list .dv-li + .dv-li { border-top: 1px solid #ffffff10; }
+.app.app .dv-sheet div.dv-li { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
+@media (max-width: 700px) { .app.app .dv-pre-r { width: 100%; } .app.app .dv-pre-r button.dv-btn { flex: 1; } }

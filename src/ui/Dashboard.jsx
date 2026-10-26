@@ -14,8 +14,7 @@ import { currentSlot, draftDone } from "../engine/draft.js";
 import { teamDraftGrade, atCombine } from "../engine/scouting.js";
 import { ensurePulse, repTier, playoffOdds } from "../engine/clubPulse.js";
 import { winProbability, teamStrength } from "../engine/matchup.js";
-import { TRAINING, setTraining } from "../engine/franchise.js";
-import { focusCandidates, FOCUS_SLOTS } from "../engine/developmentPlan.js";
+import { DevStrip, DevReportSheet } from "./DevelopmentDesk.jsx";
 import { deadlinePending } from "../engine/market.js";
 import { useDialogFocus } from "./accessibility.js";
 import Icon from "./Icon.jsx";
@@ -79,17 +78,15 @@ export default function Dashboard({ act = {} }) {
   const slot = currentSlot(lg);
   const odds = lg.phase === "regular" ? playoffOdds(lg)[t.id] : null;
   const fans = t.owner?.fanSupport ?? 60, trust = t.owner?.trust ?? 65;
-  const focused = Object.keys(t.training?.assignments || {}).filter((id) => lg.players[id]?.tid === t.id);
   const phone = usePhone();
   const [inboxOpen, setInboxOpen] = useState(false);
   const [labOpen, setLabOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
-  const [labPick, setLabPick] = useState("");
-  const [labSort, setLabSort] = useState("pos"); // "pos": grouped by position; "growth": one list, fastest growers first
   const offseason = ["draft", "resign", "freeagency"].includes(lg.phase);
 
   // ---- Needs Attention (engine/home.js): urgent first, each with a way in and its one-tap fixes ----
   // After the list closes (and gives focus back), so the scroll isn't undone.
+  // The development report sheet (Home's one Development line, and to-dos that point to it).
   const toLab = () => { setInboxOpen(false); setLabOpen(true); };
   const attention = needsAttention(lg).map((it) => ({
     ...it,
@@ -100,7 +97,7 @@ export default function Dashboard({ act = {} }) {
   const urgentN = attention.filter((x) => x.tone === "urgent").length;
 
   // ---- This week: the phase's main job first, then the to-do list ----
-  const first = lg.phase === "preseason" ? { label: "Training Camp", sub: "Camp work and mini games to improve your roster before the season", onClick: () => go("roster") }
+  const first = lg.phase === "preseason" ? { label: "Season plan", sub: "Three choices for the season: a focus player, a camp priority and where your prospects play", onClick: () => go("development", "plan") }
     : lg.phase === "regular" ? { label: "Standings", sub: "The playoff picture: who'd be in if the season ended today, and the bracket it would make", onClick: () => go("standings") }
     : lg.phase === "playoffs" ? { label: "Playoff Bracket", sub: "The road to the Stanley Cup", onClick: () => go("playoffs") }
     : lg.phase === "draft" ? (atCombine(lg) ? { label: "Scouting Combine", sub: "Combine results, interviews and your big board", onClick: () => go("draft") } : { label: "Entry Draft", sub: draftDone(lg) ? "Your class and the draft recap" : "Make your picks", onClick: () => go("draft") })
@@ -173,27 +170,6 @@ export default function Dashboard({ act = {} }) {
   const teamOfStory = (n) => { const p = n.pid != null ? lg.players[n.pid] : null; if (p && p.tid >= 0) return lg.teams[p.tid]; return lg.teams.find((x) => (n.text || "").includes(x.name)) || null; };
   const stories = (() => { const seen = new Set(); return (lg.news?.length ? lg.news : lg.inbox.slice().reverse()).filter((n) => { const k = (n.title || n.text || "").replace(/\d+/g, "#").slice(0, 60); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 7); })();
   const leaders = [["PTS", (p) => p.stats.pts], ["G", (p) => p.stats.g], ["A", (p) => p.stats.a]].map(([k, f]) => [k, roster.filter((x) => !isGoalie(x.pos)).sort((a, b) => f(b) - f(a) || b.ovr - a.ovr)[0], f]);
-  const labAdd = (pid) => { const p = lg.players[pid]; if (!p) return; for (const id of Object.keys(t.training?.assignments || {})) if (lg.players[id]?.tid !== t.id) delete t.training.assignments[id]; const groups = Object.entries(TRAINING).filter(([k]) => isGoalie(p.pos) === (k === "goaltending")); const [k] = groups.sort((a, b) => a[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / a[1].keys.length - b[1].keys.reduce((s, x) => s + (p.attrs[x] || 0), 0) / b[1].keys.length)[0]; const r = setTraining(lg, pid, k); toast(r.msg); commit(); setLabPick(""); };
-  const labRemove = (pid) => { const r = setTraining(lg, pid, ""); toast(r.msg); commit(); };
-  // Growth ranking for the focus picker: the development desk's own score (young, room to grow, trait).
-  const growth = new Map(focusCandidates(lg, t).map(({ p, score }) => [p.id, score]));
-  const labOption = (p) => <option key={p.id} value={p.id}>{p.name} ({p.pos}, {p.ovr} OVR, POT {p.pot}){p.injury > 0 ? " · injured" : p.age <= 24 ? " · ~fast" : p.age >= 31 ? " · slow" : ""}</option>;
-  const lab = (
-    <section className="gg-lab rk-lab" id="dev-focus" data-tour="devfocus">
-      <div className="rk-dsub">Your staff gives three players individual attention. Each week a focused player banks training work in his weakest skill group; it pays off at season rollover.</div>
-      {focused.length ? focused.map((id) => { const p = lg.players[id]; return <div key={id} className="gg-inj lab"><PosBadge pos={p.pos} /><b><PlayerName p={p} /></b><span className="dim">{TRAINING[t.training.assignments[id]]?.name}</span><button className="tiny ghost" onClick={() => labRemove(id)} aria-label={`Remove ${p.name} from the lab`}>✕</button></div>; }) : <div className="gg-lab-empty">Nobody in focus yet. Pick a player below.</div>}
-      {focused.length < FOCUS_SLOTS && (<>
-        <div className="rk-lab-pick"><span>{FOCUS_SLOTS - focused.length} slot{FOCUS_SLOTS - focused.length === 1 ? "" : "s"} open</span><span className="rk-sort"><small>Sort</small>{[["pos", "Position"], ["growth", "Growth"]].map(([k, l]) => <button key={k} className={labSort === k ? "on" : ""} aria-pressed={labSort === k} onClick={() => setLabSort(k)}>{l}</button>)}</span></div>
-        <Select value={labPick} onChange={(e) => labAdd(e.target.value)} aria-label="Add a development focus player" placeholder="Choose a player" style={{ width: "100%" }}>
-          <option value="">Choose a player</option>
-          {labSort === "growth"
-            ? roster.filter((p) => !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)
-            : ["C", "LW", "RW", "LD", "RD", "G"].map((pos) => <optgroup key={pos} label={pos}>{roster.filter((p) => p.pos === pos && !focused.includes(p.id)).sort((a, b) => (growth.get(b.id) ?? -99) - (growth.get(a.id) ?? -99) || b.ovr - a.ovr).map(labOption)}</optgroup>)}
-        </Select>
-      </>)}
-    </section>
-  );
-
   // Roster health: a short roster in the off-season counts against you before injuries do.
   const short = (lg.phase === "resign" || lg.phase === "freeagency") && signedNext < MAX_ROSTER;
 
@@ -221,7 +197,7 @@ export default function Dashboard({ act = {} }) {
       {todo.length ? todo.slice(0, n).map((it) => (
         <button key={it.key} className="rk-b rk-bc-todo" onClick={it.onOpen}><i style={{ background: TONE_C[it.tone] }} /><span><b>{stripEmoji(it.title)}</b>{phone && it.sub && <small>{it.sub}</small>}</span><Icon name="chevron" size={16} /></button>
       )) : <div className="rk-hm-quiet good">All set: nothing needs you.</div>}
-      <div className="rk-bc-links">{todo.length > n && <button className="rk-b rk-link" onClick={() => setInboxOpen(true)}>See all {todo.length}</button>}<button className="rk-b rk-link" onClick={() => setLabOpen(true)}>Development focus</button></div>
+      {todo.length > n && <div className="rk-bc-links"><button className="rk-b rk-link" onClick={() => setInboxOpen(true)}>See all {todo.length}</button></div>}
     </section>
   );
   const planCard = (
@@ -259,7 +235,7 @@ export default function Dashboard({ act = {} }) {
     <>
       {inboxOpen && <NeedsAttention items={todo} onClose={() => setInboxOpen(false)} />}
       {prepOpen && <GamePrep onClose={() => setPrepOpen(false)} onPlay={lg.phase === "playoffs" ? act.playPlayoffLive : act.playLive} onSim={lg.phase === "playoffs" ? act.simPlayoffDay : act.simDay} />}
-      {labOpen && <Sheet title="Development focus" onClose={() => setLabOpen(false)}>{lab}</Sheet>}
+      {labOpen && <DevReportSheet onClose={() => setLabOpen(false)} />}
     </>
   );
 
@@ -276,10 +252,10 @@ export default function Dashboard({ act = {} }) {
             <div className="rk-pbc-stars">{[awayT, homeT].map((x) => { const p = topPlayer(lg, x); return p ? <button key={x.id} className="rk-b" onClick={() => openPlayer?.(p.id)}><b>{p.name}</b><span>{p.pos} · {p.ovr} OVR · {seasonLine(p)}</span></button> : null; })}</div>
           </section>
         ) : phaseHero}
+        <DevStrip phone onOpen={() => setLabOpen(true)} />
         {todoCard(3)}
         <div className="rk-tiles">
-          <button className="rk-b rk-tile2" onClick={() => go("roster", "injured")}><Icon name="operations" /><b>Injuries</b><span style={{ color: injN ? "#f97316" : undefined }}>{lg.settings?.injuries === false ? "Turned off" : injN ? `${injN} out${starters.length ? ` · ${starters.length} key` : ""}` : "All healthy"}</span></button>
-          <button className="rk-b rk-tile2" onClick={() => setLabOpen(true)}><Icon name="stats" /><b>Development</b><span>{focused.length ? `${focused.length} of ${FOCUS_SLOTS} in focus` : "Not set"}</span></button>
+          <button className="rk-b rk-tile2 wide" onClick={() => go("roster", "injured")}><Icon name="operations" /><b>Injuries</b><span style={{ color: injN ? "#f97316" : undefined }}>{lg.settings?.injuries === false ? "Turned off" : injN ? `${injN} out${starters.length ? ` · ${starters.length} key` : ""}` : "All healthy"}</span></button>
           <button className="rk-b rk-tile2 wide" onClick={() => go("standings")}><Icon name="standings" /><b>Standings</b><span>{ORD(divRank)} in the {t.div}{odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}</span><Icon name="chevron" size={16} /></button>
           <button className="rk-b rk-tile2 wide" onClick={() => go("frontoffice", "contracts")}><Icon name="frontoffice" /><b>Cap space {money(room)}</b><span>{expiring ? `${expiring} expiring` : "No deals expiring"}</span><Icon name="chevron" size={16} /></button>
         </div>
@@ -308,6 +284,7 @@ export default function Dashboard({ act = {} }) {
       {hasGame ? <div className="rk-bc-cards">{todoCard(3)}{planCard}{storyCard}</div>
         : <><div className="rk-bc-cards">{needsCard}{todoCard(4)}{PhaseCard({ lg, t, go, slot, series }) || storyCard}</div>
           <BuildYour23 onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} /></>}
+      <DevStrip onOpen={() => setLabOpen(true)} />
       {dialogs}
     </div>
   );

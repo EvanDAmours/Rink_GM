@@ -393,7 +393,6 @@ export default function LinesPage({ onRoster }) {
       <button type="button" className="on" aria-current="page">Lines</button>
       {onRoster && <button type="button" onClick={onRoster}>Roster</button>}
       <button type="button" onClick={() => go("coaching")}>Coaching</button>
-      <button type="button" onClick={() => go("development")}>Development</button>
     </nav>
   );
 

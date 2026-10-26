@@ -11,21 +11,24 @@ import { lastDay } from "../engine/schedule.js";
 export function sectionsFor(league, { deadlineOpen, frenzyOpen }) {
   return [
     { id: "home", label: "Home", screens: [["Home", "dashboard"]] },
-    { id: "team", label: "Team", screens: [["Lines", "lines", "lines", ["lines"]], ["Roster", "lines", "roster", ["roster"]], ["Coaching", "coaching"], ["Development", "development"]] },
+    { id: "team", label: "Team", screens: [["Lines", "lines", "lines", ["lines"]], ["Roster", "lines", "roster", ["roster"]], ["Coaching", "coaching"]] },
     { id: "standings", label: "Standings", screens: [["Standings", "standings"]] },
     { id: "season", label: "Season", screens: [["Schedule", "schedule"], ["Playoffs", "league", "playoffs", ["playoffs"]], ["Stats", "stats"]] },
+    { id: "development", label: "Development", screens: [["Overview", "development", "overview", ["overview"]], ["Season plan", "development", "plan", ["plan"]], ["Prospects", "development", "prospects", ["prospects"]]] },
     { id: "draft", label: "Draft", screens: [["Scouting", "draft", "board", ["board", "list", "myscouts", "scouts", "regions"]], ["Draft", "draft", "floor", ["floor", "combine"]], ["Draft Recap", "draft", "recap", ["recap"]]] },
     { id: "market", label: "Trades & FA", screens: [["Trade", "trade", "trade", ["trade"]], ["Trade Block", "trade", "block", ["block"]], [league.phase === "resign" ? "Re-sign" : "Free Agency", "trade", "fa", ["fa"]], ...(deadlineOpen ? [["Deadline Day", "trade", "deadline", ["deadline"]]] : []), ...(frenzyOpen ? [["July 1 Frenzy", "trade", "frenzy", ["frenzy"]]] : [])] },
     { id: "office", label: "Front Office", screens: [["Front Office", "frontoffice"], ["League", "league", "teams", ["teams", "retired", "standings"]], ["Franchise History", "legacy", "club", ["club", "case", "gm"]], ["Record Book", "league", "records", ["records"]], ["League History", "league", "awards", ["awards"]], ["Transactions", "league", "tx", ["tx"]], ["Legacy Hall", "legacy", "hall", ["hall", "trophies", "awards"]]] },
   ];
 }
 // Default sub of a hub when none was picked yet (mirrors the hubs' own defaults).
-const DEFAULT_SUB = { lines: "lines", trade: "trade", league: "standings", legacy: "hall" };
+const DEFAULT_SUB = { lines: "lines", trade: "trade", league: "standings", legacy: "hall", development: "overview" };
 export function screenOn(scr, tab, sub) {
   const [, t, , subs] = scr;
   if (t !== tab) return false;
   if (!subs) return true;
-  return subs.includes(sub[t] || DEFAULT_SUB[t]);
+  const v = sub[t] || DEFAULT_SUB[t];
+  // Development's old screens (the desk and the pipeline) open its overview and prospects.
+  return subs.includes(t === "development" ? ({ development: "overview", pipeline: "prospects" }[v] || (["overview", "plan", "prospects"].includes(v) ? v : "overview")) : v);
 }
 export function sectionOf(sections, tab, sub) {
   for (const s of sections) for (const scr of s.screens) if (screenOn(scr, tab, sub)) return { section: s, screen: scr };

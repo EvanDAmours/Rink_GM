@@ -187,6 +187,8 @@ html:not(.light) .app.app .main .lnx .lx-card { background: var(--soft-inner); b
 .app .gg-confirm-lines { display: flex; flex-direction: column; gap: 8px; }
 .rk-bar-right > * { flex-shrink: 0; }
 .rk-bar-nav { flex: 1 1 auto; overflow: hidden; }
+/* Eight sections (Development has its own): a little less air per tab below 1600 so all fit beside the season's buttons. */
+@media (max-width: 1599px) { .app.app.app .rk-bar-nav button { padding: 8px 12px; } }
 @media (max-width: 1250px) { .app.app.app .rk-bar-nav button { padding: 8px 8px; font-size: 14px; } .rk-seasonbtn b { font-size: 15px; } }
 
 /* ---------- Section kickers read as plain sentence-case headings (r6 sweep) ---------- */
