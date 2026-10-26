@@ -108,10 +108,15 @@ function cornerstonePremium(league, team, id) {
   if (league.players[id]?.wantsTrade) return 0.85;
   // Their young starting goalie: they'd need to be blown away.
   if (isFranchiseGoalie(league, team, league.players[id])) return 1.35;
-  return top.includes(id) ? 1.3 : 1;
+  // A star (85+) already carries the star premium in evaluateTrade; don't stack a second one.
+  if ((league.players[id]?.ovr ?? 0) >= STAR_OVR) return 1;
+  return top.includes(id) ? 1.15 : 1;
 }
 
 const STAR_OVR = 85;
+// Picks count a bit more against players than their raw value: clubs pay for the lottery
+// ticket and the cheap entry-level years (calibrated to real deadline deals).
+export const PICK_WEIGHT = 1.35;
 const DEPTH_WEIGHT = [1, 1, 0.8, 0.6, 0.5];
 
 export function evaluateTrade(league, offer) {
@@ -128,17 +133,17 @@ export function evaluateTrade(league, offer) {
   const pickOut = offer.getPicks.map((pid) => league.draftPicks.find((p) => p.id === pid)).filter(Boolean);
   // Quality over quantity: the third and later pieces coming in count for less, and extra
   // roster bodies cost the receiver a spot.
-  const inAssets = [...incoming, ...pickIn.map((pk) => pickValue(league, pk, { contending }))].sort((a, b) => b - a);
+  const inAssets = [...incoming, ...pickIn.map((pk) => pickValue(league, pk, { contending }) * PICK_WEIGHT)].sort((a, b) => b - a);
   const extra = Math.max(0, offer.give.length - offer.get.length);
   let valIn = inAssets.reduce((s, v, i) => s + (v > 0 ? v * (DEPTH_WEIGHT[i] ?? 0.5) : v), 0) - extra * 0.8;
-  let valOut = outgoing.reduce((a, b) => a + b, 0) + pickOut.reduce((a, pk) => a + pickValue(league, pk, { contending }), 0);
+  let valOut = outgoing.reduce((a, b) => a + b, 0) + pickOut.reduce((a, pk) => a + pickValue(league, pk, { contending }) * PICK_WEIGHT, 0);
   // Star premium: a club parting with a star (85+) wants a clear win and a real centrepiece
-  // back, not a pile of pieces. The user asking for one faces the higher bar.
+  // back, not a pile of pieces.
   const stars = offer.get.map((id) => league.players[id]).filter((p) => p && (p.ovr >= STAR_OVR || isFranchiseGoalie(league, ai, p)));
   const starValue = stars.reduce((m, p) => Math.max(m, assetValue(league, p.id, ai)), 0);
   let starMargin = 1, centrepieceShort = false;
   if (stars.length) {
-    starMargin = offer.from === league.userTid ? 1.1 : 1.05;
+    starMargin = 1.05;
     centrepieceShort = (inAssets[0] ?? 0) < starValue * 0.35;
   }
   const finalMargin = margin * starMargin;
