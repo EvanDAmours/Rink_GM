@@ -16,6 +16,8 @@ export default function StatsPage() {
   const [team, setTeam] = useState("all");
   const [pos, setPos] = useState("all");
   const [rookies, setRookies] = useState(false);
+  // A calm table first (the numbers people look for); every column one tap away.
+  const [more, setMore] = useState(false);
   const key = season === "po" ? "pstats" : "stats";
 
   const players = useMemo(
@@ -76,6 +78,10 @@ export default function StatsPage() {
     { key: "so", label: "SO", num: true, render: (p) => S(p).so, sort: (p) => S(p).so },
   ];
 
+  const SK_BASIC = ["rk", "name", "tm", "pos", "gp", "g", "a", "pts", "pm", "toi"];
+  const G_BASIC = ["rk", "name", "tm", "gp", "w", "l", "otl", "sv", "gaa", "so"];
+  const skShown = more ? skCols : skCols.filter((c) => SK_BASIC.includes(c.key));
+  const gShown = more ? gCols : gCols.filter((c) => G_BASIC.includes(c.key));
   return (
     <div className="stack">
       <div className="pagehead">
@@ -102,12 +108,13 @@ export default function StatsPage() {
           </Select>
         )}
         <label className="row small"><input type="checkbox" checked={rookies} onChange={(e) => setRookies(e.target.checked)} /> Rookies</label>
+        <button type="button" className="rk-morecols" aria-pressed={more} onClick={() => setMore((v) => !v)}>{more ? "Fewer columns" : "More columns"}</button>
         </>}
       </div>
       {kind === "units" ? <UnitStats league={league} /> : kind === "sk" ? (
-        <Table columns={skCols} rows={skaters} initialSort={{ key: "pts", dir: "desc" }} limit={150} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense />
+        <Table columns={skShown} rows={skaters} initialSort={{ key: "pts", dir: "desc" }} limit={150} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense={more} />
       ) : (
-        <Table columns={gCols} rows={goalies} initialSort={{ key: "w", dir: "desc" }} limit={100} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense />
+        <Table columns={gShown} rows={goalies} initialSort={{ key: "w", dir: "desc" }} limit={100} rowClass={(p) => (p.tid === league.userTid ? "me" : "")} empty="No games played yet." dense={more} />
       )}
       {kind === "g" && <div className="muted small">SV% and GAA rankings require {minGp}+ games played.</div>}
     </div>
@@ -141,9 +148,9 @@ function UnitStats({ league }) {
         <span className="muted small">{S.gp} games · small numbers are the league average for the same unit</span>
       </div>
       <div className="gg-tiles">
-        <div><small>POWER PLAY</small><b>{f1(mine?.ppPct)}%</b><span className="dim small"> {mine?.ppGoals ?? 0}/{mine?.ppOpp ?? 0} · #{ppRank(mine || {})}</span></div>
-        <div><small>PENALTY KILL</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
-        <div><small>LEAGUE PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
+        <div><small>Power play</small><b>{f1(mine?.ppPct)}%</b><span className="dim small"> {mine?.ppGoals ?? 0}/{mine?.ppOpp ?? 0} · #{ppRank(mine || {})}</span></div>
+        <div><small>Penalty kill</small><b>{f1(mine?.pkPct)}%</b><span className="dim small"> {mine ? mine.pkOpp - mine.pkGa : 0}/{mine?.pkOpp ?? 0} · #{pkRank(mine || {})}</span></div>
+        <div><small>League PP / PK</small><b>{f1(avg.ppPct)}% / {f1(avg.pkPct)}%</b></div>
       </div>
       <Table
         columns={[

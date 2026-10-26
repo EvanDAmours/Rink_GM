@@ -66,16 +66,16 @@ export default function GamePrep({ onClose, onPlay, onSim }) {
             <section className="rk-prep-card">
               <div className="rk-prep-k">Scouting report · {opp.abbr}</div>
               <div className="rk-prep-tiles">
-                <div><small>RECORD</small><b>{rep.record}</b><span>{rep.pts} pts · {ORD(rep.divRank)} {opp.div}</span></div>
-                <div><small>THE LINE</small><b>{rep.prob >= 0.5 ? t.abbr : opp.abbr} {Math.round(Math.max(rep.prob, 1 - rep.prob) * 100)}%</b><span>{rep.prob >= 0.55 ? "You're the favourite." : rep.prob <= 0.45 ? "You're the underdog." : "A coin flip."}</span></div>
-                <div><small>POWER PLAY</small><b style={{ color: rankTone(rep.pp.rank, rep.teams) }}>{ORD(rep.pp.rank)}</b><span>{rep.pp.goals} PP goals · yours {ORD(rep.myPp.rank)}</span></div>
-                <div><small>PENALTY KILL</small><b style={{ color: rankTone(rep.pk.rank, rep.teams) }}>{ORD(rep.pk.rank)}</b><span>unit strength · yours {ORD(rep.myPk.rank)}</span></div>
+                <div><small>Record</small><b>{rep.record}</b><span>{rep.pts} pts · {ORD(rep.divRank)} {opp.div}</span></div>
+                <div><small>The line</small><b>{rep.prob >= 0.5 ? t.abbr : opp.abbr} {Math.round(Math.max(rep.prob, 1 - rep.prob) * 100)}%</b><span>{rep.prob >= 0.55 ? "You're the favourite." : rep.prob <= 0.45 ? "You're the underdog." : "A coin flip."}</span></div>
+                <div><small>Power play</small><b style={{ color: rankTone(rep.pp.rank, rep.teams) }}>{ORD(rep.pp.rank)}</b><span>{rep.pp.goals} PP goals · yours {ORD(rep.myPp.rank)}</span></div>
+                <div><small>Penalty kill</small><b style={{ color: rankTone(rep.pk.rank, rep.teams) }}>{ORD(rep.pk.rank)}</b><span>unit strength · yours {ORD(rep.myPk.rank)}</span></div>
               </div>
-              <div className="rk-prep-form"><small>FORM · LAST 5</small><Form team={t} results={rep.myForm} /><Form team={opp} results={rep.form} /></div>
+              <div className="rk-prep-form"><small>Form · last 5</small><Form team={t} results={rep.myForm} /><Form team={opp} results={rep.form} /></div>
               <div className="rk-prep-who">
                 <div><small>TOP LINE · {rep.lineOvr}</small><div>{rep.topLine.map((p) => <React.Fragment key={p.id}>{person(p)}</React.Fragment>)}</div></div>
                 <div><small>TOP PAIR · {rep.pairOvr}</small><div>{rep.topPair.map((p) => <React.Fragment key={p.id}>{person(p)}</React.Fragment>)}</div></div>
-                <div><small>IN GOAL</small><div>{person(rep.goalie)}{rep.goalie?.stats?.gp > 0 && <span className="rk-prep-gnote">{rep.goalieNote}</span>}</div></div>
+                <div><small>In goal</small><div>{person(rep.goalie)}{rep.goalie?.stats?.gp > 0 && <span className="rk-prep-gnote">{rep.goalieNote}</span>}</div></div>
               </div>
               {rep.notes.slice(0, 3).map((n, i) => <div key={i} className={`rk-prep-note ${n.tone}`}>{n.text}</div>)}
               <div className="rk-prep-sub">Key matchups</div>

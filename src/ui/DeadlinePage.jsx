@@ -24,7 +24,7 @@ export function DeadlineTicker({ league, onOpen }) {
   const text = items.length ? items.map((f) => `${f.big ? "BREAKING: " : ""}${f.short || f.text}`).join("   •   ") : "Trade Deadline Day: phones are ringing around the league…";
   return (
     <button type="button" className="ticker" onClick={onOpen} title="Open the deadline desk">
-      <span className="ticker-k">⏰ {fmtClock(dl.minute)} ET</span>
+      <span className="ticker-k">{fmtClock(dl.minute)} ET</span>
       <span className="ticker-win">
         <span className="ticker-track" key={items.length} style={{ animationDuration: `${Math.max(18, Math.round(text.length / 7))}s` }}>{text}</span>
       </span>

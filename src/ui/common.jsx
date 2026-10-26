@@ -111,6 +111,29 @@ export function DBtn({ kind = "quiet", onClick, disabled, children, title, grow 
 }
 export const softBox = { background: "#ffffff0d", borderRadius: 14, padding: "12px 14px" };
 
+// The one page header every section uses (the Lineup / Development look): a row of quiet
+// section pills, then a big plain sentence-case title with one grey line under it and the
+// screen's own buttons on the right. pills: [[key, label, on, badge?]].
+export function SectionPills({ pills = [], onPick, label = "Section" }) {
+  if (pills.length < 2) return null;
+  return (
+    <nav className="rk-pills" aria-label={label}>
+      {pills.map(([k, l, on, badge]) => <button key={k} type="button" className={on ? "on" : ""} aria-current={on ? "page" : undefined} onClick={() => onPick(k)}>{l}{badge && <span className="badge">{badge}</span>}</button>)}
+    </nav>
+  );
+}
+export function PageHead({ pills, onPick, label, title, sub, right, className = "" }) {
+  return (
+    <div className={`rk-pg ${className}`}>
+      {pills && <SectionPills pills={pills} onPick={onPick} label={label} />}
+      {(title || right) && <div className="rk-pg-row">
+        <div className="rk-pg-t">{title && <h1>{title}</h1>}{sub && <div className="rk-pg-s">{sub}</div>}</div>
+        {right && <div className="rk-pg-r">{right}</div>}
+      </div>}
+    </div>
+  );
+}
+
 // Sortable table. columns: [{ key, label, render(row), sort(row) -> value, num, title }]
 export function Table({ columns, rows, initialSort, rowClass, limit, empty = "Nothing to show.", dense }) {
   const [sort, setSort] = useState(initialSort || null);

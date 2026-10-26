@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGame, TeamBadge } from "./common.jsx";
+import { useGame, TeamBadge, PageHead } from "./common.jsx";
 import { usePhone } from "./mobile.js";
 import LinesPage from "./LinesPage.jsx";
 import RosterPage from "./RosterPage.jsx";
@@ -20,19 +20,29 @@ import CapOverview, { CapGuide } from "./CapOverview.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
-// One header for a family of screens: title, a line of status, and the section chips.
+// One header for a family of screens. On a phone it is the shared page header (PageHead: quiet
+// pills for the hub's screens, a big plain title, one grey line), the same as Lineup and
+// Development. On a computer the section header above (App's PageHead) carries the pills and the
+// title, so only the inner views stay, as a small segmented filter (deskTabs: the ones it keeps).
 // The screens inside render without their own title (see .gg-embed in gridiron.css).
-// On a computer the section header (SectionHero) carries the title, so only the chips stay, and
-// only those the header doesn't already show (deskTabs).
 export function Hub({ title, status, tabs, sub, onSub, badges = {}, right, children, deskTabs }) {
   const phone = usePhone();
   const cur = tabs.some(([k]) => k === sub) ? sub : tabs[0][0];
-  const chips = phone || !deskTabs ? tabs : tabs.filter(([k]) => deskTabs.includes(k));
-  const showHead = phone || chips.length > 1 || right;
+  const chips = !deskTabs ? tabs : tabs.filter(([k]) => deskTabs.includes(k));
+  const curLabel = tabs.find(([k]) => k === cur)?.[1];
+  if (phone) {
+    return (
+      <div className="stack gg-hub">
+        <PageHead label={title} pills={tabs.map(([k, l]) => [k, l, cur === k, badges[k]])} onPick={onSub}
+          title={!curLabel || /^overview$/i.test(curLabel) ? title : curLabel} sub={status} right={right} />
+        <div className="gg-embed">{typeof children === "function" ? children(cur) : children}</div>
+      </div>
+    );
+  }
+  const showHead = chips.length > 1 || right;
   return (
     <div className="stack gg-hub">
       {showHead && <div className="gg-pagehead gg-hub-head">
-        {phone && <b className="gg-pagelabel" title={status || undefined}>{title}</b>}
         {chips.length > 1 && <div className="gg-chips gg-hub-chips">{chips.map(([k, l]) => <button key={k} className={cur === k ? "on" : ""} onClick={() => onSub(k)}>{l}{badges[k] && <span className="badge">{badges[k]}</span>}</button>)}</div>}
         {right}
       </div>}
@@ -44,10 +54,12 @@ export function Hub({ title, status, tabs, sub, onSub, badges = {}, right, child
 export function LinesHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["lines", "Lines"], ["roster", "Roster"]];
+  const { go } = useGame();
+  // Coaching is its own screen; the pill is here so the phone's Team pills match Lineup's.
+  const tabs = [["lines", "Lines"], ["roster", "Roster"], ["coaching", "Coaching"]];
   const cur = sub || "lines";
   if (cur === "lines") return <LinesPage onRoster={() => onSub("roster")} />;
-  return <Hub title="Roster" status={`${t.city} ${t.name} · manage the people who define your season`} tabs={tabs} sub={cur} onSub={onSub} deskTabs={[]}><RosterPage /></Hub>;
+  return <Hub title="Roster" status={`${t.city} ${t.name} · manage the people who define your season`} tabs={tabs} sub={cur} onSub={(k) => (k === "coaching" ? go("coaching") : onSub(k))} deskTabs={[]}><RosterPage /></Hub>;
 }
 
 export function CoachingHub({ sub, onSub }) {

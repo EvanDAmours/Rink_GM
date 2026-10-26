@@ -84,6 +84,10 @@ function RosterCards({ rows, slots, team, sort }) {
 export default function RosterPage() {
   const { league, commit, toast, ask } = useGame();
   const [cardSort, setCardSort] = useState("line");
+  // The table opens calm (who, where he plays, rating, contract, points); the rest is one tap away.
+  const [more, setMore] = useState(false);
+  const MORE_KEYS = ["pos", "age", "pot", "type", "dev", "pm"];
+  const calm = (cols) => (more ? cols : cols.filter((c) => !MORE_KEYS.includes(c.key)));
   const callUpFlow = useCallUp();
   const [query,setQuery]=useState(""),[position,setPosition]=useState("all");
   const user = league.teams[league.userTid];
@@ -171,7 +175,7 @@ export default function RosterPage() {
     <div className="stack gg-roster">
       {callUpFlow.element}
       <div className="gg-pagehead"><div><h2>Roster</h2><div className="gg-status">{user.city} {user.name} · manage the people who define your season</div></div>
-        <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
+        <div className="gg-tiles"><div><small>Active</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>Cap space</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>Injured</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
         <div className="notice warn">
           {issues.map((i) => <div key={i}>{i}</div>)}
@@ -190,14 +194,14 @@ export default function RosterPage() {
         {[["roster", `NHL Roster (${c.active}/${MAX_ROSTER})`], ["minors", `Minors & Prospects (${minors.length})`], ["injured", `Injured & LTIR (${injured.length})`], ["contracts", "Contracts"], ...(league.phase === "preseason" ? [["camp", "Preseason games"]] : [])].map(([k, l]) => <button key={k} role="tab" aria-selected={shown === k} className={shown === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}
       </div>
 
-      {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select><span className="muted small rk-rlegend">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor · <span className="rk-rb rb-inj">OUT</span> injured · <span className="rk-rb rb-ltir">LTIR</span> · <span className="rk-rb rb-wv">WAIVERS</span> · <span className="rk-rb rb-tr">TRADE REQ</span> · <span className="rk-rb rb-exp">EXPIRING</span> · <span className="rk-rb rb-rook">ROOKIE</span></span></div>}
+      {shown !== "camp" && <div className="roster-controls"><label className="roster-search"><Icon name="search" size={16}/><input aria-label="Find roster player" placeholder="Find a player…" value={query} onChange={e=>setQuery(e.target.value)}/></label><Select aria-label="Filter roster position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All positions</option>{["C","LW","RW","LD","RD","G"].map(pos=><option key={pos}>{pos}</option>)}</Select>{more && <span className="muted small rk-rlegend">Click a player to open his profile. <span className="gg-xf">XF</span> EA X-Factor · <span className="rk-rb rb-inj">OUT</span> injured · <span className="rk-rb rb-ltir">LTIR</span> · <span className="rk-rb rb-wv">WAIVERS</span> · <span className="rk-rb rb-tr">TRADE REQ</span> · <span className="rk-rb rb-exp">EXPIRING</span> · <span className="rk-rb rb-rook">ROOKIE</span></span>}{shown === "roster" && <button type="button" className="rk-morecols" aria-pressed={more} onClick={() => setMore((v) => !v)}>{more ? "Fewer columns" : "More columns"}</button>}</div>}
       {shown === "camp" && <TrainingCamp />}
       {shown === "roster" && <label className="rk-rc-sort">Sort <Select value={cardSort} onChange={(e) => setCardSort(e.target.value)} aria-label="Sort roster">{CARD_SORTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select></label>}
       {shown === "roster" &&
         groups.map(([title, rows, stats]) => (
           <div key={title}>
-            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span><em>LINE ORDER · CONTRACT · SEASON</em></div>
-            <div className="rk-rtable"><Table columns={[...base, ...stats, actions]} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} /></div>
+            <div className="gg-roster-h"><b>{title}</b><span>{rows.filter(fits).length}</span></div>
+            <div className="rk-rtable"><Table columns={calm([...base, ...stats, actions])} rows={rows.filter(fits)} initialSort={{ key: "line", dir: "asc" }} /></div>
             <RosterCards rows={rows.filter(fits)} slots={slots} team={user} sort={cardSort} />
           </div>
         ))}
@@ -236,9 +240,9 @@ export default function RosterPage() {
         <>
           <div className="gg-tiles gg-ro-inj-tiles">
             <div><small>OUT</small><b style={{ color: injured.length ? "#ef4444" : "#22c55e" }}>{injured.length}</b></div>
-            <div><small>ON LTIR</small><b>{injured.filter((p) => p.ltir).length}</b></div>
-            <div><small>LTIR RELIEF</small><b style={{ color: relief > 0 ? "#22c55e" : undefined }}>{relief > 0 ? money(relief) : "None"}</b></div>
-            <div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div>
+            <div><small>On LTIR</small><b>{injured.filter((p) => p.ltir).length}</b></div>
+            <div><small>LTIR relief</small><b style={{ color: relief > 0 ? "#22c55e" : undefined }}>{relief > 0 ? money(relief) : "None"}</b></div>
+            <div><small>Active</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div>
           </div>
           <div className="muted small">Players out {IR_GAMES} or more games go on injured reserve and don't count against the {MAX_ROSTER}-man limit. Out 10 games or more, a player can go on long-term injured reserve: his cap hit comes off the cap while he's out, less whatever cap room you had when he went on. He stays at least 24 days and 10 games.</div>
           {ltirPool > 0 && <div className="small">LTIR: {money(ltirPool)} in cap hits, less the {money(user.ltirUnused || 0)} of cap room you had when the first player went on, leaves <b className={relief > 0 ? "good" : ""}>{relief > 0 ? `${money(relief)} of relief` : "no relief"}</b>{league.phase === "playoffs" ? " (none in the playoffs)" : ""}.</div>}

@@ -129,7 +129,7 @@ function RecapView() {
       <div className="panel">
         <div className="dr-filters">
           <div className="dr-k flex1">Every pick</div>
-          {[["all", "All"], ["mine", "Mine"], ["hits", "Hits"], ["misses", "Misses"]].map(([k, l]) => <button key={k} type="button" className={`small${show === k ? " primary" : ""}`} onClick={() => setShow(k)}>{l}</button>)}
+          {[["all", "All"], ["mine", "Mine"], ["hits", "Hits"], ["misses", "Misses"]].map(([k, l]) => <button key={k} type="button" className={`small rk-sb${show === k ? " on" : ""}`} onClick={() => setShow(k)}>{l}</button>)}
           <Select aria-label="Round" value={round} onChange={(e) => setRound(e.target.value)}><option value="all">All rounds</option>{Array.from({ length: DRAFT_ROUNDS }, (_, i) => <option key={i} value={i + 1}>Round {i + 1}</option>)}</Select>
           <Select aria-label="Position" value={pos} onChange={(e) => setPos(e.target.value)}><option value="all">All positions</option>{POSITIONS.map((x) => <option key={x} value={x}>{x}</option>)}</Select>
           {teamF >= 0 && <button type="button" className="small" onClick={() => setTeamF(-1)}>{league.teams[teamF]?.abbr} ✕</button>}

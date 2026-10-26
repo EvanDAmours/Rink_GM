@@ -1614,10 +1614,61 @@ body .app { background: #eef1f6 !important; }
 .rk-sm-legend .l { background: #fee2e2; color: #b91c1c; }
 .rk-sm-legend .o { background: #fef3c7; color: #a16207; }
 .rk-sm-stages span { background: #0f172a0d; color: #475569; }
-.app.app.app .rk-shero-tabs button:hover:not(:disabled) { border-bottom: 3px solid #0f172a55; }
 .app.app .gg-coach-who .gg-k,
 .app.app span.gg-k { color: #475569; }
 .app.app.app .gg-ops-nav button { background: #0f172a12; color: #334155; }
+
+/* src/ui/page.css */
+.app.app.app .rk-pills button,
+.app.app.app .dvx .dv-pills button,
+.app.app.app .lnx .lx-sectabs button { color: #475569; }
+.app.app.app .rk-pills button.on,
+.app.app.app .dvx .dv-pills button.on,
+.app.app.app .lnx .lx-sectabs button.on { background: #0f172a14; color: #0f172a; }
+.app.app.app .rk-pills button:hover:not(.on),
+.app.app.app .dvx .dv-pills button:hover:not(.on),
+.app.app.app .lnx .lx-sectabs button:hover:not(.on) { color: #1e293b; background: #0f172a0a; }
+.app.app.app .rk-pg h1 { color: #0f172a; }
+.app.app .rk-pg-s { color: #475569; }
+.app.app.app .gg-chips,
+.app.app.app .main .tabs:not(.lx-tabs) { background: #0f172a0d; }
+.app.app.app .gg-chips button,
+.app.app.app .main .tabs:not(.lx-tabs) button,
+.app.app.app .main .tabs:not(.lx-tabs) button:not(.link) { color: #334155; }
+.app.app.app .gg-chips button:hover:not(:disabled):not(.on),
+.app.app.app .main .tabs:not(.lx-tabs) button:hover:not(:disabled):not(.on) { background: #0f172a10; color: #0f172a; }
+.app.app .rk-gu-v { background: #0f172a12; color: #334155; }
+.app.app.app .rk-gu .rk-gu-head input[type=search] { border: 1px solid #0f172a10; }
+.app.app .rk-gu-card ul { color: #334155; }
+.app.app .activity-page .roster-search,
+.app.app .gg-roster .roster-search { border: 1px solid #0f172a10; }
+.app.app .activity-story { border-bottom: 1px solid #0f172a10; }
+.app.app .activity-symbol { background: #0f172a0d; color: #475569; }
+.app.app .activity-story-meta { color: #475569; }
+.app.app .activity-story p,
+.app.app .activity-feed p { color: #0f172a; }
+.app.app .activity-count { background: #0f172a14; }
+.app.app .main .rk-subchips { background: #0f172a0d; }
+.app.app.app .rk-seg { background: #0f172a0d; }
+.app.app.app .rk-seg button,
+.app.app.app .main .rk-seg button:not(.link) { color: #334155; }
+.app.app.app .rk-seg button:hover:not(:disabled):not(.on) { background: #0f172a10; color: #0f172a; }
+.app.app.app button.rk-morecols { color: #475569; }
+.app.app.app button.rk-morecols:hover { background: #0f172a0a; color: #1e293b; }
+.app.app.app button.rk-morecols[aria-pressed=true] { background: #0f172a14; color: #0f172a; }
+.app.app .gg-roster-h b { color: #0f172a; }
+.app.app .gg-roster-h span { background: #0f172a12; color: #475569; }
+.app.app.app .gg-tiles small,
+.app.app.app .gg-pagehead .gg-tiles small { color: #475569; }
+.app.app.app span.gg-k { color: #475569; }
+.app.app.app .gg-plan-row small { color: #475569; }
+.app.app .gg-empty b { color: #0f172a; }
+.app.app.app .gg-cal-months { background: #0f172a0d; }
+.app.app.app .gg-cal-months button { color: #334155; }
+.app.app.app button.rk-sb { background: #0f172a12; color: #334155; }
+.app.app.app .gg-stat small,
+.app.app.app .ct-tile small,
+.app.app.app .gg-coach-hero small { color: #475569; }
 
 /* src/ui/mobile.css */
 .rk-offchip { color: #a16207; background: #fef3c766; }

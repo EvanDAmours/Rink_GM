@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "./Select.jsx";
-import { useGame, PlayerName, TeamBadge, TeamName, Bar } from "./common.jsx";
+import { useGame, PlayerName, TeamBadge, TeamName, Bar, PageHead } from "./common.jsx";
 import { currentSlot, draftDone, pickSlot } from "../engine/draft.js";
 import { teamNeeds } from "../engine/teamPlanning.js";
 import { POS_COLOR } from "./TradePage.jsx";
@@ -169,7 +169,7 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
       </h3>
       <div className="row" style={{ gap: 4, marginBottom: 8 }}>
         {POSITIONS.map((x) => (
-          <button key={x} className={`small${pos === x ? " primary" : ""}`} onClick={() => { setPos(x); setN(PAGE); }}>{x === "all" ? "All" : x}</button>
+          <button key={x} className={`small rk-sb${pos === x ? " on" : ""}`} onClick={() => { setPos(x); setN(PAGE); }}>{x === "all" ? "All" : x}</button>
         ))}
       </div>
       <div className="row" style={{ gap: 6, marginBottom: 10 }}>
@@ -676,7 +676,7 @@ function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, o
             <h3>Draft order</h3>
             <div className="row" style={{ gap: 4, marginBottom: 8 }}>
               {Array.from({ length: DRAFT_ROUNDS }, (_, i) => i + 1).map((r) => (
-                <button key={r} className={`small${round === r ? " primary" : ""}`} onClick={() => setRound(r)}>{phone ? `R${r}` : `Round ${r}`}</button>
+                <button key={r} className={`small rk-sb${round === r ? " on" : ""}`} onClick={() => setRound(r)}>{phone ? `R${r}` : `Round ${r}`}</button>
               ))}
             </div>
             <div className="dorder">{d.slots.filter((s) => s.round === round).map(slotLine)}</div>
@@ -786,15 +786,16 @@ export default function DraftPage({ act, want, onView }) {
         const subs = seg === "board" ? [["board", "Big Board"], ["list", `Your list (${myList(league).ids.length})`]] : seg === "scouts" ? [["regions", "Assignments"], ["myscouts", "Reports"], ["scouts", "Staff"]] : [];
         return (
           <>
-            <div className="rk-seg3" role="tablist">{[["hq", "HQ"], ["board", "Board"], ["scouts", "Scouts"]].map(([k, l]) => <button key={k} role="tab" aria-selected={seg === k} className={seg === k ? "on" : ""} onClick={() => setView(k === "scouts" ? "regions" : k)}>{l}</button>)}</div>
+            <PageHead label="Scouting" pills={[["hq", "HQ", seg === "hq"], ["board", "Board", seg === "board"], ["scouts", "Scouts", seg === "scouts"]]} onPick={(k) => setView(k === "scouts" ? "regions" : k)}
+              title={seg === "hq" ? "Scouting" : seg === "board" ? "Big board" : "Your scouts"} sub={`${year} draft class · ${DRAFT_ROUNDS} rounds`} />
             {subs.length > 0 && <div className="rk-subchips">{subs.map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>}
           </>
         );
-      })() : <div className="tabs">
+      })() : <>{phone && <PageHead title={view === "recap" ? "Draft recap" : combine ? "Scouting combine" : "Draft"} sub={slot ? `${year} draft · round ${slot.round} of ${DRAFT_ROUNDS}` : `${year} draft · ${DRAFT_ROUNDS} rounds`} />}<div className="tabs">
         {views.filter(([k]) => !onView || (view === "recap" ? false : view === "floor" || view === "combine" ? k === "floor" || k === "combine" : !["floor", "recap", "combine"].includes(k))).map(([k, label]) => (
           <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{label}</button>
         ))}
-      </div>}
+      </div></>}
       {live && <ClockBar phone={phone} hold={!!league.moments?.length || !!panel} onPick={onPick} onForPick={(o) => setPanel({ kind: "for", overall: o })} onTradeUp={() => setPanel({ kind: "up" })} />}
       {live && phone && panelEl}
       {announce != null && <PickIsIn overall={announce} onDone={() => setAnnounce(null)} />}

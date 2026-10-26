@@ -1,6 +1,7 @@
 // Desktop navigation (the football game's "one clean bar"): six sections in one top bar, a season
 // button that opens the season at a glance, search, the live-window pills, the phase's buttons and
-// one ⋯ menu. Every section opens on a SectionHero in the club's colours with its screens as tabs.
+// one ⋯ menu. Every section opens on the shared page header (common.jsx PageHead): quiet pills
+// for its screens, a plain title and one grey line.
 import React, { useEffect, useRef, useState } from "react";
 import { TeamBadge, recordStr, money } from "./common.jsx";
 import Icon from "./Icon.jsx";
@@ -35,41 +36,20 @@ export function sectionOf(sections, tab, sub) {
   return null;
 }
 
-const FONT = "'Barlow Condensed', 'Saira Condensed', 'Arial Narrow', sans-serif";
-
-export function SectionHero({ team, title, sub, stats = [], tabs = [], onTab }) {
-  const clr = team.colors?.[0] || "#1e3a8a";
-  return (
-    <div className="keep-dark rk-shero" style={{ backgroundColor: "#0b1120", backgroundImage: `radial-gradient(120% 160% at 0% 0%, ${clr}d9, ${clr}26 55%, #0b1120 100%)` }}>
-      <span aria-hidden="true" className="rk-shero-mark"><TeamBadge team={team} size={300} decorative /></span>
-      <div className="rk-shero-top">
-        <div style={{ minWidth: 0 }}>
-          {sub && <div className="rk-shero-sub">{sub}</div>}
-          <h1 className="rk-shero-title" style={{ fontFamily: FONT }}>{title}</h1>
-        </div>
-        <div className="rk-shero-stats">
-          {stats.filter(Boolean).map(([l, v, c]) => <div key={l}><b style={c ? { color: c } : undefined}>{v}</b><span>{l}</span></div>)}
-        </div>
-      </div>
-      <div className="rk-shero-tabs" role="tablist" style={{ paddingBottom: tabs.length > 1 ? 0 : 18 }}>
-        {tabs.length > 1 && tabs.map(([l, k, on, badge]) => <button key={k} role="tab" aria-selected={on} className={on ? "on" : ""} onClick={() => onTab(k)}>{l}{badge && <span className="badge">{badge}</span>}</button>)}
-      </div>
-    </div>
-  );
-}
-
-// The numbers each section's header shows.
-export function heroStats(id, league, user, h) {
+// The section's one grey line under the title: the hero's numbers, as plain words.
+export function heroLine(id, league, user, h) {
   const rec = user.rec || { w: 0, l: 0, otl: 0, pts: 0 };
-  const cap = h.capSpace;
   const gp = rec.w + rec.l + rec.otl;
-  if (id === "team") return [["Record", recordStr(rec)], ["Roster", `${h.active}/23`], ["Cap space", money(cap), cap >= 0 ? "#4ade80" : "#f87171"], ["Injured", h.injured ? String(h.injured) : "None", h.injured ? "#fca5a5" : undefined], ["Prospects", String(user.prospects.length)]];
-  if (id === "standings") return [["Record", recordStr(rec)], ["Points", String(rec.pts ?? rec.w * 2 + rec.otl)], ["Games played", `${gp}/82`], ["Goal diff", h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff), h.goalDiff > 0 ? "#4ade80" : h.goalDiff < 0 ? "#f87171" : undefined]];
-  if (id === "season") return [["Record", recordStr(rec)], ["Points", String(rec.pts ?? rec.w * 2 + rec.otl)], ["Games played", `${gp}/82`], ["Goal diff", h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff), h.goalDiff > 0 ? "#4ade80" : h.goalDiff < 0 ? "#f87171" : undefined]];
-  if (id === "draft") return [["Draft class", String(h.draftYear)], ["Your picks", String(h.picks)], ["First pick", h.firstPick || "None"], ["Reports filed", String(h.reports)]];
-  if (id === "market") return [["Cap space", money(cap), cap >= 0 ? "#4ade80" : "#f87171"], ["Roster", `${h.active}/23`], ["Trade offers", String(h.offers)], ["Free agents", String(league.freeAgents?.length || 0)]];
-  if (id === "office") return [["Cap space", money(cap), cap >= 0 ? "#4ade80" : "#f87171"], ["Payroll", money(h.payroll)], ["Expiring", String(h.expiring)], ["Fans", `${h.fans}%`]];
-  return [];
+  const cap = h.capSpace >= 0 ? `${money(h.capSpace)} in cap space` : `${money(-h.capSpace)} over the cap`;
+  const pts = rec.pts ?? rec.w * 2 + rec.otl;
+  const gd = h.goalDiff > 0 ? `+${h.goalDiff}` : String(h.goalDiff);
+  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  if (id === "team") return [`${user.city} ${user.name}`, recordStr(rec), `${h.active} on the roster`, cap, h.injured ? `${h.injured} injured` : "nobody injured"].join(" · ");
+  if (id === "standings" || id === "season") return [recordStr(rec), n(pts, "point", "points"), `${gp} of 82 played`, gp ? `goal difference ${gd}` : null].filter(Boolean).join(" · ");
+  if (id === "draft") return [`${h.draftYear} draft`, n(h.picks, "pick", "picks"), h.firstPick ? `first in ${h.firstPick.toLowerCase()}` : null, n(h.reports, "report filed", "reports filed")].filter(Boolean).join(" · ");
+  if (id === "market") return [cap, `${h.active} on the roster`, n(h.offers, "trade offer", "trade offers"), n(league.freeAgents?.length || 0, "free agent", "free agents")].join(" · ");
+  if (id === "office") return [cap, `${money(h.payroll)} payroll`, `${h.expiring} expiring`, `fans ${h.fans}%`].join(" · ");
+  return "";
 }
 
 const PHASE_STAGES = [["preseason", "Preseason"], ["regular", "Regular season"], ["playoffs", "Playoffs"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];

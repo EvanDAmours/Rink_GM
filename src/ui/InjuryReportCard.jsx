@@ -54,7 +54,7 @@ export function ReplacementPicker({ pid, onClose }) {
       <div className="rk-rep">
         <div className="rk-rep-head">
           <span className="rk-rep-ico" aria-hidden>🚑</span>
-          <div><small>REGULAR DOWN</small><b>{out.name} ({o.name.short}) is {outPhrase(ret)}</b></div>
+          <div><small>Regular down</small><b>{out.name} ({o.name.short}) is {outPhrase(ret)}</b></div>
         </div>
         <p className="rk-rep-lede">Who plays {o.name.long} while he's out? Your pick takes his spot in the lines until you change it; when he's healthy he works back in. Everyone is rated at {o.name.short}, with a penalty for playing off position.</p>
         {o.roster.map((x) => row(x, <button className={String(x.p.id) === String(o.nowId) ? "primary small" : "small"} onClick={() => pick(x.p.id)}>{String(x.p.id) === String(o.nowId) ? "Keep him" : "Dress him"}</button>))}
@@ -99,7 +99,7 @@ export default function InjuryReportCard() {
         <div className="rk-injcard-head">
           <span className="rk-injcard-ico" aria-hidden>🏥</span>
           <div>
-            <small>INJURY REPORT</small>
+            <small>Injury report</small>
             <b>{rep.period.label}{out.length ? ` · ${out.length} out` : ""}{back.length ? ` · ${back.length} back` : ""}</b>
           </div>
           <button className="ghost rk-injcard-x" aria-label="Close the injury report" onClick={close}>×</button>

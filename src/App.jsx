@@ -8,7 +8,7 @@ import { capForYear } from "./engine/constants.js";
 import { capYear } from "./engine/roster.js";
 import { lastDay } from "./engine/schedule.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GameCtx, TeamBadge, recordStr, money } from "./ui/common.jsx";
+import { GameCtx, TeamBadge, recordStr, money, PageHead } from "./ui/common.jsx";
 import StanleyCup3D from "./ui/StanleyCup3D.jsx";
 import ActivityPage from "./ui/ActivityPage.jsx";
 import CommandPalette from "./ui/CommandPalette.jsx";
@@ -74,7 +74,7 @@ import { applyTheme, getTheme } from "./ui/theme.js";
 import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
-import { DeskBar, SectionHero, sectionsFor, sectionOf, screenOn, heroStats } from "./ui/DeskNav.jsx";
+import { DeskBar, sectionsFor, sectionOf, screenOn, heroLine } from "./ui/DeskNav.jsx";
 import { frenzyFor } from "./engine/frenzy.js";
 import { payroll } from "./engine/roster.js";
 import { capOverview } from "./engine/capOverview.js";
@@ -799,10 +799,11 @@ export default function App({ resume = false }) {
   })() : null;
   // The Lineup and Development screens have their own plain title and section pills, so no hero there.
   const bareLines = (tab === "lines" && (sub.lines || "lines") === "lines") || tab === "development";
-  const hero = heroH && !bareLines && <SectionHero team={user} sub={`${user.city} ${user.name}`} title={where.section.label}
-    stats={heroStats(where.section.id, league, user, heroH)}
-    tabs={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}
-    onTab={(l) => openScreen(where.section.screens.find((x) => x[0] === l))} />;
+  // Every section opens the same way as Lineup and Development: quiet section pills, a plain title, one grey line.
+  const hero = heroH && !bareLines && <PageHead className="rk-sechead" label={where.section.label}
+    pills={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}
+    onPick={(l) => openScreen(where.section.screens.find((x) => x[0] === l))}
+    title={where.screen[0]} sub={heroLine(where.section.id, league, user, heroH)} />;
 
   return (
     <GameCtx.Provider value={ctx}>
@@ -811,7 +812,7 @@ export default function App({ resume = false }) {
         deskBar)}
         {deadlineActive(league) && !live && <DeadlineTicker league={league} onOpen={() => go("deadline")} />}
         <div className="body">
-          <div className={`main${hero ? " rk-heroed" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
+          <div className={`main${hero ? " rk-heroed" : ""}${!phone && !live && tab !== "dashboard" && !bareLines ? " rk-paged" : ""}`} {...(phone && !live ? swipeHandlers(swipeHub) : {})}><ErrorBoundary key={live ? "live" : tab} onHome={()=>{setLive(null);setTab("dashboard");}}>
             {live ? (
               <LiveGame spec={live} onDone={onLiveDone} />
             ) : (

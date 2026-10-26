@@ -95,7 +95,7 @@ export default function RecordBookPage() {
           </div>
           <div className="gg-rec-sec"><h3>Franchise career leaders</h3><span className="dim small">All-time leaders with the club: its real history, plus everything done in your league. ● marks a current player.</span></div>
           <div className="gg-rec-grid">
-            {[...CAREER_BOARDS, ...GOALIE_BOARDS].map(([key, label]) => { const rows = franchiseBoard(league, team.abbr, key, 10); const act = rows.find((r) => r.active); return rows.length ? <LeaderCard key={key} label={label.toUpperCase()} rows={rows} active={act && rows.indexOf(act) > 4 ? act : null} /> : null; })}
+            {[...CAREER_BOARDS, ...GOALIE_BOARDS].map(([key, label]) => { const rows = franchiseBoard(league, team.abbr, key, 10); const act = rows.find((r) => r.active); return rows.length ? <LeaderCard key={key} label={label} rows={rows} active={act && rows.indexOf(act) > 4 ? act : null} /> : null; })}
           </div>
           <div className="gg-rec-sec"><h3>Season by season</h3><span className="dim small">Real seasons in grey and blue (playoffs), gold for a Cup; your simulated seasons in green.</span></div>
           <div className="gg-rec-chart" role="img" aria-label="Season points history">
@@ -130,7 +130,7 @@ export default function RecordBookPage() {
             <div key={scope}>
               <div className="gg-k" style={{ margin: "8px 0 4px" }}>{scope === "game" ? "SINGLE GAME" : scope === "season" ? "SINGLE SEASON" : "CAREER"}</div>
               <div className="gg-rec-grid">
-                {Object.entries({ g: "Goals", a: "Assists", pts: "Points", w: "Goalie wins", so: "Shutouts", sa: "Saves" }).filter(([k]) => scope !== "game" || !["w"].includes(k)).map(([k, label]) => { const r = rb[scope]?.[k]; return <div key={k} className="gg-rec light"><small>{label.toUpperCase()}</small><b>{r ? fmt(r.value) : "—"}</b><span className="gg-rec-holder">{r ? <>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} /> : r.name} · <TeamName tid={r.tid} short /> · {seasonLabel(r.year)}</> : "No record yet"}</span></div>; })}
+                {Object.entries({ g: "Goals", a: "Assists", pts: "Points", w: "Goalie wins", so: "Shutouts", sa: "Saves" }).filter(([k]) => scope !== "game" || !["w"].includes(k)).map(([k, label]) => { const r = rb[scope]?.[k]; return <div key={k} className="gg-rec light"><small>{label}</small><b>{r ? fmt(r.value) : "—"}</b><span className="gg-rec-holder">{r ? <>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} /> : r.name} · <TeamName tid={r.tid} short /> · {seasonLabel(r.year)}</> : "No record yet"}</span></div>; })}
               </div>
             </div>
           ))}
@@ -162,7 +162,7 @@ function RecordWatch({ league }) {
   return (
     <>
       <div className="gg-rec-sec"><h3>Record watch</h3><span className="dim small">Players within reach of an NHL single-season record, projected over 82 games.</span></div>
-      {rows.length ? <div className="lg-watch">{rows.map((r) => <div key={r.key} className="gg-card lg-watch-card"><small className="gg-k">{r.label.toUpperCase()} · RECORD {fmt(r.mark.value)}</small><div><b>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} showInj={false} /> : r.name}</b> <span className="dim small">{league.teams[r.tid]?.abbr}</span></div><div className="small">{fmt(r.value)} now · on pace for <b>{r.pace}</b>{r.on ? " · ON RECORD PACE" : ""}</div><div className="gg-rec-bar"><i style={{ width: `${Math.min(100, r.pct)}%` }} /></div><span className="gg-rec-pct">{r.pct}% of {r.mark.name}'s {fmt(r.mark.value)}</span></div>)}</div> : <div className="gg-card dim small">Nobody is on pace for an NHL record yet. Ten games in, the watch starts.</div>}
+      {rows.length ? <div className="lg-watch">{rows.map((r) => <div key={r.key} className="gg-card lg-watch-card"><small className="gg-k">{r.label} · RECORD {fmt(r.mark.value)}</small><div><b>{league.players[r.pid] ? <PlayerName p={league.players[r.pid]} showInj={false} /> : r.name}</b> <span className="dim small">{league.teams[r.tid]?.abbr}</span></div><div className="small">{fmt(r.value)} now · on pace for <b>{r.pace}</b>{r.on ? " · ON RECORD PACE" : ""}</div><div className="gg-rec-bar"><i style={{ width: `${Math.min(100, r.pct)}%` }} /></div><span className="gg-rec-pct">{r.pct}% of {r.mark.name}'s {fmt(r.mark.value)}</span></div>)}</div> : <div className="gg-card dim small">Nobody is on pace for an NHL record yet. Ten games in, the watch starts.</div>}
     </>
   );
 }

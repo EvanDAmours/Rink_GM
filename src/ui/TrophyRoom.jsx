@@ -2,7 +2,7 @@ import { CUP_HISTORY, CUP_HISTORY_SOURCE } from "../data/cupHistory.js";
 import { TROPHY_HISTORY } from "../data/trophyHistory.js";
 import { HISTORICAL_RECORDS } from "../data/historicalRecords.js";
 import React, { useEffect, useState } from "react";
-import { useGame, TeamName, TeamBadge, PlayerName } from "./common.jsx";
+import { useGame, TeamName, TeamBadge, PlayerName, PageHead } from "./common.jsx";
 import { AWARD_NAMES, AWARD_BLURB, ALL_STAR_LABEL, computeAwards, conferenceTrophies } from "../engine/awards.js";
 import { titleMeaning } from "../engine/momentsCup.js";
 import { trophyUrl, TROPHY_ORDER, TROPHY_NAMESAKE } from "./trophies.js";
@@ -91,8 +91,8 @@ export default function TrophyRoom({ view: forced, onView }) {
 
   return (
     <div className="stack gg-trophyroom">
+      {!forced && <PageHead className="rk-own" title="Legacy Hall" sub={`${club.city} ${club.name} · ${caseWon} of ${TROPHY_ORDER.length} trophies won at least once · real NHL history included`} />}
       <div className="gg-pagehead">
-        <div>{!forced && <h2>Legacy Hall · {club.name}</h2>}<div className="gg-status">Your club's Stanley Cups, banners and silverware · {caseWon} of {TROPHY_ORDER.length} trophies won at least once · real NHL history included</div></div>
         <div className="gg-chips">{TROPHY_VIEWS.filter(([k]) => !forced || (HISTORY_VIEWS.includes(forced) ? HISTORY_VIEWS : HALL_VIEWS).includes(k)).map(([k, l]) => <button key={k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
       </div>
 
@@ -103,9 +103,9 @@ export default function TrophyRoom({ view: forced, onView }) {
           <div className="gg-legacy-hero" style={{ "--c1": club.colors[0] }}>
             <Trophy kind="stanley" size={190} className="hero" />
             <div className="gg-legacy-who">
-              <span className="gg-k">Franchise legacy{HISTORICAL_RECORDS.franchises?.[club.abbr]?.firstSeason ? ` · SINCE ${HISTORICAL_RECORDS.franchises[club.abbr].firstSeason}` : ""}</span>
+              <span className="gg-k">Franchise legacy{HISTORICAL_RECORDS.franchises?.[club.abbr]?.firstSeason ? ` · since ${HISTORICAL_RECORDS.franchises[club.abbr].firstSeason}` : ""}</span>
               <h2><TeamName tid={team} /></h2>
-              <div className="gg-tiles"><div><small>STANLEY CUPS</small><b>{realCups.length + cups.length}</b></div><div><small>WON IN YOUR LEAGUE</small><b>{cups.length}</b></div><div><small>CUP FINALS LOST</small><b>{finals.length}</b></div><div><small>CONFERENCE TITLES</small><b>{confs.length}</b></div><div><small>PRESIDENTS' TROPHIES</small><b>{pres.length}</b></div><div><small>INDIVIDUAL AWARDS</small><b>{mine.length + ["hart","tedLindsay","artRoss","rocket","norris","vezina","calder","selke","ladyByng","jennings","masterton","kingClancy","messier","connSmythe"].reduce((s, k) => s + (real(k)?.count || 0), 0)}</b></div></div>
+              <div className="gg-tiles"><div><small>Stanley Cups</small><b>{realCups.length + cups.length}</b></div><div><small>Won in your league</small><b>{cups.length}</b></div><div><small>Cup Finals lost</small><b>{finals.length}</b></div><div><small>Conference titles</small><b>{confs.length}</b></div><div><small>Presidents' Trophies</small><b>{pres.length}</b></div><div><small>Individual awards</small><b>{mine.length + ["hart","tedLindsay","artRoss","rocket","norris","vezina","calder","selke","ladyByng","jennings","masterton","kingClancy","messier","connSmythe"].reduce((s, k) => s + (real(k)?.count || 0), 0)}</b></div></div>
               <div className="dim small" style={{ marginTop: 8 }}>{realCups.length ? `Last real Stanley Cup: ${realCups.at(-1).year}.` : "No Stanley Cup in franchise history yet."}{cups.length ? ` Last in your league: ${season(cups[0].year)}.` : ""}</div>
             </div>
             <TeamBadge team={club} size={120} decorative />

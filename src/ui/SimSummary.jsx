@@ -18,9 +18,9 @@ export default function SimSummary({ data, onClose }) {
         <div className="gg-sum-hero">
           <div><span className="gg-k">{from} – {to} · {span.gp} game{span.gp === 1 ? "" : "s"}</span><b className="gg-sum-rec">{span.w}-{span.l}-{span.otl}</b><span className="dim small">{span.gf} GF · {span.ga} GA · {signed(span.gf - span.ga)} · now {t.rec.w}-{t.rec.l}-{t.rec.otl}, {t.rec.pts} pts{d.last10 ? ` · last 10: ${d.last10}` : ""}</span></div>
           <div className="gg-sum-ranks">
-            <div><small>DIVISION</small><b>{ordinal(d.now.div)}</b>{arrow(d.movement.div)}</div>
-            <div><small>CONFERENCE</small><b>{ordinal(d.now.conf)}</b>{arrow(d.movement.conf)}</div>
-            <div><small>LEAGUE</small><b>{ordinal(d.now.league)}</b>{arrow(d.movement.league)}</div>
+            <div><small>Division</small><b>{ordinal(d.now.div)}</b>{arrow(d.movement.div)}</div>
+            <div><small>Conference</small><b>{ordinal(d.now.conf)}</b>{arrow(d.movement.conf)}</div>
+            <div><small>League</small><b>{ordinal(d.now.league)}</b>{arrow(d.movement.league)}</div>
           </div>
         </div>
         <div className="gg-sum-games">{d.games.slice(-12).map((g, i) => <span key={i} className={`gg-sum-g ${g.result === "W" ? "w" : g.result === "OTL" ? "o" : "l"}`} title={`${g.home ? "vs" : "@"} ${g.opp} ${g.us}-${g.them}${g.ot ? " " + g.ot : ""}`}>{g.home ? "" : "@"}{g.opp} {g.us}-{g.them}</span>)}</div>

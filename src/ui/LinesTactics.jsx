@@ -79,7 +79,7 @@ export function SpotPreview({ p, team, mine, onMoved }) {
   const roles = bestRoles(p, 3);
   return (
     <div className="lx-spv">
-      <div className="lx-k">{lastName(p.name).toUpperCase()} AT EACH SPOT <span>· what he rates there (cost of the move)</span></div>
+      <div className="lx-k">{lastName(p.name)} at each spot <span>· what he rates there (cost of the move)</span></div>
       <div className="lx-spv-row">
         {SKATER_SLOTS.map((s) => {
           const v = slotRating(p, s), c = s === p.pos ? "here" : moveCost(p, s), pv = movePreview(p, s);

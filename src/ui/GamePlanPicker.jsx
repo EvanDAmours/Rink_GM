@@ -5,7 +5,7 @@ import { TacticUsage } from "./LinesTactics.jsx";
 
 // One game-plan control for the whole game: the home screen and the Game Plan tab share it.
 // Picks write the user's plan and switch the coaches' automatic choice off.
-export const PLAN_ROWS = [["forecheck", "FORECHECK", ["balanced", "aggressive"]], ["neutral", "NEUTRAL ZONE", ["balanced", "trap"]], ["attack", "ATTACK", ["balanced", "rush", "shoot", "cycle"]]];
+export const PLAN_ROWS = [["forecheck", "Forecheck", ["balanced", "aggressive"]], ["neutral", "Neutral zone", ["balanced", "trap"]], ["attack", "Attack", ["balanced", "rush", "shoot", "cycle"]]];
 
 export default function GamePlanPicker({ opp, compact = false }) {
   const { league: lg, commit, toast } = useGame();

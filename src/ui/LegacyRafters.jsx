@@ -46,14 +46,14 @@ export function Rafters() {
         <div key={r.pid} className="gg-card lg-prompt"><b>Raise #{r.number} to the rafters for {r.name}?</b><span className="dim small">{r.pos} · retired {season(r.year)} · {r.gp} GP with this franchise · legacy {r.legacy ?? "—"}</span><div className="row"><button className="primary" onClick={() => answer(r, true)}>Yes, retire #{r.number}</button><button className="ghost" onClick={() => answer(r, false)}>Not now</button></div></div>
       ))}
       <div className="lg-h"><span>The Rafters</span><small>{realCups.length + simCups.length} Stanley Cups · {confs.length} conference titles · {pres.length} Presidents' Trophies in your league</small></div>
-      <Wall label="🏆 STANLEY CUP CHAMPIONS" empty={`No Stanley Cup banners yet for the ${club.name}. Win one and it goes up here.`}>
+      <Wall label="Stanley Cup champions" empty={`No Stanley Cup banners yet for the ${club.name}. Win one and it goes up here.`}>
         {[...realCups, ...simCups].sort((a, b) => a.y - b.y).map((c) => <Banner key={c.y} team={club} line1="STANLEY CUP" line2="CHAMPIONS" year={c.real ? c.y : season(c.y)} gold />)}
       </Wall>
-      {(confs.length > 0 || pres.length > 0) && <Wall label="CONFERENCE AND REGULAR-SEASON CHAMPIONS">
+      {(confs.length > 0 || pres.length > 0) && <Wall label="Conference and regular-season champions">
         {confs.map((c) => <Banner key={`${c.k}${c.y}`} team={club} line1={c.k === "princeOfWales" ? "EASTERN CONF." : "WESTERN CONF."} line2="CHAMPIONS" year={season(c.y)} />)}
         {pres.map((h) => <Banner key={`p${h.year}`} team={club} line1="PRESIDENTS'" line2="TROPHY" year={season(h.year)} />)}
       </Wall>}
-      <Wall label="RETIRED NUMBERS" empty="No numbers retired yet.">{nums.map((x) => <NumberBanner key={`${x.n}${x.name}`} team={club} number={x.n} name={x.name} yours={x.yours} />)}</Wall>
+      <Wall label="Retired numbers" empty="No numbers retired yet.">{nums.map((x) => <NumberBanner key={`${x.n}${x.name}`} team={club} number={x.n} name={x.name} yours={x.yours} />)}</Wall>
       <div className="lg-h"><span>Hockey Hall of Fame</span><small>{hofReal.length + hofLeague.length} honoured members: the club's real inductees, and legends who retire here in your league</small></div>
       <div className="lg-hof">
         {hofLeague.map((h) => <button key={h.pid} className="lg-hof-card yours" onClick={() => openPlayer(h.pid)}><b>{h.name}</b><span>{h.pos} · Class of {h.inducted}</span><em>YOUR LEAGUE</em></button>)}
@@ -77,7 +77,7 @@ export function GmLegacy() {
   return show && (
     <div className="stack lg-gm">
       <div className="gg-legacy-hero lg-gm-hero"><div><span className="gg-k">GM legacy</span><h2>{c.tier}</h2><div className="dim small">Score {c.score} · #{c.rank} against the great NHL general managers</div></div>
-        <div className="gg-tiles"><div><small>SEASONS</small><b>{c.seasons}</b></div><div><small>RECORD</small><b>{c.w}-{c.l}</b></div><div><small>STANLEY CUPS</small><b>{c.cups.length}</b></div><div><small>PLAYOFF TRIPS</small><b>{c.playoffs}</b></div><div><small>AWARDS WON</small><b>{c.awards}</b></div></div></div>
+        <div className="gg-tiles"><div><small>Seasons</small><b>{c.seasons}</b></div><div><small>Record</small><b>{c.w}-{c.l}</b></div><div><small>Stanley Cups</small><b>{c.cups.length}</b></div><div><small>Playoff trips</small><b>{c.playoffs}</b></div><div><small>Awards won</small><b>{c.awards}</b></div></div></div>
       {c.draftees.length > 0 && <div className="gg-card"><div className="gg-k">Your best draft picks</div>{c.draftees.map((p) => <div key={p.id} className="small">{p.name} · {p.pos} · {p.draft.year} #{p.draft.pick} · peak {p.peak || p.ovr}</div>)}</div>}
       <div className="gg-card"><div className="gg-k">Against the greats</div>
         <div className="tablewrap"><table className="t"><thead><tr><th>#</th><th>GM</th><th>Club</th><th>Years</th><th className="num">Cups</th><th className="num">Score</th></tr></thead><tbody>
