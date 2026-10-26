@@ -445,4 +445,7 @@ export const PATCH_NOTES = [
   { v: "1.82", date: "2026-10-26", title: "Plainer Holidays", notes: [
     "Holiday and outdoor game cards drop the emoji art and the extra one-liner (\"One more game before the ball drops\"): just the event, the two clubs and the result.",
   ] },
+  { v: "1.83", date: "2026-10-26", title: "Know Who You're Developing", notes: [
+    "Every player on the Development screens (lists, the focus player picker and the prospect sheets) now shows his position, his overall and, where known, the year and spot he was drafted.",
+  ] },
 ];

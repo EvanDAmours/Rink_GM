@@ -11,6 +11,7 @@ import {
   CAMP_PRIORITY, LEVELS, ROLES, placeText, statusWord, placementOptions, setPlacement, setFocus, setCampPriority, lockPlan,
   unlockPlan, planOpen, readyFor, placementSummer, gamble, signed, traitName, FOCUS_WEEKS, ROLL_WEEK,
 } from "../engine/developmentPlan.js";
+import { POS_COLOR } from "./TradePage.jsx";
 import "./dev.css";
 
 const VIEWS = [["overview", "Overview"], ["plan", "Season plan"], ["prospects", "Prospects"]];
@@ -54,10 +55,17 @@ function headSub(league, t) {
   return "Set the plan, then watch them grow.";
 }
 
-function Row({ name, why, num, tone, onClick, chev, word }) {
+// Who he is at a glance: position, overall, and where he was drafted.
+export const draftText = (p) => p?.draft?.year ? `Drafted ${p.draft.year}${p.draft.round ? ` · R${p.draft.round} #${p.draft.pick}` : ""}` : p?.draft === false || p?.undrafted ? "Undrafted" : "";
+export function Who({ p }) {
+  if (!p) return null;
+  return <span className="dv-who"><span className="gg-pos" style={{ background: POS_COLOR[p.pos] || "#64748b" }}>{p.pos}</span><b>{p.ovr}</b><i>OVR</i>{draftText(p) && <span>{draftText(p)}</span>}</span>;
+}
+
+function Row({ name, why, num, tone, onClick, chev, word, p }) {
   return (
     <button type="button" className="dv-li" onClick={onClick}>
-      <span className="dv-tx"><b>{name}</b>{why && <span>{why}</span>}</span>
+      <span className="dv-tx"><b>{name}</b>{p && <Who p={p} />}{why && <span>{why}</span>}</span>
       {num != null && <span className={`dv-n ${tone || ""}`}>{num}</span>}
       {word && <span className={`dv-w ${tone || ""}`}>{word}</span>}
       {chev && <span className="dv-chev" aria-hidden="true">›</span>}
@@ -87,7 +95,7 @@ function Overview({ onSub }) {
         <div>
           <div className="dv-segw"><span className="dv-lbl">{league.phase === "preseason" ? "Worth knowing this preseason" : league.phase === "regular" ? "Worth knowing this month" : "Worth knowing"}</span></div>
           <div className="dv-list">
-            {know.length ? know.map((r) => <Row key={r.pid} name={r.name} why={r.why} num={r.num} tone={r.tone} onClick={() => openPlayer(r.pid)} />) : <div className="dv-empty">Nothing stands out yet. Check back after a few weeks.</div>}
+            {know.length ? know.map((r) => <Row key={r.pid} p={league.players[r.pid]} name={r.name} why={r.why} num={r.num} tone={r.tone} onClick={() => openPlayer(r.pid)} />) : <div className="dv-empty">Nothing stands out yet. Check back after a few weeks.</div>}
           </div>
           {inSeason && (
             <button type="button" className="dv-planline" onClick={() => onSub("plan")}>
@@ -105,7 +113,7 @@ function Overview({ onSub }) {
             </div>
           </div>
           <div className="dv-list">
-            {shown.length ? shown.map((r) => { const v = Math.round(r.v); return <Row key={r.p.id} name={r.p.name} why={`${r.p.age} · ${r.farm ? LEVELS[r.p.placement?.level || r.p.assignment]?.name || "AHL" : "NHL"}`} num={signed(v)} tone={v > 0 ? "up" : v < 0 ? "down" : ""} onClick={() => openPlayer(r.p.id)} />; })
+            {shown.length ? shown.map((r) => { const v = Math.round(r.v); return <Row key={r.p.id} p={r.p} name={r.p.name} why={`${r.p.age} · ${r.farm ? LEVELS[r.p.placement?.level || r.p.assignment]?.name || "AHL" : "NHL"}`} num={signed(v)} tone={v > 0 ? "up" : v < 0 ? "down" : ""} onClick={() => openPlayer(r.p.id)} />; })
               : <div className="dv-empty">Nobody {word} next summer.</div>}
           </div>
           {rows.length > 4 && <button type="button" className="dv-qlink" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `All ${rows.length} ${word} →`}</button>}
@@ -126,8 +134,8 @@ function SeasonPlan({ onSub }) {
   const pre = league.phase === "preseason";
   const f = league.players[plan.focus];
   const left = weeksLeft(league);
-  const focusSub = !f ? "Nobody yet" : pre ? `+${focusExpected(f).toFixed(1)} expected by spring`
-    : league.phase === "regular" ? `${signed(plan.gained || 0)} so far · on pace for ${signed(Math.round((plan.gained || 0) + focusExpected(f, left)))} by spring` : `${signed(plan.gained || 0)} this season`;
+  const focusSub = !f ? "Nobody yet" : `${f.pos} · ${f.ovr} OVR${draftText(f) ? ` · ${draftText(f)}` : ""} · ` + (pre ? `+${focusExpected(f).toFixed(1)} expected by spring`
+    : league.phase === "regular" ? `${signed(plan.gained || 0)} so far · on pace for ${signed(Math.round((plan.gained || 0) + focusExpected(f, left)))} by spring` : `${signed(plan.gained || 0)} this season`);
   const camp = CAMP_PRIORITY[plan.camp];
   const covered = campCovered(league, plan.camp, t).length;
   const pros = t.prospects.map((id) => league.players[id]).filter((p) => p?.placement?.year === league.year);
@@ -180,7 +188,7 @@ function FocusSheet({ onClose }) {
       <div className={`dv-opts${every ? " scroll" : ""}`}>
         {list.map(({ p: c, boost }) => (
           <button key={c.id} type="button" className={`dv-opt${pick === c.id ? " on" : ""}`} aria-pressed={pick === c.id} onClick={() => setPick(c.id)}>
-            <span className="dv-tx"><b>{c.name}</b><span>{c.age} · {traitName(c)}{t.prospects.includes(c.id) ? ` · ${LEVELS[c.assignment]?.name || "AHL"}` : ""}</span></span>
+            <span className="dv-tx"><b>{c.name}</b><Who p={c} /><span>{c.age} · {traitName(c)}{t.prospects.includes(c.id) ? ` · ${LEVELS[c.assignment]?.name || "AHL"}` : ""}</span></span>
             <span className={`dv-n ${boost >= 0.5 ? "up" : ""}`}>+{boost.toFixed(1)}</span>
           </button>
         ))}
@@ -248,7 +256,7 @@ function Prospects() {
           else if (pl && pre) { word = statusWord(pl); tone = word === "Long shot" ? "down" : word === "Risky" ? "warn" : ""; }
           else if (pl) { word = "Settling in"; tone = "dim"; }
           const st = !pre ? statTxt(p) : null;
-          return <Row key={p.id} name={p.name} why={st ? `${where} · ${st}` : where} word={word} tone={tone} chev onClick={() => setSel(p.id)} />;
+          return <Row key={p.id} p={p} name={p.name} why={st ? `${where} · ${st}` : where} word={word} tone={tone} chev onClick={() => setSel(p.id)} />;
         })}
       </div>}
       {sel && league.players[sel] && <ProspectSheet p={league.players[sel]} onClose={() => setSel(null)} />}
@@ -267,7 +275,7 @@ function ProspectSheet({ p, onClose }) {
   const pl = p.placement?.year === league.year ? p.placement : null;
   const pre = league.phase === "preseason";
   const open = planOpen(league, t);
-  const sub = `${p.age} · ${p.ovr} today · ceiling ${p.pot}`;
+  const sub = `${p.pos} · ${p.ovr} OVR · age ${p.age} · ceiling ${p.pot}${draftText(p) ? ` · ${draftText(p)}` : ""}`;
   if (!pre || !pl) {
     const ready = league.phase === "regular" || league.phase === "preseason" ? readyFor(league, t, p) : null;
     const s = p.farmStats || {};
@@ -337,7 +345,7 @@ export function DevReportSheet({ onClose }) {
     <Dialog title={<span className="dv-sheet-hs"><Headline league={league} t={t} compact /></span>} sub={reportSub(league, t)} onClose={onClose} className="dv-sheet dv-report"
       actions={<DBtn kind="primary" onClick={() => { onClose(); go("development", "overview"); }}>Open Development</DBtn>}>
       <div className="dv-list inset">
-        {know.length ? know.map((r) => <Row key={r.pid} name={r.name} why={r.why} num={r.num} tone={r.tone} onClick={() => { onClose(); openPlayer(r.pid); }} />) : <div className="dv-empty">Nothing stands out yet.</div>}
+        {know.length ? know.map((r) => <Row key={r.pid} p={league.players[r.pid]} name={r.name} why={r.why} num={r.num} tone={r.tone} onClick={() => { onClose(); openPlayer(r.pid); }} />) : <div className="dv-empty">Nothing stands out yet.</div>}
       </div>
     </Dialog>
   );
