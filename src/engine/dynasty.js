@@ -1,6 +1,7 @@
 import {stream,clamp} from "./rng.js";
 import {createAssistant} from "./development.js";
 import {logTx} from "./roster.js";
+import {coachOffseason,ensureCoachContract} from "./coachContracts.js";
 import {queueMoment} from "./moments.js";
 import {hallMoments} from "./momentsSeason.js";
 import {legacyOf,hofWorthy,HOF_WAIT,filmDocumentaries} from "./legacy.js";
@@ -26,9 +27,11 @@ export function careerReview(lg){
     if(t.coach.tenure.some(s=>s.year===lg.year))continue;
     t.coach.tenure.push({year:lg.year,tid:t.id,w:t.rec.w,pts:t.rec.pts,cup:lg.playoffs?.champion===t.id});
     if(t.id!==lg.userTid && t.owner.trust<35 && stream(`${lg.year}|carousel|${t.id}`).next()<.4){
-      const next=lg.coachMarket.find(c=>!lg.teams.some(o=>o.coach.id===c.id));if(next){lg.coachMarket=lg.coachMarket.filter(c=>c.id!==next.id);lg.coachMarket.push(t.coach);t.coach={...next,hiredYear:lg.year+1,tenure:[]};logTx(lg,`${t.abbr} change head coach to ${next.name}`,[t.id]);}
+      const next=lg.coachMarket.find(c=>!lg.teams.some(o=>o.coach.id===c.id));if(next){lg.coachMarket=lg.coachMarket.filter(c=>c.id!==next.id);lg.coachMarket.push(t.coach);t.coach={...next,hiredYear:lg.year+1,tenure:[]};delete t.coach.yrs;delete t.coach.announced;delete t.coach.tickYear;ensureCoachContract(lg,t.coach);logTx(lg,`${t.abbr} change head coach to ${next.name}`,[t.id]);}
     }
   }
+  // Head-coach contracts count down; retirements at contract end (coachContracts.js).
+  try{coachOffseason(lg);}catch(e){console.error("Coach contracts failed",e);}
   const t=lg.teams[lg.userTid];
   if(lg.settings.firing && t.owner.trust<=25){lg.career.fired=true;lg.career.offers=lg.teams.filter(o=>o.id!==t.id).sort((a,b)=>a.owner.trust-b.owner.trust || a.rec.pts-b.rec.pts).slice(0,5).map(o=>({tid:o.id,year:lg.year+1,goal:o.owner.goal.label}));lg.inbox.push({year:lg.year,day:lg.day,text:`You were dismissed by ${t.abbr}. Select your next GM job under Front Office → Operations.`});}
   try{filmDocumentaries(lg);}catch(e){console.error("Documentary failed",e);}

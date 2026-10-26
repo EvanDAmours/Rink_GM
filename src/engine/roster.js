@@ -234,7 +234,7 @@ export function callUp(league, team, pid, {emergency=false}={}) {
   if (p.ahlRecallAfter>league.day && !(isGoalie(p.pos) && counts(league,team,{healthyOnly:true}).G<2)) return false;
   if (p.signed===false && contractCount(league,team)>=50) return false;
   if (!p.signed) {
-    p.cap = p.age <= 24 ? elcSalary(league.year) : minSalaryForYear(league.year);
+    p.cap = p.age <= 24 ? elcSalary(league.year, p.draft?.pick) : minSalaryForYear(league.year);
     p.yrs = elcTerm(p.age);
     p.elc = {signedAge:p.age,year:league.year};
     p.service={firstAge:p.age,years:0,priorGames:0,estimated:false};

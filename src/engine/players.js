@@ -3,6 +3,7 @@ import { uid, gauss, clamp, rand, randInt, chance, pick, stream } from "./rng.js
 import { generateAttributes, defaultArchetype, progressAttributes, computeOvr } from "./ratings.js";
 import { isGoalie, isDefense, capForYear, minSalaryForYear, maxSalaryForYear } from "./constants.js";
 import { randomName } from "./names.js";
+import { rankValue, marketTerm } from "./marketPay.js";
 
 export const blankSkaterStats = () => ({ gp: 0, g: 0, a: 0, pts: 0, pm: 0, pim: 0, sog: 0, hit: 0, blk: 0, toi: 0, ppg: 0, ppp: 0, shg: 0, gwg: 0, fow: 0, fol: 0 });
 export const blankGoalieStats = () => ({ gp: 0, gs: 0, w: 0, l: 0, otl: 0, sa: 0, ga: 0, so: 0, toi: 0 });
@@ -192,29 +193,10 @@ export function generatePlayer(pos, ovr, age, year, extra = {}) {
 // 92-94 first-liners $12-13M, 88 top-line or top-pair players about $8.6M, middle-six
 // forwards and second-pair D (80-86) $3.3-7.4M, depth near the league minimum. A full
 // roster priced this way comes to roughly the cap, as NHL payrolls do.
-const VALUE_TABLE = [
-  [60, 0.85], [72, 0.85], [75, 1.3], [76, 1.6], [78, 2.3], [80, 3.3], [82, 4.6], [84, 6.0],
-  [86, 7.4], [88, 8.6], [90, 10.2], [92, 11.8], [94, 13.3], [96, 14.6], [98, 15.8], [99, 16.5],
-];
-// Older players still get paid for what they do now, on shorter deals.
-const AGE_FACTOR = { 31: 0.97, 32: 0.94, 33: 0.9, 34: 0.85, 35: 0.8, 36: 0.73, 37: 0.66, 38: 0.6 };
+// Priced by league rank at his position, matched to real NHL cap hits at the same rank
+// (marketPay.js), with NHL aging (goalies two years later).
 export function marketValue(p, year) {
-  const ovr = p.ovr;
-  let v = VALUE_TABLE[0][1];
-  for (let i = 1; i < VALUE_TABLE.length; i++) {
-    const [o1, v1] = VALUE_TABLE[i - 1];
-    const [o2, v2] = VALUE_TABLE[i];
-    if (ovr <= o2) {
-      v = v1 + ((Math.max(ovr, o1) - o1) / (o2 - o1)) * (v2 - v1);
-      break;
-    }
-    v = v2;
-  }
-  v *= capForYear(year) / 104;
-  if (p.age >= 31) v *= AGE_FACTOR[p.age] ?? 0.55;
-  if (p.age <= 22 && p.pot > p.ovr) v *= 1 + Math.min(0.25, (p.pot - p.ovr) * 0.03);
-  if (isGoalie(p.pos)) v *= 0.85;
-  return round2(clamp(v, minSalaryForYear(year), maxSalaryForYear(year)));
+  return round2(clamp(rankValue(p, year), minSalaryForYear(year), maxSalaryForYear(year)));
 }
 
 export const round2 = (x) => Math.round(x * 100) / 100;
@@ -229,12 +211,7 @@ export function contractAsk(p, year, { mood = 0.5, mult = 1 } = {}) {
   if (isRFA(p)) aav *= 0.85;
   aav *= 1.08 - 0.16 * mood;
   aav = round2(clamp(aav, minSalaryForYear(year), maxSalaryForYear(year)));
-  let yrs;
-  if (p.age <= 24) yrs = p.ovr >= 84 ? randIntSeeded(p, 5, 7) : randIntSeeded(p, 2, 4);
-  else if (p.age <= 28) yrs = randIntSeeded(p, 3, 7);
-  else if (p.age <= 31) yrs = randIntSeeded(p, 2, 5);
-  else if (p.age <= 34) yrs = randIntSeeded(p, 1, 3);
-  else yrs = 1;
+  const yrs = marketTerm(p, (randIntSeeded(p, 0, 999) + 0.5) / 1000);
   return { aav, yrs };
 }
 

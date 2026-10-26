@@ -1,3 +1,4 @@
+import { elcAmount } from "./marketPay.js";
 // Stateful CBA gameplay model. Missing historical service and salary data is estimated.
 import { capForYear, minSalaryForYear, isGoalie } from "./constants.js";
 import { clamp } from "./rng.js";
@@ -18,7 +19,9 @@ export function contractCount(lg,t) {
 }
 export const reserveCount = (lg,t) => ownedIds(t).filter(id=>lg.players[id]).length;
 export const elcTerm = (age) => age <= 21 ? 3 : age <= 23 ? 2 : 1;
-export const elcSalary = (year) => year <= 2026 ? 1 : Math.round((minSalaryForYear(year)+.175)*1000)/1000;
+export const elcMax = (year) => year <= 2026 ? 1 : Math.round((minSalaryForYear(year)+.175)*1000)/1000;
+// The ELC maximum for a top-10 pick, sliding toward the minimum for late picks (marketPay.js).
+export const elcSalary = (year, pick = 1) => elcAmount(year, elcMax(year), pick);
 export function waiverStatus(p) {
   if (p.signed === false) return { exempt:true,reason:"Unsigned draft rights" };
   const age = clamp(p.service?.firstAge ?? Math.min(p.age,20),18,25);
