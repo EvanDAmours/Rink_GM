@@ -162,7 +162,7 @@ html, body, body .app { background: #080c14 !important; }
 .app.app .main.rk-heroed .gg-pagehead h2, .app.app .main.rk-heroed .gg-pagehead .gg-status, .app.app .main.rk-heroed .gg-pagehead .gg-tiles,
 .app.app .main.rk-heroed > .stack > .pagehead > h2, .app.app .main.rk-heroed .gg-embed .pagehead > h2 { display: none; }
 /* The Gazette keeps its own page: it scrolls on the backdrop. */
-.app .modalbg.gg-paperbg { overflow-y: auto; align-items: flex-start; }
+.app .modalbg.gg-paperbg { overflow-y: auto; align-items: center; justify-content: flex-start; }
 /* Needs attention as a sheet */
 .app .modal.rk-inbox-sheet .rk-inbox-list { max-height: none; }
 

@@ -398,4 +398,7 @@ export const PATCH_NOTES = [
   { v: "1.71", date: "2026-10-26", title: "Standings Up Top", notes: [
     "Standings has its own spot in the top bar again, right after Team, opening on the playoff picture.",
   ] },
+  { v: "1.72", date: "2026-10-26", title: "Front Page, Centred", notes: [
+    "The Rink Gazette is centred on the screen again.",
+  ] },
 ];
