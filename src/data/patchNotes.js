@@ -350,4 +350,11 @@ export const PATCH_NOTES = [
     "New Autofill by chemistry and Autofill by overall buttons, for even strength and special teams.",
     "Every player card shows his style (SNP, PLY, PWF, 2WY, OFD, DFD and more), with a legend in the Chemistry panel. Scratches, injured players and the power-play and penalty-kill 'not on a unit' pool get their own bigger panels.",
   ] },
+  { v: "1.63", date: "2026-10-26", title: "A Calmer Look", notes: [
+    "A cleaner top bar on computers: six sections instead of eleven tabs, with your club's season one click away (every game as a win/loss box, next game ringed).",
+    "Every section now opens on a header in your club's colours, with the numbers that matter there and its screens as tabs.",
+    "A calmer look everywhere: soft rounded cards, plain headings, and one green button for the main action.",
+    "Popups are rebuilt: centred dialogs on a computer, slide-up sheets on a phone, always on top and always closable.",
+    "Search sits in the bar (press / or Ctrl+K), and Trade Deadline and Free Agency pills appear while those windows are open.",
+  ] },
 ];
