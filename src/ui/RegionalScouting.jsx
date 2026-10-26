@@ -66,7 +66,7 @@ export default function RegionalScouting() {
         <div className="row"><span className="pill">{r.family}</span><h3 style={{ margin: 0 }}>{r.name}</h3></div>
         <p className="muted small">{r.note}</p>
         <div className="row"><b>{ps.length} prospects</b><span className="muted">{r1} in Central Scouting's first round · {reported} reported</span></div>
-        <div className="small" style={{ margin: "4px 0" }}>{who.length ? <>🔎 {who.map((x) => `${x.name} (${x.eval})`).join(", ")}</> : <span className="dim">No scout assigned: front-office reads only.</span>}</div>
+        <div className="small" style={{ margin: "4px 0" }}>{who.length ? <>{who.map((x) => `${x.name} (${x.eval})`).join(", ")}</> : <span className="dim">No scout assigned: front-office reads only.</span>}</div>
         <div className="list" style={{ marginTop: 8 }}>{reads.slice(0, 3).map(([p, x]) => <div className="item small" key={p.id}><span className="dim">#{csRank(p)}</span><PlayerName p={p} /><ScoutFlags read={x} compact /><b style={{ marginLeft: "auto" }}>{x.pot}</b></div>)}</div>
         {gems.length > 0 && <p className="sc-region-note gem small">💎 {gems.length} possible sleeper{gems.length > 1 ? "s" : ""}: {gems.slice(0, 3).map(([p]) => p.name).join(", ")}</p>}
         {flags.length > 0 && <p className="sc-region-note red small">🚩 {flags.length} red flag{flags.length > 1 ? "s" : ""}: {flags.slice(0, 3).map(([p]) => p.name).join(", ")}</p>}

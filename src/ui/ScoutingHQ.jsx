@@ -36,8 +36,8 @@ export function VisitList({ compact = false }) {
               <span>{why.join(" · ")}</span>
             </div>
             <div className="sc-visit-act">
-              {workout && <button className="small" disabled={!live || !(d?.workoutsLeft > 0)} title="A free full workup: exact ratings and (from a major scout) his development trait" onClick={() => act(privateWorkout(league, p.id))}>🏋️ Workout</button>}
-              {interview && <button className="small" disabled={!live || !(d?.interviewsLeft > 0)} title="Work ethic, and any red flags in the room" onClick={() => act(interviewProspect(league, p.id))}>🎤 Interview</button>}
+              {workout && <button className="small" disabled={!live || !(d?.workoutsLeft > 0)} title="A free full workup: exact ratings and (from a major scout) his development trait" onClick={() => act(privateWorkout(league, p.id))}>Workout</button>}
+              {interview && <button className="small" disabled={!live || !(d?.interviewsLeft > 0)} title="Work ethic, and any red flags in the room" onClick={() => act(interviewProspect(league, p.id))}>Interview</button>}
             </div>
           </div>
         );
@@ -65,8 +65,8 @@ export function CombineWeek() {
       <div className="panel sc-cweek">
         <h3>Combine week · use these before you leave</h3>
         <div className="sc-cweek-grid">
-          <div><b>🎤 {d.interviewsLeft || 0}</b><span>Interviews</span><small>A sit-down: his work ethic, which tends to go with how fast he develops, and any red flags in the room.</small></div>
-          <div><b>🏋️ {d.workoutsLeft || 0}</b><span>Private workouts</span><small>A full workup for free: exact ratings and (from a major scout) his development trait. {PRIVATE_WORKOUTS} a year.</small></div>
+          <div><b>{d.interviewsLeft || 0}</b><span>Interviews</span><small>A sit-down: his work ethic, which tends to go with how fast he develops, and any red flags in the room.</small></div>
+          <div><b>{d.workoutsLeft || 0}</b><span>Private workouts</span><small>A full workup for free: exact ratings and (from a major scout) his development trait. {PRIVATE_WORKOUTS} a year.</small></div>
         </div>
       </div>
       <div className="sc-movers">
@@ -98,7 +98,7 @@ export default function ScoutingHQ({ onBoard, onRegions, onList }) {
   return (
     <section className="gg-card gg-hq sc-hq">
       <div className="gg-k">Do this next <span className="right dim" style={{ letterSpacing: 0, textTransform: "none" }}>your biggest needs: {needs.length ? needs.map((k) => NEED_WORD[k]).join(", ") : "none pressing"} · {slot == null ? "the draft order takes shape once games are played (your scouts start around #16)" : own ? `your first pick lands around #${slot}` : `you've traded your picks; your record says #${slot}`}</span></div>
-      {atCombine(league) && <div className="gg-hq-row sc-hq-visit"><span className="gg-hq-ico">🗂️</span><div><b>Your scouts' visit list <span className="dim small">interview and work out players who'll be there when you pick</span></b><VisitList compact /></div></div>}
+      {atCombine(league) && <div className="gg-hq-row sc-hq-visit"><div><b>Your scouts' visit list <span className="dim small">interview and work out players who'll be there when you pick</span></b><VisitList compact /></div></div>}
       {targets.map(({ p, read }) => (
         <div key={p.id} className="gg-hq-row">
           <Pos pos={p.pos} />

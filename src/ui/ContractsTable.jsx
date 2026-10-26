@@ -37,9 +37,9 @@ export default function ContractsTable() {
   const rows = data.rows.filter(F[filter]).sort((a, b) => { const x = key(a), y = key(b); return (typeof x === "string" ? x.localeCompare(y) : x - y) || b.cap - a.cap; });
   const books = [...data.retained, ...data.dead];
   const th = (k, label, num) => <th className={`${k ? "sort" : ""}${sort === k ? " on" : ""}${num ? " num" : ""}`} onClick={k ? () => setSort(k) : undefined}>{label}{sort === k ? " ▼" : ""}</th>;
-  const extendCell = (r) => r.holdout ? <button className="tiny ct-ext hold" onClick={() => setTalk(r.p)}>✋ Talk contract</button>
+  const extendCell = (r) => r.holdout ? <button className="tiny ct-ext hold" onClick={() => setTalk(r.p)}>Talk contract</button>
     : r.extension ? <span className="ct-next">Next: {money(r.extension.aav)} × {r.extension.yrs} from {season(r.extension.start)}</span>
-    : r.canExtend ? <button className="tiny ct-ext" onClick={() => setTalk(r.p)}>✍️ Extend</button>
+    : r.canExtend ? <button className="tiny ct-ext" onClick={() => setTalk(r.p)}>Extend</button>
     : <span className="ct-why" title={r.extendWhy}>{r.extendWhy}</span>;
   const tags = (r) => <>
     {r.loyal && <span className="ct-tag loyal" title="Three seasons with you: about 10% off to re-sign or extend.">LOYAL</span>}

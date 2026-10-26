@@ -235,7 +235,7 @@ export default function DeadlinePage() {
         const o = fresh[0];
         setRunning(false);
         save();
-        toast(`📞 The ${full(league.teams[o.tid])} are on the phone. The clock is paused.`, 5000);
+        toast(`The ${full(league.teams[o.tid])} are on the phone. The clock is paused.`, 5000);
         return;
       }
       timer.current = setTimeout(step, league.deadline.trades > trades ? BUSY_MS : QUIET_MS);
@@ -305,7 +305,7 @@ export default function DeadlinePage() {
       ? [{ label: "Back to the season ▸", onClick: () => go("dashboard") }]
       : [
           { label: `Advance to ${fmtClock(nextHour)} ▸`, onClick: () => advance(nextHour - dl.minute), tone: "red" },
-          { label: "📞 Make a call", onClick: () => { setRunning(false); go("trade"); }, tone: "blue" },
+          { label: "Make a call", onClick: () => { setRunning(false); go("trade"); }, tone: "blue" },
           { label: "Sim to 3:00 PM", onClick: () => advance(DEADLINE_END - dl.minute) },
         ];
     return (
@@ -354,7 +354,7 @@ export default function DeadlinePage() {
             <>
               <button className="dd-b red" onClick={() => advance(nextHour - dl.minute)}>Advance to {fmtClock(nextHour)} ▸</button>
               <button className={`dd-b dark${running ? " on" : ""}`} onClick={() => setRunning((r) => !r)}>{running ? "❚❚ Pause clock" : "▶ Run the clock"}</button>
-              <button className="dd-b blue" onClick={() => { setRunning(false); go("trade"); }}>📞 Make a call (trade screen)</button>
+              <button className="dd-b blue" onClick={() => { setRunning(false); go("trade"); }}>Make a call (trade screen)</button>
               <button className="dd-b dim" onClick={() => advance(DEADLINE_END - dl.minute)}>Sim to 3:00 PM</button>
             </>
           ) : (

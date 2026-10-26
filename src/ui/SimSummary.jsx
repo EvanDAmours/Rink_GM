@@ -30,15 +30,15 @@ export default function SimSummary({ data, onClose }) {
             {d.topGoalie && <div className="gg-sum-row"><PlayerName p={d.topGoalie.p} /><span>{d.topGoalie.w}-{d.topGoalie.gp - d.topGoalie.w} · {d.topGoalie.so} SO</span></div>}
           </section>
           <section className="gg-card"><div className="gg-k">Health</div>
-            {d.newInjuries.length ? d.newInjuries.map((x) => <div key={x.pid} className="gg-sum-row bad"><PlayerName p={league.players[x.pid]} /><span>🚑 out {x.games} game{x.games === 1 ? "" : "s"}{x.note ? ` · ${x.note}` : ""}</span></div>) : <div className="dim small">No new injuries.</div>}
+            {d.newInjuries.length ? d.newInjuries.map((x) => <div key={x.pid} className="gg-sum-row bad"><PlayerName p={league.players[x.pid]} /><span>out {x.games} game{x.games === 1 ? "" : "s"}{x.note ? ` · ${x.note}` : ""}</span></div>) : <div className="dim small">No new injuries.</div>}
             {d.returned.map((x) => <div key={x.pid} className="gg-sum-row good"><PlayerName p={league.players[x.pid]} /><span>back in the lineup</span></div>)}
             {d.coachNotes > 0 && <div className="dim small">{t.coach?.name || "The coach"} adjusted the lines {d.coachNotes} time{d.coachNotes === 1 ? "" : "s"}.</div>}
           </section>
         </div>
         {(d.milestones.length > 0 || d.headlines.length > 0 || d.myTx.length > 0) && <section className="gg-card"><div className="gg-k">Around the club</div>
-          {d.milestones.map((m) => <div key={m.pid} className="gg-sum-row"><span>🏅 {m.name} reached {m.label}</span></div>)}
-          {d.myTx.map((x, i) => <div key={i} className="gg-sum-row"><span>📋 {x.text}</span></div>)}
-          {d.headlines.map((n, i) => <div key={i} className="gg-sum-row"><span>📰 {n.text}</span></div>)}
+          {d.milestones.map((m) => <div key={m.pid} className="gg-sum-row"><span>{m.name} reached {m.label}</span></div>)}
+          {d.myTx.map((x, i) => <div key={i} className="gg-sum-row"><span>{x.text}</span></div>)}
+          {d.headlines.map((n, i) => <div key={i} className="gg-sum-row"><span>{n.text}</span></div>)}
         </section>}
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
           <span className="dim small">{d.ended ? "The regular season is complete." : d.next ? `Next: ${d.next.home ? "vs" : "@"} ${d.next.opp.city} ${d.next.opp.name}, ${dayToDate(league.year, d.next.day, league.scheduleStart)}` : "No games scheduled."}</span>

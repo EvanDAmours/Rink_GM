@@ -11,12 +11,12 @@ import { SURFACES, TEXT, BORDERS, KEEP_DARK } from "../src/ui/theme.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // load order: the screens' own stylesheets (imported with App), then main.jsx's.
 export const FILES = [
-  "src/ui/callup.css", "src/ui/contracts.css", "src/ui/draft.css", "src/ui/home.css", "src/ui/legacy.css", "src/ui/lines.css", "src/ui/live.css",
+  "src/ui/broadcast.css", "src/ui/negotiate.css", "src/ui/callup.css", "src/ui/contracts.css", "src/ui/draft.css", "src/ui/home.css", "src/ui/legacy.css", "src/ui/lines.css", "src/ui/live.css",
   "src/ui/prep.css", "src/ui/scouting.css", "src/ui/standings.css",
   "src/styles.css", "src/ui/premium.css", "src/ui/clubhouse.css", "src/ui/gridiron.css", "src/ui/soft.css", "src/ui/mobile.css",
 ];
 // selectors that belong to things keeping their own look
-const KEEP_RE = /\.(lx-pc\b|lg-wall|lg-banner|gg-head|rk-phead|rk-hm|mm-|lr-|rinkwrap|gg-paper|rkt|gg-splash|lv-bug|keep-dark|rk-tour-card)/;
+const KEEP_RE = /\.(rk-bc\b(?!-)|rk-pbc\b(?!-)|rk-ph\b(?!-)|lx-pc\b|lg-wall|lg-banner|gg-head|rk-phead|rk-hm|mm-|lr-|rinkwrap|gg-paper|rkt|gg-splash|lv-bug|keep-dark|rk-tour-card)/;
 const notKeep = `:where(:not(${KEEP_DARK.map((k) => `${k} *`).join(", ")}, ${KEEP_DARK.join(", ")}))`;
 
 const HEX = /#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g;
@@ -91,6 +91,8 @@ function splitSelectors(sel) {
 function scope(sel) {
   if (KEEP_RE.test(sel)) return null;
   if (/^:root\b/.test(sel)) return null; // tokens are redefined by hand below
+  // Rules already written for one theme (html.light / html:not(.light)) are not re-mapped.
+  if (/^html(\.light|:not\(\.light\))/.test(sel)) return null;
   if (/^html\b/.test(sel)) return sel.replace(/^html/, ":scope");
   if (/^\*/.test(sel)) return null;
   return sel;

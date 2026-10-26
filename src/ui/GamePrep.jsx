@@ -64,7 +64,7 @@ export default function GamePrep({ onClose, onPlay, onSim }) {
         <div className="rk-prep-grid">
           <div className="rk-prep-col">
             <section className="rk-prep-card">
-              <div className="rk-prep-k">🔎 SCOUTING REPORT · {opp.abbr}</div>
+              <div className="rk-prep-k">Scouting report · {opp.abbr}</div>
               <div className="rk-prep-tiles">
                 <div><small>RECORD</small><b>{rep.record}</b><span>{rep.pts} pts · {ORD(rep.divRank)} {opp.div}</span></div>
                 <div><small>THE LINE</small><b>{rep.prob >= 0.5 ? t.abbr : opp.abbr} {Math.round(Math.max(rep.prob, 1 - rep.prob) * 100)}%</b><span>{rep.prob >= 0.55 ? "You're the favourite." : rep.prob <= 0.45 ? "You're the underdog." : "A coin flip."}</span></div>
@@ -77,8 +77,8 @@ export default function GamePrep({ onClose, onPlay, onSim }) {
                 <div><small>TOP PAIR · {rep.pairOvr}</small><div>{rep.topPair.map((p) => <React.Fragment key={p.id}>{person(p)}</React.Fragment>)}</div></div>
                 <div><small>IN GOAL</small><div>{person(rep.goalie)}{rep.goalie?.stats?.gp > 0 && <span className="rk-prep-gnote">{rep.goalieNote}</span>}</div></div>
               </div>
-              {rep.notes.slice(0, 3).map((n, i) => <div key={i} className={`rk-prep-note ${n.tone}`}>{n.tone === "watch" ? "⚠️" : "🎯"} {n.text}</div>)}
-              <div className="rk-prep-sub">KEY MATCHUPS</div>
+              {rep.notes.slice(0, 3).map((n, i) => <div key={i} className={`rk-prep-note ${n.tone}`}>{n.text}</div>)}
+              <div className="rk-prep-sub">Key matchups</div>
               {rep.matchups.map((m) => (
                 <div key={m.label} className="rk-mu">
                   <span className="rk-mu-k" title={m.label}>{m.short}</span>
@@ -91,7 +91,7 @@ export default function GamePrep({ onClose, onPlay, onSim }) {
           </div>
           <div className="rk-prep-col">
             <section className="rk-prep-card">
-              <div className="rk-prep-k">READY CHECK</div>
+              <div className="rk-prep-k">Ready check</div>
               {checks.map((c) => (
                 <div key={c.key} className={`rk-check ${c.ok ? "ok" : "open"}`}>
                   <span className="rk-check-ico" aria-hidden>{c.ok ? "✓" : "!"}</span>
@@ -102,7 +102,7 @@ export default function GamePrep({ onClose, onPlay, onSim }) {
               ))}
             </section>
             <section className="rk-prep-card">
-              <div className="rk-prep-k">SPECIAL TEAMS <button className="link rk-prep-edit" onClick={toLines}>Edit on Lines →</button></div>
+              <div className="rk-prep-k">Special teams <button className="link rk-prep-edit" onClick={toLines}>Edit on Lines →</button></div>
               {[["PP1", mine.PP?.[0]], ["PP2", mine.PP?.[1]], ["PK1", mine.PK?.[0]], ["PK2", mine.PK?.[1]]].map(([k, ids]) => (
                 <div key={k} className="rk-unit"><b className={k.startsWith("PP") ? "rk-u-pp" : "rk-u-pk"}>{k}</b><span>{unit(ids).map((p) => lastName(p.name)).join(" · ") || <span className="dim">not set</span>}</span></div>
               ))}

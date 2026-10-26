@@ -18,7 +18,7 @@ export default function SeriesPaper({ paper, onClose }) {
   const w = league.teams[paper.winner], l = league.teams[paper.loser];
   const final = paper.round === 3;
   // Your club won it: the celebration plays first (the paper is the next thing you see).
-  if (final && league.moments?.some((m) => m.kind === "cupWin" && m.season === paper.year)) return null;
+  const hidden = final && league.moments?.some((m) => m.kind === "cupWin" && m.season === paper.year);
   const close = () => {
     if (final) { try { queueMoment(league, awardsNightMoment(league)); } catch (e) { console.error("Awards night failed", e); } }
     onClose();
@@ -32,6 +32,10 @@ export default function SeriesPaper({ paper, onClose }) {
   const dateStr = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   const road = (league.playoffs?.rounds || []).flatMap((r, i) => r.filter((s) => i <= paper.round && (s.top === w.id || s.bot === w.id) && s.winner != null).map((s) => ({ round: i, opp: league.teams[s.top === w.id ? s.bot : s.top], won: s.winner === w.id, score: s.winner === w.id ? `${Math.max(s.wTop, s.wBot)}-${Math.min(s.wTop, s.wBot)}` : `${Math.min(s.wTop, s.wBot)}-${Math.max(s.wTop, s.wBot)}` })));
   const cups = paper.titles ?? (league.history || []).filter((h) => h.champion === w.id).length + (paper.round === 3 ? 1 : 0);
+  const closeRef = React.useRef(close); closeRef.current = hidden ? () => {} : close;
+  // Escape closes the paper like every other dialog.
+  React.useEffect(() => { const k = (e) => { if (e.key === "Escape" && !document.querySelector(".mm-overlay, .an-overlay, .sp-overlay, .cw-overlay, .rn-overlay")) closeRef.current(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
+  if (hidden) return null;
   return (
     <Portal><div className="modalbg gg-paperbg" onMouseDown={(e) => e.target === e.currentTarget && close()}>
       {ours && <div className="cup-paper-confetti" aria-hidden><Confetti colors={[clr, ac, "#e5e7eb", "#cbd5e1", "#ffffff"]} /></div>}

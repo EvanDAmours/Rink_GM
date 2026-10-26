@@ -50,7 +50,7 @@ export function useOnline() {
 export function OfflineChip() {
   const on = useOnline();
   if (on) return null;
-  return <span className="rk-offchip" title="No connection. Everything works; your league saves on this device.">✈️ Offline</span>;
+  return <span className="rk-offchip" title="No connection. Everything works; your league saves on this device.">Offline</span>;
 }
 
 async function readyInfo(info) {
@@ -137,7 +137,7 @@ export default function OfflinePanel({ league }) {
       <div className="rk-off-top">
         <span className="rk-off-ico" aria-hidden="true">✈️</span>
         <div className="rk-off-txt">
-          <div className="rk-off-k">OFFLINE PLAY <OfflineChip /></div>
+          <div className="rk-off-k">Offline play <OfflineChip /></div>
           <div className={`rk-off-status${current ? " ok" : ""}`}>{status}</div>
         </div>
         {supported && online && !prog && <button className={current ? "" : "primary"} onClick={saveNow}>{current ? "Save again" : "Get ready for offline"}</button>}

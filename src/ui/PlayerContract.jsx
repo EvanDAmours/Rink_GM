@@ -34,7 +34,7 @@ export default function PlayerContract({ p, hidden }) {
   const loyal = isLoyal(league, p);
   const act = (r) => { if (r?.msg) toast(r.msg, 4500); commit(); };
   return (
-    <section className="gg-pc-panel"><div className="gg-pc-k contract">CONTRACT</div>
+    <section className="gg-pc-panel"><div className="gg-pc-k contract">Contract</div>
       <div className="ct-pc-tags">
         <RoleTag p={p} />
         {status && <span className={`ct-tag ${status === "RFA" ? "rfa" : "ufa"}`} title={`When this deal ends he is a ${status === "RFA" ? "restricted free agent: qualify him and you keep his rights" : "unrestricted free agent: anyone can sign him"}.`}>{status} WHEN IT ENDS</span>}
@@ -53,15 +53,15 @@ export default function PlayerContract({ p, hidden }) {
       </tbody></table>}
       {years.some((y) => y.estimated) && <div className="dim small" style={{ marginTop: 3 }}>Salary by year is estimated from his cap hit (no published schedule).</div>}
       {buy && buy.total > 0 && <div className="gg-pc-kv"><span>Buyout</span><b className="ct-dead" title={buy.rows.map((r) => `${season(first + (r.offset || 0))}: ${money(r.amt)}`).join("\n")}>{money(buy.total)} over {buy.years} season{buy.years === 1 ? "" : "s"}{buy.saves > 0 ? ` · saves ${money(buy.saves)} now` : ""}</b></div>}
-      {perf && <div className={`ct-pc-note ${perf.tone}`}>{perf.tone === "up" ? "📈 " : "📉 "}{perf.text}</div>}
-      {cyNote && <div className="ct-pc-note up">🎲 {cyNote}</div>}
-      {p.holdout && <div className="ct-pc-note hold">✋ He won't sign his {money(p.holdout.qo)} qualifying offer and sits until he gets a market deal (about {money(p.holdout.ask)} × {p.holdout.yrs}).{p.holdout.firm ? " You're holding firm." : ""} December 1 is the signing deadline.</div>}
+      {perf && <div className={`ct-pc-note ${perf.tone}`}>{perf.text}</div>}
+      {cyNote && <div className="ct-pc-note up">{cyNote}</div>}
+      {p.holdout && <div className="ct-pc-note hold">He won't sign his {money(p.holdout.qo)} qualifying offer and sits until he gets a market deal (about {money(p.holdout.ask)} × {p.holdout.yrs}).{p.holdout.firm ? " You're holding firm." : ""} December 1 is the signing deadline.</div>}
       {mine && !hidden && (p.holdout ? (
-        <div className="ct-pc-act"><button className="small ct-ext hold" onClick={() => setTalk(p)}>✋ Talk contract</button>{!p.holdout.firm && <button className="small ghost" onClick={() => act(holdFirm(league, p.id))}>Hold firm</button>}</div>
+        <div className="ct-pc-act"><button className="small ct-ext hold" onClick={() => setTalk(p)}>Talk contract</button>{!p.holdout.firm && <button className="small ghost" onClick={() => act(holdFirm(league, p.id))}>Hold firm</button>}</div>
       ) : asking ? (
-        <div className="ct-pc-act"><button className="small ct-ext" onClick={() => setTalk(p)}>✍️ Talk extension</button><button className="small ghost" onClick={() => act(playItOut(league, p.id))}>🎲 Let him play it out</button></div>
+        <div className="ct-pc-act"><button className="small ct-ext" onClick={() => setTalk(p)}>Talk extension</button><button className="small ghost" onClick={() => act(playItOut(league, p.id))}>Let him play it out</button></div>
       ) : p.extension ? null : ext?.ok ? (
-        <div className="ct-pc-act"><button className="small ct-ext" onClick={() => setTalk(p)}>✍️ Extend</button><span className="ct-why">New deal from {season(ext.start)} · {money(ext.room)} of room under that cap.</span></div>
+        <div className="ct-pc-act"><button className="small ct-ext" onClick={() => setTalk(p)}>Extend</button><span className="ct-why">New deal from {season(ext.start)} · {money(ext.room)} of room under that cap.</span></div>
       ) : ext && signed ? (
         <div className="ct-pc-act"><button className="small" disabled title={ext.why}>Extend</button><span className="ct-why">{ext.why}</span></div>
       ) : null)}

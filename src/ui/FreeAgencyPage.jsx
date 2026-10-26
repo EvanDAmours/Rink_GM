@@ -42,12 +42,12 @@ function FaDayBar() {
   const due = decidingToday(league);
   return (
     <section className="gg-faday">
-      <span className="gg-faday-k">📅 {day === 0 ? "Opening day" : `Day ${day} of ${FA_DAYS}`} · {julyDate(day)}</span>
+      <span className="gg-faday-k">{day === 0 ? "Opening day" : `Day ${day} of ${FA_DAYS}`} · {julyDate(day)}</span>
       <span className="gg-faday-txt">
         {s ? <b>{s.signed ? <>{s.signed} signed{s.top ? <>, led by {s.top.name} ({s.top.abbr})</> : null}.</> : "Nobody signed."} </b> : null}
         Clubs make offers every day. Each player takes the best one on his day: the money, plus the role, the winning or the term he wants. Depth players take the first fair deal; only a big overpay (20% over his ask) signs anyone else on the spot.
-        {s && (s.won.length > 0 || s.lost.length > 0) && <span className="ct-faday-res">{s.won.map((w) => <span key={w.pid}><b className="won">✅ {w.name}</b> signed with you ({money(w.aav)} × {w.yrs}). </span>)}{s.lost.map((x) => <span key={x.pid}><b className="lost">❌ {x.name}</b> chose {x.abbr} ({money(x.aav)} × {x.yrs}) over your {money(x.mineAav)} × {x.mineYrs}. </span>)}</span>}
-        {day === 0 && <span className="ct-faday-sub"><span className="link" onClick={() => go("frenzy")}>🔥 Watch July 1 live on the Free Agent Frenzy desk →</span> </span>}
+        {s && (s.won.length > 0 || s.lost.length > 0) && <span className="ct-faday-res">{s.won.map((w) => <span key={w.pid}><b className="won">{w.name}</b> signed with you ({money(w.aav)} × {w.yrs}). </span>)}{s.lost.map((x) => <span key={x.pid}><b className="lost">❌ {x.name}</b> chose {x.abbr} ({money(x.aav)} × {x.yrs}) over your {money(x.mineAav)} × {x.mineYrs}. </span>)}</span>}
+        {day === 0 && <span className="ct-faday-sub"><span className="link" onClick={() => go("frenzy")}>Watch July 1 live on the Free Agent Frenzy desk →</span> </span>}
         {day < FA_DAYS && <span className="ct-faday-sub">{due.count ? `${due.count} player${due.count === 1 ? "" : "s"} decide${due.count === 1 ? "s" : ""} at the end of today${due.mine ? `, ${due.mine} with your offer on the table` : ""}.` : "Nobody is due to decide today."}</span>}
       </span>
       {day < FA_DAYS ? <button className="primary gg-faday-btn" onClick={next}>Next day →</button> : <span className="gg-faday-last">Last day: start the season when you are ready.</span>}
@@ -75,7 +75,7 @@ function ResignView() {
           return (
             <div key={p.id} className="gg-farow resign">
               <MugPos p={p} team={user} />
-              <span className="gg-faname"><b><PlayerName p={p} />{isLoyal(league, p) && <span className="ct-tag loyal" title={`${tenure(league, p)} seasons with you: he takes about 10% less to stay.`}>LOYAL −10%</span>}{(() => { const n = perfNote(league, p, "resign"); return n ? <span className={`ct-tag ${n.tone}`} title={n.text}>{n.tone === "up" ? "📈 BIG YEAR" : "📉 DOWN YEAR"}</span> : null; })()}</b><small>{p.age + 1} next season · POT {p.pot} · was {money(p.prevCap)} · {isRFA(p) ? "RFA" : "UFA"}</small></span>
+              <span className="gg-faname"><b><PlayerName p={p} />{isLoyal(league, p) && <span className="ct-tag loyal" title={`${tenure(league, p)} seasons with you: he takes about 10% less to stay.`}>LOYAL −10%</span>}{(() => { const n = perfNote(league, p, "resign"); return n ? <span className={`ct-tag ${n.tone}`} title={n.text}>{n.tone === "up" ? "BIG YEAR" : "DOWN YEAR"}</span> : null; })()}</b><small>{p.age + 1} next season · POT {p.pot} · was {money(p.prevCap)} · {isRFA(p) ? "RFA" : "UFA"}</small></span>
               <span className="gg-tovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
               <span className={`gg-famood ${p.willing ? (p.mood > 0.6 ? "good" : p.mood > 0.35 ? "" : "warn") : "bad"}`}>{p.willing ? (p.mood > 0.6 ? "Happy" : p.mood > 0.35 ? "Open" : "Lukewarm") : "Testing FA"}</span>
               <Select value={termFor(p)} onChange={(e) => setTerms({ ...terms, [p.id]: Number(e.target.value) })} disabled={!p.willing} aria-label={`Term for ${p.name}`} style={{ minWidth: 90 }}>

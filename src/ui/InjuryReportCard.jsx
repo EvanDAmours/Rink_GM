@@ -60,7 +60,7 @@ export function ReplacementPicker({ pid, onClose }) {
         {o.roster.map((x) => row(x, <button className={String(x.p.id) === String(o.nowId) ? "primary small" : "small"} onClick={() => pick(x.p.id)}>{String(x.p.id) === String(o.nowId) ? "Keep him" : "Dress him"}</button>))}
         {!o.roster.length && <div className="dim small rk-rep-none">Nobody healthy on the NHL roster can play there.</div>}
         {o.farm.length > 0 && <>
-          <div className="rk-rep-sub">FROM THE AHL</div>
+          <div className="rk-rep-sub">From the AHL</div>
           {o.farm.map((x) => row(x, <button className="small" onClick={() => pick(x.p.id)}>Call up</button>, true))}
         </>}
       </div>
@@ -106,7 +106,7 @@ export default function InjuryReportCard() {
         </div>
         <div className="rk-injcard-body">
           {out.length > 0 && <div className="rk-inj-sec"><div className="rk-inj-k out">OUT</div>{out.map((r) => <InjRow key={r.p.id} r={r} onChange={setPicking} openPlayer={openPlayer} />)}</div>}
-          {still.length > 0 && <div className="rk-inj-sec"><div className="rk-inj-k still">STILL OUT</div><div className="rk-inj-still">{still.map((r, i) => <span key={r.p.id}>{i ? ", " : ""}<button className="link" onClick={() => openPlayer?.(r.p.id)}>{r.p.name}</button> <span className="dim">({r.ret?.short || "out"})</span></span>)}</div></div>}
+          {still.length > 0 && <div className="rk-inj-sec"><div className="rk-inj-k still">Still out</div><div className="rk-inj-still">{still.map((r, i) => <span key={r.p.id}>{i ? ", " : ""}<button className="link" onClick={() => openPlayer?.(r.p.id)}>{r.p.name}</button> <span className="dim">({r.ret?.short || "out"})</span></span>)}</div></div>}
           {back.length > 0 && <div className="rk-inj-sec"><div className="rk-inj-k back">BACK</div><div className="rk-inj-still">{back.map((p, i) => <span key={p.id}>{i ? ", " : ""}<button className="link" onClick={() => openPlayer?.(p.id)}>{p.name}</button></span>)}</div></div>}
         </div>
         <div className="rk-injcard-foot">{coach ? "Your head coach dresses the best healthy scratch in any spot you don't change." : "Regulars you don't change are covered by your best healthy scratch."}</div>

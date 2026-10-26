@@ -46,6 +46,8 @@ import { myOffers } from "./engine/negotiations.js";
 import * as L from "./engine/league.js";
 import { startResign as DBG_startResign } from "./engine/offseason.js";
 import { frenzyTick as DBG_frenzyTick } from "./engine/frenzy.js";
+import { simFADay as DBG_simFADay } from "./engine/offseason.js";
+import { advanceRoundIfDone as DBG_advanceRound } from "./engine/playoffs.js";
 import { PHASES, FA_DAYS, SAVE_KEY } from "./engine/constants.js";
 import { dayToDate } from "./engine/schedule.js";
 import { capSpace, rosterIssues } from "./engine/roster.js";
@@ -180,7 +182,7 @@ export default function App({ resume = false }) {
     // The phase backup never costs you the autosave: if storage is full, it goes first.
     if (!ok && dropBackup()) ok = L.saveLeague(leagueRef.current);
     saveOk.current = ok;
-    if (!ok && !cloudRef.current.last) showToast("⚠️ This browser didn't keep your save. Use Settings → Export league to keep a copy.", 6000);
+    if (!ok && !cloudRef.current.last) showToast("This browser didn't keep your save. Use Settings → Export league to keep a copy.", 6000);
     syncCloud();
   }, [showToast, syncCloud]);
 
@@ -289,7 +291,7 @@ export default function App({ resume = false }) {
 
   // Test hook for browser checks: open the game with ?debug to reach the live league from the console.
   useEffect(() => {
-    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab, go, engine: { ...L, startResign: DBG_startResign, frenzyTick: DBG_frenzyTick } }; } catch { /* no window */ }
+    try { if (/[?&]debug\b/.test(window.location.search)) window.__rinkDebug = { league: () => leagueRef.current, commit, setModal, setTab, go, engine: { ...L, startResign: DBG_startResign, frenzyTick: DBG_frenzyTick, simFADay: DBG_simFADay, advanceRoundIfDone: DBG_advanceRound, simDraftToUser } }; } catch { /* no window */ }
   });
 
   const ctx = useMemo(
@@ -370,7 +372,7 @@ export default function App({ resume = false }) {
     let issues = rosterIssues(league, user).filter((x) => !x.startsWith("Need"));
     if (issues.length && league.settings?.autoRoster !== false) {
       const r = automaticallyHandleRoster(league, user, { allowWaivers: true });
-      if (r.moved.length || r.claimed.length) showToast(`🤖 ${r.msg}`, 8000);
+      if (r.moved.length || r.claimed.length) showToast(`${r.msg}`, 8000);
       issues = rosterIssues(league, user).filter((x) => !x.startsWith("Need"));
       if (!issues.length) commit();
     }
@@ -613,7 +615,7 @@ export default function App({ resume = false }) {
     const ph = league.phase;
     if (ph === "preseason") A.push({ label: "Start Season ▶", onClick: act.startSeason });
     if (ph === "regular") {
-      if (L.seasonOver(league)) A.push({ label: "Start Playoffs 🏆", onClick: act.startPlayoffs, tone: "gold" });
+      if (L.seasonOver(league)) A.push({ label: "Start the playoffs", onClick: act.startPlayoffs, tone: "gold" });
       else if (deadlinePending(league)) A.push({ label: "⏰ Trade Deadline Day", onClick: openDeadline, tone: "red" });
       else {
         const ug = L.userGameOnDay(league);

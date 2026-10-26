@@ -23,7 +23,7 @@ function PracticeReport({ game, onClose }) {
         <div className="gg-k" style={{ color: "#7dd3fc" }}>Standout performances</div>
         {game.lines.map((l) => <div key={l.id} className="gg-camp-line"><span className="gg-grade-chip" style={{ color: gradeColor(l.grade), borderColor: gradeColor(l.grade) }}>{l.grade}</span><b>{l.name}</b><span className="dim">{l.pos}</span><span className="muted">{l.sa ? `${l.sv}/${l.sa} saves` : `${l.g}G ${l.a}A · ${l.sog} SOG · ${l.pm > 0 ? "+" : ""}${l.pm}`}</span></div>)}
         {game.bonuses.length > 0 && <><div className="gg-k" style={{ color: "#22c55e", marginTop: 8 }}>Development earned</div>{game.bonuses.map((b, i) => <div key={i} className="small good">{b.gain ? "▲ +1 OVR" : "+ camp credit"} → {b.name} ({b.pos}) · grade {b.grade}</div>)}</>}
-        {game.hurt?.length > 0 && <div className="small bad" style={{ marginTop: 6 }}>🚑 Injured: {game.hurt.join(", ")}</div>}
+        {game.hurt?.length > 0 && <div className="small bad" style={{ marginTop: 6 }}>Injured: {game.hurt.join(", ")}</div>}
       </div>
     </Dialog>
   );
@@ -103,7 +103,7 @@ export default function TrainingCamp() {
       </section>
       <section className="gg-camp3-card">
         <div className="gg-camp3-sec-h"><b>Training focus</b><span>{camp.focused.length} trained</span></div>
-        <div className="gg-camp3-sub"><span>{CAMP_COSTS.focus} SP. Extra reps for one player: +1.5 to every attribute in a skill group, once per player each camp.</span><button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.focus} onClick={autoFocus}>🎲 Auto-pick 5 · {CAMP_COSTS.focus * 5} SP</button></div>
+        <div className="gg-camp3-sub"><span>{CAMP_COSTS.focus} SP. Extra reps for one player: +1.5 to every attribute in a skill group, once per player each camp.</span><button className="blue ghost small" disabled={gm.sp < CAMP_COSTS.focus} onClick={autoFocus}>Auto-pick 5 · {CAMP_COSTS.focus * 5} SP</button></div>
         <div className="gg-focus-tools">
           <div className="gg-chips">{[["bets", "Best bets"], ["young", "Under 25"], ["all", "Everyone"], ["pos", "By position"]].map(([k, l]) => <button key={k} className={focusView === k ? "on" : ""} onClick={() => setFocusView(k)}>{l}</button>)}</div>
           <input className="gg-fa-search" placeholder="Find a player…" aria-label="Find a player to train" value={focusQ} onChange={(e) => setFocusQ(e.target.value)} />

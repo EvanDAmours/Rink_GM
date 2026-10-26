@@ -174,7 +174,7 @@ export default function RosterPage() {
         <div className="gg-tiles"><div><small>ACTIVE</small><b>{c.active}<span className="dim">/{MAX_ROSTER}</span></b></div><div><small>F / D / G</small><b>{c.F}/{c.D}/{c.G}</b></div><div><small>CAP SPACE</small><b style={{color:capSpace(league,user)>=0?"#22c55e":"#ef4444"}}>{money(capSpace(league,user))}</b></div><div><small>INJURED</small><b style={{color:roster.filter(p=>p.injury>0).length?"#ef4444":"#22c55e"}}>{roster.filter(p=>p.injury>0).length}</b></div></div></div>
       {issues.length > 0 && (
         <div className="notice warn">
-          {issues.map((i) => <div key={i}>⚠️ {i}</div>)}
+          {issues.map((i) => <div key={i}>{i}</div>)}
           <button className="small" style={{marginTop:10}} onClick={async()=>{const plan=automaticRosterPlan(league,user),waivers=plan.moves.filter(p=>p.waivers);if(waivers.length && !await ask({title:"Automatically handle roster?",body:`Selected by lowest overall and positional surplus: ${plan.moves.map(p=>`${p.name} (${p.pos}, ${p.ovr})`).join(", ")}. ${waivers.map(p=>p.name).join(", ")} require waivers and may be claimed by another club. This action resolves the claim window immediately without skipping games.`,yes:"Handle assignments",danger:true}))return;const r=automaticallyHandleRoster(league,user,{allowWaivers:true});commit();toast(r.msg,10000);}}>Automatically handle</button><p className="small muted">Assigns eligible excess players by lowest overall while keeping positional depth. Reviews required waiver assignments before resolving them. No-movement clauses and cap rules remain in effect.</p>
           {issues.some((i) => i.startsWith("Need")) && (
             <button className="small" style={{ marginTop: 6 }} onClick={() => { ensureMinimums(league, user, { notify: true }); commit(); }}>Auto-fill with call-ups</button>
@@ -248,7 +248,7 @@ export default function RosterPage() {
               { key: "name", label: "Player", render: (p) => nameCell(p), sort: (p) => p.name },
               { key: "pos", label: "Pos", render: (p) => <span className="posbadge">{p.pos}</span>, sort: (p) => POS_ORDER[p.pos] },
               { key: "ovr", label: "OVR", render: (p) => <Ovr v={p.ovr} src={p.src} />, sort: (p) => p.ovr },
-              { key: "inj", label: "Injury", render: (p) => <span className="gg-ro-injury">🚑 {p.injuryNote ? p.injuryNote[0].toUpperCase() + p.injuryNote.slice(1) : p.injury > 0 ? "Undisclosed" : "Recovered"}</span>, sort: (p) => p.injuryNote || "" },
+              { key: "inj", label: "Injury", render: (p) => <span className="gg-ro-injury">{p.injuryNote ? p.injuryNote[0].toUpperCase() + p.injuryNote.slice(1) : p.injury > 0 ? "Undisclosed" : "Recovered"}</span>, sort: (p) => p.injuryNote || "" },
               { key: "out", label: "Games left", num: true, render: (p) => (p.injury > 0 ? <b className="bad">{p.injury}</b> : <span className="good">Ready</span>), sort: (p) => p.injury },
               { key: "status", label: "Status", render: (p) => <span className={`gg-ro-ir ${p.ltir ? "ltir" : onIR(p) ? "ir" : "dtd"}`}>{p.ltir ? "LTIR" : user.prospects.includes(p.id) ? "Minors" : onIR(p) ? "IR" : "Day to day"}</span>, sort: (p) => (p.ltir ? 2 : onIR(p) ? 1 : 0) },
               { key: "cap", label: "Cap Hit", num: true, render: (p) => money(p.cap), sort: (p) => p.cap },

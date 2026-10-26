@@ -151,7 +151,7 @@ function Board({ onDraft, canDraft, availableOnly = false, title = "Big Board" }
         <Select aria-label="Position" value={pos} onChange={(e) => { setPos(e.target.value); setN(PAGE); }}>{POSITIONS.map((x) => <option key={x} value={x}>{x === "all" ? "All pos." : x}</option>)}</Select>
         {leagueSel}
         {showSel}
-        {!searching && <button type="button" className="dd-mag" aria-label="Search prospects" onClick={() => setSearching(true)}>🔍</button>}
+        {!searching && <button type="button" className="dd-mag" aria-label="Search prospects" onClick={() => setSearching(true)}>Search</button>}
         {searching && <input className="search" autoFocus placeholder="Search name or team" value={q} onChange={(e) => { setQ(e.target.value); setN(PAGE); }} aria-label="Search prospects" />}
       </div>
       <div className="dd-plist">
@@ -636,7 +636,7 @@ function DraftFloor({ act, onDraft, canDraft, panel, setPanel, panelEl, phone, o
           </div>
           <div style={{ flex: 1 }} />
           <div className="row">
-            <button onClick={onRecap}>📋 Draft recap</button>
+            <button onClick={onRecap}>Draft recap</button>
             <button className="primary" onClick={act.toResign}>Continue to re-signing →</button>
           </div>
         </div>

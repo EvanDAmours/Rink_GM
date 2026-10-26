@@ -578,6 +578,8 @@ function retire(league, p, quiet = false) {
     if (league.retired.length > 250) league.retired.length = 250;
     logTx(league, `${p.name} retires (${tot.gp} GP${isGoalie(p.pos) ? `, ${tot.w} W` : `, ${tot.g + tot.a} PTS`})`, t ? [t.id] : []);
   }
+  // A retired player leaves the trade block too (otherwise the load-time repair drops him and the save changes on reload).
+  if (Array.isArray(league.block)) league.block = league.block.filter((b) => b.pid !== p.id);
   delete league.players[p.id];
 }
 

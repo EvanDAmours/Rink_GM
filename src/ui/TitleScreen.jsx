@@ -146,24 +146,24 @@ export default function TitleScreen({ onStart, ask }) {
         )}
         {cloud && (cloudNewer || !local) && (
           <button className="rkt-btn rkt-continue cloud" onClick={contCloud} disabled={loadingCloud}>
-            {loadingCloud ? "Loading cloud backup…" : <>☁ Continue from cloud backup <span>— {cloud.team} · {SEASON(cloud.year)} · saved {when(cloud.savedAt)}</span></>}
+            {loadingCloud ? "Loading cloud backup…" : <>Continue from cloud backup <span>— {cloud.team} · {SEASON(cloud.year)} · saved {when(cloud.savedAt)}</span></>}
           </button>
         )}
         <button className="rkt-btn rkt-new" onClick={() => { setErr(null); setStep("teams"); }}>NEW GAME</button>
         <label className="rkt-btn rkt-import">
-          <span>📂 IMPORT SAVE FILE</span>
+          <span>IMPORT SAVE FILE</span>
           <input type="file" accept=".rinkgm,.json,.txt" onChange={importFile} />
         </label>
         <div className="rkt-opts">
-          <button className={`rkt-pill ${firing ? "on" : "off"}`} aria-pressed={firing} title="For new franchises: when off, the owner still judges your seasons but can never fire you" onClick={() => { const v = !firing; setFiring(v); keep("rinkgm_firing", v ? "1" : "0"); }}>👔 Owner can fire you: {firing ? "ON" : "OFF"}</button>
+          <button className={`rkt-pill ${firing ? "on" : "off"}`} aria-pressed={firing} title="For new franchises: when off, the owner still judges your seasons but can never fire you" onClick={() => { const v = !firing; setFiring(v); keep("rinkgm_firing", v ? "1" : "0"); }}>Owner can fire you: {firing ? "ON" : "OFF"}</button>
           <div className="rkt-seg" role="group" aria-label="Draft classes" title="Your first draft classes">
-            {[[true, "🎓 Real 2027 & 28 classes", "The real top prospects for the 2027 and 2028 drafts lead the first two classes (NHL 27 rosters only)"], [false, "Generated", "Every class is generated"]].map(([v, l, tt]) => (
+            {[[true, "Real 2027 & 28 classes", "The real top prospects for the 2027 and 2028 drafts lead the first two classes (NHL 27 rosters only)"], [false, "Generated", "Every class is generated"]].map(([v, l, tt]) => (
               <button key={l} title={tt} aria-pressed={realDraft === v} className={realDraft === v ? "on" : ""} onClick={() => { setRealDraft(v); keep("rinkgm_realdraft", v ? "1" : "0"); }}>{l}</button>
             ))}
           </div>
         </div>
         <div className="rkt-opts">
-          <button className={`rkt-pill ${injuries ? "on" : "off"}`} aria-pressed={injuries} title={local ? "Applies to new franchises and to your saved league; turning injuries off heals everyone in it" : "Turn off to play without injuries"} onClick={toggleInjuries}>🚑 Injuries: {injuries ? "ON" : "OFF"}</button>
+          <button className={`rkt-pill ${injuries ? "on" : "off"}`} aria-pressed={injuries} title={local ? "Applies to new franchises and to your saved league; turning injuries off heals everyone in it" : "Turn off to play without injuries"} onClick={toggleInjuries}>Injuries: {injuries ? "ON" : "OFF"}</button>
           <div className="rkt-seg" role="group" aria-label="Difficulty" title="Harder settings make AI GMs tougher in trades and free agents pricier">
             <span className="rkt-seg-k">Difficulty</span>
             {Object.entries(DIFFICULTY).map(([k, d]) => (

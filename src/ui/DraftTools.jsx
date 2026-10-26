@@ -167,8 +167,8 @@ export function ClockBar({ hold, onPick, onForPick, onTradeUp, phone }) {
       {!mine && (
         <div className="dd-bar-row">
           <button type="button" className="dd-b sim" onClick={simPick}>⏭ Sim pick</button>
-          {nx && <button type="button" className="dd-b for" onClick={() => onForPick?.(s.overall)}>🔁 Get this pick</button>}
-          {nx && <button type="button" className="dd-b up" onClick={onTradeUp}>📞 Trade up</button>}
+          {nx && <button type="button" className="dd-b for" onClick={() => onForPick?.(s.overall)}>Get this pick</button>}
+          {nx && <button type="button" className="dd-b up" onClick={onTradeUp}>Trade up</button>}
         </div>
       )}
     </div>
@@ -223,9 +223,9 @@ export function OnTheClock({ onForPick, onTradeUp, onShop, forOpen, upOpen, chil
       </div>
       {!mine && nx && (
         <div className="dd-otc-row">
-          <button type="button" className={`dd-b for${forOpen ? " on" : ""}`} onClick={() => onForPick?.(s.overall)}>🔁 {forOpen ? "Never mind" : "Trade for this pick"}</button>
-          <button type="button" className={`dd-b up${upOpen ? " on" : ""}`} onClick={onTradeUp}>📞 {upOpen ? "Hide calls" : "Trade up"}</button>
-          <button type="button" className="dd-b shop" onClick={() => onShop?.(nx.slot.overall)}>💱 Shop pick #{nx.slot.overall}</button>
+          <button type="button" className={`dd-b for${forOpen ? " on" : ""}`} onClick={() => onForPick?.(s.overall)}>{forOpen ? "Never mind" : "Trade for this pick"}</button>
+          <button type="button" className={`dd-b up${upOpen ? " on" : ""}`} onClick={onTradeUp}>{upOpen ? "Hide calls" : "Trade up"}</button>
+          <button type="button" className="dd-b shop" onClick={() => onShop?.(nx.slot.overall)}>Shop pick #{nx.slot.overall}</button>
         </div>
       )}
       {children}
@@ -243,7 +243,7 @@ export function WarRoom() {
   const fit = need.map((n) => pool.find((p) => p.pos === n)).filter(Boolean)[0];
   return (
     <div className="dd-war">
-      <b className="dd-war-k">🎙️ WAR ROOM</b>
+      <b className="dd-war-k">War room</b>
       <span>Best left: <PlayerName p={best} /> ({best.pos}, CS #{csRank(best)}).{fit && fit.id !== best.id ? <> Top {need.join("/")}: <PlayerName p={fit} /> ({fit.pos}, #{csRank(fit)}).</> : fit ? <> Fills a need, too.</> : null}</span>
       <span className="dd-war-rule">At 0:00 you take the top name on Your list, then Central Scouting's best.</span>
     </div>
@@ -370,7 +370,7 @@ export function OffersFold({ offers, open, onToggle }) {
   const pass = (o) => { dismissCall(league, o); commit(); };
   return (
     <div className="dd-fold">
-      <button type="button" className="dd-fold-btn" aria-expanded={open} onClick={onToggle}><span>📞 {offers.length} trade offer{offers.length > 1 ? "s" : ""}: clubs want to move up</span><span>{open ? "▲" : "▼"}</span></button>
+      <button type="button" className="dd-fold-btn" aria-expanded={open} onClick={onToggle}><span>{offers.length} trade offer{offers.length > 1 ? "s" : ""}: clubs want to move up</span><span>{open ? "▲" : "▼"}</span></button>
       {open && <div className="dd-offers">{offers.map((o) => <OfferCard key={o.id} o={o} onAccept={accept} onMore={more} onPass={pass} />)}</div>}
     </div>
   );
@@ -394,13 +394,13 @@ export function IncomingCall({ o, phone, secs = 20 }) {
       <div className="dd-call-h">
         <div className="dd-call-ring"><TeamBadge team={t} size={46} decorative /></div>
         <div className="dd-call-who">
-          <div className="dd-call-k"><span className="dd-call-ico">📞</span> {o.kind === "faller" ? <span className="neg">URGENT CALL · HE'S SLIDING</span> : "INCOMING CALL"}</div>
+          <div className="dd-call-k">{o.kind === "faller" ? <span className="neg">URGENT CALL · HE'S SLIDING</span> : "INCOMING CALL"}</div>
           <div className="dd-call-t">{t.city} {t.name}</div>
           <div className="dd-call-q">{o.kind === "faller" && target ? `"${target.name} (${target.pos}) was #${csRank(target)} on Central Scouting's board and he's still there. We'll overpay to jump you at #${cur.overall}."` : `"We'd like to move up to #${cur.overall}${target ? ` for ${target.name}` : ""}."`}</div>
         </div>
       </div>
       <div className="dd-call-b">
-        <div className="dd-offer-k">THEY OFFER</div>
+        <div className="dd-offer-k">They offer</div>
         <PickPills ids={[o.theirs, ...o.extras]} />
         <div className={`dd-offer-chart${o.pct >= 0 ? " ok" : ""}`}>Draft chart: {o.pct >= 0 ? `+${o.pct}% in your favour` : `${o.pct}% (they're asking a discount)`}</div>
         <div className="dd-offer-act">

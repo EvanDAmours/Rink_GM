@@ -108,10 +108,10 @@ export default function PlayerCard({ p, retired = null }) {
           {devShown !== undefined && (devShown ? <span className={`gg-pc-tag dev-${devShown}`}>{DEV_TRAITS[devShown].name}</span> : <span className="gg-pc-tag"><DevChip dev={null} /></span>)}
           <span className="gg-pc-tag">{ARCHETYPES[p.type]?.name || p.type}</span>
           <AbilityChip p={p} full />
-          {form && <span className={`gg-pc-tag form-${form.kind}`} title={`Playing ${form.f > 0 ? "well above" : "below"} his rating this season (${form.f > 0 ? "+" : ""}${form.f}).`}>{form.kind === "hot" ? "🔥" : "🧊"} {form.text}</span>}
+          {form && <span className={`gg-pc-tag form-${form.kind}`} title={`Playing ${form.f > 0 ? "well above" : "below"} his rating this season (${form.f > 0 ? "+" : ""}${form.f}).`}>{form.text}</span>}
           {p.rookie && <span className="gg-pc-tag rookie">Rookie</span>}
           {p.ratingData && <span className="gg-pc-tag ea">EA {String(p.ratingData.edition).replace(/^NHL\s*/, "NHL ")}</span>}
-          {injury && <span className="gg-pc-tag inj" title={injury.when}>🚑 {p.injuryNote || "Injured"} · {injury.list ? `${injury.list} · ` : ""}{injury.text}</span>}
+          {injury && <span className="gg-pc-tag inj" title={injury.when}>{p.injuryNote || "Injured"} · {injury.list ? `${injury.list} · ` : ""}{injury.text}</span>}
           {p.clause?.type && <span className="gg-pc-tag">{p.clause.type}</span>}
         </div>
         {(accolades.length > 0 || ranks.length > 0 || retired) && <div className="lg-acc">
@@ -134,8 +134,8 @@ export default function PlayerCard({ p, retired = null }) {
             {shownGroups.map((g) => <section key={g} className="gg-pc-panel"><div className="gg-pc-k">{g}</div><Bars attrs={groups[g]} p={p} hide={hidden} /></section>)}
             <button className="link gg-pc-more" onClick={() => setAllAttrs((v) => !v)}>{allAttrs ? "Fewer skills ▴" : `All ${Object.values(groups).reduce((n, g) => n + Object.keys(g).length, 0)} skills ▾`}</button>
             {!retired && <PlayerContract p={p} hidden={hidden} />}
-            <section className="gg-pc-panel"><div className="gg-pc-k draft">DRAFT PEDIGREE</div><div className="gg-pc-big">{p.draft ? `${p.draft.year} · Round ${p.draft.round}, #${p.draft.pick}${league.teams[p.draft.tid] ? ` by ${league.teams[p.draft.tid].abbr}` : ""}` : p.src === "gen" ? "Undrafted" : "Pre-franchise"}</div></section>
-            {p.combine && <section className="gg-pc-panel"><div className="gg-pc-k combine">SCOUTING COMBINE{p.combine.grade ? ` · ${p.combine.grade}` : ""}</div><div className="gg-pc-combine">{COMBINE_TESTS.filter((t) => Number.isFinite(p.combine.tests?.[t.k])).map((t) => <div key={t.k}><small>{t.short.toUpperCase()}</small><b>{p.combine.tests[t.k].toFixed(t.dp)}{t.unit === "in" ? '"' : ""}</b><span>{t.unit !== "in" ? t.unit : ""}</span></div>)}</div></section>}
+            <section className="gg-pc-panel"><div className="gg-pc-k draft">Draft pedigree</div><div className="gg-pc-big">{p.draft ? `${p.draft.year} · Round ${p.draft.round}, #${p.draft.pick}${league.teams[p.draft.tid] ? ` by ${league.teams[p.draft.tid].abbr}` : ""}` : p.src === "gen" ? "Undrafted" : "Pre-franchise"}</div></section>
+            {p.combine && <section className="gg-pc-panel"><div className="gg-pc-k combine">Scouting combine{p.combine.grade ? ` · ${p.combine.grade}` : ""}</div><div className="gg-pc-combine">{COMBINE_TESTS.filter((t) => Number.isFinite(p.combine.tests?.[t.k])).map((t) => <div key={t.k}><small>{t.short.toUpperCase()}</small><b>{p.combine.tests[t.k].toFixed(t.dp)}{t.unit === "in" ? '"' : ""}</b><span>{t.unit !== "in" ? t.unit : ""}</span></div>)}</div></section>}
             <div className="dim small gg-pc-src">{p.ratingData ? `EA SPORTS NHL ${p.ratingData.edition}: ${p.ratingData.keys.length} published attributes; the rest are estimates.` : p.src === "ea27" ? "Official EA SPORTS NHL 27 overall; attributes are estimates." : "Generated player; attributes are gameplay estimates."}</div>
           </div>
           <div className="gg-pc-col">
@@ -143,18 +143,18 @@ export default function PlayerCard({ p, retired = null }) {
               <div className="gg-pc-tilesm">{(farmLine ? (goalie ? [["GP", farmLine.gp], ["W", farmLine.w], ["SV%", farmLine.svpct == null ? "—" : pct(farmLine.svpct)]] : [["GP", farmLine.gp], ["G", farmLine.g], ["A", farmLine.a], ["PTS", farmLine.pts]]) : tiles(s)).map(([k, v]) => <div key={k}><small>{k}</small><b>{v}</b></div>)}</div>
               {!farmLine && ps.gp > 0 && <><div className="dim small" style={{ margin: "8px 0 4px" }}>Playoffs</div><div className="gg-pc-tilesm">{tiles(ps).map(([k, v]) => <div key={k}><small>{k}</small><b>{v}</b></div>)}</div></>}
             </section>}
-            <section className="gg-pc-panel"><div className="gg-pc-k report">SCOUTING REPORT</div>
+            <section className="gg-pc-panel"><div className="gg-pc-k report">Scouting report</div>
               {hidden ? <div className="dim small">Scout him for a read on his game.</div> : <>
                 {rep.plus.map((t, i) => <div key={"p" + i} className="gg-pc-line plus"><b>+</b> {t}</div>)}
                 {rep.minus.map((t, i) => <div key={"m" + i} className="gg-pc-line minus"><b>−</b> {t}</div>)}
                 {!rep.plus.length && !rep.minus.length && <div className="dim small">A balanced, unremarkable profile.</div>}
-                {(p.bio?.lg || p.bio?.town) && <div className="gg-pc-note">📝 {p.bio.town ? `From ${p.bio.town}. ` : ""}{p.bio.lg ? `Played ${p.bio.lg} hockey${p.bio.team ? ` for ${p.bio.team}` : ""}.` : ""}</div>}
+                {(p.bio?.lg || p.bio?.town) && <div className="gg-pc-note">{p.bio.town ? `From ${p.bio.town}. ` : ""}{p.bio.lg ? `Played ${p.bio.lg} hockey${p.bio.team ? ` for ${p.bio.team}` : ""}.` : ""}</div>}
               </>}
             </section>
-            {!goalie && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k report">ROLE FIT</div>
+            {!goalie && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k report">Role fit</div>
               {bestRoles(p).map((x) => <div key={x.role} className="gg-pc-line"><b style={{ width: 28 }}>{x.fit}</b> {x.name}</div>)}
             </section>}
-            {watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">DEVELOPMENT</div>
+            {watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">Development</div>
               <div className="gg-pc-devgrid">
                 <div><small>RATING</small><b style={{ color: watch.delta > 0 ? "#4ade80" : watch.delta < 0 ? "#f87171" : "#e2e8f0" }}>{watch.start} → {p.ovr}</b><span>{watch.delta > 0 ? "+" : ""}{watch.delta} since camp</span></div>
                 <div><small>CEILING</small><b>{p.pot}</b><span>ETA {watch.eta}</span></div>
@@ -162,7 +162,7 @@ export default function PlayerCard({ p, retired = null }) {
               </div>
               {(p.farmHistory || []).length > 0 && <table className="gg-pc-table"><thead><tr><th>Year</th><th>League</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th></>}</tr></thead><tbody>{[...p.farmHistory].reverse().map((h, i) => <tr key={i}><td>{h.year}</td><td>{h.lg}</td><td className="num">{h.gp}</td>{goalie ? <><td className="num">{h.w}</td><td className="num">{h.sa ? pct((h.sa - h.ga) / h.sa) : "—"}</td></> : <><td className="num">{h.g}</td><td className="num">{h.a}</td><td className="num">{h.g + h.a}</td></>}</tr>)}</tbody></table>}
             </section>}
-            {!watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">DEVELOPMENT</div>
+            {!watch && !hidden && <section className="gg-pc-panel"><div className="gg-pc-k dev">Development</div>
               <div className="gg-pc-devrow">
                 <div><small>TRAIT</small><b>{DEV_TRAITS[p.dev]?.name || "—"}</b><span>{p.dev === "generational" ? "ages slowest" : p.dev === "superstar" ? "longer prime" : p.dev === "late" ? "surges at 22-25" : p.age <= 25 ? "still growing" : "set"}</span></div>
                 <div><small>CEILING</small><b>{p.pot}</b><span>{p.pot > p.ovr ? `${p.pot - p.ovr} to go` : "at his ceiling"}</span></div>
@@ -171,15 +171,15 @@ export default function PlayerCard({ p, retired = null }) {
               {(role || grew) && <div className="gg-pc-role">{role && <span>Role: <b>{ROLE_NAME[role.role]}</b>{role.pp >= 0.5 ? " · power play" : ""}{role.pk >= 0.5 ? " · penalty kill" : ""}</span>}{grew && <span className="grew" title="He played this role all last season and grew into it over the summer: its skills came along faster.">↗ grew into {ROLE_NAME[grew].toLowerCase()} role</span>}</div>}
               {summer && summer.notes.length > 0 && <div className="gg-pc-summer"><b>This summer:</b> {summer.from} → {summer.to} · {summer.notes.join(" · ")}</div>}
             </section>}
-            <section className="gg-pc-panel"><div className="gg-pc-k season">SEASON BY SEASON {career.length > 3 && <button className="gg-pc-pill" onClick={() => setSeasons((v) => (v === "all" ? "recent" : "all"))}>{seasons === "all" ? `All ${career.length} seasons ▾` : "Last 3 ▾"}</button>}</div>
+            <section className="gg-pc-panel"><div className="gg-pc-k season">Season by season {career.length > 3 && <button className="gg-pc-pill" onClick={() => setSeasons((v) => (v === "all" ? "recent" : "all"))}>{seasons === "all" ? `All ${career.length} seasons ▾` : "Last 3 ▾"}</button>}</div>
               {career.length ? <table className="gg-pc-table"><thead><tr><th>Year</th><th>TM</th><th className="num">GP</th>{goalie ? <><th className="num">W</th><th className="num">SV%</th><th className="num">GAA</th><th className="num">SO</th></> : <><th className="num">G</th><th className="num">A</th><th className="num">P</th><th className="num">+/-</th></>}</tr></thead><tbody>
                 {shownCareer.map((c, i) => <tr key={i}><td>{c.y}</td><td className="dim">{c.t}</td><td className="num">{c.s.gp}</td>{goalie ? <><td className="num">{c.s.w}</td><td className="num">{pct(savePct(c.s))}</td><td className="num">{gaa(c.s).toFixed(2)}</td><td className="num">{c.s.so}</td></> : <><td className="num">{c.s.g}</td><td className="num">{c.s.a}</td><td className="num">{c.s.pts}</td><td className="num">{signed(c.s.pm)}</td></>}</tr>)}
                 <tr className="career"><td>Career</td><td /><td className="num">{totals.gp}</td>{goalie ? <><td className="num">{totals.w}</td><td className="num">{totals.sa ? pct(totals.svpct) : "—"}</td><td className="num">{totals.gp ? (totals.ga / totals.gp).toFixed(2) : "—"}</td><td className="num">{totals.so}</td></> : <><td className="num">{totals.g}</td><td className="num">{totals.a}</td><td className="num">{totals.pts}</td><td className="num">{signed(totals.pm)}</td></>}</tr>
               </tbody></table> : <div className="dim small">His first season in this league is in progress.</div>}
               {totals.priorGames > 0 && <div className="dim small" style={{ marginTop: 6 }}>Plus about {totals.priorGames} NHL games before your league began (estimate).</div>}
-              {milestones.length > 0 && <div className="gg-miles" style={{ marginTop: 8 }}>{milestones.map((m) => <span key={m.key + m.mark} className="gg-mile">🏅 {m.label}</span>)}</div>}
+              {milestones.length > 0 && <div className="gg-miles" style={{ marginTop: 8 }}>{milestones.map((m) => <span key={m.key + m.mark} className="gg-mile">{m.label}</span>)}</div>}
             </section>
-            <section className="gg-pc-panel"><div className="gg-pc-k chart">CAREER OVR</div><CareerChart points={hidden ? [] : ratingPoints} /></section>
+            <section className="gg-pc-panel"><div className="gg-pc-k chart">Career OVR</div><CareerChart points={hidden ? [] : ratingPoints} /></section>
           </div>
         </div>
         {!retired && <div className="gg-pc-actions">
