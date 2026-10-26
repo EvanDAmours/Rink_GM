@@ -150,3 +150,8 @@ html.light .app .main button.sc-regrow:not(.x) { color: #0f172a; }
 html.light .sc-regrow span { color: #475569; }
 html.light .sc-regrow.on span { color: #cbd5e1; }
 html.light .sc-assign-card { background: #0f172a08; }
+/* r11: a scout works several regions: "2 of 3 regions" on his card, one calm coverage line on top. */
+.sc-assign-card small .sc-slots { float: right; letter-spacing: 0; font-weight: 700; color: #94a3b8; font-size: 12px; }
+.sc-cover { margin: 6px 0 0; font-size: 14px; }
+.sc-cover b { color: #f1f5f9; font-weight: 800; }
+html.light .sc-cover b { color: #0f172a; }

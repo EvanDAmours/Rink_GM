@@ -48,7 +48,9 @@ test("assigning a scout to a region covers it without exposing hidden numbers or
  const lg=league(),t=lg.teams[lg.userTid];
  const p=classPool(lg).find(p=>regionOf(p)==="Liiga");assert.ok(p);
  const before=classPool(lg).sort((a,b)=>csRank(a)-csRank(b)).map(p=>p.id);
- for(const k of ["major","major2","minor","minor2"])assert.ok(assignScout(lg,k,"OHL").ok);
+ // Every scout on the CHL, nobody in Finland (a scout works up to 3 / 2 / 1 / 1 regions).
+ t.scoutRegions={major:["OHL","WHL","QMJHL"],major2:["OHL","WHL"],minor:["QMJHL"],minor2:["OHL"]};
+ for(const k of ["major2","minor","minor2"])assert.ok(assignScout(lg,k,"OHL").ok||t.scoutRegions[k].includes("OHL"));
  assert.equal(prospectRead(lg,p).pot,"??");
  assert.ok(assignScout(lg,"minor","Liiga").ok);assert.ok(prospectRead(lg,p).general);
  assert.equal(prospectRead(lg,p).ovr,"??");assert.equal(prospectRead(lg,p).exact,false);
@@ -121,7 +123,7 @@ test("records retain names after retirement; repeated owner reviews and season a
 });
 test("new systems round-trip, and legacy saves keep played schedules and running draft ownership",()=>{
  const lg=league();assignScout(lg,"minor","QMJHL");const round=L.deserializeLeague(L.exportLeagueText(lg));
- assert.equal(round.teams[round.userTid].scoutRegions.minor,"QMJHL");assert.ok(round.teams[round.userTid].coach);assert.ok(round.recordBook);
+ assert.deepEqual(round.teams[round.userTid].scoutRegions.minor,["QMJHL"]);assert.ok(round.teams[round.userTid].coach);assert.ok(round.recordBook);
  const legacy=structuredClone(lg);delete legacy.scheduleStart;delete legacy.scheduleInfo;delete legacy.recordBook;delete legacy.coachMarket;
  legacy.draftPicks=legacy.draftPicks.filter(p=>p.round<=4);legacy.draftClass=legacy.draftClass.slice(0,170);
  for(const id of legacy.draftClass)legacy.players[id].scout.lvl=1;

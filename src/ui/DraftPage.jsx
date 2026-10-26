@@ -294,7 +294,7 @@ function ScoutsView() {
       <div className="panel">
         <h3>How scouting works</h3>
         <div className="muted small">
-          No points to spend. Before each season send every scout to a region (the Assignments tab). Through the season they file reports there on their own: higher-graded scouts read closer, reach full workups sooner and find the late-ranked gems. At the Combine you get interviews and private workouts.
+          No points to spend. Before each season send your scouts to their regions (the Regions tab): three for your senior scout, two for the second major scout, one for each minor scout. Through the season they file reports there on their own: higher-graded scouts read closer, reach full workups sooner and find the late-ranked gems. At the Combine you get interviews and private workouts.
         </div>
       </div>
       <div className="sgrid">

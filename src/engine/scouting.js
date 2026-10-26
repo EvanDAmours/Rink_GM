@@ -14,7 +14,7 @@ import { isGoalie, isDefense, posGroup, COMBINE_INVITES, COMBINE_INTERVIEWS } fr
 
 // ---------- Scouting staff ----------
 
-import { regionOf, REGIONS, DEFAULT_ASSIGN, scoutAssignments } from "./regions.js";
+import { regionOf, REGIONS, DEFAULT_ASSIGN, scoutAssignments, regionsOf, migrateScoutRegions } from "./regions.js";
 import { scoutingPaper } from "./papers.js";
 import { teamNeeds, roleOf } from "./teamPlanning.js";
 import { myDraftSlots, projectedDraftOrder } from "./draft.js";
@@ -163,19 +163,28 @@ export function surveyWeek(league, w) {
   for (const role of SCOUT_SLOTS) {
     const sc = s[role];
     if (!sc) continue;
-    const reg = a[role];
+    // A scout with several regions (r11: 3 / 2 / 1 / 1) files the same number of reports a week as
+    // before, shared out between them: the week's first report goes to a different region each
+    // week, so over a season each region gets its turn. More ground, not more reports.
+    const regs = regionsOf(a[role]);
+    if (!regs.length) continue;
     const eye = clamp((sc.eval - 62) / 28, 0, 1);
     const r = stream(`${league.draftClassYear}|${w}|${sc.id}|${role}|survey`);
     const noise = 1.2 + (100 - sc.eval) / 10;
-    const cands = pool.filter((p) => regionOf(p) === reg && (p.scout?.lvl || 0) < 2)
-      .map((p) => ({ p, s: csScore(p) + eye * 1.8 * gemGap(p) + r.gauss(0, noise) - 2.5 * (p.scout?.lvl || 0) }))
-      .sort((x, y) => y.s - x.s);
     const n = reportsPerWeek(sc.eval) + (sc.trait === "workhorse" ? 1 : 0);
-    for (const { p } of cands.slice(0, n)) {
-      fileReport(league, p, (p.scout?.lvl || 0) + 1);
-      filed++;
-      if (p.scout.notes?.gem && !log.gemIds.includes(p.id)) { log.gemIds.push(p.id); log.gems++; }
-    }
+    const share = Array(regs.length).fill(0);
+    for (let i = 0; i < n; i++) share[(w + i) % regs.length]++;
+    regs.forEach((reg, ri) => {
+      if (!share[ri]) return;
+      const cands = pool.filter((p) => regionOf(p) === reg && (p.scout?.lvl || 0) < 2)
+        .map((p) => ({ p, s: csScore(p) + eye * 1.8 * gemGap(p) + r.gauss(0, noise) - 2.5 * (p.scout?.lvl || 0) }))
+        .sort((x, y) => y.s - x.s);
+      for (const { p } of cands.slice(0, share[ri])) {
+        fileReport(league, p, (p.scout?.lvl || 0) + 1);
+        filed++;
+        if (p.scout.notes?.gem && !log.gemIds.includes(p.id)) { log.gemIds.push(p.id); log.gems++; }
+      }
+    });
   }
   log.filed += filed;
   return { filed };
@@ -201,11 +210,11 @@ const OFFICE_EVAL = 60;
 // so the front office's generalists handle it). Scouts cover the region you assigned them to
 // (regions.js). With several scouts on one region the best major scout leads and the rest are
 // second opinions (`second` is the next one, `others` all of them).
-const assignOf = (league) => ({ ...DEFAULT_ASSIGN, ...(league.teams[league.userTid]?.scoutRegions || {}) });
+const assignOf = (league) => { const a = { ...DEFAULT_ASSIGN, ...(league.teams[league.userTid]?.scoutRegions || {}) }; for (const k in a) a[k] = regionsOf(a[k]); return a; };
 export function coverage(league, p) {
   const s = league.teams[league.userTid]?.scouts || {};
   const a = assignOf(league), g = regionOf(p);
-  const on = SCOUT_SLOTS.filter((k) => s[k] && a[k] === g).map((k) => ({ kind: roleType(k), scout: s[k] }))
+  const on = SCOUT_SLOTS.filter((k) => s[k] && a[k]?.includes(g)).map((k) => ({ kind: roleType(k), scout: s[k] }))
     .sort((a, b) => (a.kind === b.kind ? scoutEval(b.scout, p) - scoutEval(a.scout, p) : a.kind === "major" ? -1 : 1));
   if (!on.length) return { role: "office", scout: null };
   const others = on.slice(1).map((x) => x.scout);
@@ -241,7 +250,7 @@ export function crewStrength(league) {
   const a = assignOf(league);
   return Object.keys(REGIONS).map((g) => {
     const name = REGIONS[g].name;
-    const on = SCOUT_SLOTS.filter((k) => s[k] && a[k] === g).map((k) => ({ role: k, scout: s[k] }));
+    const on = SCOUT_SLOTS.filter((k) => s[k] && a[k]?.includes(g)).map((k) => ({ role: k, scout: s[k] }));
     if (!on.length) return { group: g, name, n: 0, ev: OFFICE_EVAL, see: 0, scouts: [], label: "Front office only" };
     const lead = [...on].sort((a, b) => (roleType(a.role) === roleType(b.role) ? b.scout.eval - a.scout.eval : roleType(a.role) === "major" ? -1 : 1));
     const ev = scoutEval(lead[0].scout, null, lead.slice(1).map((x) => x.scout));
@@ -1121,7 +1130,8 @@ export function migrateScouting(l) {
   if (user && !("scouts" in user)) user.scouts = defaultScouts(l);
   // Hands-off scouting (batch x2): no scouting points, area points or in-season checkpoints.
   for (const t of l.teams || []) { delete t.scoutPts; delete t.scoutLost; delete t.area; }
-  if (user) scoutAssignments(l, user);
+  // r11: a scout works several regions (3 / 2 / 1 / 1); old one-region saves fill the new slots.
+  if (user) { migrateScoutRegions(l, classPool(l)); scoutAssignments(l, user); }
   if (Array.isArray(l.moments)) l.moments = l.moments.filter((m) => m?.kind !== "scoutCheckpoint");
   if (!Array.isArray(l.scoutPool)) refreshScoutPool(l);
   for (const id in l.players) {

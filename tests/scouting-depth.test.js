@@ -183,7 +183,7 @@ test("a season of scouting runs hands-off: reports by region, no checkpoint mome
   assert.ok(!momentStopsSim(l));
   assert.ok(!l.moments.some((m) => m.kind === "scoutCheckpoint"), "no checkpoint pop-ups");
   assert.equal(t.scoutPts, undefined, "no scouting points");
-  const regs = new Set(Object.values(t.scoutRegions));
+  const regs = new Set(Object.values(t.scoutRegions).flat());
   const seen = classPool(l).filter((p) => p.scout?.lvl > 0);
   assert.ok(seen.length >= 20, `reports filed: ${seen.length}`);
   assert.ok(seen.every((p) => regs.has(regionOf(p))), "only in assigned regions");
