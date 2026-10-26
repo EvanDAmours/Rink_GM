@@ -794,7 +794,9 @@ export default function App({ resume = false }) {
     const first = picks.slice().sort((a, b) => a.round - b.round)[0];
     return { capSpace: space, active: c.active, injured: inj, goalDiff, draftYear: dy, picks: picks.length, firstPick: first ? `Round ${first.round}` : null, reports: user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0, offers: userOffers(league).length, payroll: payroll(league, user), expiring: capOverview(league, user).expiring, fans: Math.round(user.owner?.fanSupport ?? 60) };
   })() : null;
-  const hero = heroH && <SectionHero team={user} sub={`${user.city} ${user.name}`} title={where.section.label}
+  // The Lineup screen has its own plain title and section tabs (LinesPage), so no hero there.
+  const bareLines = tab === "lines" && (sub.lines || "lines") === "lines";
+  const hero = heroH && !bareLines && <SectionHero team={user} sub={`${user.city} ${user.name}`} title={where.section.label}
     stats={heroStats(where.section.id, league, user, heroH)}
     tabs={where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : null])}
     onTab={(l) => openScreen(where.section.screens.find((x) => x[0] === l))} />;

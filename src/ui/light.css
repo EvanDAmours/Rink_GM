@@ -278,65 +278,48 @@ html.light :where(.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-ban
 .lg-tx-season { color: #475569; }
 
 /* src/ui/lines.css */
-.app .main .lnx { color: var(--gg-tx, #0f172a); }
-.app .main .lnx .good { color: #15803d; }
-.app .main .lnx .bad { color: #dc2626; }
-.app .main .lnx .lx-eyebrow { color: #475569; }
-.app .main .lnx .lx-subtabs button { color: #475569; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-subtabs button:hover:not(.on) { background: #e7ebf1; color: #1e293b; }
-.app .main .lnx .lx-seg { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-seg button { color: #475569; }
-.app .main .lnx .lx-seg button.on { background: #dbeafe; color: #0369a1; }
-.app .main .lnx .lx-sides button { color: #334155; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-sides button:hover:not(.on) { background: #e7ebf1; }
-.app .main .lnx button.lx-auto { color: #15803d; }
-.app .main .lnx button.lx-auto:hover { color: #15803d; }
-.app .main .lnx button.lx-ghost { color: #475569; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-selbar { color: #475569; }
-.app .main .lnx .lx-selbar b { color: #1e293b; }
-.app .main .lnx .lx-rt { border: 1px solid #0f172a10; }
-.app .main .lnx .lx-rt small { color: #475569; }
-.app .main .lnx button.lx-linkbtn { color: #0369a1; }
-.app .main .lnx .lx-plan { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-plan-k { color: #a16207; }
-.app .main .lnx .lx-plan b.good { color: #15803d; }
-.app .main .lnx button.lx-plan-tab { color: #1d4ed8; border: 1px solid #0f172a10; }
-.app .main .lnx button.lx-plan-tab.on { color: #1d4ed8; }
-.app .main .lnx button.lx-plan-tab:hover:not(.on) { background: #e7ebf1; }
-.app .main .lnx button.lx-style { background: #ffffff; border: 1px solid #0f172a10; color: var(--gg-tx, #0f172a); }
-.app .main .lnx button.lx-style small { color: #475569; }
-.app .main .lnx .lx-sec-h { color: #475569; border-bottom: 1px solid #0f172a10; }
-.app .main .lnx .lx-card { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-card-m b { color: #334155; }
-.app .main .lnx .lx-card-m b.good { color: #15803d; }
-.app .main .lnx .lx-card-m b.bad { color: #dc2626; }
-.app .main .lnx .lx-card-f { border-top: 1px solid #0f172a10; }
-.app .main .lnx button.lx-row { color: var(--gg-tx, #0f172a); }
-.app .main .lnx button.lx-row:hover:not(.ro) { background: #0f172a0d; }
-.app .main .lnx button.lx-row.bench { border-left-color: #cbd2dc; background: #0f172a04; }
-.app .main .lnx button.lx-row.empty { border-left-color: #cbd2dc; }
-.app .main .lnx .lx-nmrow { color: #1e293b; }
-.app .main .lnx .lx-fn { color: #334155; }
-.app .main .lnx .lx-dev .dev.superstar { color: #a16207; }
-.app .main .lnx .lx-dev .dev.star { color: #2563eb; border-color: #bfd3ea; }
-.app .main .lnx .lx-dev .dev.late { color: #6d28d9; }
-.app .main .lnx .lx-fit { color: #475569; }
-.app .main .lnx .lx-proj { color: #2563eb; }
-.app .main .lnx .lx-role { color: #475569; }
-.app .main .lnx .lx-check { color: #1e293b; }
-.app .main .lnx .lx-ice-l b { color: #1e293b; }
-.app .main .lnx .lx-ice-n { color: #475569; }
-.app .main .lnx .lx-gsep { background: #e7ebf1; }
-.app .main .lnx .lx-spv { background: #ffffff; border: 1px solid #bfd3ea; }
-.app .main .lnx .lx-spv-c { border: 1px solid #0f172a10; }
-.app .main .lnx .lx-spv-c.here small,
-.app .main .lnx .lx-spv-c.free small { color: #15803d; }
-.app .main .lnx .lx-spv-c.cheap small { color: #b45309; }
-.app .main .lnx .lx-spv-c.costly small { color: #dc2626; }
-.app .main .lnx button.lx-move { color: #1d4ed8; border: 1px solid #bfd3ea; }
-.app .main .lnx button.lx-move:hover { background: #dbeafe; color: #0369a1; }
-.app .main .lnx .lx-spv-roles { color: #475569; }
-.app .main .lnx .lx-plan-box { background: #ffffff; border: 1px solid #0f172a10; }
+.app .lnx { color: var(--gg-tx, #0f172a); }
+.app .lnx .good { color: #15803d; }
+.app .lnx .bad { color: #dc2626; }
+.app .lnx button.lx-linkbtn { color: #0369a1; }
+.app .lnx .lx-plan { background: #ffffff; border: 1px solid #0f172a10; }
+.app .lnx .lx-plan-k { color: #a16207; }
+.app .lnx .lx-plan b.good { color: #15803d; }
+.app .lnx button.lx-plan-tab { color: #1d4ed8; border: 1px solid #0f172a10; }
+.app .lnx button.lx-plan-tab.on { color: #1d4ed8; }
+.app .lnx button.lx-plan-tab:hover:not(.on) { background: #e7ebf1; }
+.app .lnx button.lx-style { background: #ffffff; border: 1px solid #0f172a10; color: var(--gg-tx, #0f172a); }
+.app .lnx button.lx-style small { color: #475569; }
+.app .lnx .lx-sec-h { color: #475569; border-bottom: 1px solid #0f172a10; }
+.app .lnx .lx-card { background: #ffffff; border: 1px solid #0f172a10; }
+.app .lnx .lx-card-m b { color: #334155; }
+.app .lnx .lx-card-m b.good { color: #15803d; }
+.app .lnx .lx-card-m b.bad { color: #dc2626; }
+.app .lnx .lx-card-f { border-top: 1px solid #0f172a10; }
+.app .lnx button.lx-row { color: var(--gg-tx, #0f172a); }
+.app .lnx button.lx-row:hover:not(.ro) { background: #0f172a0d; }
+.app .lnx button.lx-row.bench { border-left-color: #cbd2dc; background: #0f172a04; }
+.app .lnx button.lx-row.empty { border-left-color: #cbd2dc; }
+.app .lnx .lx-nmrow { color: #1e293b; }
+.app .lnx .lx-fn { color: #334155; }
+.app .lnx .lx-dev .dev.superstar { color: #a16207; }
+.app .lnx .lx-dev .dev.star { color: #2563eb; border-color: #bfd3ea; }
+.app .lnx .lx-dev .dev.late { color: #6d28d9; }
+.app .lnx .lx-role { color: #475569; }
+.app .lnx .lx-check { color: #1e293b; }
+.app .lnx .lx-ice-l b { color: #1e293b; }
+.app .lnx .lx-ice-n { color: #475569; }
+.app .lnx .lx-gsep { background: #e7ebf1; }
+.app .lnx .lx-spv { background: #ffffff; border: 1px solid #bfd3ea; }
+.app .lnx .lx-spv-c { border: 1px solid #0f172a10; }
+.app .lnx .lx-spv-c.here small,
+.app .lnx .lx-spv-c.free small { color: #15803d; }
+.app .lnx .lx-spv-c.cheap small { color: #b45309; }
+.app .lnx .lx-spv-c.costly small { color: #dc2626; }
+.app .lnx button.lx-move { color: #1d4ed8; border: 1px solid #bfd3ea; }
+.app .lnx button.lx-move:hover { background: #dbeafe; color: #0369a1; }
+.app .lnx .lx-spv-roles { color: #475569; }
+.app .lnx .lx-plan-box { background: #ffffff; border: 1px solid #0f172a10; }
 .lx-usage { border-top: 1px solid #0f172a10; }
 .lx-usage-g > span { border: 1px solid #0f172a10; }
 .lx-usage-g small { color: #475569; }
@@ -347,45 +330,60 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .rk-rc-nm { color: #0f172a; }
 .rk-rc-meta { color: #475569; }
 }
-.app .main .lnx .lx-tabs { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-tabs button { color: #475569; }
-.app .main .lnx .lx-tabs button.on { box-shadow: inset 0 -2px 0 var(--c2, #0f172a33); }
-.app .main .lnx .lx-tabs button:hover:not(.on) { color: #1e293b; background: #e7ebf1; }
-.app .main .lnx button.lx-ghost.on { color: #1d4ed8; }
-.app .main .lnx .lx-drawer { background: #f4f6fa; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-role small { color: #475569; }
-.app .main .lnx .lx-line { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx .lx-line-h > b { color: #334155; }
-.app .main .lnx .lx-chip { background: #ffffff; border: 1px solid #0f172a10; color: #475569; }
-.app .main .lnx .warn { color: #b45309; }
-.app .main .lnx button.lx-pk { background: #ffffff; border: 1px solid #0f172a10; }
-.app .main .lnx button.lx-x { background: #ffffff; border: 1px solid #0f172a10; color: #1e293b; }
-.app .main .lnx .lx-line { background: #ffffff; }
-.app .main .lnx .lx-line-h > b { color: #0f172a; }
-.app .main .lnx .lx-chip { border-color: #0f172a10; }
-.app .main .lnx .lx-grp { color: #475569; }
-.app .main .lnx .lx-dim,
-.app .main .lnx .lx-k,
-.app .main .lnx .lx-hint,
-.app .main .lnx .lx-card-m,
-.app .main .lnx .lx-meta { color: #475569; }
-.app .main .lnx .lx-tabs button { color: #334155; }
-.app .main .lnx button.lx-x { border-color: #0f172a10; color: #1e293b; }
-.app .main .lnx .lx-pk-n small { color: #475569; }
-.app .main .lnx .lx-line-r { color: #334155; }
-.app .main .lnx button.lx-chem { background: #ffffff; color: #1e293b; }
-.app .main .lnx button.lx-chem small { color: #475569; }
-.app .main .lnx .lx-chem-bar { background: #e7ebf1; }
-.app .main .lnx button.lx-chem.on,
-.app .main .lnx button.lx-chem:hover { background: color-mix(in srgb, var(--chem) 14%, #ffffff); }
-.app .main .lnx .lx-chem-pop { background: #ffffff; border: 1px solid #0f172a10; color: #334155; }
-.app .main .lnx .good { color: #15803d; }
-.app .main .lnx .lx-panel { background: #ffffff; }
-.app .main .lnx .lx-panel .lx-grp.sm { color: #b91c1c; }
-.app .main .lnx .lx-chempanel p { color: #334155; }
-.app .main .lnx .lx-chempanel .lx-staff { background: #ede9fe88; }
-.app .main .lnx .lx-legend { color: #475569; }
-.app .main .lnx .lx-x-n small { color: #475569; }
+.app.app .lnx .lx-sectabs button { color: #475569; }
+.app.app .lnx .lx-sectabs button.on { background: #0f172a14; color: #0f172a; }
+.app.app .lnx .lx-sectabs button:hover:not(.on) { color: #1e293b; background: #0f172a0a; }
+.app.app .lnx .lx-ph h1 { color: #0f172a; }
+.app.app .lnx .lx-s2 { color: #475569; }
+.app.app .lnx button.lx-btn.quiet { background: #0f172a14; color: #1e293b; }
+.app.app .lnx button.lx-btn.quiet:hover:not(:disabled),
+.app.app .lnx button.lx-btn.quiet.on { background: #0f172a21; }
+.app.app .lnx .lx-pop { background: #ffffff; border: 1px solid #0f172a14; }
+.app.app .lnx button.lx-mi { color: #1e293b; }
+.app.app .lnx button.lx-mi small { color: #475569; }
+.app.app .lnx button.lx-mi:hover:not(:disabled) { background: #0f172a0f; }
+.app.app .lnx button.lx-mi.on b { color: #15803d; }
+.app.app .lnx .lx-msep { background: #0f172a12; }
+.app.app .lnx .lx-teampick small { color: #475569; }
+.app.app .lnx .lx-gc { background: #0f172a0d; }
+.app.app .lnx h2.lx-gh { color: #0f172a; }
+.app.app .lnx button.lx-c { background: #0f172a09; color: #0f172a; }
+.app.app .lnx button.lx-c:hover { background: #0f172a10; }
+.app.app .lnx .lx-c.off .lx-nm > b { color: #a16207; }
+.app.app .lnx .lx-offm { color: #b45309; }
+.app.app .lnx .lx-inj { color: #b91c1c; }
+.app.app .lnx .lx-c.out .lx-nm > b { color: #475569; }
+.app.app .lnx button.lx-c.empty { box-shadow: inset 0 0 0 1px #0f172a14; }
+.app.app .lnx .lx-meter { background: #0f172a14; }
+.app.app .lnx .lx-why { background: #ffffff; border: 1px solid #0f172a17; color: #334155; }
+.app.app .lnx .lx-why > b { color: #0f172a; }
+.app.app .lnx .lx-prh > b { color: #0f172a; }
+.app.app .lnx .lx-m { color: #475569; }
+.app.app .lnx .lx-out { color: #475569; }
+.app.app .lnx button.lx-xn { color: #1e293b; }
+.app.app .lnx button.lx-xn.hl { color: #15803d; }
+.app.app .lnx .lx-coach { background: linear-gradient(180deg, #16a34a17, #0f172a0a 40%); }
+.app.app .lnx .lx-eyb { color: #15803d; }
+.app.app.app.app .lnx .lx-coach h3 { color: #0f172a; }
+.app.app .lnx .lx-coach p { color: #334155; }
+.app.app .lnx .lx-coach.calm { background: #0f172a0a; }
+.app.app .lnx .lx-ba { background: #0f172a0a; }
+.app.app .lnx .lx-ba-h { color: #0f172a; }
+.app.app .lnx .lx-bars { background: #0f172a14; }
+.app.app .lnx .lx-note { color: #475569; }
+.app.app .lnx .lx-more { border-top: 1px solid #0f172a10; }
+.app.app .lnx .lx-more-t { color: #475569; }
+.app.app .lnx button.lx-idea { color: #1e293b; }
+.app.app .lnx button.lx-idea + button.lx-idea { border-top: 1px solid #0f172a10; }
+.app.app .lnx .lx-gain { color: #15803d; }
+.app.app .lnx .lx-selbar { background: #ffffff; color: #334155; }
+.app.app .lnx .lx-selbar b { color: #0f172a; }
+.app.app .lnx button.lx-pk { background: #0f172a09; color: #0f172a; }
+.app.app .lnx button.lx-pk:hover { background: #0f172a12; }
+.app.app .lnx .lx-pk-n b.off { color: #a16207; }
+.app.app .lnx .lx-pk-n small { color: #475569; }
+.app.app .lnx .lx-rest { color: #1e293b; }
+.app.app .lnx.lx-settings .lx-card { background: #0f172a09; }
 
 /* src/ui/live.css */
 .lv-bside { background: linear-gradient(90deg, var(--tc) 0%, color-mix(in srgb, var(--tc) 80%, #ffffff) 70%, #ffffff 100%); }

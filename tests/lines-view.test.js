@@ -43,14 +43,17 @@ test("names: surname under a spot, full name (or initial) in the list", () => {
   assert.equal(listName("Alexander Mukhamadullin", 16), "A. Mukhamadullin");
 });
 
-// The lines screen is one view: stacked line cards per strength tab, drag-and-drop or
-// tap-to-swap, a picker for the selected spot and everything else in Line settings. No rink.
-test("the lines screen: tabs, drag or tap to swap, a picker, settings tucked away", () => {
+// The Lineup screen: a strength menu, one Auto-set menu, a forwards grid and pair rows, the coach's
+// best change, drag-and-drop or tap-to-swap, a picker Sheet for the selected spot, settings in a Sheet.
+test("the lineup screen: strength menu, Auto-set, coach panel, drag or tap to swap, picker Sheet", () => {
   const src = fs.readFileSync(new URL("../src/ui/LinesPage.jsx", import.meta.url), "utf8");
-  for (const t of ["Even Strength", "Power Play", "Penalty Kill", "Situations"]) assert.ok(src.includes(`"${t}"`), t);
+  for (const t of ["Even strength", "Power play", "Penalty kill", "Situations"]) assert.ok(src.includes(`"${t}"`), t);
+  for (const t of ["Auto lines by overall", "Auto lines by chemistry", "Reset to NHL lines", "Line settings"]) assert.ok(src.includes(t), t);
+  assert.ok(src.includes("Best change right now") && src.includes("Make the swap") && src.includes("Next idea") && src.includes("Other ideas, best first"), "coach panel");
+  assert.ok(src.includes("coachIdeas") && src.includes("applyIdea"), "coach ideas come from the engine");
   assert.ok(src.includes("draggable") && src.includes("onDrop"), "drag and drop");
-  assert.ok(src.includes("lx-pick"), "the picker for a selected spot");
-  assert.ok(src.includes("Line settings") && src.includes("Auto lines"), "settings drawer and Auto");
+  assert.ok(src.includes("<Sheet") && src.includes("Who plays"), "the picker Sheet for a selected spot");
+  assert.ok(src.includes("Scratched:") && src.includes("Not on a unit"), "scratches and special-teams bench");
   assert.ok(!/RinkLines|esSpots|stSpots/.test(src), "no rink view");
   assert.ok(!fs.existsSync(new URL("../src/ui/RinkLines.jsx", import.meta.url)), "rink component removed");
 });
