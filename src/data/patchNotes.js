@@ -381,4 +381,10 @@ export const PATCH_NOTES = [
     "Pending free agents sell at about half their value once the season starts, and older players signed for more years lose value faster after 29.",
     "Draft picks carry more weight in trades, and stars no longer come with two stacked asking premiums.",
   ] },
+  { v: "1.68", date: "2026-10-26", title: "Polish Pass", notes: [
+    "Cleaner screens: emoji are gone from buttons and headings, and section titles use normal capitalisation.",
+    "Light mode: fixed headings, card titles and labels that were invisible or faint on Home, Draft, Lines, Roster and the negotiation table.",
+    "Newspapers now close with Escape, like every other popup.",
+    "Fixed a save that changed slightly after reloading during the re-signing period.",
+  ] },
 ];
