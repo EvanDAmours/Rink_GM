@@ -3,7 +3,7 @@
 Read this before building or changing anything. Update it with every change (what and why).
 Owner: Evan. If a request conflicts with this file, the newest request wins — then update this file.
 
-## The two goals (equal weight)
+## Central tenets (equal weight)
 
 1. **Every screen is polished, clean and sleek, and makes people want to stay.**
    Tests for every screen: *Is it easy on the eyes? Will a new user understand it? Would someone
@@ -11,6 +11,11 @@ Owner: Evan. If a request conflicts with this file, the newest request wins — 
 2. **The most comprehensive, real-world simulation possible.** Real NHL player ratings (EA SPORTS
    NHL 27 where published; McDavid 99 / #97 / slapshot 92 via `verifiedData.js`), results that
    match real NHL bands, real-world contracts and trade logic for AI and user clubs alike.
+
+3. **Never cost the player visibility.** "One of our primary goals is to ensure that each new screen, feature or
+   re-work of the game does not impact a player's visibility. It should rarely if ever require any additional
+   scrolling on the screen unless the player will significantly benefit from it." (Evan, 2026-10-27)
+   Check every new screen at 1440×900 and 390×844: the main content and its primary action fit without scrolling.
 
 ## Look and feel (the reference screens)
 
