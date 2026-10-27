@@ -476,4 +476,8 @@ export const PATCH_NOTES = [
     "On the power play and penalty kill, forwards line up on top with the defence underneath. Scratched and spare players are now tiles that show where they'd fit best, so you can tap or drag them straight in.",
     "The coach's tip about how many changes could improve your lineup now stands out in its own box, with a clear Show ideas button.",
   ] },
+  { v: "1.90", date: "2026-10-27", title: "Home Ice", notes: [
+    "Home ice now matters for every club: home teams get slightly better looks and a few more power plays, and win about 54-55% of games, like the NHL. Pre-game win odds include it.",
+    "In the playoffs every coach shortens the bench: top lines and pairs play more, with your custom ice-time settings tilted the same way, so stars matter a little more in the spring.",
+  ] },
 ];
