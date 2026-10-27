@@ -22,3 +22,7 @@ html.light .app .main .lnx .lx-chempanel .lx-staff { color: #3730a3; }
 html.light .app .rk-rb.rb-ltir { color: #7e22ce; }
 html.light .app.app.app .gg-ops-nav button { background: #0f172a0f; color: #334155; border: 0; }
 html.light .app.app.app .gg-ops-nav button.on { background: #0f172a; color: #fff; }
+
+/* r16 Draft Day: banner titles drawn white on a tinted card */
+html.light .app.app .dy-otc b, html.light .app.app .dy-between > div > b, html.light .app.app .dy-cardtx b, html.light .app.app .dy-why b, html.light .app.app .dy-gradeline b { color: #0f172a; }
+html.light .app.app .dy-otc span { color: #166534; }

@@ -418,7 +418,10 @@ test("injuries heal in the playoffs; scouting: stable board, four scouts, the Co
   simDraftToUser(lg, { all: true });
   assert.ok(!atCombine(lg) && draftDone(lg));
   assert.ok(lg.draft.slots.every((s) => s.pid && s.grade && s.csr >= 1));
-  const r1 = lg.draft.slots.filter((s) => s.round === 1).map((s) => s.csr);
+  // AI clubs only: your picks follow your scouts' board (r16), which can take a sleeper far down Central Scouting's list.
+  const mine = lg.draft.slots.filter((s) => s.owner === lg.userTid);
+  assert.ok(mine.every((s) => ["list", "scouts"].includes(s.how)), "your picks were made by your list / scouts");
+  const r1 = lg.draft.slots.filter((s) => s.round === 1 && s.owner !== lg.userTid).map((s) => s.csr);
   assert.ok(r1.reduce((a, b) => a + b, 0) / r1.length < 24 && Math.max(...r1) <= 80, `round 1 CS ranks ${r1}`);
   assert.equal(pickGrade(1, 1), "A");
   assert.equal(pickGrade(12, 12), "B+");
