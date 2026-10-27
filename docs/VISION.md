@@ -27,7 +27,7 @@ negotiation table (`ContractModal.jsx`, `negotiate.css`).
   one coloured element per row. Detail lives one tap away (Sheet), not on the default view.
 - Popups: `Sheet` / `Dialog` / `DBtn` in `common.jsx` (portal to body; bottom sheet on phones).
   No popup may stop a sim. Moments queue until the sim ends at the point the user chose.
-- Desktop nav: Home · Team · Standings · Season · Development · Draft · Trades & FA · Front Office.
+- Desktop nav: Home · Team · Standings · Season · Development · Draft · Trades & FA · Contracts · Front Office.
 - Phone and desktop are separate designs sharing logic; check both every time. One column on
   phones, big touch targets, no sideways scroll, safe areas, dvh.
 - Evan dislikes: clutter, dense tables by default, sweater art on the Lineup screen, interruptions,
@@ -86,3 +86,4 @@ confirm the Pages deploy. Report real outcomes only.
 - 1.84 Development rows in Gridiron's format (name + age · POS inline, short status, big OVR + change); Prospects as a grouped 3-column grid on one screen; replaces the 1.83 chip line — Evan wanted it formatted like Gridiron, keeping ONE focus player (football's offence/defence split doesn't apply).
 - 1.85 Real draft history for all 797 real players (NHL Stats API; 700 drafted, 97 undrafted; matched by NHL id), estimated (flagged est) for generated depth players without changing ratings — draft info is shown in player details.
 - 1.86 Final front page features only the Conn Smythe winner (subhead, story, photo) — it named a different series MVP; papers' headlines wrap.
+- 1.87 Contracts its own section (Re-sign first in re-sign week); League = Teams · History · Retired; Playoffs moved into Standings (opens there in the playoffs); phone bar Home · Lineup · Standings · Development · More; ONE player sheet (PlayerSheet.jsx) for every player everywhere — Evan wanted easier navigation and less scrolling. Desktop nav: Home · Team · Standings · Season · Development · Draft · Trades & FA · Contracts · Front Office.

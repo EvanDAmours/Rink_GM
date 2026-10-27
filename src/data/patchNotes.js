@@ -459,4 +459,10 @@ export const PATCH_NOTES = [
     "The Stanley Cup Final front page now names one MVP: the Conn Smythe winner leads the subhead, the story and the photo (it used to name a different \"series MVP\" in the subhead).",
     "Long Gazette headlines wrap instead of running off the page.",
   ] },
+  { v: "1.87", date: "2026-10-27", title: "Easier to Find", notes: [
+    "Contracts has its own tab: every deal you carry, cap room now and next season, the key players who need new deals, and in re-sign week the Re-sign screen first.",
+    "The playoffs moved into Standings: one tap from the table to the bracket (or the bracket today's seeds would make), and Standings opens on the bracket once the playoffs start. League now holds the teams, the league's history and retired players in one place.",
+    "Phones get a fixed bottom bar: Home, Lineup, Standings, Development and More, with every other screen grouped in More.",
+    "One player card everywhere: tap any name on any screen and the same sheet opens, with his actions in reach (negotiate, lineup, send down or call up, trade, trade block, make an offer, draft). Retired players open too.",
+  ] },
 ];
