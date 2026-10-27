@@ -465,4 +465,10 @@ export const PATCH_NOTES = [
     "Phones get a fixed bottom bar: Home, Lineup, Standings, Development and More, with every other screen grouped in More.",
     "One player card everywhere: tap any name on any screen and the same sheet opens, with his actions in reach (negotiate, lineup, send down or call up, trade, trade block, make an offer, draft). Retired players open too.",
   ] },
+  { v: "1.88", date: "2026-10-27", title: "Your List Is the Draft", notes: [
+    "The draft is one screen now. Your scouts fill in Your list at the Combine; drag a name to move him, and when you're on the clock the top name left is one tap away.",
+    "On the clock, your scouts give you three options (best fit, best available, and a need or upside pick), each with a plain reason, or you can take anyone else.",
+    "Every name shows the chance he's still there at your pick. Trade offers come as one quiet card showing who'd still be there at the new pick, with no ringing phones or timers.",
+    "Your class shows what your scouts believed on draft day and one analysts' grade. The truth comes out over two seasons, and picks you skip are made from your list, not Central Scouting's.",
+  ] },
 ];
