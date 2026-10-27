@@ -14,14 +14,17 @@ const oC = (v) => (v >= 80 ? "#22c55e" : v >= 70 ? "#a3e635" : v >= 60 ? "#eab30
 
 // The stage (Gridiron 3.4 Draft Night): your pick walks up under the lights in your sweater, his
 // name across the back and his number on it; first-rounders come from the green room. Then his
-// real card, now that he's yours: development trait, best skills, OVR/POT and the analysts' take.
+// card, now that he's yours: the trait and ceiling your scouts believed (never the hidden truth),
+// his best skills today, and the analysts' take.
 // `m` is the draft-stage moment (engine/momentsDraft.js).
 export function PickStage({ m, onClose, onFull, cta = "Continue the draft" }) {
   const { league } = useGame();
   const team = league.teams[m.tid] || league.teams[league.userTid];
   const live = league.players[m.pid];
   const p = { ...m.p, ...(live ? { name: live.name, pos: live.pos } : {}), number: live?.number ?? m.p.num ?? undefined };
-  const dev = DEV_TRAITS[m.p.dev] ? m.p.dev : "normal";
+  // The trait your scouts saw (m.p.dev); null when they didn't see one, so nothing is given away.
+  const known = !!DEV_TRAITS[m.p.dev];
+  const dev = known ? m.p.dev : "normal";
   const [fg, bg] = DEV_STYLE[dev];
   const { clr, ac } = momentColors(team);
   const comp = live ? comparable(league, live, live.pot) : null;
@@ -46,10 +49,10 @@ export function PickStage({ m, onClose, onFull, cta = "Continue the draft" }) {
         </div>
       </div>
       <div className="dn-body">
-        <div className="dn-dev">
+        <div className={`dn-dev${known ? "" : " unknown"}`}>
           <div className="dn-dev-k">DEVELOPMENT TRAIT</div>
-          <div className="dn-dev-v">{DEV_TRAITS[dev].name}</div>
-          <div className="dn-dev-d">{DEV_TRAITS[dev].desc}</div>
+          <div className="dn-dev-v">{known ? DEV_TRAITS[dev].name : "Not known yet"}</div>
+          <div className="dn-dev-d">{known ? DEV_TRAITS[dev].desc : "Your scouts didn't see it. You'll learn it as he develops."}</div>
         </div>
         {m.top?.length > 0 && (
           <div className="dn-tiles">
@@ -58,7 +61,7 @@ export function PickStage({ m, onClose, onFull, cta = "Continue the draft" }) {
         )}
         <div className="dn-nums">
           <span>OVR <b style={{ color: oC(m.p.ovr) }}>{m.p.ovr}</b></span>
-          <span>POT <b className="pot">{m.p.pot}</b></span>
+          {m.p.pot != null && <span title={m.p.potEst ? "Your scouts' read of his ceiling. The truth comes out over his first two seasons." : undefined}>{m.p.potEst ? "Ceiling read" : "POT"} <b className="pot">{m.p.potEst ? `~${m.p.pot}` : m.p.pot}</b></span>}
           {m.grade && <span>Grade <b className="grade-v">{m.grade}</b></span>}
           <ValueTag overall={m.overall} csr={m.csr} />
         </div>

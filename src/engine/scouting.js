@@ -506,8 +506,11 @@ export function prospectRead(league, p) {
 // idea, area reads) and the development traits they've seen. Where they have no read, they go
 // with Central Scouting. Returns Map id -> your rank (1 = best).
 const DEV_BUMP = { generational: 3, superstar: 2, star: 1, late: 0, normal: 0 };
+// Nobody on your staff has seen him (no report, no general idea): Central Scouting's read with a
+// confidence penalty, so he sits below the players your scouts actually know at the same level (E9).
+export const UNSEEN_PENALTY = 3;
 export function myScore(league, p, read = prospectRead(league, p)) {
-  if (read.potV == null) return csScore(p);
+  if (read.potV == null) return csScore(p) - UNSEEN_PENALTY;
   const extra = (DEV_BUMP[read.dev] || 0) - (read.flag ? 3 : 0);
   if (read.lvl > 0 && read.ovrV != null) return read.potV * 0.78 + read.ovrV * 0.22 + extra;
   // Only a general idea (a scout's letter grade, an area read): Central Scouting's slot, moved by how
@@ -1028,7 +1031,9 @@ export function runCombine(league) {
     d.workoutsLeft = PRIVATE_WORKOUTS;
     d.buzz = combineBuzz(pool, invited);
   }
-  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: test results and Central Scouting's final rankings are out. You have ${d?.interviewsLeft ?? COMBINE_INTERVIEWS} interview slots and ${PRIVATE_WORKOUTS} private workouts before the draft. Your scouts' visit list is on the Your scouts tab.` });
+  // Your scouts fill in Your list from their board (manual edits kept).
+  seedMyList(league);
+  league.inbox?.push({ year: league.year, day: league.day, text: `The Scouting Combine is done: Central Scouting's final rankings are out, and your scouts have filled in Your list. They'll use your ${d?.interviewsLeft ?? COMBINE_INTERVIEWS} interviews and ${PRIVATE_WORKOUTS} private workouts before the draft.` });
 }
 
 function combineBuzz(pool, invited) {
@@ -1071,8 +1076,64 @@ export function interviewProspect(league, pid) {
   return { ok: true, msg: `Interview with ${p.name}: work ethic ${p.scout.intv.grade}.${flag ? " 🚩 Red flag raised: see his profile." : ""}` };
 }
 
+// ---------- Combine visits, spent by your scouts (E5) ----------
+// Your scouts plan who to interview and bring in for a workout from their visit list
+// (scoutsShortlist) and spend them when the draft starts, so nobody has to. "Change who" edits the
+// plan: d.visitPlan = { interview: [ids], workout: [ids] }. Visits you made by hand count first.
+export function visitPlan(league) {
+  const d = league.draft;
+  if (!d || d.stage !== "combine") return { interview: [], workout: [] };
+  const okI = (id) => { const p = league.players[id]; return p?.tid === -2 && !!p.combine && !p.scout?.intv; };
+  const okW = (id) => { const p = league.players[id]; return p?.tid === -2 && (p.scout?.lvl || 0) < 2; };
+  if (!d.visitPlan || !Array.isArray(d.visitPlan.interview) || !Array.isArray(d.visitPlan.workout)) {
+    const list = scoutsShortlist(league, { max: 12 });
+    d.visitPlan = {
+      interview: list.filter((x) => x.interview).map((x) => x.p.id).slice(0, Math.max(0, d.interviewsLeft ?? 0)),
+      workout: list.filter((x) => x.workout).map((x) => x.p.id).slice(0, Math.max(0, d.workoutsLeft ?? 0)),
+    };
+  }
+  const v = d.visitPlan;
+  v.interview = v.interview.filter(okI).slice(0, Math.max(0, d.interviewsLeft ?? 0));
+  v.workout = v.workout.filter(okW).slice(0, Math.max(0, d.workoutsLeft ?? 0));
+  return v;
+}
+// Add or drop one visit from the plan. Returns { ok, msg }.
+export function setVisit(league, pid, kind, on) {
+  const d = league.draft;
+  if (!d || d.stage !== "combine") return { ok: false, msg: "Visits happen during Combine week." };
+  const v = visitPlan(league);
+  const k = kind === "interview" ? "interview" : "workout";
+  const left = k === "interview" ? d.interviewsLeft ?? 0 : d.workoutsLeft ?? 0;
+  const p = league.players[pid];
+  if (!on) { v[k] = v[k].filter((x) => x !== pid); return { ok: true }; }
+  if (v[k].includes(pid)) return { ok: true };
+  if (!p || p.tid !== -2) return { ok: false, msg: "He isn't in this draft." };
+  if (k === "interview" && !p.combine) return { ok: false, msg: "He wasn't invited to the Combine." };
+  if (k === "interview" && p.scout?.intv) return { ok: false, msg: "You've already interviewed him." };
+  if (k === "workout" && (p.scout?.lvl || 0) >= 2) return { ok: false, msg: `${p.name} is already fully scouted.` };
+  if (v[k].length >= left) return { ok: false, msg: `All ${left} ${k === "interview" ? "interviews" : "workouts"} are planned. Take someone off first.` };
+  v[k].push(pid);
+  return { ok: true };
+}
+// Spend the plan (the draft is starting). Returns how many visits were made.
+export function autoVisits(league) {
+  const d = league.draft;
+  if (!d || d.stage !== "combine") return 0;
+  const v = visitPlan(league);
+  let n = 0;
+  for (const id of v.interview) if (interviewProspect(league, id).ok) n++;
+  for (const id of v.workout) if (privateWorkout(league, id).ok) n++;
+  d.visitPlan = { interview: [], workout: [] };
+  // What the visits showed goes into Your list (your own order is kept).
+  if (n && league.myList?.seeded) seedMyList(league);
+  return n;
+}
+
 export function openDraftFloor(league) {
-  if (league.draft && league.draft.stage === "combine") league.draft.stage = "live";
+  if (league.draft && league.draft.stage === "combine") {
+    try { autoVisits(league); } catch (e) { console.error("Combine visits failed", e); }
+    league.draft.stage = "live";
+  }
 }
 export const atCombine = (league) => league.phase === "draft" && league.draft?.stage === "combine";
 
@@ -1104,23 +1165,113 @@ export function teamDraftGrade(league, tid) {
 }
 
 // ---------- Your list ----------
+// Your list is the draft (r16, concept 2). At the Combine your scouts rank every prospect they've
+// seen (myBoard) and that order becomes Your list; you drag names to move them. Prospects nobody
+// on your staff has seen stay off it until you add them. The clock running out, Sim to my pick
+// and "Scouts pick the rest" all take the top name left on it, then the scouts' board (scoutsPick).
+//   league.myList = { year, ids, seeded, edited }
+//     seeded: the scouts filled it in (at the Combine, or the migration for a save already there)
+//     edited: you moved, added or removed someone, so a later re-seed keeps your order
+// Before the Combine nothing is stored: the list you see is the scouts' board as it stands, with
+// any names you starred on top.
 
 export function myList(league) {
   const year = league.draftClassYear;
   if (!league.myList || league.myList.year !== year) league.myList = { year, ids: [] };
+  if (!Array.isArray(league.myList.ids)) league.myList.ids = [];
   return league.myList;
 }
-export const onMyList = (league, pid) => myList(league).ids.includes(pid);
-export function toggleMyList(league, pid) {
+// Prospects your scouts have a read on (a report or a general idea), best first on their board.
+function seenByBoard(league) {
+  return classPool(league).map((p) => [p, prospectRead(league, p)]).filter(([, r]) => r.potV != null)
+    .map(([p, r]) => [p, myScore(league, p, r)]).sort((a, b) => b[1] - a[1] || csRank(a[0]) - csRank(b[0])).map(([p]) => p.id);
+}
+// The list as it stands, in order (drafted players stay where they were, struck through on screen).
+export function myListIds(league) {
   const l = myList(league);
-  l.ids = l.ids.includes(pid) ? l.ids.filter((x) => x !== pid) : [...l.ids, pid];
+  const inClass = new Set(league.draftClass || []);
+  const kept = l.ids.filter((id) => league.players[id] && inClass.has(id));
+  if (l.seeded) return kept;
+  const have = new Set(kept);
+  return [...kept, ...seenByBoard(league).filter((id) => !have.has(id))];
+}
+// Fill the list in from your scouts' board. A list you've edited keeps your order; anyone your
+// scouts have seen since joins at the end in their order. Returns the list.
+export function seedMyList(league, { fresh = false } = {}) {
+  const l = myList(league);
+  if (fresh || !l.edited) {
+    // Names you added by hand (nobody on your staff has seen them) stay on.
+    const seen = seenByBoard(league), set = new Set(seen);
+    const added = l.seeded ? l.ids.filter((id) => !set.has(id) && league.players[id]?.tid === -2 && l.added?.includes(id)) : [];
+    l.ids = fresh ? seen : [...seen, ...added];
+    if (fresh) { l.edited = false; l.added = []; }
+  } else {
+    const have = new Set(l.ids);
+    l.ids = [...myListIds(league), ...seenByBoard(league).filter((id) => !have.has(id))];
+  }
+  l.seeded = true;
+  return l;
+}
+// Turn the list you see into the stored one before you change it.
+function ownList(league) {
+  const l = myList(league);
+  if (!l.seeded) { l.ids = myListIds(league); l.seeded = true; }
+  return l;
+}
+export function onMyList(league, pid) {
+  const l = myList(league);
+  if (l.ids.includes(pid)) return true;
+  const p = league.players[pid];
+  return !l.seeded && p?.tid === -2 && prospectRead(league, p).potV != null;
+}
+export function toggleMyList(league, pid) {
+  const l = ownList(league);
+  if (l.ids.includes(pid)) l.ids = l.ids.filter((x) => x !== pid);
+  else { l.ids = [...l.ids, pid]; (l.added ||= []).push(pid); }
+  l.edited = true;
 }
 export function moveOnMyList(league, pid, dir) {
-  const l = myList(league);
+  const l = ownList(league);
   const i = l.ids.indexOf(pid);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= l.ids.length) return;
-  [l.ids[i], l.ids[j]] = [l.ids[j], l.ids[i]];
+  if (i < 0) return;
+  moveOnMyListTo(league, pid, i + dir);
+}
+// Drag: put him at `index` (0 = top) on the list as it stands. Returns his new index, or -1.
+export function moveOnMyListTo(league, pid, index) {
+  const l = ownList(league);
+  const i = l.ids.indexOf(pid);
+  if (i < 0) return -1;
+  const j = clamp(Math.round(index), 0, l.ids.length - 1);
+  if (i !== j) {
+    l.ids.splice(i, 1);
+    l.ids.splice(j, 0, pid);
+    l.edited = true;
+  }
+  return j;
+}
+export function resetMyList(league) { return seedMyList(league, { fresh: true }); }
+
+// How a pick made for you was chosen: "list" (the top name left on Your list) or "scouts" (their board).
+export function pickSource(league, pid) {
+  return myListIds(league).includes(pid) ? "list" : "scouts";
+}
+
+// Who your scouts take when the pick is made for you (the clock runs out, Sim to my pick, Scouts
+// pick the rest): the top name left on Your list, then the best left on their board, with your
+// needs breaking near ties. One rule for every pick you don't make by hand (E1).
+export function scoutsPick(league) {
+  const listed = myListIds(league).find((id) => league.players[id]?.tid === -2);
+  if (listed) return listed;
+  const pool = classPool(league);
+  if (!pool.length) return null;
+  const t = league.teams[league.userTid];
+  const need = t ? Object.fromEntries(teamNeeds(league, t).map((n) => [n.pos, n.score])) : {};
+  let best = null, bs = -Infinity;
+  for (const p of pool) {
+    const s = myScore(league, p) + (need[p.pos] || 0) / 100;
+    if (s > bs || (s === bs && csRank(p) < csRank(best))) { bs = s; best = p; }
+  }
+  return best?.id || null;
 }
 
 // ---------- Old saves ----------
@@ -1160,4 +1311,11 @@ export function migrateScouting(l) {
   // whose draft has started), on prospects you haven't filed a report on.
   if (cls.length && l.hiddenSeeded !== l.draftClassYear && !l.draft && !cls.some((id) => l.players[id].gem || l.players[id].bust)) plantHiddenTalent(l, cls, l.draftClassYear);
   if (l.draft?.stage === "combine" && l.draft.workoutsLeft == null) l.draft.workoutsLeft = PRIVATE_WORKOUTS;
+  // r16: Your list is the draft. A save already at the Combine or in the draft gets its list filled
+  // in from the scouts' board once (names you starred stay on top). Flagged on the list (seeded).
+  if (l.phase === "draft" && l.draft && cls.length && !(l.myList?.year === l.draftClassYear && l.myList.seeded)) {
+    const had = myList(l).ids.filter((id) => l.players[id]).length > 0;
+    if (had) l.myList.edited = true;
+    seedMyList(l);
+  }
 }

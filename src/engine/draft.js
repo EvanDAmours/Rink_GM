@@ -34,7 +34,7 @@ import { DRAFT_ROUNDS, isGoalie, isDefense, isForward, MAX_PROSPECTS } from "./c
 import { compareTeams } from "./standings.js";
 import { defaultArchetype } from "./ratings.js";
 import { rollDev } from "./players.js";
-import { rankClass, csRank, csScore, pickGrade, openDraftFloor, plantHiddenTalent, publicPot, prospectRead, tagDraftee, believedPot } from "./scouting.js";
+import { rankClass, csRank, csScore, pickGrade, openDraftFloor, plantHiddenTalent, publicPot, prospectRead, tagDraftee, believedPot, scoutsPick, pickSource } from "./scouting.js";
 
 const CLASS_SIZE = 280; // Seven rounds, plus an undrafted pool.
 const POS_MIX = [["C", 25], ["LW", 17], ["RW", 17], ["LD", 14], ["RD", 14], ["G", 8]];
@@ -275,7 +275,9 @@ export function makePick(league, pid) {
   p.signed = false;
   p.rightsUntil=d.year+(p.bio?.lg==="NCAA"?4:["OHL","WHL","QMJHL"].includes(p.bio?.lg)?2:4);
   p.assignment=p.bio?.lg==="NCAA"?"college":["OHL","WHL","QMJHL"].includes(p.bio?.lg)?"junior":"europe";
-  if (read) { slot.read = { pot: read.pot, potV: read.potV != null ? Math.round(read.potV) : null, lvl: read.lvl, gem: read.sleeper, flag: read.flag }; tagDraftee(league, p, read); }
+  // What your scouts believed (ceiling, how sure, the development trait they saw), for the pick card
+  // and Your class: the truth comes out over two seasons (revealDraftees).
+  if (read) { slot.read = { pot: read.pot, potV: read.potV != null ? Math.round(read.potV) : null, sd: read.sd != null && Number.isFinite(read.sd) ? Math.round(read.sd * 10) / 10 : null, exact: !!read.exact, lvl: read.lvl, gem: read.sleeper, flag: read.flag, dev: read.dev || null, tier: read.tier || null }; tagDraftee(league, p, read); }
   const team = league.teams[slot.owner];
   team.prospects.push(pid);
   league.draftPicks = league.draftPicks.filter((pk) => !(pk.year === d.year && pk.round === slot.round && pk.orig === slot.orig));
@@ -291,14 +293,17 @@ export function currentSlot(league) {
   return league.draft?.slots[league.draft.idx] || null;
 }
 
-// AI picks until it's the user's turn (or the draft ends).
+// AI picks until it's the user's turn (or the draft ends). With `all`, your picks too (scoutsPick).
 export function simDraftToUser(league, { all = false } = {}) {
   openDraftFloor(league);
   while (!draftDone(league)) {
     const slot = currentSlot(league);
     if (!all && slot.owner === league.userTid) return;
-    const listed = slot.owner === league.userTid ? (league.myList?.ids || []).find((id) => league.players[id]?.tid === -2) : null;
-    if (!makePick(league, listed || aiChoose(league, slot.owner))) throw new Error("Draft class exhausted before all picks were made.");
+    // Your picks: the one rule for picks made for you (Your list, then your scouts' board).
+    const mine = slot.owner === league.userTid ? scoutsPick(league) : null;
+    const how = mine ? pickSource(league, mine) : null;
+    if (!makePick(league, mine || aiChoose(league, slot.owner))) throw new Error("Draft class exhausted before all picks were made.");
+    if (how) slot.how = how;
   }
 }
 

@@ -13,7 +13,7 @@
 // so the pick and the draft slot always move together.
 import { stream } from "./rng.js";
 import { makePick, aiChoose, currentSlot, draftDone, simDraftToUser } from "./draft.js";
-import { csRank, myList } from "./scouting.js";
+import { csRank, scoutsPick, pickSource } from "./scouting.js";
 import { evaluateTrade, executeTrade } from "./trade.js";
 import { pickLocked } from "./draftExpansion.js";
 import { teamNeeds } from "./teamPlanning.js";
@@ -71,19 +71,28 @@ export function setDraftPaused(league, paused) {
   return !!c?.paused;
 }
 
-// When your clock runs out: the first player still on Your list, then Central Scouting's best.
+// When your clock runs out: the top name left on Your list, then your scouts' board (the one rule
+// for every pick made for you, scouting.scoutsPick).
 export function autoPickId(league) {
-  const listed = (myList(league).ids || []).find((id) => league.players[id]?.tid === -2);
-  if (listed) return listed;
-  const pool = (league.draftClass || []).map((id) => league.players[id]).filter((p) => p?.tid === -2);
-  return pool.sort((a, b) => csRank(a) - csRank(b))[0]?.id || null;
+  return scoutsPick(league);
+}
+
+// Scouts pick the rest: every pick left, yours made from Your list then your scouts' board.
+export function scoutsPickRest(league) {
+  if (!draftLive(league)) return 0;
+  const before = league.draft.idx;
+  simDraftToUser(league, { all: true });
+  stampDraftTruth(league);
+  return league.draft.idx - before;
 }
 
 // Make the pick on the clock. Your own picks walk up on stage (the draft-night moment).
 // Returns { slot, pid, how } or null.
 export function pickNow(league, pid, how = "pick") {
   const s = currentSlot(league);
+  const src = s && s.owner === league.userTid ? (how === "user" ? "user" : pickSource(league, pid)) : null;
   if (!s || !pid || !makePick(league, pid)) return null;
+  if (src) s.how = src;
   stampDraftTruth(league);
   if (s.owner === league.userTid) queueStageMoment(league, s);
   if (!draftDone(league)) draftClock(league);

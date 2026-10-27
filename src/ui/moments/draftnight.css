@@ -21,6 +21,8 @@
 .dn-meta { position: relative; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: 14px; color: #e2e8f0; }
 .dn-body { padding: 14px 20px 18px; }
 .dn-dev { text-align: center; padding: 10px; border-radius: 12px; border: 2px solid var(--dn-bg); background: color-mix(in srgb, var(--dn-fg) 9%, transparent); animation: dnFlip .5s .35s ease-out both; }
+.dn-dev.unknown { --dn-fg: #94a3b8; --dn-bg: #ffffff1a; }
+.dn-dev.unknown .dn-dev-v { font-size: 21px; }
 .dn-dev-k { font-size: 12px; font-weight: 900; letter-spacing: 2px; color: #64748b; }
 .dn-dev-v { font-size: 27px; font-weight: 900; color: var(--dn-fg); margin: 2px 0; }
 .dn-dev-d { font-size: 13.5px; color: #cbd5e1; }
