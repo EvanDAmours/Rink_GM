@@ -751,7 +751,8 @@ export default function App({ resume = false }) {
   ];
   const deskPills = [
     tradeDeadlineOpen && (deadlinePending(league) || deadlineActive(league)) && <button key="dl" className="rk-pill red" onClick={() => go("deadline")}>Trade Deadline</button>,
-    (league.phase === "freeagency" || league.phase === "resign") && <button key="fa" className="rk-pill blue" onClick={() => go("freeagency")}>{league.phase === "resign" ? "Re-sign" : "Free Agency"}</button>,
+    // re-sign week needs no pill: the Contracts section carries OPEN and opens on Re-sign
+    league.phase === "freeagency" && <button key="fa" className="rk-pill blue" onClick={() => go("freeagency")}>Free Agency</button>,
   ].filter(Boolean);
   const deskBar = (
     <DeskBar league={league} user={user} sections={sections} cur={live ? null : where?.section.id || null}

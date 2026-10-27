@@ -18,7 +18,7 @@ import { userOffers } from "../engine/market.js";
 import { capOverview } from "../engine/capOverview.js";
 import { gmCareer } from "../engine/legacy.js";
 import { myOffers } from "../engine/negotiations.js";
-import { keyContracts } from "../engine/home.js";
+import { keyContracts, signedForNextSeason } from "../engine/home.js";
 import { expiringPlayers } from "../engine/offseason.js";
 
 const ord = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
@@ -104,7 +104,7 @@ function statsFor(id, key, league, user) {
     const keys = safe(() => keyContracts(league, user), []) || [];
     if (league.phase === "resign") {
       const left = safe(() => expiringPlayers(league, user).filter((p) => p.yrs === 0).length, 0);
-      return [capStat(cap), ["To decide", String(left), left ? "warn" : "good"], ["Key players", String(keys.length), keys.length ? "warn" : undefined], ["Signed", `${c.active}/23`]];
+      return [capStat(cap), ["To decide", String(left), left ? "warn" : "good"], ["Key players", String(keys.length), keys.length ? "warn" : undefined], ["Signed", `${safe(() => signedForNextSeason(league, user), c.active)}/23`]];
     }
     const nextRoom = ov.next?.room;
     return [capStat(cap), ["Expiring", String(ov.expiring)], ["Key deals", keys.length ? `${keys.length} due` : "None", keys.length ? "warn" : undefined], nextRoom != null && ["Next season", nextRoom >= 0 ? money(nextRoom) : `−${money(-nextRoom)}`, nextRoom >= 0 ? "good" : "bad"]].filter(Boolean);
