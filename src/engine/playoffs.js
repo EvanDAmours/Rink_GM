@@ -103,14 +103,16 @@ export function seriesPaper(league, s) {
   const cs = s.round === 3 ? connSmythe(league, w.id) : null;
   const csP = cs && league.players[cs.pid];
   const headline = cup ? cupHeadline(w, cup, { sweep, seven, ot: !!last?.ot }) : sweep ? `${w.name.toUpperCase()} SWEEP ${l.name.toUpperCase()}` : seven ? `${w.name.toUpperCase()} SURVIVE GAME SEVEN` : `${w.name.toUpperCase()} OUST ${l.name.toUpperCase()}`;
-  const sub = `${w.city} takes the ${round} ${wins}-${losses}${ot}${mvp ? `, as ${mvp.name} is named series MVP` : ""}`;
+  // In the Final the Conn Smythe winner IS the story: headline, photo and story all name him.
+  const star = csP || mvp;
+  const sub = `${w.city} takes the ${round} ${wins}-${losses}${ot}${csP ? `, as ${csP.name} wins the Conn Smythe` : mvp ? `, as ${mvp.name} is named series MVP` : ""}`;
   const story = [
     `${w.city.toUpperCase()} — The ${w.name} ${s.round === 3 ? "are Stanley Cup champions" : `are moving on`}. In front of a ${last && last.h === w.id ? "roaring home crowd" : "silenced building on the road"}, ${w.city} closed out the ${l.city} ${l.name} ${last ? `${Math.max(last.hs, last.as)}-${Math.min(last.hs, last.as)}` : ""}${ot} to take the series ${wins} games to ${losses}.`,
-    mvp ? `${mvp.name}, the ${({C:'centre',LW:'left winger',RW:'right winger',LD:'defenceman',RD:'defenceman',G:'goaltender'})[mvp.pos] || mvp.pos}, ${isGoalieLike(mvp) ? `was the wall in goal, ${mvp.pstats?.w || wins} wins this spring` : `finished the series as the club's engine with ${mvp.pstats?.g || 0} goals and ${mvp.pstats?.a || 0} assists in the playoffs so far`}.` : "",
-    cs ? `${String(cs.pid) === String(mvp?.id) ? "He" : cs.name} was voted the Conn Smythe Trophy winner as the most valuable player of the playoffs (${cs.why.replace(/ in the playoffs$/, "")}).` : "",
+    star ? `${star.name}, the ${({C:'centre',LW:'left winger',RW:'right winger',LD:'defenceman',RD:'defenceman',G:'goaltender'})[star.pos] || star.pos}, ${isGoalieLike(star) ? `was the wall in goal, ${star.pstats?.w || wins} wins this spring` : `finished the series as the club's engine with ${star.pstats?.g || 0} goals and ${star.pstats?.a || 0} assists in the playoffs so far`}.` : "",
+    cs ? `${String(cs.pid) === String(star?.id) ? "He" : cs.name} was voted the Conn Smythe Trophy winner as the most valuable player of the playoffs (${cs.why.replace(/ in the playoffs$/, "")}).` : "",
     cup ? `${cup.what} The parade is set for Tuesday.` : `Next up: the ${["Second Round", "Conference Final", "Stanley Cup Final"][s.round]}.`,
   ].filter(Boolean);
-  (league.playoffs.papers ||= []).push({ id: `${league.year}:${s.round}:${s.top}:${s.bot}`, year: league.year, round: s.round, winner: w.id, loser: l.id, wins, losses, headline, sub, story, mvp: mvp ? { pid: mvp.id, name: mvp.name, pos: mvp.pos } : null, ...(cs ? { connSmythe: { pid: cs.pid, name: cs.name, pos: csP?.pos || null, why: cs.why } } : {}), ...(cup ? { titles: cup.titles } : {}), games: s.games.map((g) => ({ h: g.h, a: g.a, hs: g.hs, as: g.as, ot: g.ot })), seen: false });
+  (league.playoffs.papers ||= []).push({ id: `${league.year}:${s.round}:${s.top}:${s.bot}`, year: league.year, round: s.round, winner: w.id, loser: l.id, wins, losses, headline, sub, story, mvp: star ? { pid: star.id, name: star.name, pos: star.pos } : null, ...(cs ? { connSmythe: { pid: cs.pid, name: cs.name, pos: csP?.pos || null, why: cs.why } } : {}), ...(cup ? { titles: cup.titles } : {}), games: s.games.map((g) => ({ h: g.h, a: g.a, hs: g.hs, as: g.as, ot: g.ot })), seen: false });
 }
 const isGoalieLike = (p) => p.pos === "G";
 

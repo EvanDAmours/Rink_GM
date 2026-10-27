@@ -1649,3 +1649,6 @@ body, .app { background: #141820 !important; font-size: 14px; }
 .rk-look-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #ffffff10; }
 .rk-look-row > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 @media (max-width: 760px) { .rk-look-row { flex-direction: column; align-items: flex-start; } }
+/* Papers never run off the side: long headlines wrap and shrink (v1.86). */
+.app .gg-paper { max-width: calc(100vw - 24px); overflow: hidden; box-sizing: border-box; }
+.app .gg-paper .gg-paper-h1 { white-space: normal; overflow-wrap: break-word; font-size: clamp(26px, 4vw, 42px); }
