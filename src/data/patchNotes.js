@@ -455,4 +455,8 @@ export const PATCH_NOTES = [
   { v: "1.85", date: "2026-10-26", title: "Where They Were Drafted", notes: [
     "Every NHL player now shows where he was really drafted: year, round, pick and club (Connor McDavid: 2015, first overall, Edmonton). Undrafted players like Artemi Panarin say so. Existing saves are filled in automatically.",
   ] },
+  { v: "1.86", date: "2026-10-27", title: "One MVP on the Front Page", notes: [
+    "The Stanley Cup Final front page now names one MVP: the Conn Smythe winner leads the subhead, the story and the photo (it used to name a different \"series MVP\" in the subhead).",
+    "Long Gazette headlines wrap instead of running off the page.",
+  ] },
 ];
