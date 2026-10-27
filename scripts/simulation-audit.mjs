@@ -51,7 +51,16 @@ results.push(series('Elite first-line scorer vs 82-rated linemates',star,id));
 // Real roster matchup, fixed rosters and no accumulating injuries or development.
 const real=createLeague({userAbbr:'TBL',seed:34027,injuries:false});
 results.push(series('Published TBL vs PIT roster',real,null,[real.teams.find(t=>t.abbr==='TBL'),real.teams.find(t=>t.abbr==='PIT')]));
-const checks=qualityChecks(results);
+// Home ice: the same equal clubs, alternating who hosts; counts home-side wins (NHL 2015-25 ~54-55%).
+function homeIce(name,lg,[a,b]=lg.teams.slice(0,2)){
+ let hw=0,hg=0,ag=0;
+ for(let i=0;i<count;i++){seed(733001+i*7919);const s=createGame(lg,i%2?b:a,i%2?a:b);simToEnd(s);hw+=s.winner==='h';hg+=s.score.h;ag+=s.score.a;}
+ const out={name,games:count,homeWinRate:+(hw/count).toFixed(4),homeGoals:+(hg/count).toFixed(3),awayGoals:+(ag/count).toFixed(3)};
+ console.log(JSON.stringify(out));return out;
+}
+const home=homeIce('Home ice, equal 82-rated clubs',setup());
+results.push(home);
+const checks={...qualityChecks(results),homeIce:home.homeWinRate>.51&&home.homeWinRate<.60&&home.homeGoals>home.awayGoals};
 const report={seedSeries:'910007 + i * 7919',date:new Date().toISOString(),games:results.length*count,perScenario:count,qualityMethod,results,checks};
 if(process.argv[2])writeFileSync(process.argv[2],JSON.stringify(report,null,2)+'\n');
 console.log('Checks',checks);if(Object.values(checks).some(x=>!x))process.exitCode=1;

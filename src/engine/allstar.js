@@ -71,7 +71,7 @@ export function allStarWeekend(lg) {
       copy.teams.push(t); autoLines(copy, t);
     });
     const play = (i, j, label) => {
-      const s = createGame(copy, copy.teams[i], copy.teams[j], { exhibition: true, threeOnThree: true }); simToEnd(s);
+      const s = createGame(copy, copy.teams[i], copy.teams[j], { exhibition: true, threeOnThree: true, neutral: true }); simToEnd(s);
       const stars = Object.entries(s.box || {}).map(([pid, b]) => ({ pid, pts: (b.g || 0) * 1.5 + (b.a || 0) })).sort((a, b) => b.pts - a.pts);
       return { label, h: copy.teams[i].city, a: copy.teams[j].city, hs: s.score.h, as: s.score.a, winner: s.score.h > s.score.a ? i : j, top: stars[0] };
     };

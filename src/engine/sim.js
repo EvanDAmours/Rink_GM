@@ -23,6 +23,23 @@ const STEP = 10, PERIOD = 1200, REG_OT = 300;
 // Default even-strength rotation; a club's own shares (Lines sliders, identity) come from
 // situations.js iceShares and live on side.shares.
 const F_SHARE = [.32, .28, .23, .17], D_SHARE = [.39, .34, .27];
+// Playoff shortened bench: the top lines and pairs play more for every club alike. The tilt is the
+// playoff rotation over the regular-season default, applied to whatever a club's own rotation is
+// (identity or the Lines sliders), then renormalised: a balanced club plays exactly PLAYOFF_SHARE,
+// and a GM's custom shares keep their shape relative to each other, only shifted toward the top.
+export const PLAYOFF_SHARE = Object.freeze({F: [.35, .30, .22, .13], D: [.42, .35, .23]});
+export function playoffShares(shares, group) {
+  const base = group === 'F' ? F_SHARE : D_SHARE, po = PLAYOFF_SHARE[group];
+  const w = shares.map((v, i) => Math.max(0, v) * po[i] / base[i]), t = w.reduce((a, b) => a + b, 0) || 1;
+  return w.map(v => v / t);
+}
+// Home ice (every club alike, regular season and playoffs; off at neutral sites). Besides the
+// last change, the home side gets slightly better looks (shot-quality log-odds), slightly cleaner
+// zone entries, and a few fewer penalties called against it (and a few more against the visitors),
+// each split evenly around zero so league scoring and calls stay put. Calibrated to the NHL's
+// ~54-55% home win rate (2015-25 regular seasons); see scripts/simulation-audit.mjs.
+export const HOME = Object.freeze({quality: .03, entry: .01, calls: .06});
+const homeSign = (s, k) => s.neutral ? 0 : k === 'h' ? 1 : -1;
 // How a club's league-relative edge (matchup.js, in rating points) moves play:
 // tempo while in possession, zone-entry and cycle execution, and shot quality.
 // starWeight lets the best player on the ice pull a unit's offence toward him.
@@ -123,11 +140,11 @@ function makeSide(league, team, opts) {
     lines, dressed, form, star, eliteAt: bar, anchor, unavailable:team.roster.filter(id=>league.players[id]?.injury>0||league.players[id]?.ltir), pl, comp, fatigue, goalie, starter: goalie, backup: goalie === lines.G[0] ? backup : lines.G[0],
     pulled: false, autoPull: true, ride: false, timeout: false, boost: 0,
     fIdx: 0, dIdx: 0, fShift: 0, dShift: 0, fToi: [0, 0, 0, 0], dToi: [0, 0, 0],
-    fShiftLength: 45, dShiftLength: 55, pulledReason: null, ...linesSetup(league, team, lines, comp, pl)};
+    fShiftLength: 45, dShiftLength: 55, pulledReason: null, ...linesSetup(league, team, lines, comp, pl, opts)};
 }
 
 export function createGame(league, home, away, opts = {}) {
-  const s = {playoff: !!opts.playoff, exhibition: !!opts.exhibition, threeOnThree: !!opts.threeOnThree,
+  const s = {playoff: !!opts.playoff, exhibition: !!opts.exhibition, threeOnThree: !!opts.threeOnThree, neutral: !!opts.neutral,
     live: !!opts.live, userSide: opts.userTid === home.id ? 'h' : opts.userTid === away.id ? 'a' : null,
     year: league.year, day: league.day,
     h: makeSide(league, home, opts), a: makeSide(league, away, opts),
@@ -372,8 +389,9 @@ function hockeyEvent(s, ice, R) {
   const manEdge = R[k].n - R[o].n;
   const carrierSkill = att.comp[s.carrier] || R[k];
   const discipline = (R.h.dsc + R.a.dsc) / 2;
-  if (!s.delayedPenalty && chance(.0155 * (100 - discipline) / 22)) {
-    const penalized = chance(.72) ? o : k;
+  const callFor = chance(.72) ? o : k;
+  if (!s.delayedPenalty && chance(.0155 * (100 - discipline) / 22 * (1 - homeSign(s, callFor) * HOME.calls))) {
+    const penalized = callFor;
     const ids = ice[penalized].filter(id => !s.pen[penalized].some(p => p.pid === id));
     const pid = weighted(ids, id => Math.max(1, 100 - s[penalized].comp[id].dsc) + s[penalized].comp[id].agr * .12);
     if (pid) {
@@ -428,7 +446,7 @@ function hockeyEvent(s, ice, R) {
     const controlled = chance(carry);
     decision(s, k, controlled ? 'controlled-entry' : 'dump-and-chase');
     const success = (controlled ? .69 + (entryControl + carrierSkill.skate * .5 + R[k].skate * .5 - R[o].def * 2) * EDGE.execution
-      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * EDGE.execution) + manEdge * .06 + (att.edge || 0) * EDGE.entry + posture + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0);
+      : .48 + (R[k].phys + R[k].skate - R[o].phys - R[o].def) * EDGE.execution) + manEdge * .06 + (att.edge || 0) * EDGE.entry + posture + (att.plan?.forecheck === 'aggressive' && !controlled ? .06 : 0) - (def.plan?.neutral === 'trap' && controlled ? .035 : 0) + homeSign(s, k) * HOME.entry;
     s.zone = 1; s.puck = {x: zoneX(s, k, controlled ? 58 : 82), y: randFloat(12, 73)};
     if (chance(clamp(success, .25, .9))) {
       s.rush = controlled; s.lateral = false;
@@ -470,7 +488,7 @@ function hockeyEvent(s, ice, R) {
 // natural slots cost nothing, so the staff's usual lineups play as before.
 const F_SLOTS = ['LW', 'C', 'RW'], D_SLOTS = ['LD', 'RD'];
 const SLOT_WEIGHT = .6;
-function linesSetup(league, team, lines, comp, pl) {
+function linesSetup(league, team, lines, comp, pl, opts = {}) {
   const fit = (id, slot) => {
     const c = comp[id], f = pl[id] ? slotFit(pl[id], slot) : 0;
     if (!c || !f || !('off' in c)) return;
@@ -479,7 +497,9 @@ function linesSetup(league, team, lines, comp, pl) {
   lines.F.forEach(row => row.forEach((id, j) => id && fit(id, F_SLOTS[j])));
   lines.D.forEach(row => row.forEach((id, j) => id && fit(id, D_SLOTS[j])));
   const dressed = [...lines.F.flat(), ...lines.D.flat()].filter(Boolean);
-  return {shares: {F: shareFractions(team, 'F'), D: shareFractions(team, 'D')}, units: gameUnits(league, team, dressed),
+  const own = {F: shareFractions(team, 'F'), D: shareFractions(team, 'D')};
+  const shares = opts.playoff ? {F: playoffShares(own.F, 'F'), D: playoffShares(own.D, 'D')} : own;
+  return {shares, units: gameUnits(league, team, dressed),
     matchIdx: matchLine(team), unitOn: null, dzUntil: -1};
 }
 // Line matching: when the other club's top line is out, a matching coach favours his checking
@@ -607,7 +627,7 @@ function shotAttempt(s, k, ice, R, rebound = false) {
   const goalieSkill = (def.comp[def.goalie]?.goalie ?? 70) * .7 + (goalie?.attrs[saveKey] ?? 70) * .3 + (def.coaching?.goalie || 0) + (def.anchor?.goalie || 0);
   // Shot quality also follows the units on the ice: a star-driven unit against a
   // weak defending unit creates better looks than its shot location alone says.
-  const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0);
+  const quality = (att.edge || 0) * EDGE.quality + (R[k].off - R[o].def - EDGE.unitNorm) * EDGE.unitQuality + (def.tactic === 'defend' ? -.06 : def.tactic === 'attack' ? .04 : 0) + homeSign(s, k) * HOME.quality;
   const xg = expectedGoal({...geometry, finishing: finishCurve((skill.finishing + (att.form?.[shooter] || 0) + anchorLift(att.anchor?.skater || 0, skill.finishing) * ANCHOR.finish) * efficiency), goalie: goalieSkill, quality,
     rebound, rush: s.rush, lateral: s.lateral, screen: type === 'tip-in', advantage, openIce: isOpenIce(s)});
   s.xg[k] += xg; attempt.chance = Math.round(xg*1000)/1000; attempt.result = 'save';

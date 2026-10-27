@@ -32,7 +32,7 @@ export function playShowcase(lg,kind){
     });
     const results=[],table=countries.map((country,tid)=>({country,tid,w:0,gf:0,ga:0}));
     for(let i=0;i<countries.length;i++)for(let j=i+1;j<countries.length;j++){
-      const s=createGame(copy,copy.teams[i],copy.teams[j],{exhibition:true,threeOnThree:!junior});simToEnd(s);
+      const s=createGame(copy,copy.teams[i],copy.teams[j],{exhibition:true,threeOnThree:!junior,neutral:true});simToEnd(s);
       results.push({h:countries[i],a:countries[j],hs:s.score.h,as:s.score.a});table[i].gf+=s.score.h;table[i].ga+=s.score.a;table[j].gf+=s.score.a;table[j].ga+=s.score.h;table[s.score.h>s.score.a?i:j].w++;
     }
     table.sort((a,b)=>b.w-a.w || (b.gf-b.ga)-(a.gf-a.ga));

@@ -88,8 +88,11 @@ export function defaultStyle(league, team) {
 
 // Pre-game win probability from the two clubs' strength (offence, defence and
 // goaltending) plus home ice. Used by previews and odds; never by the simulator.
+// HOME_EDGE is the log-odds the simulator's home ice is actually worth (sim.js HOME: last change,
+// shot quality, zone entries, calls), measured over seeded seasons: home clubs win ~54.6%.
+export const HOME_EDGE = .19;
 export function winProbability(league, team, opponent, { home = true } = {}) {
   const a = teamStrength(league, team), b = teamStrength(league, opponent);
   const net = (a.off - b.off) + (a.def - b.def) + (a.goalie - b.goalie) * .6;
-  return clamp(1 / (1 + Math.exp(-(net * .11 + (home ? .09 : -.09)))), .12, .88);
+  return clamp(1 / (1 + Math.exp(-(net * .11 + (home ? HOME_EDGE : -HOME_EDGE)))), .12, .88);
 }
