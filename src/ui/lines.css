@@ -148,7 +148,7 @@
 /* ======================================================================================
    Lineup (v2): plain title, strength and Auto-set menus, forwards grid, pairs, coach panel.
    ====================================================================================== */
-.app.app .lx2 { gap: 0; padding: 10px 14px 40px; }
+.app.app .lx2 { gap: 0; padding: 4px 14px 12px; }
 .app.app .lx2 .lx-num, .app.app .lnx .lx-ovr, .app.app .lnx .lx-o, .app.app .lnx .lx-cm b, .app.app .lnx .lx-ba-h span, .app.app .lnx .lx-pj b, .app.app .lnx .lx-pk-v {
   font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-variant-numeric: tabular-nums; }
 
@@ -159,7 +159,7 @@
 .app.app .lnx .lx-sectabs button:hover:not(.on) { color: #e2e8f0; background: #ffffff0a; }
 
 /* page head */
-.app.app .lnx .lx-ph { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+.app.app .lnx .lx-ph { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
 .app.app .lnx .lx-ph h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: #f1f5f9; text-transform: none; font-family: inherit; line-height: 1.15; }
 .app.app .lnx .lx-s2 { color: #94a3b8; font-weight: 600; margin-top: 4px; font-size: 14px; }
 .app.app .lnx .lx-ph-r { margin-left: auto; display: flex; gap: 10px; align-items: center; }
@@ -222,8 +222,8 @@
 .app.app .lnx button.lx-cm { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; border: 0; padding: 0; min-height: 0; color: inherit; cursor: help; }
 .app.app .lnx .lx-meter { flex: 1; display: block; height: 6px; border-radius: 99px; background: #ffffff14; overflow: hidden; min-width: 40px; }
 .app.app .lnx .lx-meter i { display: block; height: 100%; border-radius: 99px; }
-.app.app .lnx .lx-cm b { font-size: 18px; min-width: 22px; text-align: right; }
-.app.app .lnx .lx-cm em { font-style: normal; font-size: 12.5px; font-weight: 700; width: 34px; }
+.app.app .lnx .lx-cm b { flex: none; font-size: 18px; min-width: 3ch; text-align: right; line-height: 1; }
+.app.app .lnx .lx-cm em { flex: none; font-style: normal; font-size: 12.5px; font-weight: 700; min-width: 36px; white-space: nowrap; }
 .app.app .lnx .lx-why { display: none; position: absolute; left: 0; top: calc(100% + 8px); z-index: 30; width: 280px; max-width: 80vw; background: #111827; border: 1px solid #ffffff17; border-radius: 12px; padding: 10px 12px; box-shadow: 0 14px 30px #0008; flex-direction: column; gap: 4px; font-size: 12.5px; color: #cbd5e1; line-height: 1.4; }
 .app.app .lnx .lx-why > b { font-size: 13px; color: #f1f5f9; }
 .app.app .lnx .lx-why i { font-style: normal; font-weight: 800; }
@@ -327,6 +327,103 @@
 .app.app .lnx label.lx-role small { font-size: 11px; font-weight: 800; color: #64748b; }
 .app.app .lnx.lx-settings .lx-card { background: #ffffff09; border: 0; border-radius: 14px; padding: 12px 14px; }
 
+
+
+/* ---- Bench tiles (scratched, injured, not on a unit): compact cells with a slot hint (r17) ---- */
+.app.app .lnx .lx-out.lx-tiles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.2; }
+.app.app .lnx .lx-tl { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #64748b; margin: 0 2px 0 4px; }
+.app.app .lnx .lx-tl ~ .lx-tl { margin-left: 10px; }
+.app.app .lnx button.lx-xt { display: flex; align-items: center; gap: 6px; width: 144px; height: 40px; min-height: 40px; padding: 3px 9px 3px 4px; background: #ffffff09; border: 0; border-radius: 10px; color: #f1f5f9; text-align: left; cursor: pointer; }
+.app.app .lnx button.lx-xt:hover { background: #ffffff12; }
+.app.app .lnx button.lx-xt .lx-num { min-width: 18px; font-size: 11px; }
+.app.app .lnx .lx-xt-n { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.app.app .lnx .lx-xt-n b { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .lnx .lx-xt-n small { font-size: 10.5px; font-weight: 600; color: #86efac; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app.app .lnx .lx-xt-n small.dim { color: #94a3b8; }
+.app.app .lnx button.lx-xt .lx-ovr { font-size: 17px; min-width: 0; }
+.app.app .lnx button.lx-xt.inj { opacity: .8; } .app.app .lnx button.lx-xt.inj .lx-xt-n small { color: #fca5a5; }
+.app.app .lnx button.lx-xt.hl { background: #16a34a1f; box-shadow: inset 0 0 0 2px #22c55e; }
+.app.app .lnx button.lx-xt.sel { background: #3b82f624; box-shadow: inset 0 0 0 2px #60a5fa; }
+.app.app .lnx button.lx-xt.target { box-shadow: inset 0 0 0 1px #60a5fa66; }
+
+/* ---- Special-teams unit: forwards on top, defence centred under them (r17) ---- */
+.app.app .lnx .lx-stu { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.app.app .lnx .lx-str { display: grid; grid-template-columns: repeat(var(--n), var(--cw, 170px)); gap: 6px; }
+.app.app .lnx .lx-stslot { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.app.app .lnx .lx-stslot .lx-lab { display: block; width: auto; font-size: 10.5px; line-height: 13px; letter-spacing: .06em; }
+
+/* ---- Coach summary callout when closed (r17): calm tint, accent edge, a dot, a visible button ---- */
+.app.app .lnx .lx-coach.lx-call { border: 1px solid var(--cc-b); background: var(--cc-bg); }
+.app.app .lnx .lx-coach.lx-call.green { --cc: #22c55e; --cc-b: #22c55e47; --cc-bg: linear-gradient(180deg, #22c55e14, #22c55e08); }
+.app.app .lnx .lx-coach.lx-call.amber { --cc: #f59e0b; --cc-b: #f59e0b4d; --cc-bg: linear-gradient(180deg, #f59e0b17, #f59e0b08); }
+.app.app .lnx .lx-ctog-i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--cc, #64748b); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cc, #64748b) 22%, transparent); align-self: center; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-t > span:first-child { color: #f1f5f9; font-weight: 800; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-t .lx-gap { color: #cbd5e1; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-a { background: #ffffff14; color: #f1f5f9; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.app.app.app .lnx .lx-coach.lx-call button.lx-ctog:hover .lx-ctog-a { background: #ffffff21; }
+.app.app.app .lnx .lx-coach.lx-call button.lx-ctog:hover { background: transparent; }
+
+/* ---- Desktop board (r17): the whole lineup on one screen, no scrolling.
+   Forwards | Defence | coach; goalies and scratches in a strip below. Cells are sized to their
+   content (number, surname, rating) instead of stretching across the page. ---- */
+@media (min-width: 761px) {
+  .app.app .lnx .lx-board { --cw: clamp(150px, 12.4vw, 178px); display: flex; gap: 14px; align-items: flex-start; }
+  .app.app .lnx .lx-lines { flex: none; display: grid; grid-template-columns: max-content max-content; grid-template-areas: "f d" "s s"; gap: 12px 14px; align-items: start; min-width: 0; }
+  .app.app .lnx .lx-lines > .lx-fwd, .app.app .lnx .lx-lines > .lx-stv, .app.app .lnx .lx-lines > .lx-gc:not(.lx-def) { grid-area: f; }
+  .app.app .lnx .lx-lines > .lx-def { grid-area: d; }
+  .app.app .lnx .lx-board.t-pp .lx-lines, .app.app .lnx .lx-board.t-pk .lx-lines { flex: 1 1 auto; grid-template-columns: minmax(0, 1fr); grid-template-areas: "f" "s"; }
+  .app.app .lnx .lx-board .lx-lines > .lx-stv { justify-self: start; }
+  .app.app .lnx .lx-board.t-pk .lx-stv .lx-prs { grid-template-columns: repeat(2, max-content); column-gap: 28px; }
+  .app.app .lnx .lx-board.t-sit .lx-lines { flex: 1 1 auto; grid-template-columns: minmax(0, 900px); grid-template-areas: "f"; }
+  .app.app .lnx .lx-lines > .lx-strip { grid-area: s; display: flex; gap: 14px; align-items: stretch; width: 0; min-width: 100%; }
+  .app.app .lnx .lx-board > .lx-rcol { flex: 1 1 250px; display: grid; gap: 12px; align-content: start; min-width: 250px; }
+  .app.app .lnx .lx-board .lx-gc { padding: 12px 14px 14px; border-radius: 16px; }
+  .app.app .lnx .lx-board h2.lx-gh { font-size: 16px; margin: 0 2px 2px; line-height: 1.25; }
+  .app.app .lnx .lx-colh { display: grid; gap: 6px; grid-template-columns: repeat(2, var(--cw)); margin: 0 0 2px; }
+  .app.app .lnx .lx-colh.n3 { grid-template-columns: repeat(3, var(--cw)); }
+  .app.app .lnx .lx-colh span { color: #64748b; font-weight: 800; font-size: 11px; letter-spacing: .06em; text-align: center; line-height: 14px; }
+  .app.app .lnx .lx-board .lx-prs { gap: 8px; }
+  .app.app .lnx .lx-board .lx-pr .lx-prh { margin: 0 2px 3px; gap: 7px; height: 20px; }
+  .app.app .lnx .lx-board .lx-prh > b { font-size: 13.5px; }
+  .app.app .lnx .lx-board .lx-o { font-size: 16px; }
+  .app.app .lnx .lx-board .lx-m { font-size: 12px; }
+  .app.app .lnx .lx-board .lx-prm { width: auto; flex: 1 1 auto; min-width: 104px; max-width: 220px; }
+  .app.app .lnx .lx-board .lx-cm b { font-size: 16px; }
+  .app.app .lnx .lx-board .lx-cm { gap: 6px; }
+  .app.app .lnx .lx-board .lx-prc { grid-template-columns: repeat(2, var(--cw)); gap: 6px; }
+  .app.app .lnx .lx-board .lx-prc.n3 { grid-template-columns: repeat(3, var(--cw)); }
+  .app.app .lnx .lx-board .lx-side .lx-lab { display: none; }
+  .app.app .lnx .lx-board .lx-side { display: block; }
+  .app.app .lnx .lx-board button.lx-c { height: 44px; min-height: 44px; padding: 4px 10px 4px 4px; gap: 6px; border-radius: 11px; }
+  .app.app .lnx .lx-board .lx-nm > b { font-size: 14px; }
+  .app.app .lnx .lx-board .lx-ovr, .app.app .lnx .lx-board .lx-pj b { font-size: 19px; }
+  .app.app .lnx .lx-board .lx-inj { font-size: 10.5px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app.app .lnx .lx-board .lx-stv .lx-prs { gap: 10px; }
+  /* the strip: goalies (header beside the two cells), then scratched and injured */
+  .app.app .lnx .lx-strip .lx-gkc { flex: none; padding: 10px 14px; display: flex; align-items: center; }
+  .app.app .lnx .lx-strip .lx-gk { display: flex; align-items: center; gap: 14px; }
+  .app.app .lnx .lx-strip .lx-gk .lx-prh { flex-direction: column; align-items: flex-start; gap: 0; height: auto; margin: 0; }
+  .app.app .lnx .lx-strip .lx-gk .lx-prh > b { font-size: 15px; }
+  .app.app .lnx .lx-strip .lx-gk .lx-m { font-size: 11.5px; white-space: nowrap; }
+  .app.app .lnx .lx-strip .lx-outc { flex: 1 1 0; min-width: 0; padding: 10px 16px; display: flex; align-items: center; }
+  .app.app .lnx .lx-strip .lx-out { padding: 0; }
+  .app.app .lnx .lx-strip .lx-outc { padding: 6px 10px 8px; }
+  .app.app .lnx .lx-strip .lx-tl { flex-basis: 100%; margin: 0 2px; line-height: 14px; }
+  .app.app .lnx .lx-strip .lx-gk .lx-prc { grid-template-columns: repeat(2, 150px); }
+  .app.app .lnx .lx-strip .lx-gk .lx-m { white-space: normal; max-width: 112px; line-height: 1.3; }
+  .app.app .lnx .lx-strip .lx-gk { gap: 10px; }
+  .app.app .lnx .lx-strip button.lx-xt { flex: 1 1 116px; min-width: 116px; max-width: 150px; }
+  .app.app .lnx .lx-board .lx-coach.lx-closed .lx-ctog, .app.app .lnx .lx-board button.lx-ctog { padding: 12px 16px; }
+  .app.app .lnx .lx-board .lx-coach.lx-closed.set { padding: 12px 16px; }
+  .app.app .lnx .lx-board .lx-ctog-t { font-size: 13.5px; }
+  .app.app .lnx .lx-board .lx-coach:not(.lx-closed) { padding: 16px 16px 14px; }
+  .app.app.app.app .lnx .lx-board .lx-coach h3 { font-size: 20px; }
+  .app.app .lnx .lx-board .lx-coach p { margin-bottom: 10px; font-size: 13px; line-height: 1.45; }
+  .app.app .lnx .lx-board .lx-acts { margin: 10px 0 4px; }
+  .app.app .lnx .lx-board .lx-more { margin-top: 10px; padding-top: 8px; }
+  .app.app .lnx .lx-board button.lx-idea { padding: 6px 0; }
+}
+
 /* phone */
 @media (max-width: 760px) {
   .app.app .lx2 { padding: 4px 2px 24px; }
@@ -336,16 +433,27 @@
   .app.app .lnx .lx-ph-r { margin-left: 0; width: 100%; }
   .app.app .lnx .lx-ph-r > .lx-menu, .app.app .lnx .lx-ph-r > .lx-btn { flex: 1; }
   .app.app .lnx .lx-ph-r .lx-menu > .lx-btn { width: 100%; }
-  .app.app .lnx .lx-split { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+  .app.app .lnx .lx-split { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
   .app.app .lnx .lx-coach { padding: 18px 16px; }
   .app.app .lnx .lx-coach.lx-closed { padding: 0; }
   .app.app.app .lnx button.lx-ctog { padding: 14px 16px; flex-wrap: wrap; row-gap: 4px; }
   .app.app .lnx .lx-coach.lx-closed .lx-ctog-a { margin-left: auto; }
   .app.app.app.app .lnx .lx-coach h3 { font-size: 21px; }
-  .app.app .lnx .lx-gc { padding: 16px 12px; }
-  .app.app .lnx button.lx-c { height: 50px; min-height: 50px; }
-  .app.app .lnx .lx-prh { flex-wrap: wrap; row-gap: 6px; }
-  .app.app .lnx .lx-prm { margin-left: 0; width: 100%; }
+  .app.app .lnx .lx-gc { padding: 12px 8px 12px; border-radius: 16px; }
+  .app.app .lnx h2.lx-gh { margin: 0 4px 8px; font-size: 16px; }
+  .app.app .lnx .lx-prs { gap: 8px; }
+  .app.app .lnx button.lx-c { height: 48px; min-height: 48px; }
+  /* header and chemistry on one line: no full-width meter row */
+  .app.app .lnx .lx-prh { flex-wrap: nowrap; gap: 6px; margin: 0 4px 4px; }
+  .app.app .lnx .lx-prh > b { font-size: 13.5px; }
+  .app.app .lnx .lx-o { font-size: 16px; }
+  .app.app .lnx .lx-m { font-size: 11.5px; min-width: 0; flex: 0 1 auto; }
+  .app.app .lnx .lx-prm { margin-left: auto; width: auto; flex: 1 1 108px; min-width: 108px; max-width: 160px; }
+  .app.app .lnx .lx-prm .lx-cm { gap: 5px; }
+  .app.app .lnx .lx-prm .lx-meter { min-width: 24px; }
+  .app.app .lnx .lx-prm .lx-cm b { font-size: 15px; }
+  .app.app .lnx .lx-prm .lx-cm em { font-size: 11.5px; min-width: 32px; }
+  .app.app .lnx .lx-out { padding: 10px 4px 0; }
   .app.app .lnx .lx-prc { gap: 6px; }
   .app.app .lnx .lx-prc .lx-lab { display: none; }
   .app.app .lnx .lx-prc button.lx-c { padding: 6px 8px 6px 4px; gap: 5px; }
@@ -365,6 +473,19 @@
   .app.app .lnx .lx-prc.n3 .lx-inj { font-size: 10px; }
   .app.app .lnx .lx-prc.n3 .lx-offm { display: none; }
   .app.app .lnx .lx-stc, .app.app .lnx .lx-stc.n4 { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  /* special-teams rows: four across at most, the same compact two-line cells as the lines */
+  .app.app .lnx .lx-stu { --cw: calc((100vw - 58px) / 4); }
+  .app.app .lnx .lx-str { gap: 5px; }
+  .app.app .lnx .lx-str button.lx-c { height: 48px; min-height: 48px; display: grid; grid-template-columns: 18px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 4px; row-gap: 0; align-content: center; padding: 4px 6px 4px 3px; border-radius: 12px; }
+  .app.app .lnx .lx-str .lx-nm { grid-column: 2; }
+  .app.app .lnx .lx-str .lx-nm > b { font-size: 12.5px; letter-spacing: -.01em; line-height: 1.25; }
+  .app.app .lnx .lx-str .lx-ovr, .app.app .lnx .lx-str .lx-pj { grid-column: 2; line-height: 1; font-size: 17px; }
+  .app.app .lnx .lx-str .lx-inj, .app.app .lnx .lx-str .lx-offm, .app.app .lnx .lx-str .lx-pj small { display: none; }
+  .app.app .lnx .lx-str .lx-num { min-width: 16px; font-size: 11px; }
+  /* bench tiles: two across */
+  .app.app .lnx .lx-tl { flex-basis: 100%; margin: 4px 2px 0; }
+  .app.app .lnx .lx-tl ~ .lx-tl { margin-left: 2px; }
+  .app.app .lnx button.lx-xt { width: calc(50% - 3px); }
   .app.app .lnx .lx-why { width: 250px; }
   .app.app .lnx .lx-selbar { left: 12px; right: 12px; transform: none; bottom: calc(140px + env(safe-area-inset-bottom, 0px)); white-space: normal; font-size: 12.5px; border-radius: 16px; padding: 8px 8px 8px 14px; }
   .app.app .lnx .lx-selbar > span { flex: 1; min-width: 0; }
