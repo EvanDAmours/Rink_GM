@@ -471,4 +471,9 @@ export const PATCH_NOTES = [
     "Every name shows the chance he's still there at your pick. Trade offers come as one quiet card showing who'd still be there at the new pick, with no ringing phones or timers.",
     "Your class shows what your scouts believed on draft day and one analysts' grade. The truth comes out over two seasons, and picks you skip are made from your list, not Central Scouting's.",
   ] },
+  { v: "1.89", date: "2026-10-27", title: "The Whole Lineup at a Glance", notes: [
+    "Your whole lineup now fits on one screen: forwards and defence side by side, goalies and scratches along the bottom, no scrolling to set your lines.",
+    "On the power play and penalty kill, forwards line up on top with the defence underneath. Scratched and spare players are now tiles that show where they'd fit best, so you can tap or drag them straight in.",
+    "The coach's tip about how many changes could improve your lineup now stands out in its own box, with a clear Show ideas button.",
+  ] },
 ];
