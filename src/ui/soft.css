@@ -193,7 +193,7 @@ html:not(.light) .app.app.app .rk-prep-k, html:not(.light) .app.app.app .gg-pc-k
 .app .rk-psheet .gg-pc-actions { padding-top: 2px; }
 .app .rk-psheet .gg-pc-actions button { min-height: 44px; padding: 0 16px; border-radius: 12px; font-weight: 700; }
 .app .rk-psheet-pros { --team: #1e293b; }
-@media (max-width: 760px) { .app .rk-psheet .gg-pc-actions button { flex: 1 1 140px; } }
+@media (max-width: 760px) { .app .rk-psheet .gg-pc-actions { gap: 6px; } .app .rk-psheet .gg-pc-actions button { flex: 1 1 calc(33% - 6px); min-height: 42px; padding: 0 6px; font-size: 13px; } }
 /* the actions stay in reach while the card scrolls */
 .app .rk-psheet .gg-pc-actions { position: sticky; bottom: 0; z-index: 2; margin: 0 -14px; padding: 12px 14px; background: #0d1424; border-top: 1px solid #ffffff10; }
 .app .rk-psheet .gg-pc-actions:empty { display: none; }

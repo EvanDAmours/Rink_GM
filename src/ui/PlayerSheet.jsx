@@ -124,14 +124,14 @@ export function PlayerActions({ p, kind, arch, context }) {
         {context !== "lines" && <button onClick={() => { closeModal(); go("lines", "lines"); }}>Move in lineup</button>}
         <button disabled={!canSendDown(p)} onClick={() => { sendDown(league, team, p.id); commit(); closeModal(); }}>Send to minors</button>
         <button onClick={() => proposeTradeFor(p.id, p.tid)}>Put in a trade</button>
-        <button aria-pressed={listed} onClick={block}>{listed ? "On the block ✓" : "Add to trade block"}</button>
+        <button aria-pressed={listed} title="Add him to your trade block (or take him off)" onClick={block}>{listed ? "On the block ✓" : "Trade block"}</button>
         <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? buyoutSummary(p, capYear(league)) : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
       </>}
       {mine && inMinors && <>
         {resignTalk && <button className="primary" onClick={() => setTalk({ id: p.id, kind: "resign" })}>Negotiate</button>}
         <button className="primary" onClick={() => callUpFlow.start(p)}>Call up</button>
         <button onClick={() => proposeTradeFor(p.id, p.tid)}>Put in a trade</button>
-        <button aria-pressed={listed} onClick={block}>{listed ? "On the block ✓" : "Add to trade block"}</button>
+        <button aria-pressed={listed} title="Add him to your trade block (or take him off)" onClick={block}>{listed ? "On the block ✓" : "Trade block"}</button>
       </>}
       {callUpFlow.element}
       {!mine && p.tid >= 0 && <button className="primary" onClick={() => proposeTradeFor(p.id)}>Trade for {last(p.name)}</button>}
