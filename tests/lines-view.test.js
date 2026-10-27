@@ -53,7 +53,8 @@ test("the lineup screen: strength menu, Auto-set, coach panel, drag or tap to sw
   assert.ok(src.includes("coachIdeas") && src.includes("applyIdea"), "coach ideas come from the engine");
   assert.ok(src.includes("draggable") && src.includes("onDrop"), "drag and drop");
   assert.ok(src.includes("<Sheet") && src.includes("Who plays"), "the picker Sheet for a selected spot");
-  assert.ok(src.includes("Scratched:") && src.includes("Not on a unit"), "scratches and special-teams bench");
+  assert.ok(src.includes(">Scratched<") && src.includes(">Not on a unit<") && src.includes("lx-xt"), "scratches and special-teams bench as tiles");
+  assert.ok(src.includes("lx-strip") && src.includes("lx-str d"), "goalies and bench in the bottom strip; PP/PK forwards over defence");
   assert.ok(!/RinkLines|esSpots|stSpots/.test(src), "no rink view");
   assert.ok(!fs.existsSync(new URL("../src/ui/RinkLines.jsx", import.meta.url)), "rink component removed");
 });

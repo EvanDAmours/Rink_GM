@@ -14,7 +14,7 @@ import { IdentityPanel, IceTimeSliders, SpotPreview, SituationsPanel, PlanStrip 
 import "./lines.css";
 
 // The Lineup screen: one strength at a time (Even strength, Power play, Penalty kill, Situations).
-// Every unit is a row: Line 1-4 (LW | C | RW), Pair 1-3 (LD | RD), the goalies beside the coach. The coach panel ("Best change right now") works out, live from the engine,
+// Every unit is a row: Line 1-4 (LW | C | RW), Pair 1-3 (LD | RD), goalies and scratches in a strip below (desktop). The coach panel ("Best change right now") works out, live from the engine,
 // the single swap or dressed scratch that most improves rating plus chemistry, and makes it on a
 // tap. Move players by dragging one onto another (desktop) or tap one, then tap where he goes;
 // a selected spot opens the best fits as a Sheet. Everything else sits in Line settings.
@@ -247,47 +247,97 @@ export default function LinesPage({ onRoster }) {
       </div>
     );
   };
+  // Position labels sit once above the cells (desktop) instead of beside every cell.
+  const colHead = (pos) => !phone && <div className={`lx-colh n${pos.length}`} aria-hidden="true">{pos.map((x) => <span key={x}>{x}</span>)}</div>;
   const forwards = (
     <section className="lx-gc lx-fwd">
       <h2 className="lx-gh">Forwards</h2>
+      {colHead(F_POS)}
       <div className="lx-prs">{L.F.map((_, i) => unitRow("F", i))}</div>
     </section>
   );
   const goalRow = (
     <div className="lx-pr lx-gk" key="G">
-      <div className="lx-prh"><b>Goalies</b><span className="lx-m">Starter {gStart}% · backup {gBack}% of starts</span></div>
+      <div className="lx-prh"><b>Goalies</b><span className="lx-m">Starter {gStart}% · backup {gBack}%{phone ? " of starts" : ""}</span></div>
       <div className="lx-prc">{[0, 1].map((i) => <div className="lx-side" key={i}><span className="lx-lab">G{i + 1}</span>{cell({ g: "G", i })}</div>)}</div>
     </div>
   );
-  const nameBtn = (p, a) => {
-    const lit = hl.has(keyOf(a)), s = same(sel, a), hot = mine && sel && sel.g !== "X" && kind(sel) === a.k;
-    return <button type="button" key={p.id} {...dnd(a)} className={`lx-xn${lit ? " hl" : ""}${s ? " sel" : ""}${hot ? " target" : ""}`} onClick={() => (mine ? act(a) : openPlayer(p.id, "lines"))} title={`${p.name} · ${p.pos} · ${p.ovr} OVR`}>{lastName(p.name)}</button>;
+  // A bench tile: number, surname, position, rating and where he'd slot in (or when he's back).
+  const tile = (p, a, hint, cls = "") => {
+    const lit = a && hl.has(keyOf(a)), s = a && same(sel, a), hot = a && mine && sel && sel.g !== "X" && kind(sel) === a.k;
+    return (
+      <button type="button" key={p.id} {...(a ? dnd(a) : {})} className={`lx-xt${lit ? " hl" : ""}${s ? " sel" : ""}${hot ? " target" : ""}${cls}`}
+        onClick={() => (mine && a ? act(a) : openPlayer(p.id, "lines"))} title={`${p.name} · ${p.pos} · ${p.ovr} OVR${hint ? ` · ${hint.text}` : ""}`}>
+        <span className="lx-num">{(p.number ?? p.num) ?? ""}</span>
+        <span className="lx-xt-n"><b>{lastName(p.name)}</b><small className={hint?.dim ? "dim" : ""}>{p.pos}{hint ? ` · ${hint.short}` : ""}</small></span>
+        <span className="lx-ovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</span>
+      </button>
+    );
   };
-  const list = (arr) => arr.flatMap((x, k) => (k ? [<span key={`c${k}`}>, </span>, x] : [x]));
+  // His best spot in the current even-strength lineup: where he beats the man there by the most.
+  const esHint = (p) => {
+    if (isGoalie(p.pos)) { const b = get(L.G[1]); return { short: `→ backup`, text: `could back up${b ? ` instead of ${lastName(b.name)}` : ""}`, dim: !!b && b.ovr >= p.ovr }; }
+    let best = null;
+    for (const g of ["F", "D"]) L[g].forEach((u, i) => u.forEach((id, j) => {
+      const pos = (g === "F" ? F_POS : D_POS)[j], o = get(id), mineR = slotRating(p, pos);
+      const inc = o && o.injury <= 0 && !o.ltir ? slotRating(o, pos) : -1, gain = mineR - inc;
+      if (!best || gain > best.gain || (best.gain <= 0 && gain <= 0 && mineR > best.r)) best = { gain, r: mineR, at: `${g === "F" ? "L" : "P"}${i + 1} ${pos}`, o };
+    }));
+    if (!best) return null;
+    return { short: `→ ${best.at} ${best.r}`, text: `rates ${best.r} at ${best.at}${best.o && best.gain > 0 ? `, ahead of ${lastName(best.o.name)}` : ""}`, dim: best.gain <= 0 };
+  };
+  const injHint = (p) => { const r = injuryReturn(league, p); return { short: `Injured · ${r?.short || "out"}`, text: r?.text || "injured", dim: true }; };
   const outLine = (
-    <div className="lx-out">
-      <span>Scratched: {scratches.length ? list(scratches.map((p) => nameBtn(p, { g: "X", id: p.id, k: isGoalie(p.pos) ? "G" : "ES" }))) : <em>nobody</em>}</span>
-      {injured.length > 0 && <span>Injured: {list(injured.map((p) => <button type="button" key={p.id} className="lx-xn inj" onClick={() => openPlayer(p.id, "lines")} title={`${p.name} · ${injuryReturn(league, p)?.text || "injured"}`}>{lastName(p.name)}</button>))}</span>}
+    <div className="lx-out lx-tiles">
+      <span className="lx-tl">Scratched</span>
+      {scratches.length ? scratches.map((p) => tile(p, { g: "X", id: p.id, k: isGoalie(p.pos) ? "G" : "ES" }, esHint(p))) : <em>nobody</em>}
+      {injured.length > 0 && <span className="lx-tl">Injured</span>}
+      {injured.map((p) => tile(p, null, injHint(p), " inj"))}
     </div>
   );
   const defence = (
-    <section className="lx-gc">
+    <section className="lx-gc lx-def">
       <h2 className="lx-gh">{phone ? "Defence and goal" : "Defence"}</h2>
+      {colHead(D_POS)}
       <div className="lx-prs">{L.D.map((_, i) => unitRow("D", i))}{phone && goalRow}</div>
-      {outLine}
+      {phone && outLine}
     </section>
+  );
+  // Desktop: goalies and the scratches sit in one strip under the lines, so nothing needs a scroll.
+  const strip = (
+    <div className="lx-strip">
+      <section className="lx-gc lx-gkc">{goalRow}</section>
+      <section className="lx-gc lx-outc">{outLine}</section>
+    </div>
   );
 
   // ---- special teams ----
   const stView = () => {
     const k = tab.toUpperCase(), word = k === "PP" ? "advantage" : "kill";
     const bench = [...dressedIds].map(get).filter((p) => p && p.injury <= 0 && !p.ltir && !L[k].flat().includes(p.id)).sort((a, b) => b.ovr - a.ovr);
-    return (
-      <section className="lx-gc">
+    // Where a bench man would help most: the unit spot (same F/D type) held by the lowest rating.
+    const stHint = (p) => {
+      const d = isDefense(p.pos); let best = null;
+      L[k].forEach((u, i) => u.forEach((id) => { const o = get(id); if (o && isDefense(o.pos) === d && (!best || o.ovr < best.o.ovr)) best = { o, i }; }));
+      if (!best) return null;
+      return { short: `→ ${k}${best.i + 1} ${d ? "D" : "F"}`, text: `${k}${best.i + 1} in place of ${lastName(best.o.name)} (${best.o.ovr})`, dim: p.ovr <= best.o.ovr };
+    };
+    const benchLine = (
+      <div className="lx-out lx-tiles">
+        <span className="lx-tl">Not on a unit</span>
+        {bench.length ? bench.map((p) => tile(p, { g: "X", id: p.id, k }, stHint(p))) : <em>nobody</em>}
+      </div>
+    );
+    // Slot labels: forwards on top (LW C RW, a fourth as F), defence centred under them.
+    const fLabs = (n) => (n === 3 ? F_POS : n === 4 ? [...F_POS, "F"] : Array(n).fill("F"));
+    const slot = (o, lab) => <div className="lx-stslot" key={o.j}><span className="lx-lab">{lab}</span>{cell({ g: k, i: o.i, j: o.j })}</div>;
+    const card = (
+      <section className="lx-gc lx-stv">
         <h2 className="lx-gh">{k === "PP" ? "Power play" : "Penalty kill"}</h2>
         <div className="lx-prs">
           {L[k].map((u, i) => {
-            const order = u.map((id, j) => ({ j, d: isDefense(get(id)?.pos) ? 1 : 0 })).sort((x, y) => x.d - y.d);
+            const order = u.map((id, j) => ({ i, j, d: isDefense(get(id)?.pos) ? 1 : 0 }));
+            const fw = order.filter((o) => !o.d), dm = order.filter((o) => o.d), fl = fLabs(fw.length);
             const a = avg(u.map(get).filter(Boolean));
             return (
               <div className="lx-pr lx-st" key={`${k}${i}`}>
@@ -296,14 +346,18 @@ export default function LinesPage({ onRoster }) {
                   <span className="lx-m">{iceShare(k, i)}% of the {word}</span>
                   <span className="lx-prm">{meter(chem(u, k), `${k}${i}`, true)}</span>
                 </div>
-                <div className={`lx-stc n${u.length}`}>{order.map((o) => cell({ g: k, i, j: o.j }))}</div>
+                <div className="lx-stu">
+                  <div className="lx-str" style={{ "--n": fw.length }}>{fw.map((o, x) => slot(o, fl[x]))}</div>
+                  {dm.length > 0 && <div className="lx-str d" style={{ "--n": dm.length }}>{dm.map((o) => slot(o, "D"))}</div>}
+                </div>
               </div>
             );
           })}
         </div>
-        <div className="lx-out"><span>Not on a unit: {bench.length ? list(bench.map((p) => nameBtn(p, { g: "X", id: p.id, k }))) : <em>nobody</em>}</span></div>
+        {phone && benchLine}
       </section>
     );
+    return phone ? card : <>{card}<div className="lx-strip"><section className="lx-gc lx-outc">{benchLine}</section></div></>;
   };
 
   // ---- the coach panel ----
@@ -314,6 +368,7 @@ export default function LinesPage({ onRoster }) {
   const gapNote = gap && gap.moves ? `Points are rating plus chemistry, weighted by ice time${gap.chem > 0 ? `. ${gap.moves === 1 ? "That change" : `All ${gap.moves} together`}: +${gap.chem} chemistry` : ""}.` : "";
   const toggle = (open) => (
     <button type="button" className={`lx-ctog${open ? " open" : ""}`} aria-expanded={open} onClick={() => setCoachOpen(!open)} title={gapNote || undefined}>
+      {!open && <span className="lx-ctog-i" aria-hidden="true" />}
       <span className="lx-ctog-t">{summaryText}</span>
       <span className="lx-ctog-a" aria-hidden="true">{open ? "Hide" : "Show ideas"}<i className="lx-chev">▾</i></span>
     </button>
@@ -321,7 +376,7 @@ export default function LinesPage({ onRoster }) {
   const coach = mine && (!gap?.moves && !shown ? (
     <aside className="lx-coach lx-closed set"><div className="lx-ctog-t">{summaryText}</div></aside>
   ) : !coachOpen ? (
-    <aside className="lx-coach lx-closed">{toggle(false)}</aside>
+    <aside className={`lx-coach lx-closed lx-call ${(gap?.points ?? 0) >= 4 ? "amber" : "green"}`}>{toggle(false)}</aside>
   ) : shown ? (() => {
     const others = ideas.map((x, k) => ({ x, k })).filter(({ k }) => k !== idx).slice(0, 3);
     return (
@@ -416,7 +471,8 @@ export default function LinesPage({ onRoster }) {
   );
 
   const main = tab === "es" ? <>{forwards}{defence}</> : tab === "sit" ? <section className="lx-gc"><h2 className="lx-gh">Situations</h2><SituationsPanel team={team} mine={mine} /></section> : stView();
-  const side = <>{coach}{tab === "es" && !phone && <section className="lx-gc lx-gkc">{goalRow}</section>}</>;
+  // Desktop board: Forwards | Defence | coach, with goalies and scratches in a strip below.
+  const board = tab === "es" ? <>{forwards}{defence}{strip}</> : main;
 
   return (
     <div className="lnx lx2">
@@ -431,7 +487,7 @@ export default function LinesPage({ onRoster }) {
         </div>
       </div>
       {phone ? <div className="lx-split">{coach}{main}</div>
-        : <div className={`lx-split${mine || tab === "es" ? "" : " solo"}`}><div className="lx-left">{main}</div>{(mine || tab === "es") && <div className="lx-rcol">{side}</div>}</div>}
+        : <div className={`lx-board t-${tab}${mine ? "" : " solo"}`}><div className="lx-lines">{board}</div>{mine && <div className="lx-rcol">{coach}</div>}</div>}
       {mine && sel && !pick && (
         <div className="lx-selbar" role="status">
           <span><b>{selPlayer ? lastName(selPlayer.name) : "Empty spot"}</b> selected · tap where he goes</span>

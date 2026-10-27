@@ -398,6 +398,15 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .app.app .lnx .lx-pk-n small { color: #475569; }
 .app.app .lnx .lx-rest { color: #1e293b; }
 .app.app .lnx.lx-settings .lx-card { background: #0f172a09; }
+.app.app .lnx button.lx-xt { background: #0f172a09; color: #0f172a; }
+.app.app .lnx button.lx-xt:hover { background: #0f172a12; }
+.app.app .lnx .lx-xt-n small { color: #15803d; }
+.app.app .lnx .lx-xt-n small.dim { color: #475569; }
+.app.app .lnx button.lx-xt.inj .lx-xt-n small { color: #b91c1c; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-t > span:first-child { color: #0f172a; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-t .lx-gap { color: #334155; }
+.app.app .lnx .lx-coach.lx-call .lx-ctog-a { background: #0f172a14; color: #0f172a; }
+.app.app.app .lnx .lx-coach.lx-call button.lx-ctog:hover .lx-ctog-a { background: #0f172a21; }
 .app .main .lnx .lx-num { color: #475569; }
 
 /* src/ui/dev.css */
