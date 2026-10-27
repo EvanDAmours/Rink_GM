@@ -134,6 +134,8 @@ html.light :where(.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-ban
 .ct-note.down { color: #1d4ed8; }
 .ct-note.loyal { color: #6d28d9; }
 .ct-note.market { color: #334155; }
+.app .gg-fa-resignlink { color: #475569; }
+.app .gg-fa-resignlink button.link { color: #1d4ed8; }
 
 /* src/ui/draft.css */
 .app .main button.dd-b:not(.link),
@@ -640,6 +642,7 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .app .pp-seed.wc { color: #6d28d9; }
 .app .pp-tag.div { color: #0284c7; }
 .app .pp-tag.wc { color: #6d28d9; }
+.app button.link.pp-tobracket { color: #1d4ed8; }
 
 /* src/styles.css */
 body { background: radial-gradient(1200px 600px at 10% -10%, #e7ebf1 0%, transparent 60%), var(--bg); }
@@ -1676,6 +1679,7 @@ body .app { background: #eef1f6 !important; }
 .app.app .gg-coach-who .gg-k,
 .app.app span.gg-k { color: #475569; }
 .app.app.app .gg-ops-nav button { background: #0f172a12; color: #334155; }
+.app .rk-psheet .gg-pc-actions { background: #f4f6fa; border-top: 1px solid #0f172a10; }
 
 /* src/ui/page.css */
 .app.app.app .rk-pills button,
