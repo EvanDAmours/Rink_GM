@@ -157,7 +157,8 @@ export function SectionHero({ team, eyebrow, title, stats = [], tabs = [], onTab
   const { c, a } = heroColor(team);
   const all = stats.filter(Boolean);
   // Phones: three numbers that fit (long values give way to the next ones).
-  const shown = compact ? [...all.filter(([, v]) => String(v).length <= 10), ...all.filter(([, v]) => String(v).length > 10)].slice(0, 3) : all;
+  const len = (v) => (v && typeof v === "object" ? 4 : String(v).length); // a live element (the draft clock) is short
+  const shown = compact ? [...all.filter(([, v]) => len(v) <= 10), ...all.filter(([, v]) => len(v) > 10)].slice(0, 3) : all;
   return (
     <section className={`keep-dark rk-hero${compact ? " compact" : ""}`} aria-label={title}
       style={{ backgroundImage: `radial-gradient(140% 220% at 0% 0%, ${c}${a} 0%, ${c}2e 46%, transparent 78%)` }}>

@@ -13,7 +13,10 @@ import { divisionTable, playoffTeams, gamesLeft } from "../engine/standings.js";
 import { userSeries } from "../engine/playoffs.js";
 import { ROUND_NAMES } from "../engine/playoffs.js";
 import { myDraftSlots } from "../engine/draft.js";
-import { myList } from "../engine/scouting.js";
+import React from "react";
+import { myListIds } from "../engine/scouting.js";
+import { myClassRows, analystsGrade } from "../engine/draftDay.js";
+import { LiveClock } from "./DraftClockText.jsx";
 import { userOffers } from "../engine/market.js";
 import { capOverview } from "../engine/capOverview.js";
 import { gmCareer } from "../engine/legacy.js";
@@ -143,16 +146,25 @@ function statsFor(id, key, league, user) {
     const picks = league.draftPicks.filter((p) => p.owner === user.id && p.year === dy);
     const slots = safe(() => myDraftSlots(league), []) || [];
     const reports = user.surveyLog?.year === league.draftClassYear ? user.surveyLog.filed : 0;
-    if (key === "recap" && league.draft?.slots) {
-      const made = league.draft.slots.filter((s) => s.owner === user.id && s.pid);
-      const first = made[0] && league.players[made[0].pid];
-      return [["Picks made", String(made.length)], first && ["First pick", `${last(first.name)} #${made[0].overall}`], ["Draft class", String(league.draft.year)]].filter(Boolean);
+    // r16: Draft = the Draft Day screen, Your class = the class you drafted.
+    if (key === "class" || key === "recap") {
+      const yr = league.draft?.slots?.some((s) => s.pid) ? league.draft.year : (league.draftHistory || [])[0]?.year;
+      const rows = yr ? safe(() => myClassRows(league, yr), []) : [];
+      const g = yr ? safe(() => analystsGrade(league, league.userTid, yr), null) : null;
+      return [["Picks made", String(rows.length), rows.length ? "good" : undefined], rows[0] && ["First pick", last(rows[0].name)], g && ["Analysts", g]].filter(Boolean);
     }
-    if (key === "floor" && league.draft?.slots) {
+    if (league.phase === "draft" && league.draft?.slots && league.draft.stage !== "combine") {
       const left = league.draft.slots.filter((s) => s.owner === user.id && !s.pid);
-      return [["Picks left", String(left.length)], left[0] ? ["Next pick", `#${left[0].overall}`, "gold"] : ["Next pick", "Done"], ["Your list", String(myList(league).ids.length)]];
+      const cur = league.draft.slots[league.draft.idx];
+      if (!cur) return [["Picks made", String(league.draft.slots.filter((s) => s.owner === user.id).length), "good"], ["Draft", "Done"]];
+      const mine = cur.owner === user.id;
+      return [[mine ? "On the clock" : `${league.teams[cur.owner]?.abbr || ""} picking`, `#${cur.overall}`, mine ? "good" : undefined], ["Time left", React.createElement(LiveClock, { league })], ["Picks left", String(left.length)]];
     }
-    return [["Your picks", String(slots.length || picks.length)], ["First pick", slots[0] ? `#${slots[0]}` : picks.length ? "TBD" : "None", slots[0] ? "gold" : undefined], ["Reports filed", String(reports)], ["Your list", String(myList(league).ids.length)]];
+    if (league.phase === "draft" && league.draft?.slots) {
+      const first = league.draft.slots.find((s) => s.owner === user.id);
+      return [["First pick", first ? `#${first.overall}` : "None", first ? "gold" : undefined], ["Picks", String(league.draft.slots.filter((s) => s.owner === user.id).length)], ["On your list", String(myListIds(league).length)]];
+    }
+    return [["Your picks", String(slots.length || picks.length)], ["First pick", slots[0] ? `#${slots[0]}` : picks.length ? "TBD" : "None", slots[0] ? "gold" : undefined], ["Reports filed", String(reports)], ["Your list", String(myListIds(league).length)]];
   }
   if (id === "market") {
     const fa = league.freeAgents?.length || 0;

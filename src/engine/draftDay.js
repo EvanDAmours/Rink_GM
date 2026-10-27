@@ -146,7 +146,9 @@ export function scoutOptions(league, overall) {
   const second = fit.id === best.id ? cands.find((p) => !used.has(p.id)) : null;
   if (second) used.add(second.id);
   // The third: your thinnest spot if neither pick fills it, otherwise the biggest ceiling in range.
-  const topNeed = userNeeds(league, 2).find((pos) => ![...used].some((id) => league.players[id].pos === pos));
+  // Goalies take years and miss often: like the AI clubs, your scouts don't push one in round 1.
+  const round = league.draft?.slots?.find((x) => x.overall === at)?.round ?? 1;
+  const topNeed = userNeeds(league, 2).find((pos) => !(pos === "G" && round === 1) && ![...used].some((id) => league.players[id].pos === pos));
   const needPick = topNeed ? cands.slice(0, 20).find((p) => p.pos === topNeed && !used.has(p.id) && !reads.get(p.id).flag) : null;
   const upside = cands.slice(0, 16).filter((p) => !used.has(p.id) && !reads.get(p.id).flag)
     .sort((a, b) => upsideOf(reads.get(b.id)) - upsideOf(reads.get(a.id)) || ranks.get(a.id) - ranks.get(b.id))[0];

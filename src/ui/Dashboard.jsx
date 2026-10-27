@@ -100,7 +100,7 @@ export default function Dashboard({ act = {} }) {
   const first = lg.phase === "preseason" ? { label: "Season plan", sub: "Three choices for the season: a focus player, a camp priority and where your prospects play", onClick: () => go("development", "plan") }
     : lg.phase === "regular" ? { label: "Standings", sub: "The playoff picture: who'd be in if the season ended today, and the bracket it would make", onClick: () => go("standings") }
     : lg.phase === "playoffs" ? { label: "Playoff Bracket", sub: "The road to the Stanley Cup", onClick: () => go("playoffs") }
-    : lg.phase === "draft" ? (atCombine(lg) ? { label: "Scouting Combine", sub: "Combine results, interviews and your big board", onClick: () => go("draft") } : { label: "Entry Draft", sub: draftDone(lg) ? "Your class and the draft recap" : "Make your picks", onClick: () => go("draft") })
+    : lg.phase === "draft" ? (atCombine(lg) ? { label: "Draft day", sub: "Your list and your first pick", onClick: () => go("draft") } : { label: "Entry Draft", sub: draftDone(lg) ? "Your class" : "Make your picks", onClick: () => go("draft") })
     : lg.phase === "resign" ? { label: "Re-sign Players", sub: "Only you can talk to your expiring players this week", onClick: () => go("freeagency") }
     : { label: "Free Agency", sub: "Negotiate with the players on the market", onClick: () => go("freeagency") };
   const deadline = lg.phase === "regular" && deadlinePending(lg);
@@ -155,8 +155,8 @@ export default function Dashboard({ act = {} }) {
     else { primary.push({ label: "Bracket", onClick: () => go("playoffs") }); if (act.simPlayoffsAll) primary.push({ label: "Sim to the Final", onClick: act.simPlayoffsAll }); }
   }
   if (lg.phase === "draft") {
-    if (atCombine(lg)) { primary.push({ label: "Go to the Combine", onClick: () => go("draft") }); if (act.startDraft) primary.push({ label: "Start the Draft →", onClick: act.startDraft }); }
-    else if (draftDone(lg)) { if (act.toResign) primary.push({ label: "Continue to Re-signing →", onClick: act.toResign }); primary.push({ label: "Draft recap", onClick: () => go("draft") }); }
+    if (atCombine(lg)) { primary.push({ label: "Your list", onClick: () => go("draft") }); if (act.startDraft) primary.push({ label: "Start the draft", onClick: act.startDraft }); }
+    else if (draftDone(lg)) { if (act.toResign) primary.push({ label: "Continue to re-signing", onClick: act.toResign }); primary.push({ label: "Your class", onClick: () => go("draft", "class") }); }
     else primary.push({ label: slot ? `Go to the draft · pick #${slot.overall}` : "Go to the draft", onClick: () => go("draft") });
   }
   if (lg.phase === "resign") { primary.push({ label: "Re-sign your players", onClick: () => go("freeagency") }); if (act.toFA) primary.push({ label: "Finish → Free Agency", onClick: act.toFA }); }

@@ -1,0 +1,166 @@
+/* Draft Day and Your class (r16, concept 2 "Your list is the draft"). Soft style: borderless
+   cards (#ffffff0d, radius 18), hairlines #ffffff10, one green primary per view, quiet buttons.
+   Scoped under .app.app .dy (the page) and .dy-* inside its sheets. */
+.app.app .dy { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; max-width: 1180px; margin: 0 auto; padding: 4px 4px 40px; color: #f1f5f9; min-width: 0; }
+.app.app .dy.narrow { grid-template-columns: minmax(0, 820px); justify-content: center; }
+.app.app .dy-main, .app.app .dy-side { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.app.app.app .dy button, .app.app.app .rk-soft .dy-li button, .app.app.app .rk-soft .dy-chips button, .app.app.app .rk-soft .dy-vis button { font-family: inherit; text-transform: none; letter-spacing: 0; }
+
+/* the one big sentence */
+.app.app .dy-hs { font-size: 34px; font-weight: 800; letter-spacing: -.015em; line-height: 1.15; margin: 12px 0 6px; color: #f1f5f9; font-family: inherit; text-transform: none; text-wrap: balance; }
+.app.app .dy-hsub { color: #94a3b8; font-size: 15px; font-weight: 600; margin: 0 0 6px; line-height: 1.45; max-width: 760px; }
+.app.app .dy-low { color: #f87171; }
+
+/* on the clock / between picks */
+.app.app .dy-otc, .app.app .dy-between { display: flex; align-items: center; gap: 14px; border-radius: 18px; padding: 14px 20px; }
+.app.app .dy-otc { background: #16a34a24; }
+.app.app .dy-between { background: #ffffff0d; flex-wrap: wrap; }
+.app.app .dy-otc > div, .app.app .dy-between > div { flex: 1; min-width: 0; }
+.app.app .dy-otc b, .app.app .dy-between > div > b { display: block; font-size: 17px; font-weight: 800; color: #fff; }
+.app.app .dy-otc span, .app.app .dy-between > div > span { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 600; color: #bbf7d0; }
+.app.app .dy-between > div > span { color: #94a3b8; }
+.app.app .dy-otc-r { display: flex !important; align-items: center; gap: 10px; margin: 0 !important; }
+.app.app .dy-otc-r b { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-size: 26px; font-variant-numeric: tabular-nums; }
+.app.app .dy-between-act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.app.app.app button.dy-pause { background: #ffffff14; border: 0; border-radius: 999px; color: #e2e8f0; font-weight: 700; font-size: 13px; padding: 6px 14px; min-height: 34px; }
+.app.app.app button.dy-quietlink { background: transparent; border: 0; padding: 4px 2px; min-height: 0; color: #94a3b8; font-weight: 700; font-size: 14px; cursor: pointer; }
+.app.app.app button.dy-quietlink:hover { color: #e2e8f0; background: transparent; }
+
+/* cards */
+.app.app .dy-card { background: #ffffff0d; border-radius: 18px; padding: 16px 20px; }
+.app.app .dy-card.list { padding: 12px 20px 8px; }
+.app.app.app .dy-card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 800; color: #fff; text-transform: none; letter-spacing: 0; }
+.app.app .dy-cardtx { color: #cbd5e1; font-size: 13.5px; font-weight: 600; line-height: 1.5; margin-bottom: 12px; }
+.app.app .dy-cardtx b { color: #fff; }
+.app.app .dy-card.how p { margin: 0 0 9px; color: #cbd5e1; font-size: 13.5px; line-height: 1.5; font-weight: 500; }
+.app.app .dy-card.how p:last-child { margin: 0; }
+.app.app .dy-card.how p b { color: #fff; }
+
+/* list header: segmented view switch + quiet actions */
+.app.app .dy-listhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 4px 0 8px; }
+.app.app .dy-lbl { font-size: 15px; font-weight: 800; color: #fff; }
+.app.app .dy-lbl i { font-style: normal; color: #94a3b8; font-weight: 600; font-size: 13px; margin-left: 6px; }
+.app.app .dy-seg { display: inline-flex; background: #ffffff0d; border-radius: 999px; padding: 4px; gap: 2px; }
+.app.app.app .dy-seg button { background: transparent; border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: #cbd5e1; min-height: 32px; white-space: nowrap; }
+.app.app.app .dy-seg button.on { background: #fff; color: #0b1220; }
+.app.app .dy-listact { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.app.app.app button.dy-q { background: #ffffff14; border: 0; border-radius: 999px; color: #e2e8f0; font-weight: 700; font-size: 13px; padding: 6px 14px; min-height: 32px; }
+.app.app.app button.dy-q.ghost { background: transparent; color: #94a3b8; }
+.app.app.app button.dy-q:hover { color: #fff; }
+.app.app .dy-divider { text-align: center; color: #94a3b8; font-size: 12.5px; font-weight: 600; padding: 6px 0 2px; }
+.app.app .dy-divider b { color: #e2e8f0; }
+
+/* rows */
+.app.app .dy-rows { position: relative; touch-action: pan-y; }
+.app.app .dy-rows.dragging { user-select: none; -webkit-user-select: none; }
+.app.app .dy-li { display: flex; align-items: center; gap: 12px; padding: 12px 0; position: relative; background: transparent; transition: transform .14s ease; }
+.app.app .dy-rows.dragging .dy-li.lift { transition: none; z-index: 2; background: #1c2230; border-radius: 14px; box-shadow: 0 12px 30px #0008; margin: 0 -10px; padding-left: 10px; padding-right: 10px; }
+.app.app .dy-li + .dy-li { border-top: 1px solid #ffffff10; }
+.app.app .dy-li.top { background: #ffffff0f; border-radius: 14px; padding: 12px 14px; margin: 4px -14px; box-shadow: inset 0 0 0 1px #4ade8055; border-top: 0; }
+.app.app .dy-li.top + .dy-li { border-top: 0; }
+.app.app .dy-li.gone { opacity: .45; }
+.app.app .dy-li.gone .dy-nm { text-decoration: line-through; text-decoration-color: #94a3b8; }
+.app.app.app button.dy-li.btn { width: 100%; border: 0; border-radius: 0; text-align: left; color: inherit; min-height: 0; cursor: pointer; background: transparent; }
+.app.app.app button.dy-grip { flex: none; width: 28px; height: 40px; margin: 0 -6px 0 -8px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #475569; font-size: 15px; letter-spacing: -3px; cursor: grab; touch-action: none; min-height: 0; }
+.app.app.app button.dy-grip:hover, .app.app.app button.dy-grip:focus-visible { color: #cbd5e1; background: #ffffff0d; }
+.app.app .dy-rk { flex: none; width: 24px; text-align: center; color: #64748b; font: 800 16px "Barlow Condensed", "Arial Narrow", sans-serif; font-variant-numeric: tabular-nums; }
+.app.app.app button.dy-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: transparent; border: 0; padding: 0; text-align: left; color: inherit; cursor: pointer; min-height: 0; }
+.app.app.app button.dy-open:hover { background: transparent; }
+@media (hover: hover) { .app.app.app button.dy-open:hover .dy-nm { text-decoration: underline; text-decoration-color: #ffffff40; text-underline-offset: 3px; } }
+.app.app .dy-tx { flex: 1; min-width: 0; display: block; }
+.app.app .dy-tx > b { display: flex; align-items: baseline; gap: 6px; font-size: 15.5px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; }
+.app.app .dy-nm { overflow: hidden; text-overflow: ellipsis; }
+.app.app .dy-tx > b i { font-style: normal; color: #94a3b8; font-weight: 600; font-size: 13px; flex: none; }
+.app.app .dy-tx > b em { font-style: normal; color: #4ade80; font-weight: 700; font-size: 13px; flex: none; }
+.app.app .dy-tx > span { display: block; color: #94a3b8; font-size: 13px; font-weight: 500; margin-top: 3px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app.app .dy-val { flex: none; display: flex; flex-direction: column; align-items: flex-end; min-width: 52px; }
+.app.app .dy-val b { font: 800 27px/1 "Barlow Condensed", "Arial Narrow", sans-serif; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+.app.app .dy-val small { color: #64748b; font-size: 11.5px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
+.app.app .dy-val.unk b { color: #64748b; }
+.app.app .dy-odds { flex: none; width: 46px; text-align: right; color: #cbd5e1; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.app.app .dy-odds.warn, .app.app .dy-why b.warn, .app.app .dy-big.warn { color: #fbbf24; }
+.app.app .dy-gone { flex: none; color: #94a3b8; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.app.app.app button.dy-fold { display: block; width: 100%; background: transparent; border: 0; border-bottom: 1px solid #ffffff10; border-radius: 0; color: #64748b; font-weight: 700; font-size: 13px; padding: 10px 0; min-height: 0; text-align: left; }
+.app.app.app button.dy-fold:hover { color: #cbd5e1; background: transparent; }
+.app.app.app button.dy-more { display: block; width: 100%; margin: 6px 0 4px; background: transparent; border: 0; color: #94a3b8; font-weight: 700; font-size: 13.5px; padding: 10px; min-height: 0; }
+.app.app.app button.dy-more:hover { color: #fff; }
+.app.app .dy-empty { color: #94a3b8; font-size: 14px; padding: 14px 0; }
+.app.app .dy-big { flex: none; font: 800 30px/1 "Barlow Condensed", "Arial Narrow", sans-serif; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+
+/* the scouts' three options: one compact row each, Draft inline, so all three fit on screen */
+.app.app .dy-opts { display: flex; flex-direction: column; gap: 8px; padding: 0 0 6px; }
+.app.app .dy-optsh { color: #94a3b8; font-size: 13px; font-weight: 700; margin: 0; }
+.app.app .dy-optsh span { font-weight: 600; color: #64748b; margin-left: 4px; }
+.app.app .dy-opt { background: #ffffff09; border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.app.app .dy-opt.first { background: #ffffff0f; box-shadow: inset 0 0 0 1px #4ade8055; }
+.app.app .dy-opt-k { display: block; color: #94a3b8; font-size: 12px; font-weight: 800; margin-bottom: 2px; }
+.app.app .dy-opt.first .dy-opt-k { color: #86efac; }
+.app.app .dy-opt-row { display: flex; align-items: center; gap: 12px; }
+.app.app.app .dy-opt-row .rk-dbtn { min-height: 42px; min-width: 104px; flex: none; }
+.app.app .dy-why { color: #cbd5e1; font-size: 13px; font-weight: 500; line-height: 1.4; }
+.app.app .dy-why b { color: #fff; }
+.app.app.app button.dy-else { align-self: flex-start; background: transparent; border: 0; color: #94a3b8; font-weight: 700; font-size: 14px; padding: 6px 2px; min-height: 0; }
+.app.app.app button.dy-else:hover { color: #fff; }
+.app.app .dy-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.app.app.app .dy-chips button { background: #ffffff12; border: 0; border-radius: 999px; color: #cbd5e1; font-weight: 700; font-size: 13px; padding: 6px 12px; min-height: 32px; }
+.app.app.app .dy-chips button.on { background: #fff; color: #0b1220; }
+
+/* side column */
+.app.app .dy-mini { display: flex; gap: 10px; align-items: center; padding: 8px 0; font-weight: 700; font-size: 13.5px; color: #e2e8f0; width: 100%; }
+.app.app .dy-mini + .dy-mini { border-top: 1px solid #ffffff10; }
+.app.app .dy-mini .n { color: #64748b; width: 34px; flex: none; font: 800 15px "Barlow Condensed", "Arial Narrow", sans-serif; }
+.app.app .dy-mini .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.app.app .dy-mini .t i { font-style: normal; color: #94a3b8; font-weight: 600; margin-left: 4px; }
+.app.app .dy-mini .p { margin-left: auto; color: #94a3b8; font-weight: 600; flex: none; }
+.app.app .dy-mini.me, .app.app .dy-mini.me .n { color: #4ade80; }
+.app.app.app button.dy-mini.btn { background: transparent; border: 0; border-radius: 0; padding: 8px 0; min-height: 0; cursor: pointer; }
+.app.app.app button.dy-mini.btn + .dy-mini { border-top: 1px solid #ffffff10; }
+.app.app.app .dy-mini button.t.linkish { background: transparent; border: 0; padding: 0; color: #e2e8f0; font-weight: 700; font-size: 13.5px; min-height: 0; cursor: pointer; }
+.app.app.app button.dy-add { flex: none; background: #ffffff14; border: 0; border-radius: 999px; color: #e2e8f0; font-weight: 700; font-size: 12.5px; padding: 4px 12px; min-height: 28px; }
+.app.app.app button.dy-findbtn { display: block; width: 100%; margin-top: 10px; height: 40px; border-radius: 12px; background: #ffffff0b; border: 1px solid #ffffff10; color: #94a3b8; text-align: left; padding: 0 14px; font-weight: 600; font-size: 13.5px; }
+
+/* sheets */
+.app .rk-soft .dy-search, .rk-soft .dy-search { width: 100%; margin: 4px 0 8px; }
+.rk-soft .dy-find { max-height: 60vh; overflow: auto; }
+.rk-soft .dy-li { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.rk-soft .dy-li + .dy-li { border-top: 1px solid #ffffff10; }
+.rk-soft .dy-vis { display: flex; gap: 6px; flex: none; }
+.app.app.app .rk-soft .dy-vis button { background: #ffffff12; border: 0; border-radius: 999px; color: #cbd5e1; font-weight: 700; font-size: 12.5px; padding: 5px 11px; min-height: 30px; }
+.app.app.app .rk-soft .dy-vis button.on { background: #fff; color: #0b1220; }
+.rk-soft .dy-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 14px; }
+.rk-soft .dy-kv > div { background: #ffffff0d; border-radius: 14px; padding: 12px 14px; }
+.rk-soft .dy-kv small { display: block; color: #94a3b8; font-size: 12.5px; font-weight: 700; }
+.rk-soft .dy-kv b { font: 800 22px "Barlow Condensed", "Arial Narrow", sans-serif; color: #fff; }
+.rk-soft .dy-chips { margin-bottom: 10px; }
+
+/* Your class */
+.app.app .dy-classhead { display: flex; align-items: flex-end; gap: 14px; justify-content: space-between; flex-wrap: wrap; }
+.app.app .dy-gradeline { display: flex; align-items: center; gap: 14px; justify-content: space-between; flex-wrap: wrap; color: #cbd5e1; font-size: 14px; font-weight: 600; padding: 0 4px; }
+.app.app .dy-gradeline b { color: #fff; font-size: 18px; margin: 0 4px; }
+.app.app .dy-gradeline i { font-style: normal; color: #64748b; font-size: 12.5px; }
+.app.app .dy-grades { padding: 12px 0 8px; border-top: 1px solid #ffffff10; margin-top: 4px; }
+.app.app .dy-gradegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px 10px; margin-top: 8px; }
+.app.app .dy-gradegrid span { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #cbd5e1; }
+.app.app .dy-gradegrid span b { margin-left: auto; color: #fff; }
+.app.app .dy-gradegrid span.me { color: #4ade80; }
+
+/* phones: one column, big targets */
+@media (max-width: 760px) {
+  .app.app .dy, .app.app .dy.narrow { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 0 24px; }
+  .app.app .dy-hs { font-size: 27px; margin-top: 6px; }
+  .app.app .dy-hsub { font-size: 14px; }
+  .app.app .dy-card, .app.app .dy-card.list { padding: 12px 14px; }
+  .app.app .dy-otc, .app.app .dy-between { padding: 12px 14px; }
+  .app.app .dy-li.top { margin: 4px -8px; padding: 12px 8px; }
+  .app.app .dy-li { gap: 10px; }
+  .app.app .dy-val b { font-size: 24px; }
+  .app.app .dy-odds { width: 38px; font-size: 12.5px; }
+  .app.app .dy-listact { margin-left: 0; }
+  .app.app .dy-between-act { width: 100%; justify-content: space-between; }
+  .app.app .dy-opt { padding: 10px 12px; gap: 4px; }
+  .app.app .dy-opt-row { gap: 8px; }
+  .app.app.app .dy-opt-row .rk-dbtn { min-width: 78px; min-height: 40px; padding: 0 12px; }
+  .app.app .dy-why { font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .app.app .dy-listhead { padding: 0 0 6px; }
+  .app.app.app .dy-seg button { min-height: 30px; padding: 5px 12px; }
+}

@@ -2,7 +2,8 @@ import React from "react";
 import { useGame, Bar } from "./common.jsx";
 import { fullPosName } from "../engine/players.js";
 import { isGoalie, COMBINE_INVITES } from "../engine/constants.js";
-import { makePick, currentSlot, draftDone } from "../engine/draft.js";
+import { currentSlot, draftDone } from "../engine/draft.js";
+import { draftPlayer } from "../engine/draftClock.js";
 import {
   prospectRead, bioStats, csRank, fmtHeight, riskLabel, skillsFor, gradeClass, COMBINE_TESTS, interviewProspect,
   atCombine, onMyList, toggleMyList, pickTake, SCOUT_GROUPS, scoutGroup, privateWorkout,
@@ -36,7 +37,8 @@ export function prospectDraftState(league, p) {
 }
 export function draftProspect(league, p, { toast, commit, closeModal }) {
   const sl = currentSlot(league);
-  if (!makePick(league, p.id)) return false;
+  // The same path as the Draft screen's button: the clock, the pick card and how the pick was made.
+  if (!draftPlayer(league, p.id)) return false;
   toast(`You selected ${p.name}. Analysts: ${sl.grade}. ${pickTake(sl.grade, sl.overall, sl.csr)}`, 5000);
   commit();
   closeModal();
@@ -60,7 +62,7 @@ export default function ProspectProfile({ p, actions = true }) {
 
   const draft = () => {
     const sl = currentSlot(league);
-    if (!makePick(league, p.id)) return;
+    if (!draftPlayer(league, p.id)) return;
     toast(`You selected ${p.name}. Analysts: ${sl.grade}. ${pickTake(sl.grade, sl.overall, sl.csr)}`, 5000);
     commit();
     closeModal();

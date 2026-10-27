@@ -55,6 +55,7 @@ import { automaticallyHandleRoster } from "./engine/autoRoster.js";
 import { simPlayoffDay, userSeries, nextGame } from "./engine/playoffs.js";
 import { simDraftToUser, draftDone, currentSlot } from "./engine/draft.js";
 import { atCombine, openDraftFloor } from "./engine/scouting.js";
+import { simToMyPick, scoutsPickRest, setDraftPaused, nextUserSlot } from "./engine/draftClock.js";
 import { simFADay } from "./engine/offseason.js";
 import { cloudSave } from "./platform.js";
 import ConfirmModal from "./ui/ConfirmModal.jsx";
@@ -496,27 +497,27 @@ export default function App({ resume = false }) {
       setTab("dashboard");
       commit();
     },
-    startDraft: () => {
-      const pts = 0, iv = league.draft?.interviewsLeft ?? 0;
-      if (!pts && !iv) return act.startDraftNow();
-      setModal({ type: "stage", title: "Move on to the Draft?", yes: "Yes, go to the Draft", onYes: act.startDraftNow, lines: [
-        ...(iv ? [{ tone: "warn", head: `${iv} prospect interview${iv === 1 ? "" : "s"} not used yet`, text: "Interviews only happen at the Combine." }] : []),
-        ...(pts ? [{ tone: "warn", head: `${pts} scouting point${pts === 1 ? "" : "s"} unspent`, text: "Reports can still be filed from the draft floor, but the clock runs there." }] : []),
-        { tone: "info", head: "Combine results and your big board stay available until the draft ends" },
-      ] });
-    },
+    // Start the draft (r16): no confirm (your scouts spend the Combine visits as it opens), the picks
+    // before yours are made, and you land on the Draft screen on the clock.
+    startDraft: () => act.startDraftNow(),
     startDraftNow: () => {
       setModal(null);
       openDraftFloor(league);
-      setTab("dashboard");
+      simToMyPick(league);
+      setTab("draft");
+      setDraftWant({ v: "day", n: Date.now() });
       commit();
     },
     simToMyPick: () => {
-      simDraftToUser(league);
+      simToMyPick(league);
       commit();
     },
     autoDraft: () => {
-      simDraftToUser(league, { all: true });
+      scoutsPickRest(league);
+      commit();
+    },
+    pauseDraft: () => {
+      setDraftPaused(league, !league.draft?.clock?.paused);
       commit();
     },
     toResign: () => {
@@ -635,12 +636,15 @@ export default function App({ resume = false }) {
       }
     }
     if (ph === "draft") {
-      if (atCombine(league)) A.push({ label: "Start the Draft →", onClick: act.startDraft, tone: "gold" });
-      else if (draftDone(league)) A.push({ label: "Continue to Re-signing →", onClick: act.toResign, tone: "gold" });
+      if (atCombine(league)) A.push({ label: "Start the draft", onClick: act.startDraft, tone: "gold" });
+      else if (draftDone(league)) A.push({ label: "Continue to re-signing", onClick: act.toResign, tone: "gold" });
       else {
-        // On the clock, the pick is yours to make on the screen: the bar only offers the auto-draft.
-        if (currentSlot(league).owner !== user.id) A.push({ label: "⏩ Sim to My Pick", onClick: act.simToMyPick });
-        A.push({ label: "Auto-Draft the Rest", onClick: act.autoDraft, tone: "violet", small: currentSlot(league).owner === user.id });
+        // On the clock, the pick is yours to make on the screen: the bar only offers the scouts.
+        // Phones: the Draft screen carries Draft; the bar sims, pauses and hands the rest to the scouts.
+        const paused = !!league.draft?.clock?.paused;
+        if (currentSlot(league).owner !== user.id && nextUserSlot(league)) A.push({ label: "Sim to my next pick", onClick: act.simToMyPick });
+        A.push({ label: paused ? "Resume the clock" : "Pause the clock", onClick: act.pauseDraft, small: true });
+        A.push({ label: "Scouts pick the rest", onClick: act.autoDraft, confirm: true });
       }
     }
     if (ph === "resign") A.push({ label: "Finish → Free Agency", onClick: act.toFA, tone: "gold", small: true });
@@ -685,10 +689,11 @@ export default function App({ resume = false }) {
     }
     if (ph === "draft") {
       if (atCombine(league)) deskMain.push(btn("sd", "Start the draft", act.startDraft, true));
-      else if (draftDone(league)) deskMain.push(btn("rs", "Finish draft", act.toResign, true));
+      else if (draftDone(league)) deskMain.push(btn("rs", "Continue to re-signing", act.toResign, true));
       else {
-        if (currentSlot(league).owner !== user.id) deskMain.push(btn("mp", "Sim to my pick", act.simToMyPick, true));
-        deskFF.push(["Auto-draft the rest", act.autoDraft]);
+        // The Draft screen carries Draft and Sim to my next pick (one green per view); the bar pauses.
+        deskMain.push(btn("pz", league.draft?.clock?.paused ? "Resume" : "Pause", act.pauseDraft));
+        deskFF.push(["Scouts pick the rest", act.autoDraft]);
       }
     }
     if (ph === "resign") deskMain.push(btn("fa", "Finish re-signing", act.toFA, true));
@@ -722,7 +727,7 @@ export default function App({ resume = false }) {
   const openScreen = (scr) => { const [, t, k] = scr; if (t === "draft" && k) { setDraftWant({ v: k, n: Date.now() }); setTab("draft"); } else { setTab(t); if (k) setSub(t, k); } setMoreOpen(false); };
   for (const s of sections) s.badge = s.id === "draft" ? badgeFor("draft") : s.id === "market" ? badgeFor("trade") : s.id === "standings" ? badgeFor("standings") : s.id === "contracts" ? badgeFor("contracts") : null;
   // Phones: the More sheet in the bar's groups, one row per screen.
-  const screenBadge = (sec, scr) => (sec.id === "draft" && scr[2] === "floor" ? badgeFor("draft") : scr[1] === "trade" && (scr[2] === "deadline" || scr[2] === "fa") ? badgeFor("trade") : scr[1] === "contracts" && scr[2] === "resign" ? badgeFor("contracts") : scr[1] === "standings" && scr[2] === "playoffs" ? badgeFor("standings") : null);
+  const screenBadge = (sec, scr) => (sec.id === "draft" && scr[2] === "day" ? badgeFor("draft") : scr[1] === "trade" && (scr[2] === "deadline" || scr[2] === "fa") ? badgeFor("trade") : scr[1] === "contracts" && scr[2] === "resign" ? badgeFor("contracts") : scr[1] === "standings" && scr[2] === "playoffs" ? badgeFor("standings") : null);
   const moreGroups = [
     ...sections.filter((sec) => sec.id !== "home").map((sec) => ({ id: sec.id, label: sec.label, items: sec.screens.map((scr) => {
       const [label, t, k] = scr;
@@ -770,7 +775,7 @@ export default function App({ resume = false }) {
   const heroSpec = live || tab === "dashboard" ? null : where && where.section.id !== "home" ? {
     id: where.section.id, label: where.section.label,
     key: where.screen[2] || where.screen[1],
-    tabs: where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : scr[1] === "draft" && scr[2] === "floor" ? badgeFor("draft") : null]),
+    tabs: where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : scr[1] === "draft" && scr[2] === "day" ? badgeFor("draft") : null]),
     onTab: (l) => openScreen(where.section.screens.find((x) => x[0] === l)),
   } : null;
   const hero = heroSpec && <SectionHero team={user} compact={phone} eyebrow={heroEyebrow(heroSpec.id, league, user)} title={heroSpec.label}

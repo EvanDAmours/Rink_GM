@@ -546,6 +546,75 @@ button.rk-rcard { background: #ffffff; border: 1px solid #0f172a10; border-left:
 .rk-gu-card ul { color: #334155; }
 .app .rk-gu .rk-gu-older:not(.link) { background: var(--gg-cd, #ffffff); color: var(--gg-tx, #0f172a); border: 1px solid var(--gg-bd, #d3d9e2); }
 
+/* src/ui/draftday.css */
+.app.app .dy { color: #0f172a; }
+.app.app .dy-hs { color: #0f172a; }
+.app.app .dy-hsub { color: #475569; }
+.app.app .dy-low { color: #dc2626; }
+.app.app .dy-between { background: #0f172a0d; }
+.app.app .dy-otc span,
+.app.app .dy-between > div > span { color: #166534; }
+.app.app .dy-between > div > span { color: #475569; }
+.app.app.app button.dy-pause { background: #0f172a14; color: #1e293b; }
+.app.app.app button.dy-quietlink { color: #475569; }
+.app.app.app button.dy-quietlink:hover { color: #1e293b; }
+.app.app .dy-card { background: #0f172a0d; }
+.app.app .dy-cardtx { color: #334155; }
+.app.app .dy-card.how p { color: #334155; }
+.app.app .dy-lbl i { color: #475569; }
+.app.app .dy-seg { background: #0f172a0d; }
+.app.app.app .dy-seg button { color: #334155; }
+.app.app.app button.dy-q { background: #0f172a14; color: #1e293b; }
+.app.app.app button.dy-q.ghost { color: #475569; }
+.app.app .dy-divider { color: #475569; }
+.app.app .dy-divider b { color: #1e293b; }
+.app.app .dy-li + .dy-li { border-top: 1px solid #0f172a10; }
+.app.app .dy-li.top { background: #0f172a0f; }
+.app.app .dy-li.gone .dy-nm { text-decoration-color: #475569; }
+.app.app.app button.dy-grip:hover,
+.app.app.app button.dy-grip:focus-visible { color: #334155; background: #0f172a0d; }
+.app.app .dy-tx > b { color: #0f172a; }
+.app.app .dy-tx > b i { color: #475569; }
+.app.app .dy-tx > b em { color: #15803d; }
+.app.app .dy-tx > span { color: #475569; }
+.app.app .dy-val b { color: #0f172a; }
+.app.app .dy-odds { color: #334155; }
+.app.app .dy-odds.warn,
+.app.app .dy-why b.warn,
+.app.app .dy-big.warn { color: #b45309; }
+.app.app .dy-gone { color: #475569; }
+.app.app.app button.dy-fold { border-bottom: 1px solid #0f172a10; }
+.app.app.app button.dy-fold:hover { color: #334155; }
+.app.app.app button.dy-more { color: #475569; }
+.app.app .dy-empty { color: #475569; }
+.app.app .dy-big { color: #0f172a; }
+.app.app .dy-optsh { color: #475569; }
+.app.app .dy-opt { background: #0f172a09; }
+.app.app .dy-opt.first { background: #0f172a0f; }
+.app.app .dy-opt-k { color: #475569; }
+.app.app .dy-opt.first .dy-opt-k { color: #15803d; }
+.app.app .dy-why { color: #334155; }
+.app.app.app button.dy-else { color: #475569; }
+.app.app.app .dy-chips button { background: #0f172a12; color: #334155; }
+.app.app .dy-mini { color: #1e293b; }
+.app.app .dy-mini + .dy-mini { border-top: 1px solid #0f172a10; }
+.app.app .dy-mini .t i { color: #475569; }
+.app.app .dy-mini .p { color: #475569; }
+.app.app .dy-mini.me,
+.app.app .dy-mini.me .n { color: #15803d; }
+.app.app.app button.dy-mini.btn + .dy-mini { border-top: 1px solid #0f172a10; }
+.app.app.app .dy-mini button.t.linkish { color: #1e293b; }
+.app.app.app button.dy-add { background: #0f172a14; color: #1e293b; }
+.app.app.app button.dy-findbtn { background: #0f172a0b; border: 1px solid #0f172a10; color: #475569; }
+.rk-soft .dy-li + .dy-li { border-top: 1px solid #0f172a10; }
+.app.app.app .rk-soft .dy-vis button { background: #0f172a12; color: #334155; }
+.rk-soft .dy-kv > div { background: #0f172a0d; }
+.rk-soft .dy-kv small { color: #475569; }
+.app.app .dy-gradeline { color: #334155; }
+.app.app .dy-grades { border-top: 1px solid #0f172a10; }
+.app.app .dy-gradegrid span { color: #334155; }
+.app.app .dy-gradegrid span.me { color: #15803d; }
+
 /* src/ui/scouting.css */
 .sc-flag.trait { color: #a16207; }
 .sc-flag.trait.star { color: #2563eb; }

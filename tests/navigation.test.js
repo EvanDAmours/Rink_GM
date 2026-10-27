@@ -23,7 +23,7 @@ test("the bar: Contracts is its own section; Season is schedule and stats; Stand
   assert.deepEqual(screens(s, "contracts"), ["Contracts"]);
   assert.deepEqual(screens(s, "office"), ["Front Office", "League", "Franchise History", "Record Book", "Transactions", "Legacy Hall"]);
   assert.ok(!screens(s, "market").includes("Re-sign"), "re-signing left Trades & FA");
-  assert.deepEqual(screens(s, "draft"), ["Scouting", "Draft", "Draft Recap"], "the Draft section is unchanged");
+  assert.deepEqual(screens(s, "draft"), ["Scouting", "Draft", "Your class"], "the Draft section: Scouting, the one Draft Day screen, Your class (r16)");
   // Re-sign week: the Re-sign screen comes first in Contracts, and Trades & FA keeps Free Agency.
   const r = sec("resign");
   assert.deepEqual(screens(r, "contracts"), ["Re-sign", "Contracts"]);

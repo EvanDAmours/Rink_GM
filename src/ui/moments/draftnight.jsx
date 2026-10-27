@@ -4,7 +4,7 @@
 //
 // "draft-stage" (engine/momentsDraft.js): your pick walks up on stage in your sweater. Queued for
 // every pick you make (or the clock makes for you); the draft clock holds while it's on screen.
-// Trade calls and "The pick is in" ring on the draft floor itself (ui/DraftTools.jsx), not here.
+// Trade offers live on the Draft screen as one quiet card (ui/DraftDay.jsx), never a popup.
 import React, { useEffect } from "react";
 import { useGame } from "../common.jsx";
 import { momentColors } from "../MomentFrame.jsx";
