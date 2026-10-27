@@ -94,8 +94,9 @@ export function Modal({ title, onClose, children, head, bare = false, className 
 // The shared popup frames (from the football game): Sheet is a plain titled popup (560px on a
 // computer, 820 with wide), Dialog a decision with an optional line under the title and its
 // buttons in one row at the bottom, DBtn those buttons (primary green, danger, gold or quiet).
-export function Sheet({ title, onClose, children, wide, className = "" }) {
-  return <Modal title={title} onClose={onClose} className={`rk-soft${wide ? " rk-wide" : ""} ${className}`}>{children}</Modal>;
+// bare: no title row (the body draws its own header, as the player sheet's hero does).
+export function Sheet({ title, onClose, children, wide, className = "", bare = false }) {
+  return <Modal title={title} onClose={onClose} bare={bare} className={`rk-soft${wide ? " rk-wide" : ""} ${className}`}>{children}</Modal>;
 }
 export function Dialog({ title, sub, onClose, children, actions, wide, className = "" }) {
   return (

@@ -173,7 +173,7 @@ export default function ScoutingHQ({ onBoard, onRegions, onList, onScouts }) {
               <div key={p.id} className="hq-row">
                 <span className="hq-rk">#{csRank(p)}</span>
                 <Pos pos={p.pos} />
-                <button type="button" className="hq-who" onClick={() => openPlayer(p.id)}>
+                <button type="button" className="hq-who" onClick={() => openPlayer(p.id, "draft")}>
                   <b>{p.name}{isNeed(p) && <em>need</em>} <ScoutFlags read={read} compact /></b>
                   <span>{p.bio?.team || "Junior"} · {p.bio?.lg || "?"} · {read.lvl === 1 ? `reported ${read.pot}` : read.grade ? `your read ${read.grade}` : "no read yet"}</span>
                 </button>

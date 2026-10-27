@@ -66,7 +66,7 @@ function RosterCards({ rows, slots, team, sort }) {
       {list.map((p) => {
         const s = slots[p.id], hurt = p.injury > 0 || p.ltir;
         return (
-          <button type="button" key={p.id} className={`rk-rcard${s?.top && !hurt ? " top" : ""}${hurt ? " out" : ""}`} onClick={() => openPlayer(p.id)}>
+          <button type="button" key={p.id} className={`rk-rcard${s?.top && !hurt ? " top" : ""}${hurt ? " out" : ""}`} onClick={() => openPlayer(p.id, "roster")}>
             <span className="rk-rc-face"><Headshot team={team} p={p} size={36} decorative /></span>
             <span className="rk-rc-who">
               <span className="rk-rc-nm">{p.name}<AbilityChip p={p} /><RosterBadges p={p} team={team} /></span>

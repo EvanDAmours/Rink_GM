@@ -15,7 +15,7 @@ try{
  const change=ids=>{for(const [i,id] of ids.entries()){const p=lg.players[id];p.ovr=i%2?40:99;p.pot=i%2?41:99;p.dev=i%2?'fragile':'late';p.attrs=Object.fromEntries(Object.keys(p.attrs).map(k=>[k,i%2?40:99]));}};
  // Legacy saves must fail closed even when no scouting record survives.
  delete lg.players[pid].scout;
- const card=await render('PlayerModal',{pid});change([pid]);assert.equal(await render('PlayerModal',{pid}),card,'opponent prospect modal exposes hidden truth');
+ const card=await render('PlayerSheet',{pid});change([pid]);assert.equal(await render('PlayerSheet',{pid}),card,'opponent prospect modal exposes hidden truth');
  console.log('Opponent modal: missing scouting data, raw attributes, market value, potential and development protected');
  const team=await render('TeamModal',{tid:rival.id}),trade=await render('TradePage');change(rival.prospects.slice().reverse());
  assert.equal(await render('TeamModal',{tid:rival.id}),team,'opponent prospect ordering exposes hidden truth');assert.equal(await render('TradePage'),trade,'trade list exposes hidden potential');
@@ -28,8 +28,8 @@ try{
  const offerBefore=renderOffer(),block=await render('TradeBlockPage'),deadline=await render('DeadlinePage');
  change([pid]);assert.equal(renderOffer(),offerBefore,'inbound offer exposes hidden ratings');assert.equal(await render('TradeBlockPage'),block,'trade block exposes hidden ratings');assert.equal(await render('DeadlinePage'),deadline,'deadline listings expose hidden ratings');
  console.log('Inbound offers, trade block and deadline listings preserve scouting visibility');
- const before=await render('DraftPage'),profile=await render('PlayerModal',{pid:lg.draftClass[0]}),lab=await render('HockeyOperationsPage',{initialView:'draft'});
+ const before=await render('DraftPage'),profile=await render('PlayerSheet',{pid:lg.draftClass[0]}),lab=await render('HockeyOperationsPage',{initialView:'draft'});
  change(lg.draftClass);
- assert.equal(await render('DraftPage'),before,'draft board leaks hidden attributes');assert.equal(await render('PlayerModal',{pid:lg.draftClass[0]}),profile,'draft profile leaks hidden attributes');assert.equal(await render('HockeyOperationsPage',{initialView:'draft'}),lab,'draft lab leaks hidden attributes');
+ assert.equal(await render('DraftPage'),before,'draft board leaks hidden attributes');assert.equal(await render('PlayerSheet',{pid:lg.draftClass[0]}),profile,'draft profile leaks hidden attributes');assert.equal(await render('HockeyOperationsPage',{initialView:'draft'}),lab,'draft lab leaks hidden attributes');
  console.log('Draft board, player profile and comparison lab: hidden truth does not alter public reads');
 }finally{await server.close();}

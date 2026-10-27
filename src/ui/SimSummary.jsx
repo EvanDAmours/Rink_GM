@@ -36,7 +36,7 @@ export default function SimSummary({ data, onClose }) {
           </section>
         </div>
         {(d.milestones.length > 0 || d.headlines.length > 0 || d.myTx.length > 0) && <section className="gg-card"><div className="gg-k">Around the club</div>
-          {d.milestones.map((m) => <div key={m.pid} className="gg-sum-row"><span>{m.name} reached {m.label}</span></div>)}
+          {d.milestones.map((m) => <div key={m.pid} className="gg-sum-row"><span>{league.players[m.pid] ? <PlayerName p={league.players[m.pid]} showInj={false} /> : m.name} reached {m.label}</span></div>)}
           {d.myTx.map((x, i) => <div key={i} className="gg-sum-row"><span>{x.text}</span></div>)}
           {d.headlines.map((n, i) => <div key={i} className="gg-sum-row"><span>{n.text}</span></div>)}
         </section>}

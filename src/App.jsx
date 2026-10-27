@@ -33,7 +33,7 @@ import ErrorBoundary from "./ui/ErrorBoundary.jsx";
 import LeaguePage from "./ui/LeaguePage.jsx";
 import SettingsPage from "./ui/SettingsPage.jsx";
 import LiveGame from "./ui/LiveGame.jsx";
-import PlayerModal from "./ui/PlayerModal.jsx";
+import PlayerSheet from "./ui/PlayerSheet.jsx";
 import TeamModal from "./ui/TeamModal.jsx";
 import BoxScoreModal from "./ui/BoxScoreModal.jsx";
 import OwnerReview from "./ui/OwnerReview.jsx";
@@ -299,7 +299,9 @@ export default function App({ resume = false }) {
       commit,
       toast: showToast,
       go,
-      openPlayer: (id) => setModal({ type: "player", id }),
+      // ONE player sheet everywhere (ui/PlayerSheet.jsx): every name, row and card opens it.
+      // context: where it was opened from ("lines", "roster", "fa", "draft"...), for its actions.
+      openPlayer: (id, context) => id != null && setModal({ type: "player", id, context }),
       openTeam: (tid) => setModal({ type: "team", tid }),
       openBox: (game) => setModal({ type: "box", game }),
       startTour: () => { setModal(null); setMenuOpen(false); setTour("run"); },
@@ -807,10 +809,10 @@ export default function App({ resume = false }) {
           </ErrorBoundary></div>
         </div>
         {!live && !busy && league.playoffs?.papers?.some((p) => !p.seen) && <SeriesPaper paper={league.playoffs.papers.find((p) => !p.seen)} onClose={() => { league.playoffs.papers.find((p) => !p.seen).seen = true; commit(); }} />}
-        {searchOpen && !live && <CommandPalette league={league} nav={[...NAV, ...EXTRA_SCREENS]} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id})} onTeam={tid=>setModal({type:"team",tid})}/>}
+        {searchOpen && !live && <CommandPalette league={league} nav={[...NAV, ...EXTRA_SCREENS]} onClose={()=>setSearchOpen(false)} onNavigate={id=>go(id)} onPlayer={id=>setModal({type:"player",id,context:"search"})} onTeam={tid=>setModal({type:"team",tid})}/>}
         {modal?.type === "paper" && (league.papers || []).some((p) => p.id === modal.id) && <NewsPaper paper={league.papers.find((p) => p.id === modal.id)} onClose={() => { league.papers.find((p) => p.id === modal.id).seen = true; setModal(null); commit(); }} />}
         {modal?.type === "simsummary" && <SimSummary data={modal.data} onClose={() => setModal(null)} />}
-        {modal?.type === "player" && league.players[modal.id] && <PlayerModal pid={modal.id} />}
+        {modal?.type === "player" && <PlayerSheet pid={modal.id} context={modal.context} />}
         {modal?.type === "team" && <TeamModal tid={modal.tid} />}
         {modal?.type === "box" && <BoxScoreModal game={modal.game} />}
         {modal?.type === "stage" && <StageConfirm {...modal} onClose={() => setModal(null)} />}

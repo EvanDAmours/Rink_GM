@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useCallUp } from "./CallUpFlow.jsx";
-import { useGame, Modal, TeamBadge, money, pct, signed } from "./common.jsx";
+import { useGame, pct, signed } from "./common.jsx";
 import Headshot from "./Headshot.jsx";
 import { SKATER_ATTRS, GOALIE_ATTRS } from "../engine/ratings.js";
 import { isGoalie, isDefense, ARCHETYPES } from "../engine/constants.js";
@@ -8,8 +7,6 @@ import { fullPosName, savePct, gaa, marketValue, isRFA, DEV_TRAITS, primeEnd } f
 import { formLabel, seasonRole, ROLE_NAME } from "../engine/development.js";
 import { DevChip } from "./scoutingBits.jsx";
 import { shownRatings } from "../engine/draft.js";
-import { sendDown, callUp, releasePlayer, canSendDown, hasRoomFor, capYear } from "../engine/roster.js";
-import { buyoutSummary } from "../engine/capAccounting.js";
 import { careerTotals, careerMilestones } from "../engine/records.js";
 import { prospectReport, isProspectWatch } from "../engine/prospectWatch.js";
 import { Sparkline } from "./ProspectWatch.jsx";
@@ -24,9 +21,10 @@ import { accoladesOf, accoladeText, franchiseRanks } from "../engine/legacy.js";
 import "./legacy.css";
 import { bestRoles } from "../engine/roles.js";
 
-// The player card, laid out like the football game's: hero with the face, number and an
+// The player card's body, laid out like the football game's: hero with the face, number and an
 // OVR ring; tags; three quick tiles; attribute bars on the left, the season, scouting
-// report, season-by-season and career rating chart on the right.
+// report, season-by-season and career rating chart on the right. It is drawn inside the one
+// player sheet (PlayerSheet.jsx), which adds the shell and the actions.
 const ovrTone = (v) => (v >= 90 ? "#4ade80" : v >= 85 ? "#a3e635" : v >= 80 ? "#facc15" : v >= 75 ? "#fb923c" : "#f87171");
 const WANTS = { winning: ["Ring", "a contender first"], role: ["Minutes", "a real role on the ice"], security: ["Term", "years and security"], loyalty: ["Home", "to stay where he is"] };
 const AGENT = { Patient: "easy to deal with", Businesslike: "all about the number", Ambitious: "drives a hard bargain", Loyal: "rewards good faith" };
@@ -55,9 +53,8 @@ function CareerChart({ points }) {
   return <svg className="gg-pc-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"><path d={`${d} L${xs.at(-1)} ${H - 22} L${xs[0]} ${H - 22} Z`} fill="#1d4ed822" /><path d={d} fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinejoin="round" />{points.map((x, i) => <g key={i}><circle cx={xs[i]} cy={ys[i]} r="4" fill="#a3e635" /><text x={xs[i]} y={ys[i] - 9} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="800">{x.ovr}</text><text x={xs[i]} y={H - 6} textAnchor="middle" fill="#94a3b8" fontSize="11">{x.year}</text></g>)}</svg>;
 }
 
-export default function PlayerCard({ p, retired = null }) {
-  const { league, closeModal, commit, toast, proposeTradeFor, go, openTeam, ask } = useGame();
-  const callUpFlow = useCallUp();
+export function PlayerCardBody({ p, retired = null }) {
+  const { league } = useGame();
   const [allAttrs, setAllAttrs] = useState(false);
   const [seasons, setSeasons] = useState("all");
   const team = retired ? league.teams[retired.tid] : league.teams[p.tid];
@@ -93,8 +90,7 @@ export default function PlayerCard({ p, retired = null }) {
   // When he's back, from the schedule and the bracket ("out 3 games", "back for game 5", "out for the series").
   const injury = injuryReturn(league, p);
   return (
-    <Modal title={p.name} onClose={closeModal} bare className="gg-pc-modal">
-      <div className="gg-pc">
+    <>
         <header className="gg-pc-hero" style={{ "--team": team?.colors?.[0] || "#1e293b" }}>
           <div className="gg-pc-face"><Headshot p={p} team={team} size={96} /><span className="gg-pc-num">#{p.number || "—"}</span></div>
           <div className="gg-pc-who">
@@ -182,19 +178,6 @@ export default function PlayerCard({ p, retired = null }) {
             <section className="gg-pc-panel"><div className="gg-pc-k chart">Career OVR</div><CareerChart points={hidden ? [] : ratingPoints} /></section>
           </div>
         </div>
-        {!retired && <div className="gg-pc-actions">
-          {mine && !inMinors && <>
-            <button disabled={!canSendDown(p)} onClick={() => { sendDown(league, team, p.id); commit(); closeModal(); }}>Send to minors</button>
-            <button className="danger" disabled={!!(p.ltir || p.waiverPending || p.offerSheetPending)} onClick={async () => { if (await ask({ title: `Release ${p.name}?`, body: p.yrs > 0 && p.cap > 0 ? buyoutSummary(p, capYear(league)) : "He becomes a free agent.", yes: "Release", danger: true })) { releasePlayer(league, team, p.id); commit(); closeModal(); } }}>Release</button>
-            <button onClick={() => proposeTradeFor(p.id, p.tid)}>Put in a trade</button>
-          </>}
-          {mine && inMinors && <button onClick={() => callUpFlow.start(p)}>Call up</button>}{callUpFlow.element}
-          {!mine && p.tid >= 0 && <button className="primary" onClick={() => proposeTradeFor(p.id)}>Trade for {p.name.split(" ").slice(-1)[0]}</button>}
-          {p.tid === -1 && <button className="primary" onClick={() => { closeModal(); go("freeagency"); }}>Go to free agency</button>}
-          {team && <button className="ghost" onClick={() => openTeam(team.id)}>{team.abbr} roster</button>}
-        </div>}
-        <button className="gg-pc-close" onClick={closeModal}>Close</button>
-      </div>
-    </Modal>
+    </>
   );
 }

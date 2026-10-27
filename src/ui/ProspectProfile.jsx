@@ -25,7 +25,25 @@ function explain(read, p) {
   return `None of your scouts covers ${grp}. Your front office can still file a rough report (1 point) and a follow-up (2 more), but never exact numbers or a development trait.`;
 }
 
-export default function ProspectProfile({ p }) {
+// The draft prospect's body inside the one player sheet (PlayerSheet.jsx). The sheet's action row
+// carries "Add to your list" and "Draft" (prospectActions below), so actions={false} there.
+export function prospectDraftState(league, p) {
+  const user = league.teams[league.userTid];
+  const d = league.draft;
+  const live = league.phase === "draft" && d && d.stage !== "combine" && !draftDone(league);
+  const slot = live ? currentSlot(league) : null;
+  return { live, onClock: !!slot && slot.owner === user.id, listed: onMyList(league, p.id) };
+}
+export function draftProspect(league, p, { toast, commit, closeModal }) {
+  const sl = currentSlot(league);
+  if (!makePick(league, p.id)) return false;
+  toast(`You selected ${p.name}. Analysts: ${sl.grade}. ${pickTake(sl.grade, sl.overall, sl.csr)}`, 5000);
+  commit();
+  closeModal();
+  return true;
+}
+
+export default function ProspectProfile({ p, actions = true }) {
   const { league, commit, toast, openPlayer, closeModal } = useGame();
   const user = league.teams[league.userTid];
   const read = prospectRead(league, p);
@@ -75,8 +93,9 @@ export default function ProspectProfile({ p }) {
         <div className="kv" style={{ flex: 1, minWidth: 220 }}>
           <span className="k">Position</span><span>{fullPosName(p.pos)} · {goalie ? "catches" : "shoots"} {p.shoots}</span>
           <span className="k">Age</span><span>{p.age}{b.town ? ` · from ${b.town}` : ""}{p.nat ? ` (${p.nat})` : ""}</span>
-          {b.ht && (<><span className="k">Size</span><span>{fmtHeight(b.ht)} · {b.wt} lbs</span></>)}
-          {b.team && (<><span className="k">Team</span><span>{b.team} ({b.lg})</span></>)}
+          {/* inside the player sheet the hero above already shows his size and junior club */}
+          {actions && b.ht && (<><span className="k">Size</span><span>{fmtHeight(b.ht)} · {b.wt} lbs</span></>)}
+          {actions && b.team && (<><span className="k">Team</span><span>{b.team} ({b.lg})</span></>)}
           <span className="k">This season</span><span>{statLine}</span>
         </div>
       </div>
@@ -166,10 +185,10 @@ export default function ProspectProfile({ p }) {
         </div>
       )}
 
-      <div className="row">
+      {actions && <div className="row">
         <button onClick={() => { toggleMyList(league, p.id); commit(); }}>{listed ? "★ On your list" : "☆ Add to your list"}</button>
         {live && <button className="primary" disabled={!onClock} title={onClock ? "" : "Wait until you're on the clock"} onClick={draft}>Draft {p.name}</button>}
-      </div>
+      </div>}
     </div>
   );
 }

@@ -104,7 +104,7 @@ export default function LinesPage({ onRoster }) {
     return true;
   };
   const act = (a) => {
-    if (!mine) { const p = get(read(a)); if (p) openPlayer(p.id); return; }
+    if (!mine) { const p = get(read(a)); if (p) openPlayer(p.id, "lines"); return; }
     if (!sel) { setSel(a); setPick(false); setSpots(false); return; }
     if (same(sel, a)) { setSel(null); setPick(false); return; }
     const r = swap(sel, a);
@@ -218,7 +218,7 @@ export default function LinesPage({ onRoster }) {
           </div>
           <div className="lx-pick-f">
             {selPlayer && (sel.g === "F" || sel.g === "D") && <button type="button" className={`lx-btn quiet sm${spots ? " on" : ""}`} aria-expanded={spots} onClick={() => setSpots(!spots)}>His rating at every spot</button>}
-            {selPlayer && <button type="button" className="lx-btn quiet sm" onClick={() => { setPick(false); setSel(null); openPlayer(selPlayer.id); }}>Profile</button>}
+            {selPlayer && <button type="button" className="lx-btn quiet sm" onClick={() => { setPick(false); setSel(null); openPlayer(selPlayer.id, "lines"); }}>Profile</button>}
             <button type="button" className="lx-btn quiet sm" onClick={() => { setPick(false); setSel(null); }}>Done</button>
           </div>
           {spots && selPlayer && (sel.g === "F" || sel.g === "D") && <SpotPreview p={selPlayer} team={team} mine={mine} onMoved={() => { setSel(null); setPick(false); }} />}
@@ -261,13 +261,13 @@ export default function LinesPage({ onRoster }) {
   );
   const nameBtn = (p, a) => {
     const lit = hl.has(keyOf(a)), s = same(sel, a), hot = mine && sel && sel.g !== "X" && kind(sel) === a.k;
-    return <button type="button" key={p.id} {...dnd(a)} className={`lx-xn${lit ? " hl" : ""}${s ? " sel" : ""}${hot ? " target" : ""}`} onClick={() => (mine ? act(a) : openPlayer(p.id))} title={`${p.name} · ${p.pos} · ${p.ovr} OVR`}>{lastName(p.name)}</button>;
+    return <button type="button" key={p.id} {...dnd(a)} className={`lx-xn${lit ? " hl" : ""}${s ? " sel" : ""}${hot ? " target" : ""}`} onClick={() => (mine ? act(a) : openPlayer(p.id, "lines"))} title={`${p.name} · ${p.pos} · ${p.ovr} OVR`}>{lastName(p.name)}</button>;
   };
   const list = (arr) => arr.flatMap((x, k) => (k ? [<span key={`c${k}`}>, </span>, x] : [x]));
   const outLine = (
     <div className="lx-out">
       <span>Scratched: {scratches.length ? list(scratches.map((p) => nameBtn(p, { g: "X", id: p.id, k: isGoalie(p.pos) ? "G" : "ES" }))) : <em>nobody</em>}</span>
-      {injured.length > 0 && <span>Injured: {list(injured.map((p) => <button type="button" key={p.id} className="lx-xn inj" onClick={() => openPlayer(p.id)} title={`${p.name} · ${injuryReturn(league, p)?.text || "injured"}`}>{lastName(p.name)}</button>))}</span>}
+      {injured.length > 0 && <span>Injured: {list(injured.map((p) => <button type="button" key={p.id} className="lx-xn inj" onClick={() => openPlayer(p.id, "lines")} title={`${p.name} · ${injuryReturn(league, p)?.text || "injured"}`}>{lastName(p.name)}</button>))}</span>}
     </div>
   );
   const defence = (

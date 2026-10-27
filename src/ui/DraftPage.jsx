@@ -57,7 +57,7 @@ function PhoneRow({ p, onDraft, canDraft }) {
   const drafting = !!onDraft && canDraft && !drafted;
   const slot = drafted && league.draft ? league.draft.slots.find((s) => s.pid === p.id) : null;
   return (
-    <div className={`dd-prow${drafting ? " live" : ""}${drafted ? " gone" : ""}`} onClick={() => openPlayer(p.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && openPlayer(p.id)} aria-label={`${p.name}, ${p.pos}, Central Scouting ${csRank(p)}`}>
+    <div className={`dd-prow${drafting ? " live" : ""}${drafted ? " gone" : ""}`} onClick={() => openPlayer(p.id, "draft")} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && openPlayer(p.id, "draft")} aria-label={`${p.name}, ${p.pos}, Central Scouting ${csRank(p)}`}>
       <span className="dd-prow-rk">{csRank(p)}</span>
       <button type="button" className={`dd-star${listed ? " on" : ""}`} aria-label={listed ? "Remove from your list" : "Add to your list"} onClick={(e) => { e.stopPropagation(); toggleMyList(league, p.id); commit(); }}>{listed ? "★" : "☆"}</button>
       <PosChip pos={p.pos} />

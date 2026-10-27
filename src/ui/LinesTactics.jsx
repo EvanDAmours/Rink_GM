@@ -123,7 +123,7 @@ export function SituationsPanel({ team, mine }) {
                 const p = get(pid), on = open && sel.j === j;
                 const lab = kind === "SO" ? `${j + 1}` : SHAPE_LABEL[K.shape[j]];
                 return (
-                  <button type="button" key={j} className={`lx-row${on ? " sel" : ""}${mine ? "" : " ro"}${p ? "" : " empty"}`} onClick={() => (mine ? setSel(on ? null : { kind, j }) : p && openPlayer(p.id))} aria-pressed={mine ? on : undefined}>
+                  <button type="button" key={j} className={`lx-row${on ? " sel" : ""}${mine ? "" : " ro"}${p ? "" : " empty"}`} onClick={() => (mine ? setSel(on ? null : { kind, j }) : p && openPlayer(p.id, "lines"))} aria-pressed={mine ? on : undefined}>
                     <i className="lx-slot" style={{ background: POS_COLOR[p?.pos] || "#475569" }}>{lab}</i>
                     <span className="lx-face">{p && <Headshot p={p} team={team} size={30} decorative />}</span>
                     <span className="lx-who"><span className="lx-nmrow"><span className="lx-ln">{p ? listName(p.name) : "Empty"}</span></span><span className="lx-meta"><span>{p ? `${p.pos} · ${p.age}` : "Tap to fill"}</span></span></span>
