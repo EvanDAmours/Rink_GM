@@ -18,7 +18,6 @@ import Dashboard from "./ui/Dashboard.jsx";
 import RosterPage from "./ui/RosterPage.jsx";
 import LinesPage from "./ui/LinesPage.jsx";
 import SchedulePage from "./ui/SchedulePage.jsx";
-import StandingsPage from "./ui/StandingsPage.jsx";
 import StatsPage from "./ui/StatsPage.jsx";
 import PlayoffsPage from "./ui/PlayoffsPage.jsx";
 import TradePage from "./ui/TradePage.jsx";
@@ -66,33 +65,29 @@ import { closeMoment } from "./engine/moments.js";
 import { repairLeague, repairSummary, loadRepairedKey } from "./engine/repair.js";
 import { staffGapText } from "./engine/franchise.js";
 import { backupSave, dropBackup } from "./engine/saveSlots.js";
-import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub } from "./ui/hubs.jsx";
+import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub, StandingsHub, ContractsHub } from "./ui/hubs.jsx";
 import { devView } from "./ui/DevelopmentDesk.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
 import { usePhone, desktopUrl, phoneUrl, swipeHandlers } from "./ui/mobile.js";
 import { applyTheme, getTheme } from "./ui/theme.js";
-import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips, SeasonHub, SEASON_TABS } from "./ui/MobileShell.jsx";
+import { PhoneHeader, MobileNav, MoreSheet, MobileActionBar, TapTips } from "./ui/MobileShell.jsx";
 import { OfflineChip } from "./ui/OfflinePanel.jsx";
 import { setInjuriesEnabled } from "./engine/injuries.js";
-import { DeskBar, sectionsFor, sectionOf, screenOn } from "./ui/DeskNav.jsx";
+import { DeskBar, sectionsFor, sectionOf, screenOn, defaultSubs } from "./ui/DeskNav.jsx";
+import { route } from "./ui/navRoute.js";
 import { frenzyFor } from "./engine/frenzy.js";
 import { payroll } from "./engine/roster.js";
 import { capOverview } from "./engine/capOverview.js";
 
 const NAV = [
   {id:"dashboard",label:"Home",short:"Home"},{id:"lines",label:"Lines & Roster",short:"Lines"},{id:"schedule",label:"Schedule",short:"Schedule"},{id:"standings",label:"Standings",short:"Standings"},
-  {id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
-  {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"trade",label:"Trade & Market",short:"Trade"},
+  {id:"playoffs",label:"Playoffs",short:"Playoffs"},{id:"stats",label:"Stats",short:"Stats"},{id:"development",label:"Development",short:"Development"},{id:"draft",label:"Draft & Scouting",short:"Draft"},
+  {id:"coaching",label:"Coaching",short:"Coaching"},{id:"frontoffice",label:"Front Office",short:"Front Office"},{id:"contracts",label:"Contracts",short:"Contracts"},{id:"trade",label:"Trade & Market",short:"Trade"},
   {id:"league",label:"League",short:"League"},{id:"legacy",label:"Legacy Hall",short:"Legacy Hall",tiny:"Legacy"},
 ];
 // Screens reached from the menu rather than the bar (search finds them too).
 const EXTRA_SCREENS = [{id:"activity",label:"News & Inbox"},{id:"updates",label:"Game updates"},{id:"settings",label:"Settings"}];
-// Old screen ids (used by the home screen, search and saved links) map onto the new hubs.
-const ALIAS = { roster:["lines","roster"], playoffs:["league","playoffs"], analysis:["coaching","plan"],
-  operations:["frontoffice","ops"], block:["trade","block"], freeagency:["trade","fa"], deadline:["trade","deadline"], frenzy:["trade","frenzy"], trophies:["legacy"], records:["league","records"], trade:["trade","trade"], pipeline:["development","prospects"] };
-// Phones keep the standings, stats, schedule and playoffs on one screen with a chip for each.
-const PHONE_ALIAS = { standings:["season","standings"], stats:["season","stats"], schedule:["season","schedule"], playoffs:["season","playoffs"] };
 
 const CLOUD_EVERY_MS = 60000;
 
@@ -120,7 +115,8 @@ export default function App({ resume = false }) {
   const [themeNow, setThemeNow] = useState(getTheme);
   // go("roster") opens the Lines hub on its Roster section, go("league","tx") the League hub on transactions, and so on.
   // The Draft screen picks its tab from `draftWant` (Home's reminders open Scout assignments, Scouts).
-  const go = useCallback((id, k) => { const [t, kk] = (phoneRef.current && PHONE_ALIAS[id]) || ALIAS[id] || [id, k]; setTab(t); if (kk || k) setSub(t, kk || k); if (t === "draft" && (kk || k)) setDraftWant({ v: kk || k, n: Date.now() }); setMoreOpen(false); }, [setSub]);
+  // go(id, k): ui/navRoute.js maps old ids (roster, playoffs, freeagency...) onto the sections.
+  const go = useCallback((id, k) => { const [t, kk] = route(id, k, leagueRef.current?.phase); setTab(t); if (kk) setSub(t, kk); else if (t === "standings" || t === "contracts") setSub(t, null); if (t === "draft" && kk) setDraftWant({ v: kk, n: Date.now() }); setMoreOpen(false); }, [setSub]);
   const [searchOpen,setSearchOpen]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [ffOpen,setFfOpen]=useState(false);
@@ -586,8 +582,9 @@ export default function App({ resume = false }) {
   const space = capSpace(league, user);
   const badgeFor = (id) => {
     if (id === "draft" && league.phase === "draft") return "LIVE";
-    if (id === "trade") { if (deadlinePending(league)) return "LIVE"; if (league.phase === "resign" || league.phase === "freeagency") return "OPEN"; const n = userOffers(league).length; return n ? String(n) : null; }
-    if (id === "league" && league.phase === "playoffs") return "ON";
+    if (id === "trade") { if (deadlinePending(league)) return "LIVE"; if (league.phase === "freeagency") return "OPEN"; const n = userOffers(league).length; return n ? String(n) : null; }
+    if (id === "contracts" && league.phase === "resign") return "OPEN";
+    if (id === "standings" && league.phase === "playoffs" && league.playoffs?.champion == null) return "ON";
     return null;
   };
 
@@ -597,26 +594,14 @@ export default function App({ resume = false }) {
   const unread = Math.max(0, league.inbox.length - (league.settings.activityReadCount || 0));
 
   // ---------- Phones ----------
-  // The bottom bar: Home, Lines, Scouting (the Draft while it runs), whatever the season phase is
-  // about, and More. The phase item follows the football game's: Camp, Standings, Playoffs, then
-  // the off-season's own screen.
-  const linesSub = sub.lines || "lines";
+  // The bottom bar is fixed: Home, Lineup, Standings, Development and More (every other screen,
+  // grouped by the computer's sections). More lights up when the screen you're on lives there.
   const tradeSub = sub.trade || "trade";
-  const PHASE_ITEM = {
-    preseason: { key: "camp", icon: "camp", label: "Camp", on: tab === "lines" && linesSub === "roster", onClick: () => go("lines", "roster") },
-    regular: { key: "season", icon: "standings", label: "Standings", on: tab === "season", onClick: () => go("season", sub.season || "standings") },
-    playoffs: { key: "season", icon: "trophies", label: "Playoffs", on: tab === "season", onClick: () => go("season", "playoffs") },
-    draft: { key: "trade", icon: "trade", label: "Trade", on: tab === "trade" && tradeSub === "trade", onClick: () => go("trade", "trade") },
-    resign: { key: "fa", icon: "freeagency", label: "Re-sign", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
-    freeagency: { key: "fa", icon: "freeagency", label: "Free Agency", on: tab === "trade" && tradeSub === "fa", onClick: () => go("freeagency") },
-  };
   const phoneNav = [
     { key: "home", icon: "home", label: "Home", on: tab === "dashboard", onClick: () => go("dashboard") },
-    { key: "lines", icon: "lines", label: "Lines", on: tab === "lines" && !(league.phase === "preseason" && linesSub === "roster"), onClick: () => go("lines", "lines") },
-    // Development is the middle tab; the Draft takes its place while the draft runs.
-    league.phase === "draft" ? { key: "draft", icon: "draft", label: "Draft", on: tab === "draft", onClick: () => go("draft"), badge: badgeFor("draft") }
-      : { key: "development", icon: "stats", label: "Development", on: tab === "development", onClick: () => go("development") },
-    PHASE_ITEM[league.phase] || PHASE_ITEM.regular,
+    { key: "lines", icon: "lines", label: "Lineup", on: tab === "lines" || tab === "coaching", onClick: () => go("lines", "lines") },
+    { key: "standings", icon: "standings", label: "Standings", on: tab === "standings", onClick: () => go("standings"), badge: badgeFor("standings") },
+    { key: "development", icon: "development", label: "Development", on: tab === "development", onClick: () => go("development") },
   ];
   // The day's main action, then the rest behind the ▾ (the same act functions as the top bar's).
   const phoneActions = (() => {
@@ -714,31 +699,6 @@ export default function App({ resume = false }) {
   // The deadline desk has its own action bar (the clock's controls).
   const onDeadlineDesk = tab === "trade" && tradeSub === "deadline" && tradeDeadlineOpen && league.deadline?.year === league.year;
   const injOn = league.settings.injuries !== false;
-  // More: every screen, the sections inside each, and the settings.
-  const moreScreens = [
-    ...NAV.filter((n) => n.id !== "dashboard").flatMap((n) => (n.id === "schedule" ? [{ key: "season", label: "Schedule & Standings", on: tab === "season", onClick: () => go("season", "standings") }] : n.id === "stats" || n.id === "standings" ? [] : [{ key: n.id, label: n.label, on: tab === n.id, badge: badgeFor(n.id), onClick: () => go(n.id) }])),
-    { key: "activity", label: unread ? `News & Inbox (${unread})` : "News & Inbox", on: tab === "activity", onClick: () => go("activity") },
-    { key: "settings", label: "Settings", on: tab === "settings", onClick: () => go("settings") },
-  ];
-  // a hub on a given section (go() would send "trade" or "development" to their first one)
-  const openSub = (t, k) => { setTab(t); setSub(t, k); setMoreOpen(false); };
-  const jump = (t, k, label, cur) => ({ key: `${t}-${k}`, label, on: tab === t && cur === k, onClick: () => openSub(t, k) });
-  const moreJumps = [
-    { label: "Lines", items: [jump("lines", "lines", "Lines", linesSub), jump("lines", "roster", league.phase === "preseason" ? "Roster & preseason games" : "Roster", linesSub)] },
-    { label: "Season", items: SEASON_TABS.map(([k, l]) => jump("season", k, l, sub.season || "standings")) },
-    { label: "Trade & Market", items: [jump("trade", "trade", "Trade Center", tradeSub), jump("trade", "block", "Trade Block", tradeSub), jump("trade", "fa", league.phase === "resign" ? "Re-sign" : "Free Agency", tradeSub), ...(tradeDeadlineOpen ? [jump("trade", "deadline", "Deadline Day", tradeSub)] : [])] },
-    { label: "Front Office", items: [["overview", "Overview"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]].map(([k, l]) => jump("frontoffice", k, l, sub.frontoffice || "overview")) },
-    { label: "Coaching", items: [jump("coaching", "coaching", "Head coach", sub.coaching || "coaching"), jump("coaching", "plan", "Game plan", sub.coaching || "coaching")] },
-    { label: "Development", items: [["overview", "Overview"], ["plan", "Season plan"], ["prospects", "Prospects"]].map(([k, l]) => jump("development", k, l, devView(sub.development))) },
-    { label: "League", items: [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]].map(([k, l]) => jump("league", k, l, sub.league || "standings")) },
-  ];
-  // phones: swipe sideways to the next or previous section of the hub you're in
-  const swipeHub = (dir) => {
-    const g = moreJumps.find((x) => x.items.some((it) => it.on));
-    if (!g) return;
-    const i = g.items.findIndex((it) => it.on), next = g.items[i + dir];
-    if (next) next.onClick();
-  };
   const moreActions = [
     { label: "Save game", onClick: () => { flushSave(); setMoreOpen(false); showToast("Game saved in this browser."); } },
     { label: injOn ? "Injuries: on (tap to turn off)" : "Injuries: off (tap to turn on)", onClick: () => { const healed = setInjuriesEnabled(league, !injOn); commit(); showToast(!injOn ? "Injuries enabled." : `Injuries disabled. ${healed} players restored to full health.`); } },
@@ -753,21 +713,30 @@ export default function App({ resume = false }) {
   // ---------- Desktop: the bar and each section's header ----------
   const frenzyOpen = league.phase === "freeagency" && (!!frenzyFor(league) || (league.fa?.day || 0) === 0);
   const sections = sectionsFor(league, { deadlineOpen: tradeDeadlineOpen, frenzyOpen });
-  const draftSub = { ...sub, draft: draftView };
-  const where = sectionOf(sections, tab, draftSub);
+  // the hubs' current screens, with the phase's defaults (Standings opens on the bracket in the playoffs)
+  const navSub = { ...defaultSubs(league), ...Object.fromEntries(Object.entries(sub).filter(([, v]) => v != null)), draft: draftView };
+  const draftSub = navSub;
+  const where = sectionOf(sections, tab, navSub);
   const openScreen = (scr) => { const [, t, k] = scr; if (t === "draft" && k) { setDraftWant({ v: k, n: Date.now() }); setTab("draft"); } else { setTab(t); if (k) setSub(t, k); } setMoreOpen(false); };
-  for (const s of sections) s.badge = s.id === "draft" ? badgeFor("draft") : s.id === "market" ? badgeFor("trade") : s.id === "season" ? badgeFor("league") : null;
-  // Phones: the More sheet in the bar's groups (the season screens open on the phone's Season hub).
+  for (const s of sections) s.badge = s.id === "draft" ? badgeFor("draft") : s.id === "market" ? badgeFor("trade") : s.id === "standings" ? badgeFor("standings") : s.id === "contracts" ? badgeFor("contracts") : null;
+  // Phones: the More sheet in the bar's groups, one row per screen.
+  const screenBadge = (sec, scr) => (sec.id === "draft" && scr[2] === "floor" ? badgeFor("draft") : scr[1] === "trade" && (scr[2] === "deadline" || scr[2] === "fa") ? badgeFor("trade") : scr[1] === "contracts" && scr[2] === "resign" ? badgeFor("contracts") : scr[1] === "standings" && scr[2] === "playoffs" ? badgeFor("standings") : null);
   const moreGroups = [
-    ...sections.filter((sec) => sec.id !== "home").map((sec) => ({ label: sec.label, items: sec.screens.map((scr) => {
+    ...sections.filter((sec) => sec.id !== "home").map((sec) => ({ id: sec.id, label: sec.label, items: sec.screens.map((scr) => {
       const [label, t, k] = scr;
-      const seasonKey = PHONE_ALIAS[t] ? t : t === "league" && k === "playoffs" ? "playoffs" : null;
-      return { key: `${t}-${k || ""}-${label}`, label, badge: sec.id === "draft" && k === "floor" ? badgeFor("draft") : t === "trade" && (k === "deadline" || k === "fa") ? badgeFor("trade") : null,
-        on: seasonKey ? tab === "season" && (sub.season || "standings") === seasonKey : screenOn(scr, tab, draftSub),
-        onClick: () => (seasonKey ? go(seasonKey) : openScreen(scr)) };
+      return { key: `${t}-${k || ""}-${label}`, label, badge: screenBadge(sec, scr), on: screenOn(scr, tab, navSub), onClick: () => openScreen(scr) };
     }) })),
     { label: "Your club", items: [{ key: "activity", label: unread ? `News & inbox (${unread})` : "News & inbox", on: tab === "activity", onClick: () => go("activity") }] },
   ];
+  // phones: swipe sideways to the next or previous screen of the section you're in
+  const swipeHub = (dir) => {
+    const g = moreGroups.find((x) => x.items.some((it) => it.on));
+    if (!g) return;
+    const i = g.items.findIndex((it) => it.on), next = g.items[i + dir];
+    if (next) next.onClick();
+  };
+  // More carries the draft's and the deadline's LIVE while they run.
+  const moreBadge = badgeFor("draft") || (deadlinePending(league) ? "LIVE" : null);
   const deskMenu = [
     <button key="n" role="menuitem" onClick={() => go("activity")}>News & inbox{unread > 0 && <span className="badge">{unread}</span>}</button>,
     <button key="sv" role="menuitem" onClick={() => { flushSave(); showToast("Game saved in this browser."); }}>Save game</button>,
@@ -784,18 +753,18 @@ export default function App({ resume = false }) {
   ].filter(Boolean);
   const deskBar = (
     <DeskBar league={league} user={user} sections={sections} cur={live ? null : where?.section.id || null}
-      onSection={(s) => { if (live) return; const keep = s.screens.find((scr) => screenOn(scr, tab, draftSub)); openScreen(keep || s.screens[0]); }}
+      onSection={(s) => { if (live) return; const keep = s.screens.find((scr) => screenOn(scr, tab, draftSub));
+        // Standings and Contracts open on the phase's screen (the bracket in the playoffs, Re-sign in re-sign week).
+        if (!keep && (s.id === "standings" || s.id === "contracts")) { go(s.screens[0][1]); return; }
+        openScreen(keep || s.screens[0]); }}
       onGo={(id) => go(id)} onSearch={() => !live && setSearchOpen(true)} pills={live ? null : deskPills}
       actions={live ? null : <OfflineChip />} ff={live ? null : <>{deskMain}{deskFF.length > 0 && <div className="gg-ff"><button className="gg-ff-btn rk-quiet" aria-haspopup="menu" aria-expanded={ffOpen} title="Fast forward" onClick={() => setFfOpen((v) => !v)}>⏩</button>{ffOpen && <><div className="rk-scrim" onClick={() => setFfOpen(false)} /><div className="gg-ffmenu" role="menu">{deskFF.map(([l, f]) => <button key={l} role="menuitem" onClick={() => { setFfOpen(false); f(); }}>{l}</button>)}</div></>}</div>}</>}
       menu={deskMenu} />
   );
   // Every section opens on the same hero (common.jsx SectionHero, Gridiron's Team header): the club's
   // colours, the section's block title, the screen's own numbers (heroStats.js) and the section's
-  // screens as underline tabs. Phones get the compact band; their Season hub is one section.
-  const heroSpec = live || tab === "dashboard" ? null : phone && tab === "season" ? (() => {
-    const cur = sub.season || (league.phase === "playoffs" ? "playoffs" : "standings");
-    return { id: "season", label: "Season", key: cur, tabs: SEASON_TABS.map(([k, l]) => [k, l, k === cur, k === "playoffs" && league.phase === "playoffs" ? "ON" : null]), onTab: (k) => setSub("season", k) };
-  })() : where && where.section.id !== "home" ? {
+  // screens as underline tabs. Phones get the compact band.
+  const heroSpec = live || tab === "dashboard" ? null : where && where.section.id !== "home" ? {
     id: where.section.id, label: where.section.label,
     key: where.screen[2] || where.screen[1],
     tabs: where.section.screens.map((scr) => [scr[0], scr[0], scr === where.screen, scr[1] === "trade" && scr[2] === "deadline" ? badgeFor("trade") : scr[1] === "draft" && scr[2] === "floor" ? badgeFor("draft") : null]),
@@ -822,8 +791,8 @@ export default function App({ resume = false }) {
                 {tab === "lines" && <LinesHub sub={sub.lines} onSub={(k) => setSub("lines", k)} />}
                 {tab === "schedule" && <SchedulePage />}
                 {tab === "stats" && <StatsPage />}
-                {tab === "standings" && <StandingsPage />}
-                {tab === "season" && <SeasonHub league={league} sub={sub.season} onSub={(k) => setSub("season", k)} act={act} />}
+                {tab === "standings" && <StandingsHub sub={navSub.standings} act={act} />}
+                {tab === "contracts" && <ContractsHub sub={navSub.contracts} />}
                 {tab === "draft" && <DraftPage act={act} want={draftWant} onView={setDraftView} />}
                 {tab === "coaching" && <CoachingHub sub={sub.coaching} onSub={(k) => setSub("coaching", k)} />}
                 {tab === "frontoffice" && <FrontOfficeHub sub={sub.frontoffice} onSub={(k) => setSub("frontoffice", k)} />}
@@ -869,7 +838,7 @@ export default function App({ resume = false }) {
         <div id="rk-dock" className="rk-dock" />
         {phone && moreOpen && !live && <MoreSheet groups={moreGroups} actions={moreActions} onClose={() => setMoreOpen(false)} />}
         {phone && !live && !busy && !moreOpen && !modal && !searchOpen && !onDeadlineDesk && !(tab === "trade" && tradeSub === "trade") && <MobileActionBar key={`${league.phase}-${tab}`} actions={phoneActions} />}
-        {phone && !live && <MobileNav items={phoneNav} moreOpen={moreOpen} onMore={() => setMoreOpen((o) => !o)} />}
+        {phone && !live && <MobileNav items={phoneNav} moreOpen={moreOpen} moreBadge={moreBadge} onMore={() => setMoreOpen((o) => !o)} />}
         {phone && <TapTips />}
         {confirmEl}
         <FeedbackToast toast={toastHead} waiting={toasts.length - 1} onDismiss={nextToast} />

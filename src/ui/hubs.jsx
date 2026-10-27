@@ -17,6 +17,8 @@ import LeaguePage from "./LeaguePage.jsx";
 import DevelopmentDesk from "./DevelopmentDesk.jsx";
 import CapOverview, { CapGuide } from "./CapOverview.jsx";
 import RecordBookPage from "./RecordBookPage.jsx";
+import ContractsTable from "./ContractsTable.jsx";
+import { ResignPage } from "./FreeAgencyPage.jsx";
 import { deadlinePending, deadlineActive, userOffers } from "../engine/market.js";
 
 // One body for a family of screens. The section hero above (App: common.jsx SectionHero) carries
@@ -63,9 +65,10 @@ export function CoachingHub({ sub, onSub }) {
 export function FrontOfficeHub({ sub, onSub }) {
   const { league } = useGame();
   const t = league.teams[league.userTid];
-  const tabs = [["overview", "Overview"], ["contracts", "Contracts"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]];
+  // Contracts is its own section now (ContractsHub); the cap overview stays here.
+  const tabs = [["overview", "Overview"], ["owner", "Owner"], ["ops", "Operations"], ["capguide", "How the cap works"]];
   return (
-    <Hub title="Front Office" status={`${t.city} ${t.name} · your cap, every contract, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
+    <Hub title="Front Office" status={`${t.city} ${t.name} · your cap, the owner and hockey operations`} tabs={tabs} sub={sub} onSub={onSub}>
       {(cur) => (cur === "ops" ? <HockeyOperationsPage /> : cur === "overview" ? <CapOverview /> : cur === "capguide" ? <CapGuide /> : <FrontOfficePage view={cur} />)}
     </Hub>
   );
@@ -79,9 +82,9 @@ export function DevelopmentHub({ sub, onSub }) {
 export function TradeHub({ sub, onSub, seed }) {
   const { league } = useGame();
   const dl = (league.phase === "regular" || league.phase === "playoffs") && (deadlinePending(league) || (league.deadline?.year === league.year && !league.deadline.synthetic));
-  const tabs = [["trade", "Trade Center"], ["block", "Trade Block"], ["fa", league.phase === "resign" ? "Re-sign" : "Free Agency"], ...(dl ? [["deadline", "Deadline Day"]] : []), ...(league.phase === "freeagency" && (frenzyFor(league) || (league.fa?.day || 0) === 0) ? [["frenzy", "July 1 Frenzy"]] : [])];
+  const tabs = [["trade", "Trade Center"], ["block", "Trade Block"], ["fa", "Free Agency"], ...(dl ? [["deadline", "Deadline Day"]] : []), ...(league.phase === "freeagency" && (frenzyFor(league) || (league.fa?.day || 0) === 0) ? [["frenzy", "July 1 Frenzy"]] : [])];
   const offers = userOffers(league).length;
-  const badges = { block: offers ? String(offers) : null, fa: league.phase === "resign" || league.phase === "freeagency" ? "OPEN" : null, deadline: deadlinePending(league) || deadlineActive(league) ? "LIVE" : null, frenzy: league.phase === "freeagency" && !frenzyFor(league)?.done && (league.fa?.day || 0) === 0 ? "LIVE" : null };
+  const badges = { block: offers ? String(offers) : null, fa: league.phase === "freeagency" ? "OPEN" : null, deadline: deadlinePending(league) || deadlineActive(league) ? "LIVE" : null, frenzy: league.phase === "freeagency" && !frenzyFor(league)?.done && (league.fa?.day || 0) === 0 ? "LIVE" : null };
   return (
     <Hub title="Trade & Market" status="Trades, the league-wide block, free agency and the deadline" tabs={tabs} sub={sub} onSub={onSub} badges={badges} deskTabs={[]}>
       {(cur) => (cur === "block" ? <TradeBlockPage /> : cur === "fa" ? <FreeAgencyPage /> : cur === "deadline" ? <DeadlinePage /> : cur === "frenzy" ? <FrenzyPage /> : <TradePage seed={seed} />)}
@@ -89,14 +92,32 @@ export function TradeHub({ sub, onSub, seed }) {
   );
 }
 
-export function LeagueHub({ sub, onSub, act }) {
+// League: one tab for the clubs, the league's history (awards, Cups) and the retired, with the
+// Record Book and Transactions beside it in Front Office. Standings and the playoffs have their own section.
+export const LEAGUE_VIEWS = [["teams", "Teams"], ["awards", "History"], ["retired", "Retired"]];
+export function LeagueHub({ sub, onSub }) {
   const { league } = useGame();
-  // The Legacy Hall is its own tab in the bar (as in the football game).
-  const tabs = [["standings", "Standings"], ["playoffs", "Playoffs"], ["teams", "Teams"], ["records", "Record Book"], ["awards", "Awards & History"], ["tx", "Transactions"], ["retired", "Retired"]];
-  const badges = { playoffs: league.phase === "playoffs" ? "ON" : null };
+  const tabs = [...LEAGUE_VIEWS, ["records", "Record Book"], ["tx", "Transactions"]];
+  const cur = tabs.some(([k]) => k === sub) ? sub : "teams";
   return (
-    <Hub title="League" status={`${league.year}-${String(league.year + 1).slice(2)} · 32 clubs`} tabs={tabs} sub={sub} onSub={onSub} badges={badges} deskTabs={["standings", "teams", "retired"].includes(sub || "standings") ? ["teams", "retired"] : []}>
-      {(cur) => (cur === "standings" ? <StandingsPage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : cur === "records" ? <RecordBookPage /> : <LeaguePage view={cur} />)}
+    <Hub title="League" status={`${league.year}-${String(league.year + 1).slice(2)} · 32 clubs`} tabs={tabs} sub={cur} onSub={onSub} deskTabs={LEAGUE_VIEWS.some(([k]) => k === cur) ? LEAGUE_VIEWS.map(([k]) => k) : []}>
+      {(c) => (c === "records" ? <RecordBookPage /> : <LeaguePage view={c} />)}
     </Hub>
   );
+}
+
+// Standings: the tables and the playoff picture, and the Playoffs (the bracket while they're on,
+// the bracket today's seeds would make before that). The hero carries the two as tabs.
+export function StandingsHub({ sub, act }) {
+  const { league } = useGame();
+  const cur = sub === "playoffs" || sub === "table" ? sub : league.phase === "playoffs" ? "playoffs" : "table";
+  return <div className="gg-embed">{cur === "playoffs" ? <PlayoffsPage act={act} /> : <StandingsPage />}</div>;
+}
+
+// Contracts: every deal you carry, and in re-sign week the Re-sign screen first.
+export function ContractsHub({ sub }) {
+  const { league } = useGame();
+  const resign = league.phase === "resign";
+  const cur = sub === "resign" && resign ? "resign" : sub === "contracts" ? "contracts" : resign ? "resign" : "contracts";
+  return <div className="gg-embed">{cur === "resign" ? <ResignPage /> : <ContractsTable />}</div>;
 }

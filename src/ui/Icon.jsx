@@ -6,6 +6,8 @@ const shapes={
  schedule:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h3m4 0h3"/></>,
  standings:<><path d="M4 20V10h4v10m4 0V4h4v16m4 0v-7M2 21h20"/></>,
  stats:<><path d="M3 3v18h18M6 15l5-5 4 3 6-7"/></>,
+ development:<><path d="M4 20h16"/><path d="m5 15 5-5 3 3 6-6"/><path d="M14 7h5v5"/></>,
+ contracts:<><path d="M6 3h9l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h6m-6 4h4"/></>,
  trophies:<><path d="M7 3h10v6a5 5 0 0 1-10 0V3Zm0 2H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 14v5m-5 2h10m-8-2h6"/></>,
  trade:<><path d="M3 7h17m-4-4 4 4-4 4M21 17H4m4-4-4 4 4 4"/></>,
  block:<><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 3h6v4H9V3Zm0 9h6m-6 4h6"/></>,

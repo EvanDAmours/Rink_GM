@@ -147,7 +147,7 @@ test("off-season board: biggest needs with reasons beside the deals ending, each
   for (const r of b.list) {
     assert.equal(r.p.yrs, 1);
     assert.ok(t.roster.includes(r.p.id));
-    assert.deepEqual(r.to, ["frontoffice", "contracts"]);
+    assert.deepEqual(r.to, ["contracts", "contracts"]);
   }
   assert.ok(b.list.every((r, i) => i === 0 || b.list[i - 1].p.ovr >= r.p.ovr), "best players first");
 
@@ -157,7 +157,7 @@ test("off-season board: biggest needs with reasons beside the deals ending, each
   for (const p of ending) p.yrs = 0;
   const rb = offseasonBoard(lg);
   assert.equal(rb.kind, "expiring");
-  assert.ok(rb.list.length > 0 && rb.list.every((r) => r.p.yrs === 0 && r.to[0] === "freeagency"));
+  assert.ok(rb.list.length > 0 && rb.list.every((r) => r.p.yrs === 0 && r.to.join() === "contracts,resign"));
   assert.ok(rb.needs.every((n) => n.to[0] === "freeagency"));
 
   // Once free agency opens: the young core instead, toward the development screens.

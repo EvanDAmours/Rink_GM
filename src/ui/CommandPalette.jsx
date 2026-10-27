@@ -2,7 +2,7 @@ import React,{useMemo,useState,useId} from 'react';
 import {Modal,TeamBadge} from './common.jsx';
 import Icon from './Icon.jsx';
 // Screens whose id isn't an icon name borrow the nearest one.
-const ICON={legacy:'trophies',activity:'bell',updates:'records',coaching:'operations',development:'stats'};
+const ICON={legacy:'trophies',activity:'bell',updates:'records',coaching:'operations',development:'development',contracts:'contracts',playoffs:'trophies'};
 const normalize=value=>String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 export default function CommandPalette({league,nav,onNavigate,onPlayer,onTeam,onClose}){
  const listId=useId();

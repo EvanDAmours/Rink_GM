@@ -39,3 +39,4 @@
   .app .pp-rec { min-width: 50px; font-size: 12.5px; }
   .app .pp-seed { width: 26px; }
 }
+.app button.link.pp-tobracket { background: none; padding: 0; min-height: 0; font-weight: 700; color: #93c5fd; }

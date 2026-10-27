@@ -18,6 +18,8 @@ import { userOffers } from "../engine/market.js";
 import { capOverview } from "../engine/capOverview.js";
 import { gmCareer } from "../engine/legacy.js";
 import { myOffers } from "../engine/negotiations.js";
+import { keyContracts } from "../engine/home.js";
+import { expiringPlayers } from "../engine/offseason.js";
 
 const ord = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"}`;
 const last = (n) => String(n || "").split(" ").slice(-1)[0];
@@ -41,6 +43,7 @@ export function heroEyebrow(id, league, user) {
   const yr = `${league.year}-${String(league.year + 1).slice(2)}`;
   if (id === "team") return "Your team";
   if (id === "standings" || id === "season") return `${yr} season`;
+  if (id === "contracts") return league.phase === "resign" ? "Re-signing week" : `${user.city} ${user.name}`;
   if (id === "development") return "Your players";
   if (id === "draft") return `${league.phase === "draft" && league.draft ? league.draft.year : league.draftClassYear} NHL Draft`;
   if (id === "market") return league.phase === "freeagency" ? "Free agency is open" : league.phase === "resign" ? "Re-signing week" : "The market";
@@ -48,7 +51,7 @@ export function heroEyebrow(id, league, user) {
   return "";
 }
 
-// key: the screen inside the section (lines, roster, coaching, schedule, playoffs, board, fa...).
+// key: the screen inside the section (lines, roster, coaching, table, playoffs, board, fa, contracts, resign...).
 export function heroStats(id, key, league, user) {
   return safe(() => statsFor(id, key, league, user), []) || [];
 }
@@ -96,27 +99,24 @@ function statsFor(id, key, league, user) {
       ["Prospects", rolled ? `${thriving}/${placed.length} thriving` : String(pros.length), rolled && thriving ? "good" : undefined],
     ];
   }
+  if (id === "contracts") {
+    const ov = capOverview(league, user);
+    const keys = safe(() => keyContracts(league, user), []) || [];
+    if (league.phase === "resign") {
+      const left = safe(() => expiringPlayers(league, user).filter((p) => p.yrs === 0).length, 0);
+      return [capStat(cap), ["To decide", String(left), left ? "warn" : "good"], ["Key players", String(keys.length), keys.length ? "warn" : undefined], ["Signed", `${c.active}/23`]];
+    }
+    const nextRoom = ov.next?.room;
+    return [capStat(cap), ["Expiring", String(ov.expiring)], ["Key deals", keys.length ? `${keys.length} due` : "None", keys.length ? "warn" : undefined], nextRoom != null && ["Next season", nextRoom >= 0 ? money(nextRoom) : `−${money(-nextRoom)}`, nextRoom >= 0 ? "good" : "bad"]].filter(Boolean);
+  }
+  if ((id === "standings" && key === "playoffs") || (id === "season" && key === "playoffs")) {
+    return playoffStats(league, user, rec, gp, pts);
+  }
   if (id === "standings" || (id === "season" && key === "standings")) {
     const div = divisionTable(league, user.div);
     const place = div.findIndex((t) => t.id === user.id) + 1;
     const inNow = gp ? playoffTeams(league).has(user.id) : null;
     return [["Record", recordStr(rec)], ["Points", String(pts)], ["Division", gp ? `${ord(place)} ${user.div}` : user.div], gp ? ["Playoffs", inNow ? "In" : "Out", inNow ? "good" : "bad"] : ["Played", `${gp}/82`], gdStat];
-  }
-  if (id === "season" && key === "playoffs") {
-    const po = league.playoffs;
-    const s = po ? userSeries(league) : null;
-    if (po) {
-      const champ = po.champion != null;
-      const won = champ && po.champion === user.id;
-      const alive = !!s;
-      const usW = s ? (s.top === user.id ? s.wTop : s.wBot) : null;
-      const themW = s ? (s.top === user.id ? s.wBot : s.wTop) : null;
-      const opp = s ? league.teams[s.top === user.id ? s.bot : s.top] : null;
-      return [["Round", champ ? "Done" : ROUND_NAMES[po.round || 0] || "Playoffs"], ["Status", won ? "Champions" : alive ? "Alive" : "Out", won ? "gold" : alive ? "good" : "bad"], opp && ["Opponent", opp.abbr], usW != null && themW != null && ["Series", `${usW}-${themW}`, usW > themW ? "good" : usW < themW ? "warn" : undefined]].filter(Boolean);
-    }
-    const inNow = gp ? playoffTeams(league).has(user.id) : null;
-    const left = gamesLeft(league)[user.id] || 0;
-    return [["Record", recordStr(rec)], ["Points", String(pts)], ["Playoffs", gp ? (inNow ? "In" : "Out") : "—", gp ? (inNow ? "good" : "bad") : undefined], ["Games left", String(left)]];
   }
   if (id === "season" && key === "stats") {
     const ps = user.roster.map((pid) => league.players[pid]).filter(Boolean);
@@ -167,7 +167,7 @@ function statsFor(id, key, league, user) {
     return [capStat(cap), ["Roster", `${c.active}/23`], ["Trade offers", String(userOffers(league).length), userOffers(league).length ? "good" : undefined], ["Free agents", String(fa)]];
   }
   if (id === "office") {
-    if (["club", "hall", "records", "awards", "tx", "teams"].includes(key)) {
+    if (["club", "hall", "records", "awards", "tx", "teams", "retired"].includes(key)) {
       const g = gmCareer(league);
       // The season under way counts too (the archive only holds finished ones).
       const now = !(league.seasonArchive || []).some((x) => x.year === league.year) && gp > 0;
@@ -177,4 +177,21 @@ function statsFor(id, key, league, user) {
     return [capStat(cap), ["Payroll", money(payroll(league, user))], ["Expiring", String(ov.expiring)], ["Owner trust", String(Math.round(user.owner?.trust ?? 60))], ["Fans", `${Math.round(user.owner?.fanSupport ?? 60)}%`]];
   }
   return [];
+}
+
+function playoffStats(league, user, rec, gp, pts) {
+  const po = league.playoffs;
+  const s = po ? userSeries(league) : null;
+  if (po) {
+    const champ = po.champion != null;
+    const won = champ && po.champion === user.id;
+    const alive = !!s;
+    const usW = s ? (s.top === user.id ? s.wTop : s.wBot) : null;
+    const themW = s ? (s.top === user.id ? s.wBot : s.wTop) : null;
+    const opp = s ? league.teams[s.top === user.id ? s.bot : s.top] : null;
+    return [["Round", champ ? "Done" : ROUND_NAMES[po.round || 0] || "Playoffs"], ["Status", won ? "Champions" : alive ? "Alive" : "Out", won ? "gold" : alive ? "good" : "bad"], opp && ["Opponent", opp.abbr], usW != null && themW != null && ["Series", `${usW}-${themW}`, usW > themW ? "good" : usW < themW ? "warn" : undefined]].filter(Boolean);
+  }
+  const inNow = gp ? playoffTeams(league).has(user.id) : null;
+  const left = gamesLeft(league)[user.id] || 0;
+  return [["Record", recordStr(rec)], ["Points", String(pts)], ["Playoffs", gp ? (inNow ? "In" : "Out") : "—", gp ? (inNow ? "good" : "bad") : undefined], ["Games left", String(left)]];
 }

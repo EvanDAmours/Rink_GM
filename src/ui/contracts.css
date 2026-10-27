@@ -109,3 +109,6 @@
 .ct-notes { display: flex; flex-direction: column; gap: 6px; }
 .ct-note { background: #141820; border: 1px solid #ffffff10; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.45; color: #cbd5e1; }
 .ct-note.up { color: #fde68a; } .ct-note.down { color: #bfdbfe; } .ct-note.loyal { color: #e9d5ff; } .ct-note.market { color: #cbd5e1; }
+/* Free agency in re-sign week: one quiet line pointing to Contracts › Re-sign */
+.app .gg-fa-resignlink { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 14px; color: #94a3b8; }
+.app .gg-fa-resignlink button.link { background: none; padding: 0; min-height: 0; font-weight: 700; color: #93c5fd; }

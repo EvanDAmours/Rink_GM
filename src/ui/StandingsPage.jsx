@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useGame, TeamBadge, TeamName, ovrColor } from "./common.jsx";
-import { divisionTable, conferenceTable, leagueTable, playoffPicture, clinchStatus, CLINCH_MARKS, conferenceSeeds, projectedFirstRound } from "../engine/standings.js";
-import { ROUND_NAMES } from "../engine/playoffs.js";
-import { Column, SeriesCard } from "./PlayoffsPage.jsx";
+import { divisionTable, conferenceTable, leagueTable, playoffPicture, clinchStatus, CLINCH_MARKS, conferenceSeeds } from "../engine/standings.js";
 import { DIVISIONS } from "../engine/teams.js";
 import { teamRatings } from "../engine/lines.js";
 import "./standings.css";
@@ -111,13 +109,10 @@ function PicConf({ conf, marks }) {
 }
 
 function PlayoffPicture({ marks }) {
-  const { league } = useGame();
+  const { league, go } = useGame();
   const me = league.teams[league.userTid];
   const tags = {};
   for (const c of ["East", "West"]) conferenceSeeds(league, c).seeds.forEach((s) => (tags[s.t.id] = s.tag));
-  const r1 = projectedFirstRound(league).map((m) => ({ ...m, round: 0, wTop: tags[m.top], wBot: tags[m.bot], games: [], winner: null }));
-  const pick = (c) => r1.filter((s) => s.conf === c);
-  const tbd = (n) => Array(n).fill(null);
   const myTag = tags[me.id];
   const gp = me.rec.gp;
   return (
@@ -125,22 +120,9 @@ function PlayoffPicture({ marks }) {
       <div className="pp-lead">
         If the season ended today{gp ? ` (after game ${gp})` : ""}. The top three in each division are in, plus two wild cards per conference.
         <b className={myTag ? "in" : "outl"}> The {me.name} {myTag ? `would be the ${me.conf}'s ${myTag} seed` : "are out right now"}.</b>
+        {go && <> <button type="button" className="link pp-tobracket" onClick={() => go("standings", "playoffs")}>See the bracket →</button></>}
       </div>
       <div className="pp-grid"><PicConf conf="East" marks={marks} /><PicConf conf="West" marks={marks} /></div>
-      {r1.length === 8 && (
-        <>
-          <div className="pp-bh">The bracket these seeds would make</div>
-          <div className="gg-bracket pp-bracket">
-            <Column side="left" title={`East · ${ROUND_NAMES[0]}`} list={pick("East")} />
-            <Column side="left" title={ROUND_NAMES[1]} list={tbd(2)} />
-            <Column side="left" title={ROUND_NAMES[2]} list={tbd(1)} />
-            <div className="gg-bcol final"><div className="gg-bcol-h">Stanley Cup Final</div><div className="gg-bcol-body"><SeriesCard s={null} /></div></div>
-            <Column side="right" title={ROUND_NAMES[2]} list={tbd(1)} />
-            <Column side="right" title={ROUND_NAMES[1]} list={tbd(2)} />
-            <Column side="right" title={`West · ${ROUND_NAMES[0]}`} list={pick("West")} />
-          </div>
-        </>
-      )}
     </div>
   );
 }

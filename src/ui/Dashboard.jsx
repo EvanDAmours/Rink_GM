@@ -260,7 +260,7 @@ export default function Dashboard({ act = {} }) {
         <div className="rk-tiles">
           <button className="rk-b rk-tile2 wide" onClick={() => go("roster", "injured")}><Icon name="operations" /><b>Injuries</b><span style={{ color: injN ? "#f97316" : undefined }}>{lg.settings?.injuries === false ? "Turned off" : injN ? `${injN} out${starters.length ? ` · ${starters.length} key` : ""}` : "All healthy"}</span></button>
           <button className="rk-b rk-tile2 wide" onClick={() => go("standings")}><Icon name="standings" /><b>Standings</b><span>{ORD(divRank)} in the {t.div}{odds != null ? ` · ${Math.round(odds * 100)}% playoff odds` : ""}</span><Icon name="chevron" size={16} /></button>
-          <button className="rk-b rk-tile2 wide" onClick={() => go("frontoffice", "contracts")}><Icon name="frontoffice" /><b>Cap space {money(room)}</b><span>{expiring ? `${expiring} expiring` : "No deals expiring"}</span><Icon name="chevron" size={16} /></button>
+          <button className="rk-b rk-tile2 wide" onClick={() => go("contracts", "contracts")}><Icon name="contracts" /><b>Cap space {money(room)}</b><span>{expiring ? `${expiring} expiring` : "No deals expiring"}</span><Icon name="chevron" size={16} /></button>
         </div>
         {!hasGame && needsCard}
         {!hasGame && <BuildYour23 foot={false} onPick={(pos) => { faStart.pos = pos; go("freeagency"); }} />}

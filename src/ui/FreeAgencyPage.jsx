@@ -55,6 +55,12 @@ function FaDayBar() {
   );
 }
 
+// Re-sign week: the re-sign screen lives under Contracts; one quiet line points there.
+function ResignLink() {
+  const { go } = useGame();
+  return <section className="gg-card gg-fa-resignlink"><span>Re-sign week: only you can talk to your expiring players. The market opens after it.</span> <button className="link" onClick={() => go("contracts", "resign")}>Open Contracts › Re-sign →</button></section>;
+}
+
 function ResignView() {
   const { league, commit, toast } = useGame();
   const user = league.teams[league.userTid];
@@ -68,7 +74,7 @@ function ResignView() {
   return (
     <section className="gg-card">
       <div className="gg-k">Re-sign window · {expiring.length} EXPIRING</div>
-      <div className="dim small" style={{ marginBottom: 8 }}>Re-sign expiring players, or use Front Office → Operations to qualify RFAs, negotiate with agents or seek arbitration. {signed.length} players under contract for next season · cap {money(capForYear(capYear(league)))} · space {money(capSpace(league, user))}.</div>
+      <div className="dim small" style={{ marginBottom: 8 }}>Re-sign expiring players, or use Front Office › Operations to qualify RFAs, negotiate with agents or seek arbitration. {signed.length} players under contract for next season · cap {money(capForYear(capYear(league)))} · space {money(capSpace(league, user))}.</div>
       <div className="gg-falist">
         {expiring.map((p) => {
           const ask = p.willing ? resignAsk(league, p, termFor(p)) : null;
@@ -96,6 +102,18 @@ function ResignView() {
   );
 }
 
+// Contracts › Re-sign (re-sign week): the roster you're building for next season, then each
+// expiring player with his ask, Negotiate and Let walk.
+export function ResignPage() {
+  const { go } = useGame();
+  return (
+    <div className="stack gg-fa">
+      <BuildYour23 onPick={(x) => { faStart.pos = x; go("trade", "fa"); }} foot={false} />
+      <ResignView />
+    </div>
+  );
+}
+
 export default function FreeAgencyPage() {
   const { league } = useGame();
   const [offerFor, setOfferFor] = useState(null);
@@ -117,11 +135,11 @@ export default function FreeAgencyPage() {
   return (
     <div className="stack gg-fa">
       <div className="gg-pagehead">
-        <div><h2>{league.phase === "resign" ? "Re-sign Players" : "Free Agency"}</h2><div className="gg-status">{league.phase === "freeagency" ? `${league.fa.day ? `Day ${league.fa.day} of ${FA_DAYS}` : "Opening day"} · ` : ""}{league.freeAgents.length} available · cap space <b style={{ color: capSpace(league, user) >= 0 ? "#22c55e" : "#ef4444" }}>{money(capSpace(league, user))}</b>{pendingSpend(league, user.id) > 0 && league.phase === "freeagency" ? <> ({money(pendingSpend(league, user.id))} in open offers)</> : null} · roster {counts(league, user).active}/{MAX_ROSTER}</div></div>
+        <div><h2>Free Agency</h2><div className="gg-status">{league.phase === "freeagency" ? `${league.fa.day ? `Day ${league.fa.day} of ${FA_DAYS}` : "Opening day"} · ` : ""}{league.freeAgents.length} available · cap space <b style={{ color: capSpace(league, user) >= 0 ? "#22c55e" : "#ef4444" }}>{money(capSpace(league, user))}</b>{pendingSpend(league, user.id) > 0 && league.phase === "freeagency" ? <> ({money(pendingSpend(league, user.id))} in open offers)</> : null} · roster {counts(league, user).active}/{MAX_ROSTER}</div></div>
         {!open && <span className="gg-phase">Market opens after the draft and re-sign period</span>}
       </div>
       <BuildYour23 onPick={(x) => { setPos(x); setNeedOnly(false); }} foot={false} />
-      {league.phase === "resign" && <ResignView />}
+      {league.phase === "resign" && <ResignLink />}
       <FaDayBar />
       <MyOffers onRaise={(id) => setOfferFor(id)} />
       <div className="gg-card">

@@ -71,7 +71,7 @@ test("contracts: one grouped row with names, from the second half on, never earl
   assert.match(it.title, new RegExp(`^${ps.length} key players need new deals$`));
   assert.ok(it.sub.split(", ").length <= 3, "a short subline: three names at most");
   assert.ok(it.sub.includes(ps[0].name.split(" ").slice(1).join(" ")));
-  assert.deepEqual(it.to, ["frontoffice", "contracts"]);
+  assert.deepEqual(it.to, ["contracts", "contracts"]);
   // every name is ending and key: 85+, a top-6 F / top-4 D / starting G, or off an entry-level deal
   for (const p of ps) assert.equal(p.yrs, 1);
   // a depth player in his last year is not a key player
@@ -118,7 +118,7 @@ test("contracts: Not now hides it for 30 days or until the next phase; re-sign w
   for (const id of t.roster) { const p = lg.players[id]; if (p.yrs === 1) p.yrs = 0; else if (p.yrs > 1) p.yrs -= 1; }
   const rs = needsAttention(lg).find((x) => x.key === "rmContracts");
   assert.ok(rs, "always in re-sign week");
-  assert.deepEqual(rs.to, ["freeagency"]);
+  assert.deepEqual(rs.to, ["contracts", "resign"]);
   assert.ok(!keys(lg).includes("resign"), "no duplicate re-sign row");
 });
 

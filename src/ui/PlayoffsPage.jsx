@@ -2,7 +2,7 @@ import React from "react";
 import { useGame, TeamBadge, TeamName } from "./common.jsx";
 import { ROUND_NAMES } from "../engine/playoffs.js";
 import { Trophy } from "./TrophyRoom.jsx";
-import { playoffPicture } from "../engine/standings.js";
+import { conferenceSeeds, projectedFirstRound } from "../engine/standings.js";
 
 // One best-of-seven matchup: two team rows with series wins, game chips below.
 export function SeriesCard({ s, compact = false }) {
@@ -49,39 +49,44 @@ export function Column({ list, title, side }) {
   );
 }
 
+// The bracket today's seeds would make (Standings › Playoffs before the playoffs begin).
+export function ProjectedBracket() {
+  const { league } = useGame();
+  const tags = {};
+  for (const c of ["East", "West"]) conferenceSeeds(league, c).seeds.forEach((s) => (tags[s.t.id] = s.tag));
+  const r1 = projectedFirstRound(league).map((m) => ({ ...m, round: 0, wTop: tags[m.top], wBot: tags[m.bot], games: [], winner: null }));
+  if (r1.length !== 8) return null;
+  const pick = (c) => r1.filter((s) => s.conf === c);
+  const tbd = (n) => Array(n).fill(null);
+  return (
+    <div className="gg-bracket pp-bracket">
+      <Column side="left" title={`East · ${ROUND_NAMES[0]}`} list={pick("East")} />
+      <Column side="left" title={ROUND_NAMES[1]} list={tbd(2)} />
+      <Column side="left" title={ROUND_NAMES[2]} list={tbd(1)} />
+      <div className="gg-bcol final"><div className="gg-bcol-h">Stanley Cup Final</div><div className="gg-bcol-body"><SeriesCard s={null} /></div></div>
+      <Column side="right" title={ROUND_NAMES[2]} list={tbd(1)} />
+      <Column side="right" title={ROUND_NAMES[1]} list={tbd(2)} />
+      <Column side="right" title={`West · ${ROUND_NAMES[0]}`} list={pick("West")} />
+    </div>
+  );
+}
+
 export default function PlayoffsPage({ act }) {
   const { league } = useGame();
   const po = league.playoffs;
+  // Before the playoffs: the bracket today's seeds would make (the seed lists live on Standings).
   if (!po) {
+    const me = league.teams[league.userTid];
+    const tags = {};
+    for (const c of ["East", "West"]) conferenceSeeds(league, c).seeds.forEach((s) => (tags[s.t.id] = s.tag));
+    const myTag = tags[me.id];
     return (
-      <div className="stack">
-        <div className="gg-pagehead"><div><h2>Playoff Picture</h2><div className="gg-status">Top three in each division plus two wild cards per conference qualify. The bracket tree appears once the playoffs begin.</div></div></div>
-        <div className="gg-stand-grid">
-          {["East", "West"].map((c) => {
-            const pic = playoffPicture(league, c);
-            const seeds = [];
-            pic.order.forEach((d) => pic.divs[d].forEach((t, i) => seeds.push({ t, tag: `${d[0]}${i + 1}`, d })));
-            pic.wildcards.forEach((t, i) => seeds.push({ t, tag: `WC${i + 1}`, d: "Wild card" }));
-            return (
-              <section className="gg-stand" key={c} style={{ "--acc": c === "East" ? "#3b82f6" : "#ef4444" }}>
-                <div className="gg-stand-h"><span>{c}ern Conference · if the playoffs started today</span><small>8 qualify</small></div>
-                <div className="gg-seedlist">
-                  {seeds.map(({ t, tag, d }, i) => (
-                    <div key={t.id} className={`gg-seed${t.id === league.userTid ? " me" : ""}${i === 5 ? " cut" : ""}`}>
-                      <span className="gg-seed-tag">{tag}</span><TeamBadge team={t} size={30} decorative /><span className="gg-seed-name"><b><TeamName tid={t.id} /></b><small>{d} · {t.rec.w}-{t.rec.l}-{t.rec.otl}</small></span><span className="gg-seed-pts">{t.rec.pts}</span>
-                    </div>
-                  ))}
-                  <div className="gg-seed-sub">Chasing</div>
-                  {pic.out.slice(0, 4).map((t) => (
-                    <div key={t.id} className={`gg-seed out${t.id === league.userTid ? " me" : ""}`}>
-                      <span className="gg-seed-tag">—</span><TeamBadge team={t} size={26} decorative /><span className="gg-seed-name"><b><TeamName tid={t.id} short /></b><small>{t.rec.w}-{t.rec.l}-{t.rec.otl}</small></span><span className="gg-seed-pts">{t.rec.pts}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+      <div className="stack gg-playoffs">
+        <div className="pp-lead">
+          The bracket these seeds would make if the season ended today{me.rec.gp ? ` (after game ${me.rec.gp})` : ""}. The real bracket is drawn when the regular season ends.
+          <b className={myTag ? "in" : "outl"}> The {me.name} {myTag ? `would open as the ${me.conf}'s ${myTag} seed` : "are out right now"}.</b>
         </div>
+        <ProjectedBracket />
       </div>
     );
   }

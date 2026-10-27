@@ -76,11 +76,11 @@ export function needsAttention(lg) {
   if (lg.phase === "resign") {
     const left = [...t.roster, ...t.prospects].map((id) => lg.players[id]).filter((p) => p && p.signed !== false && p.yrs === 0).length;
     // The grouped key-player reminder below says the same thing with names; one row, not two.
-    if (left && !keyDeals) add({ key: "resign", icon: "✍️", tone: "action", title: `${plural(left, "expiring contract")}: the re-sign window is open`, sub: "Only you can talk to them this week. Anyone you don't re-sign reaches free agency.", cta: "Re-sign", to: ["freeagency"] });
+    if (left && !keyDeals) add({ key: "resign", icon: "✍️", tone: "action", title: `${plural(left, "expiring contract")}: the re-sign window is open`, sub: "Only you can talk to them this week. Anyone you don't re-sign reaches free agency.", cta: "Re-sign", to: ["contracts", "resign"] });
   }
   // A short roster in the off-season (the football game's Build Your 53).
   const signed = signedForNextSeason(lg, t);
-  if (["resign", "freeagency"].includes(lg.phase) && signed < MAX_ROSTER) add({ key: "short", icon: "🧩", tone: lg.phase === "freeagency" && (lg.fa?.day ?? 0) >= FA_DAYS - 5 ? "urgent" : "action", title: `${signed} of ${MAX_ROSTER} NHL spots signed for next season`, sub: `${plural(MAX_ROSTER - signed, "spot")} to fill. ${lg.phase === "freeagency" ? "Sign free agents, trade, or let camp fill them from the farm." : "Re-sign your own players first; free agency opens next."}`, cta: lg.phase === "freeagency" ? "Free agency" : "Re-sign", to: ["freeagency"] });
+  if (["resign", "freeagency"].includes(lg.phase) && signed < MAX_ROSTER) add({ key: "short", icon: "🧩", tone: lg.phase === "freeagency" && (lg.fa?.day ?? 0) >= FA_DAYS - 5 ? "urgent" : "action", title: `${signed} of ${MAX_ROSTER} NHL spots signed for next season`, sub: `${plural(MAX_ROSTER - signed, "spot")} to fill. ${lg.phase === "freeagency" ? "Sign free agents, trade, or let camp fill them from the farm." : "Re-sign your own players first; free agency opens next."}`, cta: lg.phase === "freeagency" ? "Free agency" : "Re-sign", to: lg.phase === "freeagency" ? ["freeagency"] : ["contracts", "resign"] });
   // His head coach's last two seasons before he retires (coachContracts.js): a dismissible note.
   const hc = coachRetirementNotice(lg);
   if (hc) add({ key: "hcRetire", icon: "👔", tone: "info", title: `${t.coach.name} retires after ${hc.last}-${String(hc.last + 1).slice(2)}`, sub: `${hc.text} Line up his successor on the Coaching page.`, cta: "Coaching", to: ["frontoffice", "coaching"], dismiss: "hcNote" });
@@ -159,7 +159,7 @@ export function contractReminder(lg) {
   const last = (p) => p.name.split(" ").slice(1).join(" ") || p.name;
   const names = ps.slice(0, 3).map(last).join(", ") + (ps.length > 3 ? ` +${ps.length - 3}` : "");
   const resign = lg.phase === "resign";
-  return { key: "rmContracts", icon: "✍️", tone: resign ? "action" : "info", title: ps.length === 1 ? `${ps[0].name} needs a new deal` : `${ps.length} key players need new deals`, sub: names, cta: resign ? "Re-sign" : "Contracts", to: resign ? ["freeagency"] : ["frontoffice", "contracts"], dismiss: "contractsLater", dismissLabel: "Not now", pids: ps.map((p) => p.id) };
+  return { key: "rmContracts", icon: "✍️", tone: resign ? "action" : "info", title: ps.length === 1 ? `${ps[0].name} needs a new deal` : `${ps.length} key players need new deals`, sub: names, cta: resign ? "Re-sign" : "Contracts", to: resign ? ["contracts", "resign"] : ["contracts", "contracts"], dismiss: "contractsLater", dismissLabel: "Not now", pids: ps.map((p) => p.id) };
 }
 
 // Run a one-tap fix from Needs Attention. Returns { ok, msg }.
@@ -239,11 +239,11 @@ export function offseasonBoard(lg) {
   } else if (ph === "resign") {
     kind = "expiring";
     list = [...t.roster, ...t.prospects].map((id) => lg.players[id]).filter((p) => p && p.signed !== false && p.yrs === 0).sort((a, b) => b.ovr - a.ovr).slice(0, 5)
-      .map((p) => ({ p, note: p.willing === false ? "testing the market" : "re-sign now", to: ["freeagency"] }));
+      .map((p) => ({ p, note: p.willing === false ? "testing the market" : "re-sign now", to: ["contracts", "resign"] }));
   } else {
     kind = "expiring";
     list = roster.filter((p) => p.yrs === 1 && !p.extension).sort((a, b) => b.ovr - a.ovr).slice(0, 5)
-      .map((p) => ({ p, note: "deal ends this summer", to: ["frontoffice", "contracts"] }));
+      .map((p) => ({ p, note: "deal ends this summer", to: ["contracts", "contracts"] }));
     if (!list.length) { kind = "young"; list = roster.filter((p) => p.age <= 23).sort((a, b) => b.ovr - a.ovr).slice(0, 5).map((p) => ({ p, note: `POT ${p.pot}`, to: ["development"] })); }
   }
   return { needs, kind, title: kind === "young" ? "YOUR YOUNG CORE" : "DEALS ENDING", list, signed: ph === "resign" || ph === "freeagency" ? signedForNextSeason(lg, t) : counts(lg, t).active, target: MAX_ROSTER };

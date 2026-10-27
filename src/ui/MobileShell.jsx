@@ -1,15 +1,10 @@
-// Phone navigation, as in the football game: a slim header, a bottom tab bar (Home, Lines,
-// Scouting, whatever the season phase is about, More), the day's main action in a big button
+// Phone navigation, as in the football game: a slim header, a bottom tab bar (Home, Lineup,
+// Standings, Development, More), the day's main action in a big button
 // right above it (everything else one tap away behind the ▾), and a full-screen "More" sheet
 // with every other screen and the settings. App.jsx decides what goes in each; these draw it.
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { TeamBadge, money } from "./common.jsx";
-import { Hub } from "./hubs.jsx";
-import StandingsPage from "./StandingsPage.jsx";
-import StatsPage from "./StatsPage.jsx";
-import SchedulePage from "./SchedulePage.jsx";
-import PlayoffsPage from "./PlayoffsPage.jsx";
 import { OfflineChip } from "./OfflinePanel.jsx";
 import Icon from "./Icon.jsx";
 
@@ -28,14 +23,17 @@ export function PhoneHeader({ team, season, record, cap, live, unread, onSearch,
   );
 }
 
-// items: [{ key, icon, label, on, onClick, badge }] (icon = an Icon name); the More button is added last.
-export function MobileNav({ items, moreOpen, onMore }) {
+// items: [{ key, icon, label, on, onClick, badge }] (icon = an Icon name); the More button is added
+// last. More is lit while its sheet is open, and also when the screen you're on lives in it (none of
+// the four is), so one tab is always lit.
+export function MobileNav({ items, moreOpen, onMore, moreBadge }) {
+  const elsewhere = !items.some((it) => it.on);
   return (
     <nav className="rk-mnav" aria-label="Main" data-tour="nav">
-      {[...items, { key: "more", icon: "menu", label: "More", more: true }].map((it) => {
-        const on = it.more ? moreOpen : !moreOpen && it.on;
+      {[...items, { key: "more", icon: "menu", label: "More", more: true, badge: moreBadge }].map((it) => {
+        const on = it.more ? moreOpen || elsewhere : !moreOpen && it.on;
         return (
-          <button key={it.key} className={on ? "on" : ""} aria-current={on && !it.more ? "page" : undefined} aria-expanded={it.more ? moreOpen : undefined} onClick={it.more ? onMore : it.onClick}>
+          <button key={it.key} className={on ? "on" : ""} aria-current={on && (!it.more || (elsewhere && !moreOpen)) ? "page" : undefined} aria-expanded={it.more ? moreOpen : undefined} onClick={it.more ? onMore : it.onClick}>
             <span className="rk-mnav-ico" aria-hidden="true"><Icon name={it.icon} size={22} /></span>
             <span className="rk-mnav-lbl">{it.label}</span>
             {it.badge && <span className="rk-mnav-badge">{it.badge}</span>}
@@ -46,8 +44,8 @@ export function MobileNav({ items, moreOpen, onMore }) {
   );
 }
 
-// Every other screen, grouped like the computer's bar (Team, Season, Draft, Trades & FA,
-// Front Office), then saving and the settings. One column, nothing wider than the screen.
+// Every other screen, grouped like the computer's bar (Team, Standings, Season, Development, Draft,
+// Trades & FA, Contracts, Front Office), then saving and the settings. One column, nothing wider than the screen.
 // groups: [{ label, items: [{ key, label, on, onClick, badge }] }]; actions: [{ label, onClick }].
 export function MoreSheet({ groups, actions, onClose }) {
   const ref = useRef(null);
@@ -160,14 +158,4 @@ export function TapTips() {
   const left = Math.max(12, Math.min(tip.x - w / 2, window.innerWidth - w - 12));
   const above = tip.y > 140;
   return <div className="rk-taptip" role="tooltip" style={{ left, width: w, ...(above ? { bottom: window.innerHeight - tip.y + 14 } : { top: tip.y + 18 }) }}>{tip.text}</div>;
-}
-
-// Phones: the standings, stats, schedule and playoffs on one screen, a chip for each.
-export const SEASON_TABS = [["standings", "Standings"], ["stats", "Stats"], ["schedule", "Schedule"], ["playoffs", "Playoffs"]];
-export function SeasonHub({ league, sub, onSub, act }) {
-  return (
-    <Hub tabs={SEASON_TABS} sub={sub || (league.phase === "playoffs" ? "playoffs" : "standings")} onSub={onSub} deskTabs={[]}>
-      {(cur) => (cur === "stats" ? <StatsPage /> : cur === "schedule" ? <SchedulePage /> : cur === "playoffs" ? <PlayoffsPage act={act} /> : <StandingsPage />)}
-    </Hub>
-  );
 }

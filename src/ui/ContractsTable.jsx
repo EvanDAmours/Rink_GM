@@ -1,4 +1,4 @@
-// Front Office → Contracts (Gridiron 1.80 / 1.68 / 2.4 / 1.91): every deal on your books in one
+// Contracts (its own section; Gridiron 1.80 / 1.68 / 2.4 / 1.91): every deal on your books in one
 // sortable table. Filters for deals expiring, players you can extend now, retained salary and
 // buyouts, and contracts buried on the farm. Each row: cap hit, years left, RFA or UFA when it
 // ends, his clause, what a buyout costs and over how many seasons, the pending extension, and the

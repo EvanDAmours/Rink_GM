@@ -187,3 +187,20 @@ html:not(.light) .app.app.app .rk-prep-k, html:not(.light) .app.app.app .gg-pc-k
 .app.app.app .gg-ops-nav { gap: 8px; }
 .app.app.app .gg-ops-nav button { text-transform: none; letter-spacing: 0; border: 0; border-radius: 999px; background: #ffffff12; color: #cbd5e1; font-size: 13px; font-weight: 700; padding: 8px 14px; min-height: 36px; }
 .app.app.app .gg-ops-nav button.on { background: #fff; color: #0b1220; }
+
+/* ---------- The one player sheet (PlayerSheet.jsx): the card's width inside the soft shell ---------- */
+.app .modal.rk-soft.rk-wide.gg-pc-modal { width: min(1040px, calc(100vw - 20px)); }
+.app .rk-psheet .gg-pc-actions { padding-top: 2px; }
+.app .rk-psheet .gg-pc-actions button { min-height: 44px; padding: 0 16px; border-radius: 12px; font-weight: 700; }
+.app .rk-psheet-pros { --team: #1e293b; }
+@media (max-width: 760px) { .app .rk-psheet .gg-pc-actions button { flex: 1 1 140px; } }
+/* the actions stay in reach while the card scrolls */
+.app .rk-psheet .gg-pc-actions { position: sticky; bottom: 0; z-index: 2; margin: 0 -14px; padding: 12px 14px; background: #0d1424; border-top: 1px solid #ffffff10; }
+.app .rk-psheet .gg-pc-actions:empty { display: none; }
+@media (max-width: 760px) { .app .rk-psheet .gg-pc-actions { margin: 0 -10px; padding: 10px; } }
+.app .modal.rk-psheet .mbody { padding: 14px 14px 0; }
+.app .rk-psheet .gg-pc-close { margin-bottom: 14px; }
+@media (max-width: 760px) { .app .modal.rk-psheet .mbody { padding: 10px 10px 0; } .app .rk-psheet .gg-pc-close { margin-bottom: 10px; } }
+/* nine sections (Contracts joined the bar): a little tighter below 1400px so all of them fit */
+@media (max-width: 1399px) { .app.app.app .rk-bar-nav button { padding: 8px 8px; font-size: 14px; } .rk-bar { gap: 12px; } }
+@media (max-width: 1250px) { .app.app.app .rk-bar-nav button { padding: 7px 6px; font-size: 13.5px; } .rk-bar-nav .badge { margin-left: 4px; } }
