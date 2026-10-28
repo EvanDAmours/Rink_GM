@@ -20,6 +20,7 @@ import { LiveClock } from "./DraftClockText.jsx";
 import { userOffers } from "../engine/market.js";
 import { capOverview } from "../engine/capOverview.js";
 import { gmCareer } from "../engine/legacy.js";
+import { legacyCounts } from "../engine/legacyHall.js";
 import { myOffers } from "../engine/negotiations.js";
 import { keyContracts, signedForNextSeason } from "../engine/home.js";
 import { expiringPlayers } from "../engine/offseason.js";
@@ -50,7 +51,7 @@ export function heroEyebrow(id, league, user) {
   if (id === "development") return "Your players";
   if (id === "draft") return `${league.phase === "draft" && league.draft ? league.draft.year : league.draftClassYear} NHL Draft`;
   if (id === "market") return league.phase === "freeagency" ? "Free agency is open" : league.phase === "resign" ? "Re-signing week" : "The market";
-  if (id === "office") return `${user.city} ${user.name}`;
+  if (id === "office" || id === "legacy") return `${user.city} ${user.name}`;
   return "";
 }
 
@@ -178,8 +179,12 @@ function statsFor(id, key, league, user) {
     }
     return [capStat(cap), ["Roster", `${c.active}/23`], ["Trade offers", String(userOffers(league).length), userOffers(league).length ? "good" : undefined], ["Free agents", String(fa)]];
   }
+  if (id === "legacy") {
+    const n = legacyCounts(league, user.id);
+    return [["Stanley Cups", String(n.cups), n.cups ? "gold" : undefined], ["Retired numbers", String(n.numbers)], ["Hall of Famers", String(n.hof)], ["Seasons as GM", String(n.seasons)]];
+  }
   if (id === "office") {
-    if (["club", "hall", "records", "awards", "tx", "teams", "retired"].includes(key)) {
+    if (["club", "case", "gm", "records", "tx", "teams", "retired"].includes(key)) {
       const g = gmCareer(league);
       // The season under way counts too (the archive only holds finished ones).
       const now = !(league.seasonArchive || []).some((x) => x.year === league.year) && gp > 0;

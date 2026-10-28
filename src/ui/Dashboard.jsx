@@ -357,7 +357,7 @@ function PhaseCard({ lg, t, go, slot, series }) {
     if (out) rows.push(row("Your run", `Out in the ${ROUND_NAMES[last.round]} to ${lg.teams[last.winner].abbr}, ${last.top === t.id ? last.wTop : last.wBot}-${last.top === t.id ? last.wBot : last.wTop}`));
     if (!mine.length) rows.push(row("Your run", "Missed the playoffs"));
     if (champ) { rows.push(row("Champions", `${champ.city} ${champ.name}`)); if (lg.awards?.connSmythe) rows.push(row("Conn Smythe", lg.awards.connSmythe.name)); }
-    links = [["Bracket", () => go("playoffs")], ...(champ ? [["Awards", () => go("legacy")]] : [])];
+    links = [["Bracket", () => go("playoffs")], ...(champ ? [["Awards", () => go("legacy", "awards")]] : [])];
   } else if (lg.phase === "draft") {
     const done = draftDone(lg);
     const taken = Object.values(lg.players).filter((p) => p.draft?.year === lg.draft?.year && p.draft.tid === t.id).sort((a, b) => a.draft.pick - b.draft.pick);

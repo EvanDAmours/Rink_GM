@@ -280,6 +280,33 @@ html.light :where(.keep-dark, .rk-bc, .rk-pbc, .rk-ph, .lx-pc, .lg-wall, .lg-ban
 .gg-records .gg-rec.gold { background: var(--panel,#ffffff); color: var(--text,#1e293b); }
 .gg-records .gg-rec-pct { color: #475569; }
 .lg-tx-season { color: #475569; }
+.lh-h span { color: #0f172a; }
+.lh-h b { color: #a16207; }
+.lh-h small { color: #475569; }
+.app.app .lh-arrow { background: #e7ebf1f0; color: #0f172a; }
+.app.app .lh-arrow:hover { background: #dde3eb; }
+.lh-art-none { background: #0f172a10; }
+.app.app .lh-plaque em { color: #a16207; }
+.lh-ring { background: linear-gradient(180deg,color-mix(in srgb,var(--bg) 70%,#ffffff),#ffffff); }
+.app.app .lh-ringcard { border: 1px solid #0f172a22; }
+.lh-rec { background: #0f172a0d; }
+.lh-rec small { color: #475569; }
+.lh-rec>b { color: #0f172a; }
+.lh-rec>span { color: #1e293b; }
+.lh-rec em { color: #a16207; }
+.lh-rec .act,
+.lh-rec li.act span { color: #15803d; }
+.lh-rec ol { border-top: 1px solid #0f172a12; }
+.lh-rec li { color: #334155; }
+.lh-season>b { color: #0f172a; }
+.app.app .lh-step { background: #0f172a14; color: #1e293b; }
+.lh-arow-h { color: #475569; }
+.app.app .lh-tile { background: #0f172a0d; }
+.app.app .lh-tile:hover:not(:disabled) { background: #0f172a16; }
+.lh-tile-body small { color: #475569; }
+.lh-tile-body b { color: #0f172a; }
+.lh-tile-body em { color: #334155; }
+.app.app .lh-tile.mine .lh-tile-body small { color: #15803d; }
 
 /* src/ui/lines.css */
 .app .lnx { color: var(--gg-tx, #0f172a); }
@@ -1756,6 +1783,7 @@ body .app { background: #eef1f6 !important; }
 .rk-sm-stages span { background: #0f172a0d; color: #475569; }
 .app.app .gg-coach-who .gg-k,
 .app.app span.gg-k { color: #475569; }
+.rk-moremenu .rk-more-sec + :not(.rk-more-sec) { border-top: 1px solid #0f172a10; }
 .app.app.app .gg-ops-nav button { background: #0f172a12; color: #334155; }
 .app .rk-psheet .gg-pc-actions { background: #f4f6fa; border-top: 1px solid #0f172a10; }
 

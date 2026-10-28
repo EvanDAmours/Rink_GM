@@ -1,4 +1,5 @@
-// Desktop navigation (the football game's "one clean bar"): six sections in one top bar, a season
+// Desktop navigation (the football game's "one clean bar"): the sections in one top bar (any that
+// don't fit move to the ⋯ menu), a season
 // button that opens the season at a glance, search, the live-window pills, the phase's buttons and
 // one ⋯ menu. Every section opens on the section hero (common.jsx SectionHero, numbers in
 // heroStats.js) with its screens as underline tabs.
@@ -10,6 +11,7 @@ import { lastDay } from "../engine/schedule.js";
 
 // The sections, their screens and which one is on live in navRoute.js (pure, so tests check them).
 export { sectionsFor, screenOn, sectionOf, defaultSubs } from "./navRoute.js";
+import { fitSections } from "./navRoute.js";
 
 const PHASE_STAGES = [["preseason", "Preseason"], ["regular", "Regular season"], ["playoffs", "Playoffs"], ["draft", "Draft"], ["resign", "Re-sign"], ["freeagency", "Free agency"]];
 
@@ -60,6 +62,24 @@ export function SeasonMenu({ league, user, onGo, onClose }) {
 export function DeskBar({ league, user, sections, cur, onSection, onGo, onSearch, pills, actions, ff, menu }) {
   const [seasonOpen, setSeasonOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef(null);
+  const [shown, setShown] = useState(null);
+  const curIdx = sections.findIndex((s) => s.id === cur);
+  const key = sections.map((s) => s.label + (s.badge || "")).join("|");
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return undefined;
+    const fit = () => {
+      const ws = [...nav.children].map((b) => b.offsetWidth);
+      const next = fitSections(ws, nav.clientWidth, curIdx);
+      setShown((prev) => (prev && prev.join() === next.join() ? prev : next));
+    };
+    fit();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
+    ro?.observe(nav);
+    return () => ro?.disconnect();
+  }, [key, curIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  const off = sections.filter((s, i) => shown && !shown[i]);
   return (
     <header className="rk-bar">
       <div className="rk-bar-left">
@@ -70,8 +90,8 @@ export function DeskBar({ league, user, sections, cur, onSection, onGo, onSearch
         </button>
         {seasonOpen && <SeasonMenu league={league} user={user} onGo={onGo} onClose={() => setSeasonOpen(false)} />}
       </div>
-      <nav className="rk-bar-nav" aria-label="Main navigation">
-        {sections.map((s) => <button key={s.id} aria-current={cur === s.id ? "page" : undefined} className={cur === s.id ? "on" : ""} onClick={() => onSection(s)}>{s.label}{s.badge && <span className="badge">{s.badge}</span>}</button>)}
+      <nav className="rk-bar-nav" aria-label="Main navigation" ref={navRef}>
+        {sections.map((s, i) => <button key={s.id} aria-current={cur === s.id ? "page" : undefined} aria-hidden={shown && !shown[i] ? true : undefined} tabIndex={shown && !shown[i] ? -1 : undefined} className={`${cur === s.id ? "on" : ""}${shown && !shown[i] ? " rk-nav-off" : ""}`} onClick={() => onSection(s)}>{s.label}{s.badge && <span className="badge">{s.badge}</span>}</button>)}
       </nav>
       <div className="rk-bar-right">
         <button className="rk-search" onClick={onSearch} aria-label="Search players, teams and screens" title="Search (press / or Ctrl+K)"><Icon name="search" size={16} /><span className="rk-search-t">Search</span><kbd>/</kbd></button>
@@ -79,7 +99,7 @@ export function DeskBar({ league, user, sections, cur, onSection, onGo, onSearch
         <div className="rk-bar-actions">{actions}{ff}</div>
         <div className="rk-more">
           <button className="rk-more-btn" aria-label="More" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>⋯</button>
-          {menuOpen && <><div className="rk-scrim" onClick={() => setMenuOpen(false)} /><div className="rk-moremenu" role="menu" onClick={() => setMenuOpen(false)}>{menu}</div></>}
+          {menuOpen && <><div className="rk-scrim" onClick={() => setMenuOpen(false)} /><div className="rk-moremenu" role="menu" onClick={() => setMenuOpen(false)}>{off.map((s) => <button key={`sec-${s.id}`} role="menuitem" className="rk-more-sec" onClick={() => onSection(s)}>{s.label}{s.badge && <span className="badge">{s.badge}</span>}</button>)}{menu}</div></>}
         </div>
       </div>
     </header>

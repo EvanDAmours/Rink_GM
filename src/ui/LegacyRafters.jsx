@@ -10,7 +10,7 @@ import { gmCareer, GM_GREATS } from "../engine/legacy.js";
 import "./legacy.css";
 
 const season = (y) => `${y}-${String(y + 1).slice(2)}`;
-function Banner({ team, line1, line2, year, gold }) {
+export function Banner({ team, line1, line2, year, gold }) {
   return (
     <div className={`lg-banner${gold ? " gold" : ""}`} style={{ "--bg": team.colors?.[0] || "#1e3a8a", "--ac": team.colors?.[1] || "#e5e7eb" }}>
       <i className="lg-bar" />
@@ -18,7 +18,7 @@ function Banner({ team, line1, line2, year, gold }) {
     </div>
   );
 }
-function NumberBanner({ team, number, name, yours }) {
+export function NumberBanner({ team, number, name, yours }) {
   return (
     <div className={`lg-banner num${yours ? " yours" : ""}`} style={{ "--bg": team.colors?.[0] || "#1e3a8a", "--ac": team.colors?.[1] || "#e5e7eb" }} title={yours ? "Retired in your league" : "Retired by the club"}>
       <i className="lg-bar" />
@@ -26,7 +26,7 @@ function NumberBanner({ team, number, name, yours }) {
     </div>
   );
 }
-const Wall = ({ label, children, empty }) => <div className="lg-wall"><div className="lg-wall-k">{label}</div><div className="lg-wall-row">{React.Children.count(children) ? children : <p className="dim small">{empty}</p>}</div></div>;
+export const Wall = ({ label, children, empty }) => <div className="lg-wall"><div className="lg-wall-k">{label}</div><div className="lg-wall-row">{React.Children.count(children) ? children : <p className="dim small">{empty}</p>}</div></div>;
 
 export function Rafters() {
   const { league, commit, toast, openPlayer } = useGame();

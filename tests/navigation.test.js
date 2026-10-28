@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createLeague } from "../src/engine/league.js";
-import { sectionsFor, sectionOf, screenOn, defaultSubs, route, playerSheetKind } from "../src/ui/navRoute.js";
+import { sectionsFor, sectionOf, screenOn, defaultSubs, route, playerSheetKind, fitSections } from "../src/ui/navRoute.js";
 import { keyContracts, contractReminder } from "../src/engine/home.js";
 
 const lg = createLeague({ userAbbr: "EDM", seed: 4242 });
@@ -17,11 +17,12 @@ const src = (f) => fs.readFileSync(new URL(`../src/${f}`, import.meta.url), "utf
 
 test("the bar: Contracts is its own section; Season is schedule and stats; Standings holds the playoffs", () => {
   const s = sec("regular");
-  assert.deepEqual(labels(s), ["Home", "Team", "Standings", "Season", "Development", "Draft", "Trades & FA", "Contracts", "Front Office"]);
+  assert.deepEqual(labels(s), ["Home", "Team", "Standings", "Season", "Development", "Draft", "Trades & FA", "Contracts", "Front Office", "Legacy Hall"]);
   assert.deepEqual(screens(s, "season"), ["Schedule", "Stats"]);
   assert.deepEqual(screens(s, "standings"), ["Standings", "Playoffs"]);
   assert.deepEqual(screens(s, "contracts"), ["Contracts"]);
-  assert.deepEqual(screens(s, "office"), ["Front Office", "League", "Franchise History", "Record Book", "Transactions", "Legacy Hall"]);
+  assert.deepEqual(screens(s, "office"), ["Front Office", "League", "Franchise History", "Record Book", "Transactions"]);
+  assert.deepEqual(screens(s, "legacy"), ["Banners", "Trophies", "Hall of Fame", "Ring of Honour", "Records", "League awards"]);
   assert.ok(!screens(s, "market").includes("Re-sign"), "re-signing left Trades & FA");
   assert.deepEqual(screens(s, "draft"), ["Scouting", "Draft", "Your class"], "the Draft section: Scouting, the one Draft Day screen, Your class (r16)");
   // Re-sign week: the Re-sign screen comes first in Contracts, and Trades & FA keeps Free Agency.
@@ -36,6 +37,25 @@ test("League is one tab for teams, history and the retired", () => {
   assert.equal(sectionOf(s, "league", { league: "records" }).screen[0], "Record Book");
   assert.equal(sectionOf(s, "league", { league: "tx" }).screen[0], "Transactions");
   assert.equal(sectionOf(s, "league", {}).screen[0], "League", "League opens on its teams");
+});
+
+test("the Legacy Hall is its own section (r19): old links land on its screens, Franchise History stays in Front Office", () => {
+  const s = sec("regular");
+  const at = (id, k) => { const [t, kk] = route(id, k, "regular"); return sectionOf(s, t, { ...(kk ? { [t]: kk } : {}) }); };
+  assert.equal(sectionOf(s, "legacy", {}).screen[0], "Banners", "the Legacy Hall opens on its banners");
+  assert.equal(sectionOf(s, "legacy", { legacy: "hall" }).screen[0], "Banners", "the old Rafters & Hall link opens Banners");
+  assert.equal(at("trophies").screen[0], "Trophies", "the Cup moment's link opens the trophy shelf");
+  assert.equal(at("legacy", "awards").screen[0], "League awards");
+  assert.equal(at("legacy", "hof").section.label, "Legacy Hall");
+  for (const v of ["club", "case", "gm"]) assert.equal(sectionOf(s, "legacy", { legacy: v }).section.label, "Front Office", v);
+  assert.ok(!s.find((x) => x.id === "office").screens.some((x) => x[0] === "Legacy Hall"), "no Legacy Hall screen left in Front Office");
+});
+
+test("a section that doesn't fit the bar moves to the menu, last first, never the one you're on", () => {
+  assert.deepEqual(fitSections([100, 100, 100], 400, 0), [true, true, true]);
+  assert.deepEqual(fitSections([100, 100, 100], 250, 0), [true, true, false]);
+  assert.deepEqual(fitSections([100, 100, 100], 250, 2), [true, false, true], "the current section stays");
+  assert.deepEqual(fitSections([100, 100, 100], 150, 1), [false, true, false]);
 });
 
 test("Standings opens on the playoffs while they're on; Contracts on Re-sign in re-sign week", () => {

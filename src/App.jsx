@@ -69,6 +69,7 @@ import { backupSave, dropBackup } from "./engine/saveSlots.js";
 import { LinesHub, CoachingHub, FrontOfficeHub, TradeHub, LeagueHub, DevelopmentHub, StandingsHub, ContractsHub } from "./ui/hubs.jsx";
 import { devView } from "./ui/DevelopmentDesk.jsx";
 import TrophyRoom from "./ui/TrophyRoom.jsx";
+import LegacyHall from "./ui/LegacyHall.jsx";
 import GameUpdates from "./ui/GameUpdates.jsx";
 import { usePhone, desktopUrl, phoneUrl, swipeHandlers } from "./ui/mobile.js";
 import { applyTheme, getTheme } from "./ui/theme.js";
@@ -808,7 +809,7 @@ export default function App({ resume = false }) {
                 {tab === "development" && <DevelopmentHub sub={sub.development} onSub={(k) => setSub("development", k)} />}
                 {tab === "league" && <LeagueHub sub={sub.league} onSub={(k) => setSub("league", k)} act={act} />}
                 {tab === "settings" && <SettingsPage />}
-                {tab === "legacy" && <TrophyRoom view={sub.legacy || "hall"} onView={(k) => setSub("legacy", k)} />}
+                {tab === "legacy" && (["club", "case", "gm"].includes(sub.legacy) ? <TrophyRoom view={sub.legacy} onView={(k) => setSub("legacy", k)} /> : <LegacyHall view={sub.legacy} />)}
                 {tab === "updates" && <GameUpdates />}
               </>
             )}

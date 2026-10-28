@@ -3,7 +3,8 @@
 
 // Each screen: [label, tab, sub (the hub section it opens), subs it covers (for "which tab is on")].
 // Contracts is its own section (the contracts list, and the Re-sign screen in re-sign week);
-// the playoffs live inside Standings; League folds the teams, the history and the retired.
+// the playoffs live inside Standings; League folds the teams, the history and the retired;
+// the Legacy Hall (banners, trophies, Hall of Fame, Ring of Honour, records, league awards) is its own section.
 export function sectionsFor(league, { deadlineOpen, frenzyOpen }) {
   const resign = league.phase === "resign";
   return [
@@ -15,12 +16,14 @@ export function sectionsFor(league, { deadlineOpen, frenzyOpen }) {
     { id: "draft", label: "Draft", screens: [["Scouting", "draft", "hq", ["hq", "board", "myscouts", "scouts", "regions"]], ["Draft", "draft", "day", ["day", "floor", "combine", "list"]], ["Your class", "draft", "class", ["class", "recap"]]] },
     { id: "market", label: "Trades & FA", screens: [["Trade", "trade", "trade", ["trade"]], ["Trade Block", "trade", "block", ["block"]], ["Free Agency", "trade", "fa", ["fa"]], ...(deadlineOpen ? [["Deadline Day", "trade", "deadline", ["deadline"]]] : []), ...(frenzyOpen ? [["July 1 Frenzy", "trade", "frenzy", ["frenzy"]]] : [])] },
     { id: "contracts", label: "Contracts", screens: [...(resign ? [["Re-sign", "contracts", "resign", ["resign"]]] : []), ["Contracts", "contracts", "contracts", ["contracts"]]] },
-    { id: "office", label: "Front Office", screens: [["Front Office", "frontoffice"], ["League", "league", "teams", ["teams", "awards", "retired"]], ["Franchise History", "legacy", "club", ["club", "case", "gm"]], ["Record Book", "league", "records", ["records"]], ["Transactions", "league", "tx", ["tx"]], ["Legacy Hall", "legacy", "hall", ["hall", "trophies", "awards"]]] },
+    { id: "office", label: "Front Office", screens: [["Front Office", "frontoffice"], ["League", "league", "teams", ["teams", "awards", "retired"]], ["Franchise History", "legacy", "club", ["club", "case", "gm"]], ["Record Book", "league", "records", ["records"]], ["Transactions", "league", "tx", ["tx"]]] },
+    // The Legacy Hall is its own section (r19, Gridiron's Legacy Hall): the old "hall" link opens Banners.
+    { id: "legacy", label: "Legacy Hall", screens: [["Banners", "legacy", "banners", ["banners", "hall"]], ["Trophies", "legacy", "trophies", ["trophies"]], ["Hall of Fame", "legacy", "hof", ["hof"]], ["Ring of Honour", "legacy", "honour", ["honour"]], ["Records", "legacy", "records", ["records"]], ["League awards", "legacy", "awards", ["awards"]]] },
   ];
 }
 // Default sub of a hub when none was picked yet (mirrors the hubs' own defaults). Standings opens
 // on the bracket while the playoffs are on; Contracts on the Re-sign screen in re-sign week.
-const DEFAULT_SUB = { lines: "lines", trade: "trade", league: "teams", legacy: "hall", development: "overview", standings: "table", contracts: "contracts" };
+const DEFAULT_SUB = { lines: "lines", trade: "trade", league: "teams", legacy: "banners", development: "overview", standings: "table", contracts: "contracts" };
 export function defaultSubs(league) {
   return { standings: league?.phase === "playoffs" ? "playoffs" : "table", contracts: league?.phase === "resign" ? "resign" : "contracts" };
 }
@@ -52,7 +55,7 @@ export function playerSheetKind(league, pid) {
 export const ALIAS = {
   roster: ["lines", "roster"], playoffs: ["standings", "playoffs"], analysis: ["coaching", "plan"],
   operations: ["frontoffice", "ops"], block: ["trade", "block"], freeagency: ["trade", "fa"], deadline: ["trade", "deadline"], frenzy: ["trade", "frenzy"],
-  trophies: ["legacy"], records: ["league", "records"], trade: ["trade", "trade"], pipeline: ["development", "prospects"],
+  trophies: ["legacy", "trophies"], awards: ["legacy", "awards"], hall: ["legacy", "banners"], records: ["league", "records"], trade: ["trade", "trade"], pipeline: ["development", "prospects"],
 };
 
 export function route(id, k, phase) {
@@ -66,4 +69,17 @@ export function route(id, k, phase) {
   const a = ALIAS[id];
   if (a) return a[0] === id ? [id, k || a[1]] : a;
   return [id, k];
+}
+
+// Which sections fit in the bar: any that don't (a narrow window, a long phase button) move to the
+// ⋯ menu, last first, and the section you're on always stays in the bar.
+export function fitSections(widths, room, curIdx, gap = 2) {
+  const n = widths.length, shown = new Array(n).fill(true);
+  let used = widths.reduce((a, w) => a + w, 0) + gap * Math.max(0, n - 1);
+  for (let i = n - 1; i >= 0 && used > room; i--) {
+    if (i === curIdx) continue;
+    shown[i] = false;
+    used -= widths[i] + gap;
+  }
+  return shown;
 }
