@@ -480,4 +480,9 @@ export const PATCH_NOTES = [
     "Home ice now matters for every club: home teams get slightly better looks and a few more power plays, and win about 54-55% of games, like the NHL. Pre-game win odds include it.",
     "In the playoffs every coach shortens the bench: top lines and pairs play more, with your custom ice-time settings tilted the same way, so stars matter a little more in the spring.",
   ] },
+  { v: "1.91", date: "2026-10-28", title: "Legacy Hall", notes: [
+    "The Legacy Hall is now its own section in the top bar: Banners, Trophies, Hall of Fame, Ring of Honour, Records and League awards, with your Cups, retired numbers, Hall of Famers and seasons as GM up top.",
+    "Trophies puts every Stanley Cup your club has won on a lit shelf, real history and your league alike. Your players' awards from your time as GM stand beside them, with a ×2 badge for repeat winners.",
+    "League awards is rebuilt as four calm rows (team trophies, scoring and performance, leadership, front office), one season at a time, with your winners in green; tap any winner for details.",
+  ] },
 ];
